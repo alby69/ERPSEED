@@ -1,0 +1,36 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app  # Monta la cartella corrente per hot-reloading durante lo sviluppo
+    environment:
+      - FLASK_APP=run.py
+      - FLASK_DEBUG=1
+      # Sovrascrive la connessione DB per usare il nome del servizio 'db'
+      - DATABASE_URL=postgresql://postgres:password@db:5432/flaskerp
+      - MAIL_SERVER=mailhog
+      - MAIL_PORT=1025
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: flaskerp
+    ports:
+      - "5432:5432" # Espone la porta per accessi locali (es. DBeaver)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025" # SMTP port
+      - "8025:8025" # Web UI port
+
+volumes:
+  postgres_data:
