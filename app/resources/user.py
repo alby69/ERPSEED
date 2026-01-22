@@ -1,13 +1,29 @@
+import os
 from datetime import timedelta
 from flask.views import MethodView
+from flask import request, current_app
 from flask_smorest import Blueprint, abort
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, decode_token
 from flask_mail import Message
+from marshmallow import fields
 from app.extensions import db, mail
 from app.models.user import User
 from app.decorators import admin_required
 from app.schemas import UserSchema, UserLoginSchema, PasswordResetRequestSchema, PasswordResetSchema, PasswordChangeSchema, AdminPasswordResetSchema
+
+# Schema per la modifica utente: permette password vuote (che verranno ignorate)
+class UserEditSchema(UserSchema):
+    password = fields.String(load_default=None, allow_none=True, validate=None)
+
+def save_avatar(file):
+    if not file: return None
+    filename = secure_filename(file.filename)
+    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    os.makedirs(upload_folder, exist_ok=True)
+    file.save(os.path.join(upload_folder, filename))
+    return filename
 
 blp = Blueprint("users", __name__, description="Operations on users")
 
@@ -61,6 +77,26 @@ class UserMe(MethodView):
         user_id = get_jwt_identity()
         return User.query.get_or_404(user_id)
 
+    @jwt_required()
+    @blp.response(200, UserSchema)
+    def put(self):
+        """Aggiorna il profilo dell'utente loggato (Avatar, Nome, Cognome)"""
+        user_id = get_jwt_identity()
+        user = User.query.get_or_404(user_id)
+        
+        # Gestione multipart/form-data per upload file
+        if 'avatar' in request.files:
+            filename = save_avatar(request.files['avatar'])
+            if filename:
+                user.avatar = filename
+        
+        data = request.form
+        if 'first_name' in data: user.first_name = data['first_name']
+        if 'last_name' in data: user.last_name = data['last_name']
+        
+        db.session.commit()
+        return user
+
 @blp.route("/me/password")
 class UserPasswordChange(MethodView):
     @jwt_required()
@@ -85,6 +121,70 @@ class UserList(MethodView):
     def get(self):
         """Lista tutti gli utenti (Solo Admin)"""
         return User.query.all()
+
+    @admin_required()
+    @blp.arguments(UserSchema)
+    @blp.response(201, UserSchema)
+    def post(self, user_data):
+        """Crea un nuovo utente (Solo Admin)"""
+        if User.query.filter_by(email=user_data["email"]).first():
+            abort(409, message="A user with that email already exists.")
+        
+        user = User(
+            email=user_data["email"],
+            first_name=user_data.get("first_name"),
+            last_name=user_data.get("last_name"),
+            role=user_data.get("role", "user"),
+            is_active=user_data.get("is_active", True)
+        )
+        if "password" in user_data and user_data["password"]:
+            user.set_password(user_data["password"])
+        
+        db.session.add(user)
+        db.session.commit()
+        return user
+
+@blp.route("/users/<int:user_id>")
+class UserResource(MethodView):
+    @admin_required()
+    @blp.response(200, UserSchema)
+    def get(self, user_id):
+        """Dettaglio utente (Solo Admin)"""
+        return User.query.get_or_404(user_id)
+
+    @admin_required()
+    @blp.arguments(UserEditSchema(partial=True))
+    @blp.response(200, UserSchema)
+    def put(self, user_data, user_id):
+        """Modifica utente (Solo Admin)"""
+        user = User.query.get_or_404(user_id)
+        
+        if "email" in user_data and user_data["email"] != user.email:
+            if User.query.filter_by(email=user_data["email"]).first():
+                abort(409, message="A user with that email already exists.")
+
+        for key, value in user_data.items():
+            if key == "password":
+                if value:
+                    user.set_password(value)
+            else:
+                setattr(user, key, value)
+        
+        db.session.commit()
+        return user
+
+    @admin_required()
+    @blp.response(204)
+    def delete(self, user_id):
+        """Elimina utente (Solo Admin)"""
+        user = User.query.get_or_404(user_id)
+        current_user_id = get_jwt_identity()
+        if str(user.id) == str(current_user_id):
+             abort(400, message="Cannot delete yourself.")
+             
+        db.session.delete(user)
+        db.session.commit()
+        return ""
 
 @blp.route("/users/<int:user_id>/password")
 class AdminUserPasswordReset(MethodView):

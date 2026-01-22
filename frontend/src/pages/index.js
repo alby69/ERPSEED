@@ -7,3 +7,6 @@ export { default as Sales } from './Sales';
 export { default as Profile } from './Profile';
 export { default as ForgotPassword } from './ForgotPassword';
 export { default as ResetPassword } from './ResetPassword';
+export { default as SysModelDetail } from './SysModelDetail';
+export { default as ProjectDetail } from './ProjectDetail';
+export { default as DynamicPageWrapper } from './DynamicPageWrapper';

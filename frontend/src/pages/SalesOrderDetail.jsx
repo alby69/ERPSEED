@@ -1,0 +1,148 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Layout, FormLines } from '../components';
+import { apiFetch } from '../utils';
+
+function SalesOrderDetail() {
+    const { orderId } = useParams();
+    const navigate = useNavigate();
+    const isNew = orderId === 'new';
+    const [order, setOrder] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [dynamicOptions, setDynamicOptions] = useState({});
+
+    const currencyFormatter = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+
+    const lineColumns = [
+        { accessor: 'product.name', header: 'Prodotto' },
+        { accessor: 'quantity', header: 'Quantità' },
+        { accessor: 'unit_price', header: 'Prezzo Unit.', render: (row) => currencyFormatter.format(row.unit_price) },
+        { accessor: 'line_total', header: 'Totale', render: (row) => currencyFormatter.format(row.line_total) },
+    ];
+
+    const lineFields = [
+        { name: 'product_id', label: 'Prodotto', type: 'select', apiUrl: '/products', valueKey: 'id', labelKey: 'name', colClass: 'col-md-5' },
+        { name: 'quantity', label: 'Qtà', type: 'number', colClass: 'col-md-2' },
+        { name: 'unit_price', label: 'Prezzo', type: 'currency', colClass: 'col-md-2' },
+        { name: 'line_total', label: 'Totale', type: 'currency', readOnly: true, colClass: 'col-md-3' },
+    ];
+    
+    const computeTotals = (lines = []) => {
+        let grandTotal = 0;
+        const updatedLines = lines.map(line => {
+            const quantity = parseFloat(line.quantity) || 0;
+            const price = parseFloat(line.unit_price) || 0;
+            const lineTotal = quantity * price;
+            grandTotal += lineTotal;
+            return { ...line, line_total: lineTotal.toFixed(2) };
+        });
+        return { updatedLines, grandTotal };
+    };
+
+    const fetchOrder = useCallback(async () => {
+        if (isNew) {
+            setOrder({
+                party_id: '',
+                order_date: new Date().toISOString().substring(0, 10),
+                lines: [],
+                total_amount: '0.00',
+                status: 'draft'
+            });
+            setLoading(false);
+            return;
+        }
+        try {
+            setLoading(true);
+            const data = await apiFetch(`/sales-orders/${orderId}`).then(res => res.json());
+            const { updatedLines, grandTotal } = computeTotals(data.lines || []);
+            setOrder({ ...data, lines: updatedLines, total_amount: grandTotal.toFixed(2) });
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [orderId, isNew]);
+
+    useEffect(() => {
+        fetchOrder();
+        apiFetch('/parties?per_page=1000').then(r => r.json()).then(d => setDynamicOptions(p => ({...p, parties: d.items || d})));
+    }, [fetchOrder]);
+
+    const handleHeaderChange = (e) => {
+        const { name, value } = e.target;
+        setOrder(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleLinesChange = ({ name, value }) => { // Destruttura l'oggetto evento
+        const { updatedLines, grandTotal } = computeTotals(value);
+        setOrder(prev => ({ ...prev, [name]: updatedLines, total_amount: grandTotal.toFixed(2) }));
+    };
+
+    const handleSave = async () => {
+        try {
+            const payload = {
+                ...order,
+                lines_attributes: order.lines.map(({ id, product_id, quantity, unit_price, _destroy }) => ({
+                    id, product_id, quantity, unit_price, _destroy
+                }))
+            };
+            delete payload.lines;
+            delete payload.party;
+
+            const url = isNew ? '/sales-orders' : `/sales-orders/${orderId}`;
+            const method = isNew ? 'POST' : 'PUT';
+
+            await apiFetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            alert('Ordine salvato con successo!');
+            navigate('/sales');
+        } catch (err) {
+            alert(`Errore nel salvataggio: ${err.message}`);
+        }
+    };
+
+    if (loading) return <Layout><div>Caricamento ordine...</div></Layout>;
+    if (error) return <Layout><div className="alert alert-danger m-4">{error}</div></Layout>;
+    if (!order) return <Layout><div>Ordine non trovato.</div></Layout>;
+
+    return (
+        <Layout>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h2>{isNew ? 'Nuovo Ordine di Vendita' : `Ordine di Vendita #${order.id}`}</h2>
+                <div>
+                    <Link to="/sales" className="btn btn-secondary me-2">Indietro</Link>
+                    <button onClick={handleSave} className="btn btn-primary">Salva Ordine</button>
+                </div>
+            </div>
+
+            <div className="card">
+                <div className="card-header">Dettagli Ordine</div>
+                <div className="card-body">
+                    <div className="row">
+                        <div className="col-md-6 mb-3">
+                            <label className="form-label">Cliente</label>
+                            <select name="party_id" value={order.party_id} onChange={handleHeaderChange} className="form-select">
+                                <option value="">Seleziona Cliente</option>
+                                {(dynamicOptions.parties || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
+                        </div>
+                        <div className="col-md-6 mb-3">
+                            <label className="form-label">Data Ordine</label>
+                            <input type="date" name="order_date" value={(order.order_date || '').substring(0, 10)} onChange={handleHeaderChange} className="form-control" />
+                        </div>
+                    </div>
+                    <hr />
+                    <h5>Linee Ordine</h5>
+                    <FormLines name="lines" value={order.lines} onChange={handleLinesChange} columns={lineColumns} fields={lineFields} />
+                    <div className="text-end mt-3"><h4>Totale: {currencyFormatter.format(order.total_amount)}</h4></div>
+                </div>
+            </div>
+        </Layout>
+    );
+}
+
+export default SalesOrderDetail;

@@ -33,12 +33,19 @@ function Parties() {
     { name: 'fiscal_code', label: 'Codice Fiscale', colClass: 'col-md-6' }
   ];
 
+  const filterTabs = [
+    { label: 'Tutti', filters: {} },
+    { label: 'Aziende', filters: { type: 'company' } },
+    { label: 'Persone', filters: { type: 'person' } }
+  ];
+
   return (
     <GenericCrudPage 
       pageTitle="Anagrafiche" 
       apiPath="/parties" 
       columns={columns} 
       formFields={formFields} 
+      filterTabs={filterTabs}
     />
   );
 }

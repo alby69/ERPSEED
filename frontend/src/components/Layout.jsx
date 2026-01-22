@@ -3,14 +3,11 @@ import Sidebar from './Sidebar';
 import { useAuth } from '../context';
 
 function Layout({ children }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('refresh_token');
+    logout();
     navigate('/login');
   };
 
@@ -20,9 +17,17 @@ function Layout({ children }) {
         <span className="navbar-brand mb-0 h1">FlaskERP</span>
         <div className="d-flex align-items-center gap-3">
           {user && (
-            <span className="text-light small">
-              Ciao, <Link to="/profile" className="text-light text-decoration-none fw-bold">{user.email}</Link>
-            </span>
+            <div className="d-flex align-items-center gap-2">
+              <img 
+                src={user.avatar ? `http://localhost:5000/uploads/${user.avatar}` : `https://ui-avatars.com/api/?name=${user.first_name}+${user.last_name}&background=random`} 
+                alt="Avatar" 
+                className="rounded-circle border border-light"
+                style={{ width: '32px', height: '32px', objectFit: 'cover' }}
+              />
+              <span className="text-light small">
+                Ciao, <Link to="/profile" className="text-light text-decoration-none fw-bold">{user.first_name || user.email}</Link>
+              </span>
+            </div>
           )}
           <button onClick={handleLogout} className="btn btn-outline-light btn-sm">Logout</button>
         </div>

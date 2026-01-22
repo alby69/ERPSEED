@@ -33,7 +33,7 @@ L'obiettivo è creare un'alternativa open-source, flessibile e potente ai tradiz
 Proponiamo un'architettura "Modular Monolith" con una SPA frontend separata.
 
 1.  **Backend (Flask)**:
-    - **Blueprints**: Ogni modulo ERP (es. `sales`, `inventory`, `accounting`) è un Flask Blueprint. Questo permette una separazione logica del codice e delle rotte.
+    - **Struttura Modulare**: Il codice risiede nella cartella `backend/`. Ogni dominio (es. `users`, `projects`, `sales`) è un modulo isolato con le sue rotte, modelli e schemi.
     - **API-Driven**: Il backend espone unicamente API REST/JSON. Non fa rendering di HTML.
     - **Comunicazione Inter-Modulo**: I moduli comunicano tramite API interne ben documentate (standard OpenAPI), garantendo disaccoppiamento.
 
@@ -46,39 +46,26 @@ Proponiamo un'architettura "Modular Monolith" con una SPA frontend separata.
     - Un singolo database PostgreSQL funge da "source of truth".
     - SQLAlchemy mappa le tabelle a oggetti Python, semplificando le query e garantendo la coerenza.
 
-### ⚙️ Il "Motore ERP": Sviluppo Rapido e DRY
+### 🏗️ ERP Builder (No-Code Engine) - *Attivo*
 
-Per gestire la complessità di un ERP con centinaia di tabelle, abbiamo sviluppato un **framework interno** che automatizza le operazioni CRUD (Create, Read, Update, Delete), permettendo agli sviluppatori di concentrarsi sulla logica di business complessa.
+Il cuore del progetto è il **Builder**, un sistema per estendere l'ERP direttamente dall'interfaccia web, senza scrivere codice.
 
-#### 1. Backend Automation (`app/crud.py`)
-Invece di scrivere manualmente gli endpoint per ogni entità, utilizziamo una **Factory Function** `register_crud_routes`.
+#### 1. Gestione Modelli Dinamica
+Il backend ora supporta la definizione di modelli tramite API, permettendo di creare dinamicamente:
+- **Tabelle** (Entità) tramite il modello `SysModel`.
+- **Campi** (`SysField`) con un'ampia gamma di tipi: `string`, `integer`, `boolean`, `date`, `select`, `file`, `image`, `calculated` (frontend).
+- **Relazioni** (tramite il tipo `relation`), **Campi Calcolati Backend** (`formula`), **Campi di Riepilogo** (`summary`) e **Campi di Ricerca** (`lookup`).
 
-**Come aggiungere una nuova entità (es. Prodotti):**
-1.  Definire il Modello (`models/product.py`).
-2.  Definire lo Schema di Validazione (`schemas.py`).
-3.  Registrare le rotte con una riga di codice:
-    ```python
-    register_crud_routes(blp, Product, ProductSchema, url_prefix="/products", search_fields=["name"], multipart=True)
-    ```
-Questo genera automaticamente API sicure (JWT), paginata, ricercabili e capaci di gestire upload di file.
+#### 2. Dynamic Runtime
+Il backend includerà un motore capace di:
+- Salvare la definizione dei modelli in tabelle di sistema (`sys_models`, `sys_fields`).
+- Generare/Aggiornare lo schema del database PostgreSQL automaticamente.
+- Esporre automaticamente API CRUD per i nuovi modelli creati graficamente.
 
-#### 2. Frontend Automation (`GenericCrudPage.jsx`)
-Il frontend utilizza un approccio **Metadata-Driven**. Non disegniamo form o tabelle a mano per le anagrafiche standard.
-
-**Come creare la pagina di gestione:**
-Configuriamo semplicemente le colonne e i campi:
-```javascript
-const columns = [
-  { header: 'Nome', accessor: 'name' },
-  { header: 'Prezzo', accessor: 'price' }
-];
-const formFields = [
-  { name: 'name', label: 'Nome Prodotto', required: true },
-  { name: 'image', label: 'Foto', type: 'file' }
-];
-// Il componente fa tutto il resto
-<GenericCrudPage apiPath="/products" columns={columns} formFields={formFields} />
-```
+#### 3. Frontend Automation (`GenericCrudPage.jsx`)
+Il frontend è già predisposto con componenti **Metadata-Driven**:
+- **`GenericCrudPage`**: Renderizza tabelle e form basandosi su una configurazione JSON.
+- Il Builder collegherà i metadati del backend direttamente a questo componente, permettendo di visualizzare le nuove tabelle istantaneamente.
 
 **Componenti Chiave:**
 - **`GenericCrudPage`**: Gestisce stato, fetch dati, modali, form, validazione errori backend, upload file.
@@ -120,19 +107,17 @@ Questo approccio evita ereditarietà complesse e permette a un'entità di avere 
     - [x] Endpoint protetto di prova (`/me`).
     - [x] Decoratori per proteggere gli endpoint in base ai ruoli/permessi.
     - [x] Creazione della UI di base (React SPA) per login e gestione utenti.
-    - [x] Implementazione "Motore ERP" (`register_crud_routes`, `GenericCrudPage`) per sviluppo rapido.
+    - [x] Implementazione Frontend Generico (`GenericCrudPage`) per sviluppo rapido.
 
-3.  **Fase 2: Anagrafiche di Base (In Corso)**
-    - [x] Modello `Party` (Clienti/Fornitori).
-    - [ ] Modelli `Address`, `Product`.
-    - [ ] API CRUD (Create, Read, Update, Delete) per queste anagrafiche.
-    - [ ] UI per la gestione delle anagrafiche di base.
+3.  **Fase 2: Anagrafiche di Base (Completata)**
+    - [x] Modelli `Party` (Clienti/Fornitori) e `Product`.
+    - [x] API CRUD (Create, Read, Update, Delete) con filtri e paginazione.
+    - [x] UI per la gestione delle anagrafiche di base.
 
-4.  **Fase 3: Primo Modulo Funzionale (Es. Vendite)**
-    - [ ] Modello `SalesOrder` e `SalesOrderLine`.
-    - [ ] Logica di business per la creazione e gestione di un ordine di vendita.
-    - [ ] API per il ciclo di vita dell'ordine.
-    - [ ] UI per la gestione degli ordini di vendita.
+4.  **Fase 3: Primo Modulo Funzionale (Es. Vendite) (In Corso)**
+    - [x] Modello `SalesOrder` e `SalesOrderLine`.
+    - [x] API per la creazione e gestione ordini.
+    - [ ] UI avanzata per la gestione degli ordini (es. Master-Detail).
 
 5.  **Fase 4: Moduli Successivi**
     - [ ] Sviluppo iterativo dei moduli Acquisti, Magazzino, Cespiti.
@@ -142,7 +127,137 @@ Questo approccio evita ereditarietà complesse e permette a un'entità di avere 
     - [ ] Logica per la generazione del Libro Giornale e liquidazione IVA.
     - [ ] Integrazione con gli altri moduli per la contabilizzazione automatica.
 
+7.  **Fase 6: ERP Builder (No-Code)**
+    - [x] Modelli di sistema (`SysModel`, `SysField`) per definire tabelle e campi.
+    - [x] Motore di generazione e aggiornamento schema DB (`CREATE/ALTER TABLE`).
+    - [x] API Runtime Dinamica (`/data/<model>`) completa (CRUD, relazioni, file, formule).
+    - [x] UI di Amministrazione per il Builder (gestione modelli, campi, permessi ACL).
+    - [x] Frontend Dinamico (`GenericCrudPage`) per l'utilizzo delle applicazioni create.
+    - [x] Funzionalità Avanzate: Validazione Regex, Campi Calcolati Frontend, Widget Dashboard.
+
 ---
+
+## 🔧 Debugging e Troubleshooting
+
+Se riscontri problemi con le API o il Frontend, segui questa guida per isolare il problema.
+
+### 1. Problemi di Routing (404 Not Found)
+- **API Statiche**: Controlla `app/crud.py`. Le rotte sono generate automaticamente. Verifica che il modello sia registrato nel blueprint.
+- **API Dinamiche**: Controlla `backend/dynamic_api.py`. Queste rotte rispondono a `/data/<model_name>`.
+  - Verifica che il `model_name` esista nella tabella `sys_models`.
+  - Verifica che la tabella fisica esista nel DB (usa `Generate Table` dalla UI).
+
+### 2. Problemi di Database (SQLAlchemy)
+- Se modifichi un modello Python (`app/models/`), devi generare una migrazione:
+  ```bash
+  flask db migrate -m "descrizione"
+  flask db upgrade
+  ```
+- Se modifichi un modello Dinamico (dal Builder), devi cliccare su **"Generate/Update DB Table"** nella pagina di dettaglio del modello.
+
+### 3. Frontend (React)
+- **Schermata Bianca / Crash**: Spesso dovuto a import ciclici o doppi export (es. `SysModelDetail`). Controlla la console del browser (F12).
+- **Campi non visibili**: Verifica che i metadati (`sys_fields`) siano allineati con la risposta API `/data/<model>/meta`.
+
+### 4. Reset Completo del Database (Ambiente Docker)
+
+Se il database si corrompe, lo schema non è più sincronizzato o semplicemente vuoi ripartire da zero, puoi usare lo script di reset. **Attenzione: questa operazione cancellerà tutti i dati.**
+
+1.  **Assicurati che i container siano attivi**:
+    ```bash
+    docker compose up -d
+    ```
+
+2.  **Esegui lo script di reset dentro il container `web`**:
+    ```bash
+    docker compose exec web python -m backend.reset_db
+    ```
+    Questo comando eseguirà lo script `reset_db.py` che si occupa di cancellare il database, ricreare tutte le tabelle secondo i modelli SQLAlchemy e inserire i dati di seed (amministratore, KPI, etc.).
+
+3.  **Riavvia il servizio web per applicare le modifiche**:
+    ```bash
+    docker compose restart web
+    ```
+
+### 🏗️ Architettura del Codice (Refactoring in corso)
+
+Stiamo migrando verso un'architettura più pulita (KISS/DRY):
+- **`app/crud.py`**: Gestisce i modelli "Hard-coded" (User, Party).
+- **`backend/dynamic_api.py`**: Gestisce i modelli "No-Code". *Nota: In futuro queste due logiche verranno unificate in un unico `QueryBuilder`.*
+
+---
+
+## 📖 Manuale Utente Builder (Guida Passo-Passo)
+
+Il **Builder (Admin)** è lo strumento che ti permette di creare nuove funzionalità (moduli) nell'ERP senza scrivere codice.
+
+### Passo 1: Creare un Nuovo Modello (Tabella)
+1.  Vai nel menu **Builder (Admin)**.
+2.  Clicca su **"Create New Model"**.
+3.  Compila il form:
+    -   **Internal Name**: Il nome della tabella nel database (es. `fleet_vehicles`). Usa solo lettere minuscole e underscore.
+    -   **Display Title**: Il nome visibile nel menu (es. `Gestione Flotta`).
+    -   **Description**: Una breve descrizione.
+4.  Clicca su **Create**.
+
+### Passo 2: Configurare i Permessi (Importante!)
+⚠️ **Se non configuri i permessi, non potrai accedere al modulo e verrai reindirizzato al login.**
+1.  Nella lista dei modelli, clicca su **Manage Model** (o sul nome del modello).
+2.  Clicca su **Edit Model** (pulsante in alto a destra).
+3.  Nella tabella **Permissions (ACL)**, spunta le caselle **Read** e **Write** per il ruolo `admin` (e altri ruoli se necessario).
+4.  Clicca **Update Model**.
+
+### Passo 3: Aggiungere Campi (Colonne)
+Nella pagina di dettaglio del modello, clicca su **"Add New Field"**.
+Esempi di campi comuni:
+-   **Targa** -> Type: `String`, Name: `license_plate`, Required: `Yes`, Unique: `Yes`.
+-   **Chilometraggio** -> Type: `Integer`, Name: `mileage`.
+-   **Data Immatricolazione** -> Type: `Date`, Name: `registration_date`.
+-   **Tipo Veicolo** -> Type: `Select`. Nel campo *Options (List)* scrivi le opzioni (es. `Auto`, `Furgone`, `Moto`) premendo Invio dopo ognuna.
+-   **Assegnatario** -> Type: `Relation`. In *Target Table* seleziona `users` (o un altro modello creato, es. `employees`).
+
+### Passo 4: Generare la Tabella nel Database
+Finché non esegui questo passaggio, il modello è solo una "bozza".
+1.  Clicca sul pulsante blu **"Generate/Update DB Table"**.
+2.  Conferma l'operazione.
+    *Nota: Se modifichi i campi in futuro, dovrai cliccare di nuovo su questo pulsante per aggiornare il database.*
+
+### Passo 5: Usare la Nuova Applicazione
+1.  Ricarica la pagina (F5).
+2.  Nel menu laterale, sotto la voce **APPLICAZIONI**, troverai il tuo nuovo modulo (es. `Gestione Flotta`).
+3.  Cliccaci per iniziare a inserire dati, cercare ed esportare.
+
+### 💡 Risoluzione Problemi: Accesso Negato a "Dashboard KPIs"
+Se vedi un'applicazione chiamata **Dashboard KPIs** ma cliccandoci vieni rimandato al login:
+1.  Vai su **Builder (Admin)**.
+2.  Cerca il modello `dashboard_kpi`.
+3.  Clicca **Manage Model** -> **Edit Model**.
+4.  Assicurati che il tuo ruolo (`admin`) abbia le spunte su **Read** e **Write**.
+5.  Salva e riprova ad accedere dal menu laterale.
+
+## ✨ Funzionalità Avanzate del Builder
+
+Oltre alla creazione base di tabelle e campi, il Builder supporta funzionalità avanzate per creare logiche complesse senza codice.
+
+### 1. Campi Calcolati e di Riepilogo
+-   **Formula (Backend)**: Esegue calcoli matematici lato server usando i valori di altri campi. Esempio: `{quantity} * {price}`.
+-   **Calculated (Frontend)**: Esegue calcoli lato client (JavaScript) per logiche di visualizzazione immediate. Esempio: `{firstName} + ' ' + {lastName}`.
+-   **Summary (Riepilogo)**: Aggrega dati da una tabella "figlia" (relazione 1-a-N). Utile per calcolare totali, medie, o conteggi. Esempio: `SUM(total)` dalle righe di una fattura.
+-   **Lookup**: Recupera e visualizza un valore da una tabella correlata, evitando join complesse nel frontend.
+
+### 2. Logica Condizionale
+-   **Visibilità Condizionale**: Mostra o nascondi un campo nel form in base al valore di un altro campo. Esempio: mostra il campo "Motivazione" solo se lo stato è "Rifiutato".
+-   **Requisito Condizionale**: Rendi un campo obbligatorio solo se un altro campo ha un determinato valore.
+
+### 3. Viste Personalizzate (Kanban)
+Il Builder permette di definire viste alternative ai dati oltre alla classica tabella.
+-   **Vista Kanban**: Visualizza i record come card in colonne che rappresentano uno stato (es. To Do, In Progress, Done).
+-   **Configurazione**:
+    1.  Nel modello, definisci un campo di tipo `Select` per lo stato (es. "status_pedido").
+    2.  Nelle impostazioni del modello, imposta la **Vista di Default** su `kanban`.
+    3.  Seleziona il campo di stato nel nuovo menu a tendina **Campo Stato Kanban**.
+-   Il sistema genererà automaticamente una board interattiva con drag-and-drop per cambiare lo stato dei record.
+
 
 ## ⚙️ Setup dell'Ambiente di Sviluppo
 

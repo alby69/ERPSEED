@@ -1,18 +1,30 @@
-FROM python:3.11-slim
+# Fase 1: Build - Installa le dipendenze
+FROM python:3.12-slim as builder
 
 WORKDIR /app
 
-# Installa dipendenze di sistema per WeasyPrint
-RUN apt-get update && apt-get install -y \
-    build-essential libpango-1.0-0 libpangoft2-1.0-0 libjpeg62-turbo-dev libopenjp2-7-dev libffi-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Installa le dipendenze di build
+RUN pip install --upgrade pip
 
-# Copia i requisiti e installa le dipendenze
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Copia il file delle dipendenze e crea i "wheels" (pacchetti pre-compilati)
+COPY requirements.txt .
+RUN pip wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
 
-# Copia il resto del codice sorgente
-COPY . .
+# Fase 2: Immagine finale - Leggera e pronta per l'esecuzione
+FROM python:3.12-slim
 
-# Espone la porta e avvia l'app
-CMD ["flask", "run", "--host=0.0.0.0"]
+WORKDIR /app
+
+# Copia le dipendenze pre-compilate dalla fase di build e installale
+COPY --from=builder /app/wheels /wheels
+COPY --from=builder /app/requirements.txt .
+RUN pip install --no-cache /wheels/*
+
+# Copia il codice dell'applicazione (verrà sovrascritto dal volume in dev)
+COPY ./backend ./backend
+
+# Imposta la variabile d'ambiente per Flask e per i log
+ENV FLASK_APP=backend
+ENV PYTHONUNBUFFERED=1
+
+EXPOSE 5000

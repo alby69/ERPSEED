@@ -1,8 +1,32 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context';
-import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, Parties, Products, Sales } from './pages';
+import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, Parties, Products } from './pages';
+import Sales from './pages/Sales';
+import SalesOrderDetail from './pages/SalesOrderDetail';
+import SysModelDetail from './pages/SysModelDetail';
+import SysModelList from './pages/SysModelList';
+import ProjectDetail from './pages/ProjectDetail';
+import DynamicModelPage from './pages/DynamicModelPage';
+import AuditLogs from './pages/AuditLogs';
+
 
 function App() {
+  // Componente per le rotte pubbliche (es. Login)
+  // Se l'utente è già autenticato, lo reindirizza alla dashboard
+  const PublicRoute = ({ children }) => {
+    const { user, isLoading } = useAuth();
+
+    if (isLoading) {
+      return <div className="p-5 text-center">Caricamento...</div>;
+    }
+
+    if (user) {
+      return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
+  };
+
   // Componente per proteggere le rotte in base all'autenticazione e al ruolo
   const ProtectedRoute = ({ children, roles }) => {
     const { user, isLoading } = useAuth();
@@ -15,7 +39,9 @@ function App() {
       return <Navigate to="/login" replace />;
     }
 
-    if (roles && !roles.includes(user.role)) {
+    // Fix: Supporta sia user.role (stringa) che user.roles (array di oggetti)
+    const hasRole = !roles || roles.includes(user.role) || user.roles?.some(r => roles.includes(r.name));
+    if (!hasRole) {
       return <Navigate to="/dashboard" replace />; // Redirect to a safe page
     }
 
@@ -25,7 +51,14 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route 
+          path="/login" 
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } 
+        />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route 
@@ -76,7 +109,72 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route path="*" element={<Navigate to="/login" />} />
+        <Route 
+          path="/sales/new" 
+          element={
+            <ProtectedRoute>
+              <SalesOrderDetail />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/sales/:orderId" 
+          element={
+            <ProtectedRoute>
+              <SalesOrderDetail />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/builder/:modelId" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <SysModelDetail />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/builder" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <SysModelList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/bi-builder" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <div className="p-5 text-center"><h2>BI Builder</h2><p>Modulo in arrivo...</p></div>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/projects/:id" 
+          element={
+            <ProtectedRoute>
+              <ProjectDetail />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/data/:modelName" 
+          element={
+            <ProtectedRoute>
+              <DynamicModelPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/audit-logs" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <AuditLogs />
+            </ProtectedRoute>
+          } 
+        />
+        {/* Reindirizza tutto alla dashboard; se non loggato, ProtectedRoute manderà al login */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );

@@ -145,7 +145,7 @@ function FormLines({ name, value = [], onChange, columns, fields, compute }) {
                   </select>
                 ) : (
                   <input 
-                    type={field.type || 'text'}
+                    type={['integer', 'float', 'currency'].includes(field.type) ? 'number' : (field.type || 'text')}
                     className="form-control form-control-sm"
                     name={field.name}
                     value={lineData[field.name]}

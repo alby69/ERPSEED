@@ -1,19 +1,68 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components';
 import { apiFetch } from '../utils';
 import { useAuth } from '../context';
 
 function Profile() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [searchParams] = useSearchParams();
   const [passwords, setPasswords] = useState({ current: '', new: '' });
+  const [profileData, setProfileData] = useState({ first_name: '', last_name: '' });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
   const isForced = searchParams.get('force') === 'true';
 
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        first_name: user.first_name || '',
+        last_name: user.last_name || ''
+      });
+      if (user.avatar) {
+        setAvatarPreview(`http://localhost:5000/uploads/${user.avatar}`);
+      }
+    }
+  }, [user]);
+
   const handleChange = (e) => {
     setPasswords({ ...passwords, [e.target.name]: e.target.value });
+  };
+
+  const handleProfileChange = (e) => {
+    setProfileData({ ...profileData, [e.target.name]: e.target.value });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('first_name', profileData.first_name);
+    formData.append('last_name', profileData.last_name);
+    if (avatarFile) {
+      formData.append('avatar', avatarFile);
+    }
+
+    try {
+      const res = await apiFetch('/me', { method: 'PUT', body: formData });
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Profilo aggiornato!' });
+        if (refreshUser) refreshUser(); // Aggiorna il contesto utente
+      } else {
+        setMessage({ type: 'danger', text: 'Errore aggiornamento profilo' });
+      }
+    } catch (err) {
+      setMessage({ type: 'danger', text: 'Errore di connessione' });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -49,11 +98,49 @@ function Profile() {
   return (
     <Layout>
       <h2>Profilo Utente</h2>
-      <p className="text-muted">Email: {user?.email}</p>
       <hr />
 
-      <div className="card shadow-sm" style={{ maxWidth: '500px' }}>
-        <div className="card-body">
+      <div className="row">
+        <div className="col-md-6 mb-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-body">
+              <h5 className="card-title mb-3">Dati Personali</h5>
+              <form onSubmit={handleProfileSubmit}>
+                <div className="text-center mb-3">
+                  <div className="position-relative d-inline-block">
+                    <img 
+                      src={avatarPreview || `https://ui-avatars.com/api/?name=${user?.first_name}+${user?.last_name}&background=random`} 
+                      alt="Avatar" 
+                      className="rounded-circle border"
+                      style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                    />
+                    <label className="position-absolute bottom-0 end-0 btn btn-sm btn-primary rounded-circle" style={{ cursor: 'pointer' }}>
+                      <i className="bi bi-camera"></i>
+                      <input type="file" className="d-none" onChange={handleFileChange} accept="image/*" />
+                    </label>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Nome</label>
+                  <input type="text" className="form-control" name="first_name" value={profileData.first_name} onChange={handleProfileChange} />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Cognome</label>
+                  <input type="text" className="form-control" name="last_name" value={profileData.last_name} onChange={handleProfileChange} />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Email</label>
+                  <input type="text" className="form-control" value={user?.email} disabled readOnly />
+                </div>
+                <button type="submit" className="btn btn-success">Salva Profilo</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-6 mb-4">
+          <div className="card shadow-sm h-100">
+            <div className="card-body">
           <h5 className="card-title mb-3">Cambia Password</h5>
           {isForced && (
             <div className="alert alert-warning">
@@ -89,6 +176,8 @@ function Profile() {
             </div>
             <button type="submit" className="btn btn-primary">Aggiorna Password</button>
           </form>
+        </div>
+      </div>
         </div>
       </div>
     </Layout>

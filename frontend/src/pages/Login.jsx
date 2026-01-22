@@ -40,35 +40,58 @@ function Login() {
   };
 
   return (
-    <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
-      <div className="card shadow p-4" style={{ width: '400px' }}>
-        <h3 className="text-center mb-4">FlaskERP Login</h3>
-        {error && <div className="alert alert-danger">{error}</div>}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label className="form-label">Email</label>
-            <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
+    <div className="container-fluid vh-100">
+      <div className="row h-100">
+        {/* Colonna Sinistra: Immagine/Branding */}
+        <div className="col-md-6 d-none d-md-flex bg-primary text-white flex-column align-items-center justify-content-center p-5" 
+             style={{ 
+               background: 'linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%)',
+               boxShadow: 'inset -5px 0 15px rgba(0,0,0,0.1)'
+             }}>
+          <div className="text-center mb-4">
+            <i className="bi bi-layers-half display-1 mb-3"></i>
+            <h1 className="fw-bold display-4">FlaskERP</h1>
+            <p className="lead opacity-75">Gestisci la tua azienda con semplicità e potenza.</p>
           </div>
-          <div className="mb-3">
-            <label className="form-label">Password</label>
-            <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <div className="mt-auto text-center opacity-50 small">
+            &copy; {new Date().getFullYear()} FlaskERP Inc. All rights reserved.
           </div>
-          <button type="submit" className="btn btn-primary w-100">Accedi</button>
-          <div className="d-flex justify-content-between mt-3">
-            <div className="form-check">
-              <input 
-                type="checkbox" 
-                className="form-check-input" 
-                id="rememberMe"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              <label className="form-check-label" htmlFor="rememberMe">Ricordami</label>
+        </div>
+
+        {/* Colonna Destra: Form Login */}
+        <div className="col-md-6 d-flex align-items-center justify-content-center bg-white">
+          <div className="w-100 p-4" style={{ maxWidth: '450px' }}>
+            <div className="text-center mb-5 d-md-none">
+              <h2 className="fw-bold text-primary">FlaskERP</h2>
             </div>
-            <Link to="/forgot-password">Password dimenticata?</Link>
+            
+            <h3 className="mb-4 fw-bold">Benvenuto!</h3>
+            <p className="text-muted mb-4">Inserisci le tue credenziali per accedere al pannello di controllo.</p>
+
+            {error && <div className="alert alert-danger d-flex align-items-center"><i className="bi bi-exclamation-triangle-fill me-2"></i>{error}</div>}
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-floating mb-3">
+                <input type="email" className="form-control" id="floatingInput" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <label htmlFor="floatingInput">Indirizzo Email</label>
+              </div>
+              <div className="form-floating mb-4">
+                <input type="password" className="form-control" id="floatingPassword" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <label htmlFor="floatingPassword">Password</label>
+              </div>
+
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <div className="form-check">
+                  <input type="checkbox" className="form-check-input" id="rememberMe" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+                  <label className="form-check-label small" htmlFor="rememberMe">Ricordami</label>
+                </div>
+                <Link to="/forgot-password" style={{ textDecoration: 'none', fontSize: '0.9rem' }}>Password dimenticata?</Link>
+              </div>
+
+              <button type="submit" className="btn btn-primary w-100 py-2 fw-bold shadow-sm">Accedi</button>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
