@@ -1,6 +1,6 @@
-# FlaskERP - Un ERP Modulare Moderno
+# MakeERP - The ERP Engine
 
-Questo progetto è un sistema ERP (Enterprise Resource Planning) costruito con un'architettura moderna, modulare e scalabile, utilizzando Python e Flask. È progettato per le esigenze delle aziende italiane, con un focus sulla manutenibilità, estensibilità e una user experience di alta qualità.
+MakeERP è un motore "Low-Code" open-source progettato per costruire, eseguire e distribuire sistemi gestionali complessi. Non è solo un ERP, ma una piattaforma per creare il *tuo* ERP (es. Gestione Flotta, CRM, WMS) attraverso una definizione dinamica dei dati.
 
 ## Visione del Progetto
 
@@ -8,7 +8,8 @@ L'obiettivo è creare un'alternativa open-source, flessibile e potente ai tradiz
 
 - **Modularità Estrema**: Ogni funzione aziendale (Contabilità, Vendite, Magazzino) è un modulo a sé stante che può essere attivato o disattivato.
 - **Disaccoppiamento**: I moduli comunicano tramite API interne ben definite, riducendo le dipendenze e facilitando lo sviluppo parallelo.
-- **Dati Robusti e Scalabili**: Un modello dati relazionale solido, gestito da un ORM potente, che garantisce integrità e performance.
+- **Engine vs Blueprint**: Il motore (MakeERP) è separato dalla logica di business (Blueprint). Puoi esportare il tuo progetto "Parco Auto" in un file JSON e distribuirlo ovunque.
+- **Multi-Progetto**: Il motore è progettato per gestire più progetti indipendenti (es. un'istanza per ogni cliente), ognuno con i propri modelli e dati, garantendo l'isolamento.
 - **UI/UX Professionale**: Un'interfaccia web veloce, intuitiva e reattiva (Single Page Application).
 - **Cloud-Native**: Progettato per essere deployato, scalato e gestito su piattaforme cloud.
 
@@ -52,6 +53,7 @@ Il cuore del progetto è il **Builder**, un sistema per estendere l'ERP direttam
 
 #### 1. Gestione Modelli Dinamica
 Il backend ora supporta la definizione di modelli tramite API, permettendo di creare dinamicamente:
+- **Progetti**: Contenitori logici per raggruppare modelli e configurazioni (es. "Gestione Flotta", "CRM Cliente X").
 - **Tabelle** (Entità) tramite il modello `SysModel`.
 - **Campi** (`SysField`) con un'ampia gamma di tipi: `string`, `integer`, `boolean`, `date`, `select`, `file`, `image`, `calculated` (frontend).
 - **Relazioni** (tramite il tipo `relation`), **Campi Calcolati Backend** (`formula`), **Campi di Riepilogo** (`summary`) e **Campi di Ricerca** (`lookup`).
@@ -134,6 +136,12 @@ Questo approccio evita ereditarietà complesse e permette a un'entità di avere 
     - [x] UI di Amministrazione per il Builder (gestione modelli, campi, permessi ACL).
     - [x] Frontend Dinamico (`GenericCrudPage`) per l'utilizzo delle applicazioni create.
     - [x] Funzionalità Avanzate: Validazione Regex, Campi Calcolati Frontend, Widget Dashboard.
+    - [ ] **Gestione Progetti e Template**:
+        - [x] Aggiunta del modello `Project` per raggruppare le configurazioni.
+        - [x] API per creare, leggere, aggiornare ed eliminare Progetti.
+        - [x] Funzionalità di Import/Export di un intero Progetto come template JSON.
+        - [x] Gestione Versionamento Progetti e Backup automatici.
+        - [ ] Isolamento dei dati per progetto (multi-tenancy).
 
 ---
 
@@ -258,6 +266,15 @@ Il Builder permette di definire viste alternative ai dati oltre alla classica ta
     3.  Seleziona il campo di stato nel nuovo menu a tendina **Campo Stato Kanban**.
 -   Il sistema genererà automaticamente una board interattiva con drag-and-drop per cambiare lo stato dei record.
 
+### 4. Gestione Progetti (Import/Export)
+Il sistema supporta la gestione completa del ciclo di vita dei progetti.
+- **Export**: È possibile esportare l'intera configurazione di un progetto (modelli, campi, permessi) in un file JSON versionato.
+- **Import**: Caricamento di template JSON per creare nuovi progetti o aggiornare quelli esistenti (Upsert), con gestione intelligente dei conflitti.
+
+### 5. Sicurezza e Manutenzione Dati
+- **Reset Tabella**: Funzionalità per ricreare lo schema fisico della tabella (DROP/CREATE) in caso di disallineamento critico.
+- **Backup Automatico**: Prima di ogni operazione distruttiva (Reset), il sistema crea automaticamente un backup CSV dei dati.
+- **Download Backup**: Gli amministratori possono visualizzare la lista dei backup e scaricarli direttamente dall'interfaccia.
 
 ## ⚙️ Setup dell'Ambiente di Sviluppo
 

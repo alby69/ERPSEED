@@ -3,7 +3,7 @@ from flask import request, current_app
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import sys
-from sqlalchemy import Table, select, insert, update, delete, func, or_, desc, asc, String, Text
+from sqlalchemy import Table, select, insert, update, delete, func, or_, desc, asc, String, Text, text
 import os
 import json, re, datetime, decimal
 import csv
@@ -14,18 +14,9 @@ from werkzeug.utils import secure_filename
 from .models import SysModel, User, SysField, AuditLog
 from .extensions import db
 from .schemas import SysModelSchema, AuditLogSchema
-from .utils import serialize_value, log_audit
+from .utils import serialize_value, log_audit, generate_schema_diff_sql, get_table_object
 
 blp = Blueprint("dynamic_api", __name__, description="Dynamic CRUD API for builder models")
-
-def get_table_object(model_name):
-    """Riflette il database e restituisce un oggetto SQLAlchemy Table."""
-    try:
-        # autoload_with=db.engine is a key part: it inspects the DB
-        return Table(model_name, db.metadata, autoload_with=db.engine, extend_existing=True)
-    except Exception as e:
-        # This will catch if the table doesn't exist in the database
-        abort(404, message=f"Table '{model_name}' not found in the database. Please generate it first.")
 
 def check_model_permissions(sys_model, action):
     """Verifica i permessi basati sui ruoli per il modello."""
@@ -142,7 +133,7 @@ def _evaluate_formulas(record, sys_model):
             record[field.name] = None # Set to None if evaluation fails
     return record
 
-def _build_relational_query(sys_model, table):
+def _build_relational_query(sys_model, table, schema=None):
     """Builds a SQLAlchemy query with joins and labeled columns for relations."""
     columns_to_select = [table]
     relation_fields = {}
@@ -154,7 +145,7 @@ def _build_relational_query(sys_model, table):
                 options = json.loads(field.options)
                 target_table_name = options.get('target_table')
                 if target_table_name:
-                    target_table = get_table_object(target_table_name)
+                    target_table = get_table_object(target_table_name, schema=schema)
                     # Prefix for labels to avoid column name collisions, e.g., "customer_id__name"
                     label_prefix = f"{field.name}__"
                     relation_fields[field.name] = {
@@ -181,7 +172,7 @@ def _build_relational_query(sys_model, table):
                 remote_field = options.get('remote_field') # e.g., name
 
                 if target_table_name and local_key and remote_field:
-                    target_table = get_table_object(target_table_name)
+                    target_table = get_table_object(target_table_name, schema=schema)
                     columns_to_select.append(target_table.c[remote_field].label(field.name))
                     join_key = f"{table.name}_{target_table_name}"
                     if join_key not in joins_to_make:
@@ -197,7 +188,7 @@ def _build_relational_query(sys_model, table):
                 foreign_key = options.get('foreign_key')
                 
                 if target_table_name:
-                    target_table = get_table_object(target_table_name)
+                    target_table = get_table_object(target_table_name, schema=schema)
                     
                     # Parse expression like "SUM(amount)"
                     match = re.match(r"(\w+)\((\w+)\)", field.summary_expression)
@@ -303,7 +294,7 @@ def _handle_file_uploads(data, sys_model):
                     data[field.name] = filename
     return data
 
-def _handle_nested_writes(main_id, data, sys_model):
+def _handle_nested_writes(main_id, data, sys_model, schema=None):
     """Gestisce inserimento/aggiornamento dei record detail (lines)."""
     for field in sys_model.fields:
         if field.type == 'lines' and field.name in data:
@@ -317,7 +308,7 @@ def _handle_nested_writes(main_id, data, sys_model):
                 foreign_key = options.get('foreign_key')
                 
                 if target_table_name and foreign_key:
-                    target_table = get_table_object(target_table_name)
+                    target_table = get_table_object(target_table_name, schema=schema)
                     
                     for line in lines_data:
                         # Imposta la chiave esterna
@@ -369,14 +360,15 @@ class DynamicDataList(MethodView):
         # Controlla che il modello esista nei metadati
         sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
         check_model_permissions(sys_model, 'read')
-        table = get_table_object(model_name)
+        schema_name = f"project_{sys_model.project_id}"
+        table = get_table_object(model_name, schema=schema_name)
 
         # --- Paginazione ---
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
         
         # --- Costruzione Query ---
-        query, relation_fields = _build_relational_query(sys_model, table)
+        query, relation_fields = _build_relational_query(sys_model, table, schema=schema_name)
         
         # Eager load lines? Per ora no, le carichiamo solo nel dettaglio singolo se necessario
         # o implementiamo una logica simile a _build_relational_query per le One-to-Many
@@ -464,7 +456,8 @@ class DynamicDataList(MethodView):
         """Crea un nuovo record in una tabella creata dinamicamente."""
         sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
         check_model_permissions(sys_model, 'write')
-        table = get_table_object(model_name)
+        schema_name = f"project_{sys_model.project_id}"
+        table = get_table_object(model_name, schema=schema_name)
             
         # Handle both JSON and Form data (for file uploads)
         if request.content_type and 'multipart/form-data' in request.content_type:
@@ -507,7 +500,7 @@ class DynamicDataList(MethodView):
         result = db.session.execute(stmt).mappings().one()
         
         # Handle Nested Writes (Lines)
-        _handle_nested_writes(result.id, json_data, sys_model)
+        _handle_nested_writes(result.id, json_data, sys_model, schema=schema_name)
         log_audit(get_jwt_identity(), model_name, result.id, 'CREATE', validated_data)
         
         db.session.commit()
@@ -526,7 +519,8 @@ class DynamicDataList(MethodView):
         """Elimina record multipli."""
         sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
         check_model_permissions(sys_model, 'write')
-        table = get_table_object(model_name)
+        schema_name = f"project_{sys_model.project_id}"
+        table = get_table_object(model_name, schema=schema_name)
 
         data = request.get_json()
         ids_to_delete = data.get('ids')
@@ -553,9 +547,10 @@ class DynamicDataItem(MethodView):
         """Recupera un singolo record da una tabella dinamica."""
         sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
         check_model_permissions(sys_model, 'read')
-        table = get_table_object(model_name)
+        schema_name = f"project_{sys_model.project_id}"
+        table = get_table_object(model_name, schema=schema_name)
 
-        query, relation_fields = _build_relational_query(sys_model, table)
+        query, relation_fields = _build_relational_query(sys_model, table, schema=schema_name)
         query = query.where(table.c.id == item_id)
         raw_result = db.session.execute(query).mappings().first()
 
@@ -570,7 +565,7 @@ class DynamicDataItem(MethodView):
             if field.type == 'lines':
                 try:
                     opts = json.loads(field.options)
-                    target_table = get_table_object(opts['target_table'])
+                    target_table = get_table_object(opts['target_table'], schema=schema_name)
                     fk = opts['foreign_key']
                     lines_query = select(target_table).where(target_table.c[fk] == item_id)
                     lines_res = db.session.execute(lines_query).mappings().all()
@@ -588,7 +583,8 @@ class DynamicDataItem(MethodView):
         """Aggiorna un record in una tabella dinamica."""
         sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
         check_model_permissions(sys_model, 'write')
-        table = get_table_object(model_name)
+        schema_name = f"project_{sys_model.project_id}"
+        table = get_table_object(model_name, schema=schema_name)
 
         # Handle both JSON and Form data (for file uploads)
         if request.content_type and 'multipart/form-data' in request.content_type:
@@ -623,7 +619,7 @@ class DynamicDataItem(MethodView):
         result = db.session.execute(stmt).mappings().one()
         
         # Handle Nested Writes (Lines)
-        _handle_nested_writes(item_id, json_data, sys_model)
+        _handle_nested_writes(item_id, json_data, sys_model, schema=schema_name)
         log_audit(get_jwt_identity(), model_name, item_id, 'UPDATE', validated_data)
         
         db.session.commit()
@@ -642,7 +638,8 @@ class DynamicDataItem(MethodView):
         """Elimina un record da una tabella dinamica."""
         SysModel.query.filter_by(name=model_name).first_or_404()
         check_model_permissions(sys_model, 'write')
-        table = get_table_object(model_name)
+        schema_name = f"project_{sys_model.project_id}"
+        table = get_table_object(model_name, schema=schema_name)
 
         stmt = delete(table).where(table.c.id == item_id)
         db.session.execute(stmt)
@@ -679,7 +676,8 @@ class DynamicDataClone(MethodView):
         """Clona un record esistente."""
         sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
         check_model_permissions(sys_model, 'write')
-        table = get_table_object(model_name)
+        schema_name = f"project_{sys_model.project_id}"
+        table = get_table_object(model_name, schema=schema_name)
 
         # Recupera il record originale
         query = select(table).where(table.c.id == item_id)
@@ -734,7 +732,8 @@ class DynamicDataImport(MethodView):
         """Importa dati da CSV."""
         sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
         check_model_permissions(sys_model, 'write')
-        table = get_table_object(model_name)
+        schema_name = f"project_{sys_model.project_id}"
+        table = get_table_object(model_name, schema=schema_name)
 
         if 'file' not in request.files:
             abort(400, message="No file part")

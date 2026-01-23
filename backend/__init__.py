@@ -2,6 +2,7 @@ import os
 from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 
 from .extensions import db, socketio, api
 
@@ -61,6 +62,17 @@ def create_app(db_url=None):
         "expose_headers": ["X-Total-Count", "X-Pages", "X-Current-Page", "X-Per-Page", "Content-Range"],
         "supports_credentials": True
     }})
+
+    # --- Global Error Handler ---
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        # Pass through HTTP errors
+        if isinstance(e, HTTPException):
+            return e
+        # Log and return JSON for 500 errors
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
 
     # --- Database Creation ---
     with app.app_context():

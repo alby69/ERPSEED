@@ -7,7 +7,7 @@ from flask.views import MethodView
 from flask_jwt_extended import jwt_required
 from sqlalchemy import or_, func, inspect
 from sqlalchemy.orm import joinedload
-from app.extensions import db
+from .extensions import db
 
 def register_crud_routes(blueprint, model, schema, url_prefix="", search_fields=None, multipart=False, csv_fields=None, eager_load=None):
     """

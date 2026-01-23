@@ -1,14 +1,19 @@
 from flask.views import MethodView
-from flask import request
+from flask import request, current_app, send_from_directory
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import sys
-from sqlalchemy import text
+from sqlalchemy import text, select
 import json
+import csv
+import io
+import os
+import datetime
+
 from .models import SysModel, SysField, User, AuditLog
 from .extensions import db
 from .schemas import SysModelSchema, SysFieldSchema
-from .utils import apply_filters, paginate, apply_sorting, generate_schema_diff_sql, log_audit
+from .utils import apply_filters, paginate, apply_sorting, generate_schema_diff_sql, log_audit, generate_create_table_sql, get_table_object, serialize_value
 
 blp = Blueprint("builder", __name__, description="No-Code Builder Operations")
 
@@ -151,8 +156,9 @@ class SysModelSyncSchema(MethodView):
         """Generate and execute CREATE or ALTER TABLE SQL to sync the DB with the model"""
         model = SysModel.query.get_or_404(model_id)
         
+        schema_name = f"project_{model.project_id}"
         try:
-            sql_commands = generate_schema_diff_sql(model, db.engine)
+            sql_commands = generate_schema_diff_sql(model, db.engine, schema=schema_name)
             for sql in sql_commands:
                 db.session.execute(text(sql))
             db.session.commit()
@@ -164,6 +170,70 @@ class SysModelSyncSchema(MethodView):
         if not sql_commands:
             return {"message": f"Schema for table '{model.name}' is already up to date."}
         return {"message": f"Schema for table '{model.name}' synced successfully."}
+
+@blp.route("/sys-models/<int:model_id>/reset-table")
+class SysModelResetTable(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200)
+    def post(self, model_id):
+        """Drop and Re-create the table based on metadata (DATA LOSS WARNING)"""
+        model = SysModel.query.get_or_404(model_id)
+        
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        
+        if user.role != 'admin':
+             abort(403, message="Only admins can reset tables.")
+
+        schema_name = f"project_{model.project_id}"
+        # --- Backup Logic ---
+        backup_path = None
+        try:
+            table = get_table_object(model.name, schema=schema_name)
+            data_to_backup = db.session.execute(select(table)).mappings().all()
+
+            if data_to_backup:
+                backup_folder = current_app.config.get('BACKUP_FOLDER', 'backups')
+                os.makedirs(backup_folder, exist_ok=True)
+                
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"{model.name}_{timestamp}.csv"
+                backup_filepath = os.path.join(backup_folder, filename)
+
+                headers = data_to_backup[0].keys()
+                
+                # Serialize data before writing
+                serialized_data = []
+                for row in data_to_backup:
+                    serialized_data.append({k: serialize_value(v) for k, v in row.items()})
+
+                with open(backup_filepath, 'w', newline='', encoding='utf-8') as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=headers)
+                    writer.writeheader()
+                    writer.writerows(serialized_data)
+                
+                backup_path = backup_filepath
+        except Exception as e:
+            # If backup fails, abort the operation.
+            abort(500, message=f"Failed to create backup before reset: {str(e)}")
+
+        # --- Reset Logic ---
+        try:
+            db.session.execute(text(f'DROP TABLE IF EXISTS "{schema_name}"."{model.name}" CASCADE'))
+            sql = generate_create_table_sql(model, schema=schema_name)
+            db.session.execute(text(sql))
+            db.session.commit()
+            log_audit(user_id, 'sys_models', model_id, 'RESET_TABLE', {'backup_path': backup_path})
+        except Exception as e:
+            db.session.rollback()
+            abort(500, message=f"Error resetting table: {str(e)}")
+            
+        success_message = f"Table '{model.name}' has been dropped and recreated."
+        if backup_path:
+            success_message += f" A backup was saved to '{backup_path}'."
+        
+        return {"message": success_message}
 
 @blp.route("/sys-models/<int:model_id>/clone")
 class SysModelClone(MethodView):
@@ -224,3 +294,52 @@ class SysModelClone(MethodView):
         log_audit(user_id, 'sys_models', new_model.id, 'CLONE', {'source_id': model_id})
         
         return SysModelSchema().dump(new_model), 201
+
+@blp.route("/sys-models/<int:model_id>/backups")
+class SysModelBackups(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self, model_id):
+        """List available backups for a specific model"""
+        model = SysModel.query.get_or_404(model_id)
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        
+        if user.role != 'admin':
+             abort(403, message="Only admins can list backups.")
+
+        backup_folder = current_app.config.get('BACKUP_FOLDER', 'backups')
+        if not os.path.exists(backup_folder):
+            return []
+
+        backups = []
+        prefix = f"{model.name}_"
+        
+        try:
+            for f in os.listdir(backup_folder):
+                if f.startswith(prefix) and f.endswith(".csv"):
+                    backups.append(f)
+        except OSError:
+            return []
+        
+        # Sort by filename (which includes timestamp YYYYMMDD) descending -> newest first
+        backups.sort(reverse=True)
+        return backups
+
+@blp.route("/backups/<string:filename>")
+class BackupDownload(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self, filename):
+        """Download a specific backup file"""
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        
+        if user.role != 'admin':
+             abort(403, message="Only admins can download backups.")
+             
+        backup_folder = current_app.config.get('BACKUP_FOLDER', 'backups')
+        # Use absolute path to ensure safety with send_from_directory
+        abs_backup_folder = os.path.abspath(backup_folder)
+        
+        return send_from_directory(abs_backup_folder, filename, as_attachment=True)

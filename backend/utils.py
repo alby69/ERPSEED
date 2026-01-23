@@ -1,10 +1,11 @@
 from flask import request
-from sqlalchemy import or_, desc, asc, func, inspect
+from sqlalchemy import or_, desc, asc, func, inspect, Table
 import json
 import datetime
 import decimal
 from .extensions import db
 from .models import AuditLog
+from flask_smorest import abort
 
 def apply_filters(query, model, search_fields):
     """Applica filtri di ricerca testuale (q) alla query."""
@@ -83,19 +84,20 @@ def _build_column_definition(field):
 
     return column_def
 
-def _get_foreign_key_definition(field):
+def _get_foreign_key_definition(field, schema=None):
     """Helper to build a FOREIGN KEY constraint string."""
     if field.type == 'relation' and field.options:
         try:
             options = json.loads(field.options)
             target_table = options.get('target_table')
             if target_table and target_table.isidentifier():
-                return f'FOREIGN KEY ("{field.name}") REFERENCES "{target_table}"(id) ON DELETE SET NULL'
+                target = f'"{schema}"."{target_table}"' if schema else f'"{target_table}"'
+                return f'FOREIGN KEY ("{field.name}") REFERENCES {target}(id) ON DELETE SET NULL'
         except (json.JSONDecodeError, KeyError):
             pass
     return None
 
-def generate_create_table_sql(sys_model):
+def generate_create_table_sql(sys_model, schema=None):
     """
     Genera una stringa SQL 'CREATE TABLE' da un oggetto SysModel, gestendo le relazioni.
     """
@@ -122,39 +124,43 @@ def generate_create_table_sql(sys_model):
             columns.append(col_def)
 
         # Gestione delle relazioni (FOREIGN KEY)
-        fk_def = _get_foreign_key_definition(field)
+        fk_def = _get_foreign_key_definition(field, schema=schema)
         if fk_def:
             foreign_keys.append(fk_def)
 
     all_definitions = columns + foreign_keys
-    sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" (\n    ' + ',\n    '.join(all_definitions) + '\n);'
+    
+    full_table_name = f'"{schema}"."{table_name}"' if schema else f'"{table_name}"'
+    sql = f'CREATE TABLE IF NOT EXISTS {full_table_name} (\n    ' + ',\n    '.join(all_definitions) + '\n);'
     return sql
 
-def generate_schema_diff_sql(sys_model, db_engine):
+def generate_schema_diff_sql(sys_model, db_engine, schema=None):
     """
     Compares a SysModel to the live database schema and generates ALTER TABLE statements.
     """
     inspector = inspect(db_engine)
     table_name = sys_model.name
 
-    if not inspector.has_table(table_name):
-        return [generate_create_table_sql(sys_model)]
+    if not inspector.has_table(table_name, schema=schema):
+        return [generate_create_table_sql(sys_model, schema=schema)]
 
     sql_commands = []
-    db_columns = {c['name']: c for c in inspector.get_columns(table_name)}
+    db_columns = {c['name']: c for c in inspector.get_columns(table_name, schema=schema)}
     model_fields = {f.name: f for f in sys_model.fields if f.type not in ['formula', 'summary', 'lookup', 'calculated']}
     type_mapping = _get_type_mapping()
     
+    table_identifier = f'"{schema}"."{table_name}"' if schema else f'"{table_name}"'
+
     # Get existing unique constraints
     # unique_constraints is a list of dicts: [{'name': '...', 'column_names': ['...'], ...}]
-    db_unique_constraints = inspector.get_unique_constraints(table_name)
+    db_unique_constraints = inspector.get_unique_constraints(table_name, schema=schema)
     # Map column name to constraint name for single-column unique constraints
     db_unique_map = {uc['column_names'][0]: uc['name'] 
                      for uc in db_unique_constraints if len(uc['column_names']) == 1}
     
     # Get existing foreign keys
     # foreign_keys is a list of dicts: [{'name': '...', 'constrained_columns': ['...'], 'referred_table': '...', ...}]
-    db_foreign_keys = inspector.get_foreign_keys(table_name)
+    db_foreign_keys = inspector.get_foreign_keys(table_name, schema=schema)
     # Map column name to constraint name for single-column foreign keys
     db_fk_map = {fk['constrained_columns'][0]: fk['name'] 
                  for fk in db_foreign_keys if len(fk['constrained_columns']) == 1}
@@ -167,11 +173,11 @@ def generate_schema_diff_sql(sys_model, db_engine):
         field = model_fields[field_name]
         col_def = _build_column_definition(field)
         if col_def:
-            sql_commands.append(f'ALTER TABLE "{table_name}" ADD COLUMN {col_def};')
+            sql_commands.append(f'ALTER TABLE {table_identifier} ADD COLUMN {col_def};')
 
     # --- 2. Find columns to DROP ---
     for col_name in db_column_names - model_field_names:
-        sql_commands.append(f'ALTER TABLE "{table_name}" DROP COLUMN "{col_name}" CASCADE;')
+        sql_commands.append(f'ALTER TABLE {table_identifier} DROP COLUMN "{col_name}" CASCADE;')
 
     # --- 3. Find columns to MODIFY (NOT NULL, TYPE, UNIQUE, and FK changes) ---
     for field_name in model_field_names.intersection(db_column_names):
@@ -181,9 +187,9 @@ def generate_schema_diff_sql(sys_model, db_engine):
         # Check NOT NULL constraint
         is_db_nullable = db_col.get('nullable', True)
         if field.required and is_db_nullable:
-            sql_commands.append(f'ALTER TABLE "{table_name}" ALTER COLUMN "{field_name}" SET NOT NULL;')
+            sql_commands.append(f'ALTER TABLE {table_identifier} ALTER COLUMN "{field_name}" SET NOT NULL;')
         elif not field.required and not is_db_nullable:
-            sql_commands.append(f'ALTER TABLE "{table_name}" ALTER COLUMN "{field_name}" DROP NOT NULL;')
+            sql_commands.append(f'ALTER TABLE {table_identifier} ALTER COLUMN "{field_name}" DROP NOT NULL;')
 
         # Check TYPE changes
         target_type_str = type_mapping.get(field.type)
@@ -204,9 +210,19 @@ def generate_schema_diff_sql(sys_model, db_engine):
                  if field.type == 'boolean':
                      using_clause = f'USING CASE WHEN "{field_name}" IN (\'true\', \'1\', \'t\', \'y\', \'yes\') THEN TRUE ELSE FALSE END'
                  
-                 sql_commands.append(f'ALTER TABLE "{table_name}" ALTER COLUMN "{field_name}" TYPE {target_type_str} {using_clause};')
+                 sql_commands.append(f'ALTER TABLE {table_identifier} ALTER COLUMN "{field_name}" TYPE {target_type_str} {using_clause};')
 
     return sql_commands
+
+def get_table_object(model_name, schema=None):
+    """Riflette il database e restituisce un oggetto SQLAlchemy Table."""
+    try:
+        # autoload_with=db.engine is a key part: it inspects the DB
+        return Table(model_name, db.metadata, autoload_with=db.engine, schema=schema, extend_existing=True)
+    except Exception as e:
+        # This will catch if the table doesn't exist in the database
+        # Using a generic exception catch as the specific one can vary (e.g., NoSuchTableError)
+        abort(404, message=f"Table '{model_name}' not found in the database. Please generate it first.")
 
 def serialize_value(value):
     """Converte tipi speciali (date, decimali) in formati JSON-serializzabili."""
