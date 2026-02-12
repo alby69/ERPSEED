@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { apiFetch } from '../utils';
+import { apiFetch } from '@/utils';
 
-function DashboardWidgets({ modelName }) {
+function DashboardWidgets({ modelName, projectId }) {
   const [widgets, setWidgets] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadWidgets = async () => {
+      if (!projectId) return;
+
       try {
         // 1. Recupera i metadati
-        const metaRes = await apiFetch(`/data/${modelName}/meta`);
+        const metaRes = await apiFetch(`/projects/${projectId}/data/${modelName}/meta`);
         if (metaRes.status === 404) return;
         if (!metaRes.ok) throw new Error("Failed to load widget metadata");
         
@@ -22,14 +24,14 @@ function DashboardWidgets({ modelName }) {
 
         if (hasLabel && hasValue) {
             // Modalità Righe: ogni record è un widget
-            const dataRes = await apiFetch(`/data/${modelName}?per_page=20`);
+            const dataRes = await apiFetch(`/projects/${projectId}/data/${modelName}?per_page=20`);
             if (!dataRes.ok) throw new Error("Failed to load widget data");
             const data = await dataRes.json();
             setWidgets(data);
         } else {
             // Modalità Colonne: un record contiene tutti i KPI (es. summary fields)
             const numericFields = meta.fields.filter(f => ['integer', 'float', 'currency', 'summary', 'formula'].includes(f.type));
-            const dataRes = await apiFetch(`/data/${modelName}?per_page=1`);
+            const dataRes = await apiFetch(`/projects/${projectId}/data/${modelName}?per_page=1`);
             if (!dataRes.ok) throw new Error("Failed to load widget data");
             const data = await dataRes.json();
             
@@ -57,7 +59,7 @@ function DashboardWidgets({ modelName }) {
     };
 
     loadWidgets();
-  }, [modelName]);
+  }, [modelName, projectId]);
 
   if (error || widgets.length === 0) return null;
 

@@ -16,10 +16,14 @@ from .extensions import db
 from .schemas import SysModelSchema, AuditLogSchema
 from .utils import serialize_value, log_audit, generate_schema_diff_sql, get_table_object
 
-blp = Blueprint("dynamic_api", __name__, description="Dynamic CRUD API for builder models")
+blp = Blueprint("dynamic_api", __name__, url_prefix="/projects/<int:project_id>", description="Dynamic CRUD API for builder models")
 
-def check_model_permissions(sys_model, action):
+def check_model_permissions(sys_model, action, project_id=None):
     """Verifica i permessi basati sui ruoli per il modello."""
+    # Se viene fornito un project_id, verifica che il modello appartenga a quel progetto
+    if project_id is not None and sys_model.project_id != project_id:
+        abort(404, message=f"Model '{sys_model.name}' not found in project {project_id}.")
+
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     
@@ -355,12 +359,12 @@ def _evaluate_default_value(default_val, field_type):
 class DynamicDataList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def get(self, model_name):
+    def get(self, project_id, model_name):
         """Elenca i record da una tabella creata dinamicamente."""
         # Controlla che il modello esista nei metadati
-        sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
-        check_model_permissions(sys_model, 'read')
-        schema_name = f"project_{sys_model.project_id}"
+        sys_model = SysModel.query.filter_by(project_id=project_id, name=model_name).first_or_404()
+        check_model_permissions(sys_model, 'read', project_id)
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         # --- Paginazione ---
@@ -452,11 +456,11 @@ class DynamicDataList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def post(self, model_name):
+    def post(self, project_id, model_name):
         """Crea un nuovo record in una tabella creata dinamicamente."""
-        sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
-        check_model_permissions(sys_model, 'write')
-        schema_name = f"project_{sys_model.project_id}"
+        sys_model = SysModel.query.filter_by(project_id=project_id, name=model_name).first_or_404()
+        check_model_permissions(sys_model, 'write', project_id)
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
             
         # Handle both JSON and Form data (for file uploads)
@@ -515,11 +519,11 @@ class DynamicDataList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
-    def delete(self, model_name):
+    def delete(self, project_id, model_name):
         """Elimina record multipli."""
-        sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
-        check_model_permissions(sys_model, 'write')
-        schema_name = f"project_{sys_model.project_id}"
+        sys_model = SysModel.query.filter_by(project_id=project_id, name=model_name).first_or_404()
+        check_model_permissions(sys_model, 'write', project_id)
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         data = request.get_json()
@@ -543,11 +547,11 @@ class DynamicDataList(MethodView):
 class DynamicDataItem(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def get(self, model_name, item_id):
+    def get(self, project_id, model_name, item_id):
         """Recupera un singolo record da una tabella dinamica."""
-        sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
-        check_model_permissions(sys_model, 'read')
-        schema_name = f"project_{sys_model.project_id}"
+        sys_model = SysModel.query.filter_by(project_id=project_id, name=model_name).first_or_404()
+        check_model_permissions(sys_model, 'read', project_id)
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         query, relation_fields = _build_relational_query(sys_model, table, schema=schema_name)
@@ -579,11 +583,11 @@ class DynamicDataItem(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def put(self, model_name, item_id):
+    def put(self, project_id, model_name, item_id):
         """Aggiorna un record in una tabella dinamica."""
-        sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
-        check_model_permissions(sys_model, 'write')
-        schema_name = f"project_{sys_model.project_id}"
+        sys_model = SysModel.query.filter_by(project_id=project_id, name=model_name).first_or_404()
+        check_model_permissions(sys_model, 'write', project_id)
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         # Handle both JSON and Form data (for file uploads)
@@ -634,11 +638,11 @@ class DynamicDataItem(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
-    def delete(self, model_name, item_id):
+    def delete(self, project_id, model_name, item_id):
         """Elimina un record da una tabella dinamica."""
-        SysModel.query.filter_by(name=model_name).first_or_404()
-        check_model_permissions(sys_model, 'write')
-        schema_name = f"project_{sys_model.project_id}"
+        sys_model = SysModel.query.filter_by(project_id=project_id, name=model_name).first_or_404()
+        check_model_permissions(sys_model, 'write', project_id)
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         stmt = delete(table).where(table.c.id == item_id)
@@ -652,11 +656,11 @@ class DynamicModelMeta(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, SysModelSchema)
-    def get(self, model_name):
+    def get(self, project_id, model_name):
         """Recupera i metadati di un modello dinamico per il frontend."""
         try:
-            sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
-            check_model_permissions(sys_model, 'read')
+            sys_model = SysModel.query.filter_by(project_id=project_id, name=model_name).first_or_404()
+            check_model_permissions(sys_model, 'read', project_id)
             
             # Trigger lazy loading of fields to catch potential DB errors within this try block
             _ = sys_model.fields
@@ -672,11 +676,11 @@ class DynamicModelMeta(MethodView):
 class DynamicDataClone(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def post(self, model_name, item_id):
+    def post(self, project_id, model_name, item_id):
         """Clona un record esistente."""
-        sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
-        check_model_permissions(sys_model, 'write')
-        schema_name = f"project_{sys_model.project_id}"
+        sys_model = SysModel.query.filter_by(project_id=project_id, name=model_name).first_or_404()
+        check_model_permissions(sys_model, 'write', project_id)
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         # Recupera il record originale
@@ -728,11 +732,11 @@ class AuditLogList(MethodView):
 class DynamicDataImport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def post(self, model_name):
+    def post(self, project_id, model_name):
         """Importa dati da CSV."""
-        sys_model = SysModel.query.filter_by(name=model_name).first_or_404()
-        check_model_permissions(sys_model, 'write')
-        schema_name = f"project_{sys_model.project_id}"
+        sys_model = SysModel.query.filter_by(project_id=project_id, name=model_name).first_or_404()
+        check_model_permissions(sys_model, 'write', project_id)
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         if 'file' not in request.files:

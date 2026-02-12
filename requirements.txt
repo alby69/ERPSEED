@@ -9,5 +9,5 @@ psycopg2-binary
 python-dotenv
 gunicorn
 eventlet
-marshmallow
+flask-marshmallow
 marshmallow-sqlalchemy

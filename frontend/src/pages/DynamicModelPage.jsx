@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiFetch } from '../utils';
-import GenericCrudPage from '../components/GenericCrudPage';
+import GenericCrudPage from '../components/GenericCrudPage'; // Assicurati che il percorso sia corretto
 import { Layout } from '../components';
 
 function DynamicModelPage() {
-  const { modelName } = useParams();
+  const { projectId, modelName } = useParams();
   const [modelMeta, setModelMeta] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,7 +15,7 @@ function DynamicModelPage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await apiFetch(`/data/${modelName}/meta`);
+        const response = await apiFetch(`/projects/${projectId}/data/${modelName}/meta`);
         if (!response.ok) throw new Error('Failed to load model metadata');
         const data = await response.json();
 
@@ -26,7 +26,7 @@ function DynamicModelPage() {
             try {
               const opts = JSON.parse(field.options);
               if (opts.target_table) {
-                const detailRes = await apiFetch(`/data/${opts.target_table}/meta`);
+                const detailRes = await apiFetch(`/projects/${projectId}/data/${opts.target_table}/meta`);
                 if (detailRes.ok) {
                   const detailMeta = await detailRes.json();
                   // Arricchiamo il campo con i metadati del dettaglio per FormLines
@@ -41,8 +41,7 @@ function DynamicModelPage() {
                       name: f.name,
                       label: f.title,
                       type: f.type,
-                      // Mappa altri attributi necessari per FormLines...
-                      apiUrl: f.type === 'relation' && f.options ? `/data/${JSON.parse(f.options).target_table}` : undefined,
+                      apiUrl: f.type === 'relation' && f.options ? `/projects/${projectId}/data/${JSON.parse(f.options).target_table}` : undefined,
                       valueKey: 'id', labelKey: 'name' // Default
                     }));
                 }
@@ -59,8 +58,8 @@ function DynamicModelPage() {
       }
     };
 
-    if (modelName) fetchMeta();
-  }, [modelName]);
+    if (projectId && modelName) fetchMeta();
+  }, [projectId, modelName]);
 
   if (loading) return <Layout><div className="p-5 text-center">Loading configuration...</div></Layout>;
   if (error) return <Layout><div className="alert alert-danger m-4">{error}</div></Layout>;
@@ -114,7 +113,7 @@ function DynamicModelPage() {
           const opts = JSON.parse(f.options);
           if (opts.target_table) {
             fieldConfig.type = 'select';
-            fieldConfig.apiUrl = `/data/${opts.target_table}`;
+            fieldConfig.apiUrl = `/projects/${projectId}/data/${opts.target_table}`;
           }
         } catch (e) {
           console.error("Error parsing options for relation", f.name);
@@ -167,7 +166,7 @@ function DynamicModelPage() {
   return (
     <GenericCrudPage
       pageTitle={modelMeta.title}
-      apiPath={`/data/${modelName}`}
+      apiPath={`/projects/${projectId}/data/${modelName}`}
       columns={columns}
       formFields={formFields}
       defaultView={modelMeta.default_view || 'table'}

@@ -1,122 +1,96 @@
-import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
-import { apiFetch } from '../utils';
+import React from 'react';
+import { Menu } from 'antd';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import {
+    AppstoreOutlined,
+    TeamOutlined,
+    ProjectOutlined,
+    BuildOutlined,
+    BarChartOutlined,
+    AuditOutlined,
+    LogoutOutlined,
+    HomeOutlined,
+    DashboardOutlined,
+    SettingOutlined
+} from '@ant-design/icons';
+import './Sidebar.css';
 
-function Sidebar({ user }) {
-  // Correzione: controlla se l'utente ha il ruolo 'admin' nell'array dei ruoli.
-  // L'API /me restituisce i ruoli come un array di oggetti (es. [{name: 'admin'}]).
-  const isAdmin = user?.role === 'admin' || user?.roles?.some(role => role.name === 'admin');
-  const [dynamicModels, setDynamicModels] = useState([]);
+const Sidebar = ({ projectMenuItems = [] }) => {
+    const { user, logout } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { projectId } = useParams();
 
-  useEffect(() => {
-    if (user) {
-      // Carica i modelli dinamici per il menu
-      apiFetch('/sys-models')
-        .then(res => {
-          if (res.ok) return res.json();
-          return [];
-        })
-        .then(data => setDynamicModels(data))
-        .catch(err => console.error("Failed to load dynamic models", err));
+    // Voci di menu statiche per la sezione di amministrazione
+    const adminItems = [
+        { key: '/admin/builder', label: 'Builder', icon: <BuildOutlined /> },
+        { key: '/users', label: 'Users', icon: <TeamOutlined /> },
+        { key: '/admin/projects', label: 'Projects Admin', icon: <ProjectOutlined /> },
+        { key: '/admin/audit-logs', label: 'Audit Logs', icon: <AuditOutlined /> },
+    ];
+
+    // Costruisce dinamicamente le voci del menu
+    const items = [
+        { key: '/projects', label: 'Seleziona Progetto', icon: <HomeOutlined /> },
+    ];
+
+    if (projectId) {
+        items.push({ key: `/projects/${projectId}`, label: 'Dashboard Progetto', icon: <DashboardOutlined /> });
+        items.push({ key: `/projects/${projectId}/members`, label: 'Membri del Team', icon: <TeamOutlined /> });
+        items.push({ key: `/projects/${projectId}/settings`, label: 'Impostazioni', icon: <SettingOutlined /> });
     }
-  }, [user]);
 
-  return (
-    <div className="bg-white border-end" style={{ width: '250px', minHeight: '100%' }}>
-      <div className="p-3">
-        <h6 className="text-uppercase text-muted small fw-bold">Menu</h6>
-        <ul className="nav flex-column">
-          <li className="nav-item mb-2">
-            <NavLink 
-              to="/dashboard" 
-              className={({ isActive }) => `nav-link rounded ${isActive ? 'active bg-light text-primary' : 'text-dark'}`}
-            >
-              Dashboard
-            </NavLink>
-          </li>
-          {isAdmin && (
-            <>
-              <li className="nav-item mb-2">
-                <NavLink 
-                  to="/users" 
-                  className={({ isActive }) => `nav-link rounded ${isActive ? 'active bg-light text-primary' : 'text-dark'}`}
-                >
-                  Utenti
-                </NavLink>
-              </li>
-              <li className="nav-item mb-2">
-                <NavLink 
-                  to="/anagrafiche" 
-                  className={({ isActive }) => `nav-link rounded ${isActive ? 'active bg-light text-primary' : 'text-dark'}`}
-                >
-                  Anagrafiche
-                </NavLink>
-              </li>
-              <li className="nav-item mb-2">
-                <NavLink 
-                  to="/products" 
-                  className={({ isActive }) => `nav-link rounded ${isActive ? 'active bg-light text-primary' : 'text-dark'}`}
-                >
-                  Prodotti
-                </NavLink>
-              </li>
-              <li className="nav-item mb-2">
-                <NavLink 
-                  to="/admin/builder" 
-                  className={({ isActive }) => `nav-link rounded ${isActive ? 'active bg-light text-primary' : 'text-dark'}`}
-                >
-                  Builder (Admin)
-                </NavLink>
-              </li>
-              <li className="nav-item mb-2">
-                <NavLink 
-                  to="/admin/bi-builder" 
-                  className={({ isActive }) => `nav-link rounded ${isActive ? 'active bg-light text-primary' : 'text-dark'}`}
-                >
-                  BI Builder
-                </NavLink>
-              </li>
-              <li className="nav-item mb-2">
-                <NavLink 
-                  to="/admin/audit-logs" 
-                  className={({ isActive }) => `nav-link rounded ${isActive ? 'active bg-light text-primary' : 'text-dark'}`}
-                >
-                  Audit Logs
-                </NavLink>
-              </li>
-            </>
-          )}
-          <li className="nav-item mb-2">
-            <NavLink 
-              to="/sales" 
-              className={({ isActive }) => `nav-link rounded ${isActive ? 'active bg-light text-primary' : 'text-dark'}`}
-            >
-              Vendite
-            </NavLink>
-          </li>
-        </ul>
+    // Aggiunge le applicazioni del progetto corrente, se presenti
+    if (projectMenuItems.length > 0) {
+        items.push({
+            key: 'project-apps',
+            label: 'Applicazioni',
+            icon: <AppstoreOutlined />,
+            children: projectMenuItems.map(item => ({
+                key: item.path,
+                label: item.label,
+            }))
+        });
+    }
 
-        {/* Sezione Dinamica per i Modelli Creati */}
-        {dynamicModels.length > 0 && (
-          <>
-            <h6 className="text-uppercase text-muted small fw-bold mt-4">Applicazioni</h6>
-            <ul className="nav flex-column">
-              {dynamicModels.map(model => (
-                <li className="nav-item mb-2" key={model.id}>
-                  <NavLink 
-                    to={`/data/${model.name}`} 
-                    className={({ isActive }) => `nav-link rounded ${isActive ? 'active bg-light text-primary' : 'text-dark'}`}
-                  >
-                    {model.title}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
+    // Aggiunge la sezione di amministrazione se l'utente è un admin
+    if (user?.role === 'admin') {
+        items.push({ type: 'divider' });
+        items.push({
+            key: 'admin-section',
+            label: 'Amministrazione',
+            icon: <BarChartOutlined />,
+            children: adminItems,
+        });
+    }
+
+    // Aggiunge il pulsante di logout in fondo
+    items.push({ type: 'divider' });
+    items.push({ key: 'logout', label: 'Logout', icon: <LogoutOutlined />, danger: true });
+
+    const handleMenuClick = (e) => {
+        if (e.key === 'logout') {
+            logout();
+        } else {
+            navigate(e.key);
+        }
+    };
+
+    return (
+        <div className="sidebar">
+            <div className="sidebar-logo">
+                <Link to="/projects">FlaskERP</Link>
+            </div>
+            <Menu
+                theme="dark"
+                mode="inline"
+                onClick={handleMenuClick}
+                selectedKeys={[location.pathname]}
+                items={items}
+            />
+        </div>
+    );
+};
 
 export default Sidebar;

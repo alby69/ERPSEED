@@ -5,22 +5,33 @@ import json
 from flask import make_response, request
 from sqlalchemy import text
 
-from .models import Project, SysModel, SysField
+from .models import Project, SysModel, SysField, User
 from .extensions import db
-from .schemas import ProjectSchema, ProjectUpdateSchema, SysModelSchema, SysModelCreateSchema
+from .schemas import ProjectSchema, ProjectUpdateSchema, SysModelSchema, SysModelCreateSchema, ProjectMemberSchema, UserDisplaySchema
 from .decorators import admin_required
 from .utils import paginate
 
 blp = Blueprint("projects", "projects", url_prefix="/projects", description="Operations on projects")
 
-@blp.route("/")
+@blp.route("")
 class ProjectList(MethodView):
     @blp.doc(security=[{"jwt": []}])
-    @admin_required()
+    @jwt_required()
     @blp.response(200, ProjectSchema(many=True))
     def get(self):
-        """Elenca tutti i progetti (solo Admin)"""
-        query = Project.query.order_by(Project.name)
+        """Elenca i progetti a cui l'utente ha accesso"""
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+
+        if user.role == 'admin':
+            # L'admin vede tutti i progetti
+            query = Project.query.order_by(Project.name)
+        else:
+            # Gli altri utenti vedono solo i progetti di cui sono proprietari o membri
+            query = Project.query.filter(
+                (Project.owner_id == user_id) | (Project.members.any(id=user_id))
+            ).order_by(Project.name)
+
         items, headers = paginate(query)
         return items, 200, headers
 
@@ -33,9 +44,16 @@ class ProjectList(MethodView):
         if Project.query.filter_by(name=project_data.name).first():
             abort(409, message=f"Un progetto con nome '{project_data.name}' esiste già.")
         
+        owner_id = get_jwt_identity()
+        owner = User.query.get(owner_id)
+
         # Imposta il proprietario sull'utente admin corrente
-        project_data.owner_id = get_jwt_identity()
+        project_data.owner_id = owner_id
         
+        # Aggiungi il proprietario come primo membro del progetto
+        if owner:
+            project_data.members.append(owner)
+
         db.session.add(project_data)
         db.session.commit()
         
@@ -49,19 +67,36 @@ class ProjectList(MethodView):
 @blp.route("/<int:project_id>")
 class ProjectResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
-    @admin_required()
+    @jwt_required()
     @blp.response(200, ProjectSchema)
     def get(self, project_id):
-        """Ottiene i dettagli di un progetto per ID (solo Admin)"""
-        return Project.query.get_or_404(project_id)
+        """Ottiene i dettagli di un progetto per ID"""
+        project = Project.query.get_or_404(project_id)
+        
+        current_user_id = int(get_jwt_identity())
+        current_user = User.query.get(current_user_id)
+        
+        # Admin, Owner e Membri possono vedere i dettagli
+        is_member = project.members.filter_by(id=current_user_id).first() is not None
+        
+        if current_user.role != 'admin' and project.owner_id != current_user_id and not is_member:
+             abort(403, message="Non hai accesso a questo progetto.")
+        
+        return project
 
     @blp.doc(security=[{"jwt": []}])
-    @admin_required()
+    @jwt_required()
     @blp.arguments(ProjectUpdateSchema)
     @blp.response(200, ProjectSchema)
     def put(self, update_data, project_id):
-        """Aggiorna un progetto esistente (solo Admin)"""
+        """Aggiorna un progetto esistente (Admin o Owner)"""
         project = Project.query.get_or_404(project_id)
+
+        current_user_id = int(get_jwt_identity())
+        current_user = User.query.get(current_user_id)
+
+        if current_user.role != 'admin' and project.owner_id != current_user_id:
+             abort(403, message="Solo il proprietario o un admin possono modificare il progetto.")
 
         for key, value in update_data.items():
             setattr(project, key, value)
@@ -70,11 +105,22 @@ class ProjectResource(MethodView):
         return project
 
     @blp.doc(security=[{"jwt": []}])
-    @admin_required()
+    @jwt_required()
     @blp.response(204)
     def delete(self, project_id):
-        """Elimina un progetto (solo Admin)"""
+        """Elimina un progetto (Admin o Owner)"""
         project = Project.query.get_or_404(project_id)
+
+        current_user_id = int(get_jwt_identity())
+        current_user = User.query.get(current_user_id)
+
+        if current_user.role != 'admin' and project.owner_id != current_user_id:
+             abort(403, message="Solo il proprietario o un admin possono eliminare il progetto.")
+
+        # Drop the project-specific schema from the database
+        schema_name = f"project_{project.id}"
+        db.session.execute(text(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE'))
+
         db.session.delete(project)
         db.session.commit()
         return ""
@@ -82,10 +128,10 @@ class ProjectResource(MethodView):
 @blp.route("/<int:project_id>/models")
 class ProjectModels(MethodView):
     @blp.doc(security=[{"jwt": []}])
-    @admin_required()
+    @jwt_required()
     @blp.response(200, SysModelSchema(many=True))
     def get(self, project_id):
-        """Lista tutti i modelli di un progetto (solo Admin)"""
+        """Lista tutti i modelli di un progetto"""
         project = Project.query.get_or_404(project_id)
         return project.models
 
@@ -96,14 +142,82 @@ class ProjectModels(MethodView):
     def post(self, model_data, project_id):
         """Crea un nuovo modello in un progetto (solo Admin)"""
         Project.query.get_or_404(project_id)
-        
-        if SysModel.query.filter_by(name=model_data.name).first():
-            abort(409, message=f"Un modello con nome '{model_data.name}' esiste già.")
+
+        if SysModel.query.filter_by(project_id=project_id, name=model_data.name).first():
+            abort(409, message=f"Un modello con nome '{model_data.name}' esiste già in questo progetto.")
         
         model_data.project_id = project_id
         db.session.add(model_data)
         db.session.commit()
         return model_data
+
+@blp.route("/<int:project_id>/members")
+class ProjectMemberList(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, UserDisplaySchema(many=True))
+    def get(self, project_id):
+        """Elenca i membri di un progetto"""
+        project = Project.query.get_or_404(project_id)
+        
+        current_user_id = int(get_jwt_identity())
+        current_user = User.query.get(current_user_id)
+        
+        # Admin, Owner e Membri possono vedere la lista
+        is_member = project.members.filter_by(id=current_user_id).first() is not None
+        
+        if current_user.role != 'admin' and project.owner_id != current_user_id and not is_member:
+             abort(403, message="Non hai accesso ai membri di questo progetto.")
+
+        return project.members.all()
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.arguments(ProjectMemberSchema)
+    @blp.response(201, UserDisplaySchema)
+    def post(self, member_data, project_id):
+        """Aggiunge un membro a un progetto (Admin o Owner)"""
+        project = Project.query.get_or_404(project_id)
+        current_user_id = int(get_jwt_identity())
+        current_user = User.query.get(current_user_id)
+
+        if current_user.role != 'admin' and project.owner_id != current_user_id:
+             abort(403, message="Solo il proprietario o un admin possono aggiungere membri.")
+
+        user_to_add = User.query.get_or_404(member_data['user_id'])
+
+        if user_to_add in project.members:
+            abort(409, message=f"L'utente {user_to_add.email} è già membro di questo progetto.")
+
+        project.members.append(user_to_add)
+        db.session.commit()
+        return user_to_add
+
+@blp.route("/<int:project_id>/members/<int:user_id>")
+class ProjectMemberResource(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(204)
+    def delete(self, project_id, user_id):
+        """Rimuove un membro da un progetto (Admin o Owner)"""
+        project = Project.query.get_or_404(project_id)
+        current_user_id = int(get_jwt_identity())
+        current_user = User.query.get(current_user_id)
+
+        if current_user.role != 'admin' and project.owner_id != current_user_id:
+             abort(403, message="Solo il proprietario o un admin possono rimuovere membri.")
+
+        user_to_remove = User.query.get_or_404(user_id)
+
+        if user_to_remove.id == project.owner_id:
+            abort(400, message="Non è possibile rimuovere il proprietario del progetto.")
+
+        if user_to_remove not in project.members:
+            abort(404, message="L'utente non è membro di questo progetto.")
+
+        project.members.remove(user_to_remove)
+        db.session.commit()
+        return ""
 
 @blp.route("/<int:project_id>/export")
 class ProjectExport(MethodView):
@@ -210,34 +324,19 @@ class ProjectImport(MethodView):
         
         for m_data in data.get('models', []):
             m_name = m_data['name']
-            
-            # Check for global name collision
-            existing_model = SysModel.query.filter_by(name=m_name).first()
-            model = None
+            model = SysModel.query.filter_by(project_id=project.id, name=m_name).first()
 
-            if existing_model:
-                if existing_model.project_id == project.id:
-                    # Update existing model belonging to this project
-                    model = existing_model
-                    model.title = m_data.get('title', model.title)
-                    model.description = m_data.get('description', model.description)
-                    model.permissions = m_data.get('permissions', model.permissions)
-                else:
-                    # Name collision with another project's model -> Rename
-                    m_name = f"{name}_{m_name}"
-                    # Check if renamed model exists (from previous import)
-                    renamed_model = SysModel.query.filter_by(name=m_name).first()
-                    if renamed_model and renamed_model.project_id == project.id:
-                        model = renamed_model
-                        model.title = m_data.get('title', model.title)
-                        model.description = m_data.get('description', model.description)
-                        model.permissions = m_data.get('permissions', model.permissions)
-
-            if not model:
+            if model:
+                # Update existing model
+                model.title = m_data.get('title', model.title)
+                model.description = m_data.get('description', model.description)
+                model.permissions = m_data.get('permissions', model.permissions)
+            else:
+                # Create new model
                 model = SysModel(
                     project_id=project.id,
                     name=m_name,
-                    title=m_data.get('title'),
+                    title=m_data.get('title', m_data.get('name')),
                     description=m_data.get('description'),
                     permissions=m_data.get('permissions')
                 )

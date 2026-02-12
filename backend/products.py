@@ -27,10 +27,10 @@ class ProductList(MethodView):
     @blp.response(201, ProductSchema)
     def post(self, product_data):
         """Crea un nuovo prodotto"""
-        if 'code' in product_data and Product.query.filter_by(code=product_data['code']).first():
+        # product_data is already a Product instance due to load_instance=True in ProductSchema
+        if product_data.code and Product.query.filter_by(code=product_data.code).first():
             abort(409, message="Product code already exists")
             
-        product = Product(**product_data)
-        db.session.add(product)
+        db.session.add(product_data)
         db.session.commit()
-        return product
+        return product_data

@@ -1,10 +1,9 @@
 import os
 from flask import Flask, jsonify
-from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 
-from .extensions import db, socketio, api
+from .extensions import db, socketio, api, jwt, ma, migrate
 
 # Import Blueprints
 from .auth import auth_bp
@@ -35,8 +34,10 @@ def create_app(db_url=None):
 
     # --- Initialize Extensions ---
     db.init_app(app)
+    migrate.init_app(app, db)
     api.init_app(app)
-    jwt = JWTManager(app)
+    jwt.init_app(app)
+    ma.init_app(app)
 
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_payload):
@@ -73,12 +74,6 @@ def create_app(db_url=None):
         import traceback
         print(traceback.format_exc())
         return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
-
-    # --- Database Creation ---
-    with app.app_context():
-        # Import models to ensure they are registered with SQLAlchemy
-        from . import models
-        db.create_all()
 
     # --- Register Blueprints ---
     api.register_blueprint(auth_bp)

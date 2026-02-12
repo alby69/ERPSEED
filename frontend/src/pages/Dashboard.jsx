@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Layout } from '../components';
 import DashboardWidgets from '../components/DashboardWidgets';
 import ChartWidget from '../components/ChartWidget';
@@ -7,6 +7,7 @@ import { apiFetch } from '../utils';
 import { useAuth } from '../context';
 
 function Dashboard() {
+  const { projectId } = useParams();
   const { user } = useAuth();
   const [usersList, setUsersList] = useState([]);
   const [dashboards, setDashboards] = useState([]);
@@ -73,7 +74,7 @@ function Dashboard() {
       <hr />
 
       {/* Widget Dinamici dal Builder (Modello: dashboard_kpi) */}
-      <DashboardWidgets modelName="dashboard_kpi" />
+      <DashboardWidgets modelName="dashboard_kpi" projectId={projectId} />
 
       {/* Selettore Dashboard */}
       {dashboards.length > 0 && (

@@ -1,89 +1,91 @@
-# 🏗️ Manuale Utente ERP Builder
+# Manuale Utente del Builder
 
-Il **Builder (Admin)** è lo strumento che ti permette di creare nuove funzionalità (moduli) nell'ERP senza scrivere codice.
+Il **Builder** è il cuore "Low-Code" di FlaskERP. Permette agli amministratori di creare, modificare ed estendere le funzionalità dell'applicazione direttamente dall'interfaccia web, senza scrivere una singola riga di codice.
 
-## Guida Passo-Passo
+Questa guida ti accompagnerà attraverso i passaggi fondamentali per utilizzare il Builder e creare la tua applicazione personalizzata.
 
-### Passo 1: Creare un Nuovo Modello (Tabella)
-1.  Vai nel menu **Builder (Admin)**.
-2.  Clicca su **"Create New Model"**.
+## 1. Gestione dei Progetti
+
+Un **Progetto** è un contenitore isolato per le tue applicazioni. Ogni progetto ha i propri modelli, dati, membri e impostazioni.
+
+### Creare un Nuovo Progetto
+
+1.  Naviga alla pagina di **Selezione Progetto**.
+2.  Se sei un amministratore, vedrai un pulsante **"Crea Progetto"**. Cliccalo.
 3.  Compila il form:
-    -   **Internal Name**: Il nome della tabella nel database (es. `fleet_vehicles`). Usa solo lettere minuscole e underscore.
-    -   **Display Title**: Il nome visibile nel menu (es. `Gestione Flotta`).
-    -   **Description**: Una breve descrizione.
-4.  Clicca su **Create**.
+    -   **Nome Interno**: Un identificatore unico per il progetto (es. `gestione_flotta`). Usa solo lettere minuscole, numeri e underscore. **Non può essere modificato dopo la creazione.**
+    -   **Titolo Visibile**: Il nome che apparirà nell'interfaccia (es. "Gestione Flotta Aziendale").
+    -   **Versione**: La versione iniziale del tuo progetto (es. `1.0.0`).
+    -   **Descrizione**: Una breve spiegazione dello scopo del progetto.
+4.  Clicca su **"Crea"**. Verrai reindirizzato alla dashboard del nuovo progetto.
 
-### Passo 2: Configurare i Permessi (Importante!)
-⚠️ **Se non configuri i permessi, non potrai accedere al modulo e verrai reindirizzato al login.**
-1.  Nella lista dei modelli, clicca su **Manage Model** (o sul nome del modello).
-2.  Clicca su **Edit Model** (pulsante in alto a destra).
-3.  Nella tabella **Permissions (ACL)**, spunta le caselle **Read** e **Write** per il ruolo `admin` (e altri ruoli se necessario).
-4.  Clicca **Update Model**.
+### Gestire le Impostazioni di un Progetto
 
-### Passo 3: Aggiungere Campi (Colonne)
-Nella pagina di dettaglio del modello, clicca su **"Add New Field"**.
+Una volta dentro un progetto, puoi modificarne le impostazioni:
+1.  Nel menu laterale, clicca su **"Impostazioni"**.
+2.  Da qui puoi aggiornare il **Titolo**, la **Descrizione** e la **Versione**.
+3.  In fondo alla pagina, nella "Danger Zone", puoi **eliminare il progetto**. Questa azione è irreversibile e cancellerà tutti i modelli e i dati associati.
 
-#### Tipi di Campo Disponibili:
--   **String**: Testo breve (es. Nome, Targa). Supporta validazione Regex.
--   **Text**: Testo lungo (es. Descrizione, Note).
--   **Integer**: Numero intero (es. Quantità). Supporta formattazione (Valuta, %, Suffissi).
--   **Float**: Numero decimale (es. Prezzo). Supporta formattazione.
--   **Boolean**: Vero/Falso (Checkbox).
--   **Date / DateTime**: Date e orari.
--   **Select**: Menu a tendina statico. Inserisci le opzioni come lista JSON `["A", "B"]` o premendo Invio nel builder.
--   **Relation**: Collegamento a un'altra tabella (es. Cliente, Utente).
--   **File / Image**: Upload di file.
--   **Formula**: Calcolo lato backend (Python).
--   **Calculated**: Calcolo lato frontend (JS).
--   **Summary**: Aggregazione da tabelle collegate (Somma, Media, Conteggio, Min, Max).
--   **Lookup**: Recupero valore da tabella collegata.
--   **Master-Detail (Linee/Righe)**: Tabella annidata per gestire righe di dettaglio (es. Righe Ordine).
+### Gestire i Membri del Progetto
 
-#### Esempi Comuni:
--   **Targa** -> Type: `String`, Name: `license_plate`, Required: `Yes`, Unique: `Yes`.
--   **Chilometraggio** -> Type: `Integer`, Name: `mileage`.
--   **Data Immatricolazione** -> Type: `Date`, Name: `registration_date`.
--   **Tipo Veicolo** -> Type: `Select`. Nel campo *Options (List)* scrivi le opzioni (es. `Auto`, `Furgone`, `Moto`).
--   **Assegnatario** -> Type: `Relation`. In *Target Table* seleziona `users`.
+Puoi decidere quali utenti hanno accesso a un progetto.
+1.  Nel menu laterale, clicca su **"Membri del Team"**.
+2.  Vedrai la lista degli utenti che fanno parte del progetto.
+3.  Per aggiungere un nuovo membro, clicca su **"Aggiungi Membro"**.
+    -   Se sei **Admin**, potrai selezionare un utente da una lista.
+    -   Se sei **Owner** (proprietario), dovrai inserire l'ID numerico dell'utente.
+4.  Per rimuovere un membro, clicca sull'icona del cestino accanto al suo nome.
 
-### Funzionalità Avanzate
+---
 
-#### 1. Formattazione Numerica
-Per i campi **Integer** e **Float**, puoi definire come vengono visualizzati i numeri:
--   **Formato**: Valuta (€, $), Percentuale, Decimale fisso.
--   **Suffisso**: Unità di misura personalizzata (es. `kg`, `m²`, `pz`).
+## 2. Gestione dei Modelli (Tabelle)
 
-#### 2. Campi di Riepilogo (Summary)
-Permettono di calcolare totali da una tabella collegata (es. Totale Ordine dalle Righe).
--   **Funzioni**: Somma (SUM), Media (AVG), Conteggio (COUNT), Minimo (MIN), Massimo (MAX).
--   **Configurazione**: Seleziona la tabella target, la chiave esterna e il campo su cui eseguire il calcolo.
+Un **Modello** rappresenta una tabella nel database (es. `Veicoli`, `Manutenzioni`).
 
-#### 3. Relazioni Master-Detail
-Per creare un modulo complesso come "Ordini" (Testata + Righe):
-1.  Crea prima il modello **Detail** (es. `order_lines`) con un campo `relation` verso il Master (es. `order_id`).
-2.  Crea il modello **Master** (es. `orders`).
-3.  Nel Master, aggiungi un campo di tipo **Master-Detail (Linee/Righe)**.
-    -   **Target Table**: `order_lines`.
-    -   **Foreign Key**: `order_id`.
-4.  Il sistema genererà automaticamente una griglia di inserimento nel form del Master.
+### Creare un Nuovo Modello
 
-### Passo 4: Generare la Tabella nel Database
-Finché non esegui questo passaggio, il modello è solo una "bozza".
-1.  Clicca sul pulsante blu **"Generate/Update DB Table"**.
+1.  Assicurati di essere nel progetto corretto.
+2.  Nel menu laterale, vai su **Amministrazione -> Builder**.
+3.  Clicca su **"Create New Model"**.
+4.  Seleziona il **Progetto** a cui appartiene il modello.
+5.  Compila i campi:
+    -   **Internal Name**: Il nome della tabella (es. `vehicles`).
+    -   **Display Title**: Il nome che apparirà nel menu (es. `Veicoli`).
+6.  Clicca **Create**.
+
+### Configurare i Permessi (ACL)
+
+⚠️ **Passaggio Fondamentale**: Senza permessi, nessuno (nemmeno l'admin) potrà vedere o usare il nuovo modulo.
+
+1.  Dalla lista dei modelli nel Builder, clicca su **"Manage"** accanto al tuo nuovo modello.
+2.  Nella pagina di dettaglio, clicca su **"Edit Model"**.
+3.  Nella sezione **Permissions (ACL)**, spunta le caselle per i ruoli che devono accedere.
+    -   **Read**: Permette di visualizzare i dati.
+    -   **Write**: Permette di creare, modificare ed eliminare dati.
+4.  Clicca **"Update Model"**.
+
+### Aggiungere Campi al Modello
+
+Nella pagina di dettaglio del modello, vedrai la lista dei campi.
+1.  Clicca su **"Add New Field"**.
+2.  Compila il form:
+    -   **Field Name**: Nome della colonna nel DB (es. `license_plate`).
+    -   **Field Title**: Etichetta visualizzata nel form (es. `Targa`).
+    -   **Type**: Il tipo di dato. Scegli tra `String`, `Integer`, `Date`, `Select`, `Relation`, etc.
+    -   **Required/Unique**: Imposta se il campo è obbligatorio o deve essere unico.
+3.  A seconda del tipo, appariranno opzioni aggiuntive (es. opzioni per `Select`, tabella target per `Relation`).
+4.  Salva il campo.
+
+### Generare la Tabella nel Database
+
+Dopo aver definito i campi, devi creare la tabella fisica nel database.
+1.  Nella pagina di dettaglio del modello, clicca sul pulsante blu **"Generate/Update DB Table"**.
 2.  Conferma l'operazione.
-    *Nota: Se modifichi i campi in futuro, dovrai cliccare di nuovo su questo pulsante per aggiornare il database.*
 
-### Passo 5: Usare la Nuova Applicazione
-1.  Ricarica la pagina (F5) per aggiornare il menu laterale.
-2.  Nel menu laterale, sotto la voce **APPLICAZIONI**, troverai il tuo nuovo modulo (es. `Gestione Flotta`).
-3.  Cliccaci per iniziare a inserire dati, cercare ed esportare.
+Se in futuro modificherai i campi (aggiungendo, rimuovendo o cambiando tipo), dovrai cliccare di nuovo su questo pulsante per sincronizzare lo schema del database.
 
-## 💡 Risoluzione Problemi
+---
 
-### Accesso Negato (Redirect al Login)
-Se vedi un'applicazione nel menu ma cliccandoci vieni rimandato al login:
-1.  Vai su **Builder (Admin)**.
-2.  Cerca il modello in questione.
-3.  Clicca **Manage Model** -> **Edit Model**.
-4.  Assicurati che il tuo ruolo (`admin`) abbia le spunte su **Read** e **Write**.
-5.  Salva e riprova.
+## 3. Utilizzare l'Applicazione Creata
+
+Una volta generata la tabella, ricarica la pagina (F5). Nel menu laterale, sotto la voce **"Applicazioni"**, apparirà il tuo nuovo modulo. Cliccandoci, accederai a una pagina CRUD completa per gestire i tuoi dati.

@@ -3,7 +3,7 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from .models import User
 from .extensions import db
-from .schemas import UserLoginSchema, UserSchema, AuthResponseSchema, PasswordChangeSchema, RefreshResponseSchema
+from .schemas import UserLoginSchema, UserDisplaySchema, AuthResponseSchema, PasswordChangeSchema, RefreshResponseSchema
 
 auth_bp = Blueprint('auth', __name__, description="Authentication Operations")
 
@@ -37,7 +37,7 @@ class Login(MethodView):
 class Me(MethodView):
     @auth_bp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @auth_bp.response(200, UserSchema)
+    @auth_bp.response(200, UserDisplaySchema)
     def get(self):
         """Get current user data"""
         user_id = get_jwt_identity()

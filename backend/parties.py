@@ -28,10 +28,15 @@ class PartyList(MethodView):
     @blp.response(201, PartySchema)
     def post(self, party_data):
         """Crea un nuovo cliente/fornitore"""
-        party = Party(**party_data)
-        db.session.add(party)
+        # party_data is already a Party instance due to load_instance=True in PartySchema
+        if party_data.vat_number and Party.query.filter_by(vat_number=party_data.vat_number).first():
+            abort(409, message=f"Party with VAT number '{party_data.vat_number}' already exists.")
+        if party_data.email and Party.query.filter_by(email=party_data.email).first():
+            abort(409, message=f"Party with email '{party_data.email}' already exists.")
+
+        db.session.add(party_data)
         db.session.commit()
-        return party
+        return party_data
 
 @blp.route("/parties/<int:party_id>")
 class PartyResource(MethodView):

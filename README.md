@@ -14,20 +14,19 @@ L'obiettivo è creare un'alternativa open-source, flessibile e potente ai tradiz
 - **Cloud-Native**: Progettato per essere deployato, scalato e gestito su piattaforme cloud.
 
 ---
+## Gestione Progetti e Multi-Tenancy
 
-## 📚 Stack Tecnologico
+Il FlaskERP è costruito sopra un potente sistema di gestione di progetti che permette un completo isolamento dei dati e delle configurazioni, rendendolo una soluzione ideale per il multi-tenancy.
 
-- **Backend**: Python 3.11+
-- **Framework Backend**: Flask
-- **ORM**: SQLAlchemy con Alembic per le migrazioni del database.
-- **Database**: PostgreSQL
-- **Package Management**: `uv` (un gestore di pacchetti e ambienti virtuali Python ad alte prestazioni).
-- **Frontend**: React (o Vue.js) come Single Page Application (SPA).
-- **Styling UI**: Ant Design / Bootstrap 5.
-- **BI & Analytics**: Dash by Plotly, Pandas.
-- **Deployment**: Docker, Kubernetes.
+- **Progetti come Contenitori**: Ogni progetto (es. "Logistica", "CRM Cliente Alpha", "WMS per il Magazzino Centrale") agisce come un contenitore autonomo per i propri modelli di dati, configurazioni, membri e permessi.
 
----
+- **Isolamento dei Dati tramite Schema**: Per garantire la sicurezza e l'isolamento dei dati, FlaskERP crea uno schema PostgreSQL dedicato per ogni progetto (es. `project_1`, `project_2`). Questo significa che i dati di un cliente non si mescoleranno mai con quelli di un altro, anche se condividono la stessa infrastruttura.
+
+- **Gestione dei Membri**: Aggiungi utenti a progetti specifici con ruoli distinti (es. Amministratore, Editor, Visualizzatore). I permessi vengono applicati a livello di progetto, garantendo che gli utenti vedano e modifichino solo ciò che è loro consentito.
+
+- **Template di Progetto (Import/Export)**:
+  - **Esporta**: Esporta l'intera architettura di un progetto—inclusi tutti i suoi modelli, campi e configurazioni—in un file di template JSON. Questo è perfetto per fare il backup delle tue applicazioni o per condividere "soluzioni pronte all'uso" con altri.
+  - **Importa**: Crea nuovi progetti da un template con un solo clic. Il sistema può creare un nuovo progetto o aggiornarne uno esistente (upsert), gestendo in modo intelligente le modifiche a modelli e campi. Questo accelera drasticamente i tempi di implementazione per nuovi clienti o ambienti.
 
 ## 🏛️ Architettura
 
@@ -60,12 +59,12 @@ Il backend ora supporta la definizione di modelli tramite API, permettendo di cr
 
 #### 2. Dynamic Runtime
 Il backend includerà un motore capace di:
-- Salvare la definizione dei modelli in tabelle di sistema (`sys_models`, `sys_fields`).
-- Generare/Aggiornare lo schema del database PostgreSQL automaticamente.
-- Esporre automaticamente API CRUD per i nuovi modelli creati graficamente.
+- Salvare la definizione dei modelli in tabelle di sistema (`sys_models`, `sys_fields`) all'interno di un **Progetto**.
+- Generare/Aggiornare lo schema del database PostgreSQL per ogni progetto in modo isolato (`CREATE SCHEMA project_x`).
+- Esporre automaticamente API CRUD per i nuovi modelli, contestualizzate per progetto (es. `/projects/<id>/data/<model_name>`).
 
 #### 3. Frontend Automation (`GenericCrudPage.jsx`)
-Il frontend è già predisposto con componenti **Metadata-Driven**:
+Il frontend è predisposto con componenti **Metadata-Driven**:
 - **`GenericCrudPage`**: Renderizza tabelle e form basandosi su una configurazione JSON.
 - Il Builder collegherà i metadati del backend direttamente a questo componente, permettendo di visualizzare le nuove tabelle istantaneamente.
 
@@ -129,20 +128,21 @@ Questo approccio evita ereditarietà complesse e permette a un'entità di avere 
     - [ ] Logica per la generazione del Libro Giornale e liquidazione IVA.
     - [ ] Integrazione con gli altri moduli per la contabilizzazione automatica.
 
-7.  **Fase 6: ERP Builder (No-Code)**
+7.  **Fase 6: ERP Builder (No-Code) (Completata)**
     - [x] Modelli di sistema (`SysModel`, `SysField`) per definire tabelle e campi.
-    - [x] Motore di generazione e aggiornamento schema DB (`CREATE/ALTER TABLE`).
-    - [x] API Runtime Dinamica (`/data/<model>`) completa (CRUD, relazioni, file, formule).
+    - [x] Motore di generazione e aggiornamento schema DB (`CREATE/ALTER TABLE`) per progetto.
+    - [x] API Runtime Dinamica (`/projects/<id>/data/<model>`) completa (CRUD, relazioni, file, formule).
     - [x] UI di Amministrazione per il Builder (gestione modelli, campi, permessi ACL).
     - [x] Frontend Dinamico (`GenericCrudPage`) per l'utilizzo delle applicazioni create.
     - [x] Funzionalità Avanzate: Validazione Regex, Campi Calcolati Frontend, Widget Dashboard.
-    - [ ] **Gestione Progetti e Template**:
+    - [x] **Gestione Progetti e Multi-Tenancy**:
         - [x] Aggiunta del modello `Project` per raggruppare le configurazioni.
+        - [x] Gestione membri per progetto (Owner/Admin).
+        - [x] Isolamento dei dati per progetto (schema-based multi-tenancy).
         - [x] API per creare, leggere, aggiornare ed eliminare Progetti.
         - [x] Funzionalità di Import/Export di un intero Progetto come template JSON.
         - [x] Gestione Versionamento Progetti e Backup automatici.
-        - [ ] Isolamento dei dati per progetto (multi-tenancy).
-
+        
 ---
 
 ## 🔧 Debugging e Troubleshooting
@@ -151,8 +151,8 @@ Se riscontri problemi con le API o il Frontend, segui questa guida per isolare i
 
 ### 1. Problemi di Routing (404 Not Found)
 - **API Statiche**: Controlla `app/crud.py`. Le rotte sono generate automaticamente. Verifica che il modello sia registrato nel blueprint.
-- **API Dinamiche**: Controlla `backend/dynamic_api.py`. Queste rotte rispondono a `/data/<model_name>`.
-  - Verifica che il `model_name` esista nella tabella `sys_models`.
+- **API Dinamiche**: Controlla `backend/dynamic_api.py`. Queste rotte rispondono a `/projects/<project_id>/data/<model_name>`.
+  - Verifica che il `model_name` esista nella tabella `sys_models` e sia associato al `project_id` corretto.
   - Verifica che la tabella fisica esista nel DB (usa `Generate Table` dalla UI).
 
 ### 2. Problemi di Database (SQLAlchemy)
@@ -195,53 +195,11 @@ Stiamo migrando verso un'architettura più pulita (KISS/DRY):
 
 ---
 
-## 📖 Manuale Utente Builder (Guida Passo-Passo)
+## 📖 Manuale Utente del Builder
 
-Il **Builder (Admin)** è lo strumento che ti permette di creare nuove funzionalità (moduli) nell'ERP senza scrivere codice.
+Il **Builder** è il cuore "Low-Code" di FlaskERP. Permette agli amministratori di creare, modificare ed estendere le funzionalità dell'applicazione direttamente dall'interfaccia web.
 
-### Passo 1: Creare un Nuovo Modello (Tabella)
-1.  Vai nel menu **Builder (Admin)**.
-2.  Clicca su **"Create New Model"**.
-3.  Compila il form:
-    -   **Internal Name**: Il nome della tabella nel database (es. `fleet_vehicles`). Usa solo lettere minuscole e underscore.
-    -   **Display Title**: Il nome visibile nel menu (es. `Gestione Flotta`).
-    -   **Description**: Una breve descrizione.
-4.  Clicca su **Create**.
-
-### Passo 2: Configurare i Permessi (Importante!)
-⚠️ **Se non configuri i permessi, non potrai accedere al modulo e verrai reindirizzato al login.**
-1.  Nella lista dei modelli, clicca su **Manage Model** (o sul nome del modello).
-2.  Clicca su **Edit Model** (pulsante in alto a destra).
-3.  Nella tabella **Permissions (ACL)**, spunta le caselle **Read** e **Write** per il ruolo `admin` (e altri ruoli se necessario).
-4.  Clicca **Update Model**.
-
-### Passo 3: Aggiungere Campi (Colonne)
-Nella pagina di dettaglio del modello, clicca su **"Add New Field"**.
-Esempi di campi comuni:
--   **Targa** -> Type: `String`, Name: `license_plate`, Required: `Yes`, Unique: `Yes`.
--   **Chilometraggio** -> Type: `Integer`, Name: `mileage`.
--   **Data Immatricolazione** -> Type: `Date`, Name: `registration_date`.
--   **Tipo Veicolo** -> Type: `Select`. Nel campo *Options (List)* scrivi le opzioni (es. `Auto`, `Furgone`, `Moto`) premendo Invio dopo ognuna.
--   **Assegnatario** -> Type: `Relation`. In *Target Table* seleziona `users` (o un altro modello creato, es. `employees`).
-
-### Passo 4: Generare la Tabella nel Database
-Finché non esegui questo passaggio, il modello è solo una "bozza".
-1.  Clicca sul pulsante blu **"Generate/Update DB Table"**.
-2.  Conferma l'operazione.
-    *Nota: Se modifichi i campi in futuro, dovrai cliccare di nuovo su questo pulsante per aggiornare il database.*
-
-### Passo 5: Usare la Nuova Applicazione
-1.  Ricarica la pagina (F5).
-2.  Nel menu laterale, sotto la voce **APPLICAZIONI**, troverai il tuo nuovo modulo (es. `Gestione Flotta`).
-3.  Cliccaci per iniziare a inserire dati, cercare ed esportare.
-
-### 💡 Risoluzione Problemi: Accesso Negato a "Dashboard KPIs"
-Se vedi un'applicazione chiamata **Dashboard KPIs** ma cliccandoci vieni rimandato al login:
-1.  Vai su **Builder (Admin)**.
-2.  Cerca il modello `dashboard_kpi`.
-3.  Clicca **Manage Model** -> **Edit Model**.
-4.  Assicurati che il tuo ruolo (`admin`) abbia le spunte su **Read** e **Write**.
-5.  Salva e riprova ad accedere dal menu laterale.
+Per una guida dettagliata su come creare progetti, modelli, campi e utilizzare le funzionalità avanzate, consulta il **Manuale del Builder**.
 
 ## ✨ Funzionalità Avanzate del Builder
 
@@ -266,15 +224,15 @@ Il Builder permette di definire viste alternative ai dati oltre alla classica ta
     3.  Seleziona il campo di stato nel nuovo menu a tendina **Campo Stato Kanban**.
 -   Il sistema genererà automaticamente una board interattiva con drag-and-drop per cambiare lo stato dei record.
 
-### 4. Gestione Progetti (Import/Export)
-Il sistema supporta la gestione completa del ciclo di vita dei progetti.
-- **Export**: È possibile esportare l'intera configurazione di un progetto (modelli, campi, permessi) in un file JSON versionato.
-- **Import**: Caricamento di template JSON per creare nuovi progetti o aggiornare quelli esistenti (Upsert), con gestione intelligente dei conflitti.
+### 4. Gestione dei Modelli
+- **Clonazione**: Clona un modello esistente con un solo clic, duplicando tutti i suoi campi e configurazioni. Utile per creare rapidamente nuove varianti di modelli complessi.
+- **Sincronizzazione dello Schema**: Applica in modo sicuro le modifiche alla definizione del modello (aggiunta di campi, modifica di tipi) alla tabella del database sottostante (`ALTER TABLE`), preservando i dati esistenti.
 
 ### 5. Sicurezza e Manutenzione Dati
 - **Reset Tabella**: Funzionalità per ricreare lo schema fisico della tabella (DROP/CREATE) in caso di disallineamento critico.
 - **Backup Automatico**: Prima di ogni operazione distruttiva (Reset), il sistema crea automaticamente un backup CSV dei dati.
 - **Download Backup**: Gli amministratori possono visualizzare la lista dei backup e scaricarli direttamente dall'interfaccia.
+- **Audit Log**: Tutte le azioni significative del builder (creazione, modifica, cancellazione di modelli/campi) sono registrate in un log di audit, fornendo una traccia completa delle modifiche.
 
 ## ⚙️ Setup dell'Ambiente di Sviluppo
 

@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context';
-import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, Parties, Products } from './pages';
+import { useAuth } from '@/context';
+import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, Parties, Products, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage } from './pages';
 import Sales from './pages/Sales';
 import SalesOrderDetail from './pages/SalesOrderDetail';
 import SysModelDetail from './pages/SysModelDetail';
 import SysModelList from './pages/SysModelList';
-import ProjectDetail from './pages/ProjectDetail';
+import ProjectLayout from './ProjectLayout'; // Path corretto
 import DynamicModelPage from './pages/DynamicModelPage';
 import AuditLogs from './pages/AuditLogs';
 
@@ -21,7 +21,7 @@ function App() {
     }
 
     if (user) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/projects" replace />;
     }
 
     return children;
@@ -59,6 +59,21 @@ function App() {
             </PublicRoute>
           } 
         />
+
+        {/* Project Selection and Project-specific routes */}
+        <Route path="/projects" element={<ProtectedRoute><ProjectSelectionPage /></ProtectedRoute>} />
+        <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectLayout /></ProtectedRoute>}>
+            {/* A default page for a project, e.g. a dashboard */}
+            <Route index element={<Dashboard />} /> 
+            {/* Pagina gestione membri */}
+            <Route path="members" element={<ProjectMembersPage />} />
+            {/* Pagina impostazioni progetto */}
+            <Route path="settings" element={<ProjectSettingsPage />} />
+            {/* The route for dynamic models, now nested */}
+            <Route path="data/:modelName" element={<DynamicModelPage />} /> 
+            {/* You can add more project-specific routes here */}
+        </Route>
+
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route 
@@ -150,22 +165,6 @@ function App() {
           } 
         />
         <Route 
-          path="/projects/:id" 
-          element={
-            <ProtectedRoute>
-              <ProjectDetail />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/data/:modelName" 
-          element={
-            <ProtectedRoute>
-              <DynamicModelPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
           path="/admin/audit-logs" 
           element={
             <ProtectedRoute roles={['admin']}>
@@ -174,7 +173,7 @@ function App() {
           } 
         />
         {/* Reindirizza tutto alla dashboard; se non loggato, ProtectedRoute manderà al login */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/projects" replace />} />
       </Routes>
     </BrowserRouter>
   );

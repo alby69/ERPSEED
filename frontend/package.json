@@ -20,7 +20,9 @@
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.12.0",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "antd": "^5.19.3",
+    "@ant-design/icons": "^5.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

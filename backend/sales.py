@@ -8,7 +8,7 @@ from .utils import apply_filters, paginate, apply_sorting, apply_date_filters
 
 blp = Blueprint("sales", __name__, description="Operations on sales orders")
 
-@blp.route("/sales")
+@blp.route("/sales-orders")
 class SalesOrderList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -28,14 +28,16 @@ class SalesOrderList(MethodView):
     @blp.response(201, SalesOrderSchema)
     def post(self, order_data):
         """Crea un nuovo ordine"""
-        # Verifica esistenza cliente
-        if not Party.query.get(order_data['customer_id']):
+        # order_data is a SalesOrder instance with nested SalesOrderLine instances
+        # Marshmallow-SQLAlchemy with load_instance=True handles object creation.
+        
+        # The customer_id is already on the order_data object.
+        # We just need to verify it exists.
+        if not Party.query.get(order_data.customer_id):
             abort(404, message="Customer not found")
 
-        order = SalesOrder(
-            number=order_data['number'],
-            customer_id=order_data['customer_id']
-        )
-        db.session.add(order)
+        # The order_data object is already a complete SalesOrder with lines.
+        # We can just add it to the session.
+        db.session.add(order_data)
         db.session.commit()
-        return order
+        return order_data

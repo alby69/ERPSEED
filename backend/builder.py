@@ -10,9 +10,9 @@ import io
 import os
 import datetime
 
-from .models import SysModel, SysField, User, AuditLog
+from .models import SysModel, SysField, User, AuditLog, Project
 from .extensions import db
-from .schemas import SysModelSchema, SysFieldSchema
+from .schemas import SysModelSchema, SysFieldSchema, AuditLogSchema
 from .utils import apply_filters, paginate, apply_sorting, generate_schema_diff_sql, log_audit, generate_create_table_sql, get_table_object, serialize_value
 
 blp = Blueprint("builder", __name__, description="No-Code Builder Operations")
@@ -47,8 +47,11 @@ class SysModelList(MethodView):
     @blp.response(201, SysModelSchema)
     def post(self, model_data):
         """Create a new system model"""
-        if SysModel.query.filter_by(name=model_data["name"]).first():
-            abort(409, message="Model with this name already exists.")
+        if "project_id" not in model_data:
+             abort(400, message="project_id is required to create a model.")
+
+        if SysModel.query.filter_by(project_id=model_data["project_id"], name=model_data["name"]).first():
+            abort(409, message=f"Model with name '{model_data['name']}' already exists in this project.")
         
         model = SysModel(**model_data)
         db.session.add(model)
@@ -74,8 +77,8 @@ class SysModelResource(MethodView):
         model = SysModel.query.filter(SysModel.id == model_id).first_or_404()
         
         if "name" in model_data and model_data["name"] != model.name:
-            if SysModel.query.filter_by(name=model_data["name"]).first():
-                abort(409, message="Model with this name already exists.")
+            if SysModel.query.filter(SysModel.project_id == model.project_id, SysModel.name == model_data["name"], SysModel.id != model_id).first():
+                abort(409, message=f"Model with name '{model_data['name']}' already exists in this project.")
 
         for key, value in model_data.items():
             setattr(model, key, value)
@@ -257,11 +260,12 @@ class SysModelClone(MethodView):
         if not new_name or not new_title:
             abort(400, message="Name and Title are required.")
             
-        if SysModel.query.filter_by(name=new_name).first():
-            abort(409, message=f"Model with name '{new_name}' already exists.")
+        if SysModel.query.filter_by(project_id=source_model.project_id, name=new_name).first():
+            abort(409, message=f"Model with name '{new_name}' already exists in this project.")
 
         # 1. Clona il Modello
         new_model = SysModel(
+            project_id=source_model.project_id,
             name=new_name,
             title=new_title,
             description=source_model.description,
@@ -285,8 +289,7 @@ class SysModelClone(MethodView):
                 summary_expression=field.summary_expression,
                 is_unique=field.is_unique,
                 validation_regex=field.validation_regex,
-                validation_message=field.validation_message,
-                tooltip=field.tooltip
+                validation_message=field.validation_message
             )
             db.session.add(new_field)
         
@@ -343,3 +346,20 @@ class BackupDownload(MethodView):
         abs_backup_folder = os.path.abspath(backup_folder)
         
         return send_from_directory(abs_backup_folder, filename, as_attachment=True)
+
+@blp.route("/audit-logs")
+class AuditLogList(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, AuditLogSchema(many=True))
+    def get(self):
+        """Recupera i log di audit (solo admin)."""
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        if user.role != 'admin':
+            abort(403, message="Access denied")
+            
+        query = AuditLog.query.order_by(desc(AuditLog.timestamp))
+        items, headers = paginate(query)
+        
+        return items, 200, headers

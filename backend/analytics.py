@@ -106,9 +106,10 @@ class ChartData(MethodView):
             abort(404, message="Source model not found")
             
         # Verifica permessi di lettura sul modello dati
-        check_model_permissions(sys_model, 'read')
+        check_model_permissions(sys_model, 'read') # project_id is not needed here, check is inside
         
-        table = get_table_object(sys_model.name)
+        schema_name = f"project_{sys_model.project_id}"
+        table = get_table_object(sys_model.name, schema=schema_name)
 
         # --- Helper per filtri data ---
         def apply_date_filter(q):
