@@ -3,13 +3,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 
 class BaseModel(db.Model):
-    """Modello base con campi comuni per tutti gli altri modelli."""
+    """Base model with common fields for all other models."""
     __abstract__ = True
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
-# Tabella di associazione per la relazione N-N tra Utenti e Progetti
 project_members = db.Table('project_members',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('project_id', db.Integer, db.ForeignKey('projects.id'), primary_key=True)
@@ -17,17 +16,16 @@ project_members = db.Table('project_members',
 
 class Project(BaseModel):
     """
-    Rappresenta un Progetto o un'istanza applicativa creata con il Builder.
-    Ogni progetto è un contenitore per un insieme di modelli (SysModel).
+    Represents a Project or application instance created with the Builder.
+    Each project is a container for a set of models (SysModel).
     """
     __tablename__ = 'projects'
-    name = db.Column(db.String(80), unique=True, nullable=False, comment="Nome interno del progetto (es. 'fleet_management')")
-    title = db.Column(db.String(120), nullable=False, comment="Titolo visualizzato per il progetto")
+    name = db.Column(db.String(80), unique=True, nullable=False, comment="Internal project name (e.g., 'fleet_management')")
+    title = db.Column(db.String(120), nullable=False, comment="Display title for the project")
     description = db.Column(db.Text)
-    version = db.Column(db.String(20), default="1.0.0", comment="Versione del progetto")
+    version = db.Column(db.String(20), default="1.0.0", comment="Project version")
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
-    # Relazioni
     models = db.relationship('SysModel', back_populates='project', lazy='dynamic', cascade="all, delete-orphan")
     owner = db.relationship('User')
     members = db.relationship('User', secondary=project_members, back_populates='projects', lazy='dynamic')
@@ -36,18 +34,17 @@ class Project(BaseModel):
         return f'<Project {self.name}>'
 
 class User(BaseModel):
-    """Modello per gli utenti del sistema."""
+    """User model for system users."""
     __tablename__ = 'users'
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
     first_name = db.Column(db.String(80))
     last_name = db.Column(db.String(80))
-    role = db.Column(db.String(80), default='user', nullable=False, comment="Ruolo dell'utente (es. admin, user)")
+    role = db.Column(db.String(80), default='user', nullable=False, comment="User role (e.g., admin, user)")
     is_active = db.Column(db.Boolean, default=True)
     force_password_change = db.Column(db.Boolean, default=False)
     avatar = db.Column(db.String(255), nullable=True)
 
-    # Relazione N-N con i progetti
     projects = db.relationship('Project', secondary=project_members, back_populates='members', lazy='dynamic')
 
     def set_password(self, password):
@@ -60,20 +57,17 @@ class User(BaseModel):
         return f'<User {self.email}>'
 
 class SysModel(BaseModel):
-    """Definizione di un modello (tabella) creato dinamicamente dal Builder."""
+    """Definition of a model (table) created dynamically by the Builder."""
     __tablename__ = 'sys_models'
     name = db.Column(db.String(80), nullable=False)
     title = db.Column(db.String(120))
     description = db.Column(db.Text)
     permissions = db.Column(db.Text, comment="JSON string for Access Control List (ACL)")
     
-    # Ogni modello DEVE appartenere a un progetto
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=False)
     
-    # Unicità del nome del modello all'interno di un progetto
     __table_args__ = (db.UniqueConstraint('project_id', 'name', name='_project_model_name_uc'),)
 
-    # Relazioni
     fields = db.relationship('SysField', back_populates='model', lazy='joined', cascade="all, delete-orphan", order_by='SysField.order')
     project = db.relationship('Project', back_populates='models')
 
@@ -81,7 +75,7 @@ class SysModel(BaseModel):
         return f'<SysModel {self.name}>'
 
 class SysField(BaseModel):
-    """Definizione di un campo (colonna) per un SysModel."""
+    """Definition of a field (column) for a SysModel."""
     __tablename__ = 'sys_fields'
     name = db.Column(db.String(80), nullable=False)
     title = db.Column(db.String(120))
@@ -98,14 +92,13 @@ class SysField(BaseModel):
     
     model_id = db.Column(db.Integer, db.ForeignKey('sys_models.id'), nullable=False)
     
-    # Relazioni
     model = db.relationship('SysModel', back_populates='fields')
 
     def __repr__(self):
         return f'<SysField {self.name} in {self.model.name}>'
 
 class AuditLog(BaseModel):
-    """Log delle azioni significative eseguite nel sistema."""
+    """Log of significant actions performed in the system."""
     __tablename__ = 'audit_logs'
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     model_name = db.Column(db.String(80))
@@ -114,15 +107,14 @@ class AuditLog(BaseModel):
     changes = db.Column(db.Text, comment="JSON diff of the changes")
     timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
     
-    # Relazioni
     user = db.relationship('User')
 
 class Party(BaseModel):
-    """Anagrafica generica per clienti, fornitori, etc."""
+    """Generic master data for customers, suppliers, etc."""
     __tablename__ = 'parties'
     
     name = db.Column(db.String(150), nullable=False, index=True)
-    party_type = db.Column(db.String(50), nullable=False, default='Cliente', comment="Es. Cliente, Fornitore")
+    party_type = db.Column(db.String(50), nullable=False, default='Customer', comment="E.g., Customer, Supplier")
     email = db.Column(db.String(120), unique=True)
     phone = db.Column(db.String(50))
     vat_number = db.Column(db.String(50), unique=True, index=True)
@@ -132,7 +124,7 @@ class Party(BaseModel):
         return f'<Party {self.name}>'
 
 class Product(BaseModel):
-    """Anagrafica prodotti/servizi."""
+    """Product/Service master data."""
     __tablename__ = 'products'
     
     name = db.Column(db.String(150), nullable=False)
@@ -162,7 +154,6 @@ class SalesOrderLine(BaseModel):
     quantity = db.Column(db.Float, nullable=False)
     unit_price = db.Column(db.Float, nullable=False)
     
-    # Relazioni
     order = db.relationship('SalesOrder', back_populates='lines')
     product = db.relationship('Product')
 

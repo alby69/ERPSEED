@@ -8,8 +8,11 @@ import json
 from .models import SysChart, SysDashboard, SysModel
 from .extensions import db
 from .schemas import SysChartSchema, SysDashboardSchema
-from .dynamic_api import get_table_object, check_model_permissions
+from .utils import get_table_object
+from .services import DynamicApiService
 from .utils import paginate, serialize_value
+
+dynamic_service = DynamicApiService()
 
 blp = Blueprint("analytics", __name__, description="BI & Analytics Operations")
 
@@ -106,7 +109,7 @@ class ChartData(MethodView):
             abort(404, message="Source model not found")
             
         # Verifica permessi di lettura sul modello dati
-        check_model_permissions(sys_model, 'read') # project_id is not needed here, check is inside
+        dynamic_service.check_permissions(sys_model, 'read')
         
         schema_name = f"project_{sys_model.project_id}"
         table = get_table_object(sys_model.name, schema=schema_name)

@@ -286,3 +286,176 @@ L'architettura è pensata per il cloud.
 - **Orchestrazione**: Si consiglia l'uso di **Kubernetes** per gestire i container in produzione, garantendo scalabilità, auto-riparazione e rolling updates.
 - **PaaS**: Piattaforme come Heroku, Google App Engine, o AWS Elastic Beanstalk possono essere alternative più semplici per un avvio rapido.
 - **Database Gestito**: Utilizzare servizi come Amazon RDS, Google Cloud SQL o Azure Database for PostgreSQL per gestire il database in modo affidabile.
+
+---
+
+## 🧩 Service Layer
+
+Architettura per la分离 della logica di business dal layer API.
+
+**Struttura:**
+```
+backend/services/
+├── base.py              # BaseService con metodi comuni
+├── user_service.py      # Logica utenti
+├── project_service.py   # Logica progetti
+├── builder_service.py   # Logica builder
+└── dynamic_api_service.py  # Logica API dinamica
+```
+
+**Vantaggi:**
+- Separazione netta tra business logic e API routes
+- Codice riutilizzabile
+- Maggiore testabilità
+- Integrazione automatica con Webhooks e Workflow
+
+---
+
+## 🔌 Plugin System
+
+Sistema modulare per estendere FlaskERP con funzionalità aggiuntive.
+
+**Plugin Integrati:**
+- **Accounting**: Piano dei Conti, Registrazioni Contabili, Fatture
+- **HR**: Dipendenti, Dipartimenti, Presenze, Richieste Ferie
+
+**API Plugin:**
+| Metodo | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/hr/*` | Risorse Umane |
+| GET | `/accounting/*` | Contabilità |
+
+**Creare un Nuovo Plugin:**
+
+1. Crea la cartella in `backend/plugins/mio_plugin/`
+2. Definisci il modello che estende `BasePlugin`:
+```python
+# backend/plugins/mio_plugin/plugin.py
+from backend.plugins.base import BasePlugin
+
+class MioPlugin(BasePlugin):
+    name = "mio_plugin"
+    version = "1.0.0"
+    
+    def install(self):
+        # Logica di installazione
+        pass
+    
+    def uninstall(self):
+        # Logica di disinstallazione
+        pass
+```
+
+3. Registra il plugin in `backend/__init__.py`:
+```python
+from .plugins.mio_plugin.plugin import get_plugin as get_mio_plugin
+PluginRegistry.register(get_mio_plugin())
+PluginRegistry.enable('mio_plugin', app=app, db=db, api=api)
+```
+
+**Eventi Estesi:**
+I plugin possono attivare eventi webhook personalizzati per integrare con Workflow Automation.
+
+---
+
+## 🔌 Estensioni
+
+### Webhooks
+
+Sistema di integrazione event-driven per collegare FlaskERP a servizi esterni.
+
+Sistema di integrazione event-driven per collegare FlaskERP a servizi esterni.
+
+**Funzionalità:**
+- Creazione endpoint webhook configurabili
+- Supporto per oltre 20 eventi (user.created, project.created, record.created, invoice.created, etc.)
+- Firma HMAC per autenticazione payload
+- Sistema di retry automatico (3 tentativi con backoff)
+- Storico delle delivery con stato e log
+
+**API Endpoints:**
+| Metodo | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET/POST | `/webhooks` | Lista e crea endpoint |
+| GET/PUT/DELETE | `/webhooks/<id>` | Gestione endpoint |
+| POST | `/webhooks/<id>/test` | Test endpoint |
+| GET | `/webhooks/deliveries` | Storico delivery |
+| GET | `/webhooks/events` | Eventi disponibili |
+
+**Eventi disponibili:**
+- **User**: user.created, user.updated, user.deleted, user.login
+- **Project**: project.created, project.updated, project.deleted
+- **Model**: model.created, model.updated, model.deleted
+- **Data**: record.created, record.updated, record.deleted
+- **Accounting**: journal.created, journal.posted, invoice.created, invoice.paid
+- **HR**: employee.created, employee.updated, leave.requested, leave.approved
+
+**Uso:**
+```python
+# I webhook vengono attivati automaticamente dai trigger
+# Esempio: quando viene creato un utente
+from backend.webhook_triggers import on_user_created
+on_user_created(user)
+```
+
+---
+
+### Workflow Automation
+
+Motore di automazione per creare workflow basati su eventi.
+
+**Funzionalità:**
+- Creazione workflow con trigger eventi
+- 5 tipi di step: condition, action, notification, delay, webhook
+- Esecuzione automatica al verificarsi degli eventi
+- Storico esecuzioni con log dettagliati
+- Test manuale dei workflow
+
+**API Endpoints:**
+| Metodo | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET/POST | `/workflows` | Lista e crea workflow |
+| GET/PUT/DELETE | `/workflows/<id>` | Gestione workflow |
+| POST | `/workflows/<id>/steps` | Aggiungi step |
+| GET | `/workflows/<id>/executions` | Storico esecuzioni |
+| POST | `/workflows/<id>/test` | Test workflow |
+| GET | `/workflows/triggers` | Eventi trigger |
+| GET | `/workflows/step-types` | Tipi step |
+
+**Tipi di Step:**
+
+1. **Condition** - Valuta condizioni sui dati
+   - Operatori: equals, not_equals, contains, greater_than, less_than, is_empty, is_not_empty
+
+2. **Action** - Esegue azioni
+   - set_field, update_record, create_record, send_email
+
+3. **Notification** - Invia notifiche
+   - webhook, email
+
+4. **Delay** - Pausa temporizzata
+   - secondi, minuti, ore, giorni
+
+5. **Webhook** - Chiama servizi esterni
+   - POST, PUT, PATCH con header configurabili
+
+**Esempio di Utilizzo:**
+
+1. Crea un workflow dalla UI (`/admin/workflows`)
+2. Imposta il trigger (es. `record.created`)
+3. Aggiungi step di automazione
+4. Attiva il workflow
+
+**Migration Database:**
+```bash
+flask db upgrade
+# oppure se usi Docker:
+docker compose exec web flask db upgrade
+```
+
+---
+
+## 📋 Prossime Estensioni Pianificate
+
+- **Redis Caching**: Sistema di caching per migliorare le performance
+- **Scheduled Tasks**: Task periodici per automazioni (cron-like)

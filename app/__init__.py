@@ -8,7 +8,7 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Abilita CORS per permettere richieste dal frontend
+    # Enable CORS to allow requests from the frontend
     CORS(app, expose_headers=["X-Total-Count", "X-Pages", "X-Current-Page", "X-Per-Page"])
 
     # Initialize extensions
@@ -19,7 +19,7 @@ def create_app(config_class=Config):
     api = Api(app)
 
     # Import models to ensure they are registered with SQLAlchemy
-    from app import models
+    from backend import models
 
     # Register Blueprints
     from app.resources.user import blp as UserBlueprint
@@ -31,7 +31,7 @@ def create_app(config_class=Config):
     from app.resources.sales import blp as SalesBlueprint
     api.register_blueprint(SalesBlueprint)
 
-    # Rotta per servire i file caricati (immagini, documenti)
+    # Route to serve uploaded files (images, documents)
     @app.route('/uploads/<path:filename>')
     def serve_uploads(filename):
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)

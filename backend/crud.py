@@ -11,85 +11,76 @@ from .extensions import db
 
 def register_crud_routes(blueprint, model, schema, url_prefix="", search_fields=None, multipart=False, csv_fields=None, eager_load=None):
     """
-    Genera e registra automaticamente le rotte CRUD per un dato modello.
+    Automatically generates and registers CRUD routes for a given model.
     
-    :param blueprint: Il Blueprint di Flask-Smorest su cui registrare le rotte
-    :param model: Il modello SQLAlchemy
-    :param schema: Lo schema Marshmallow per validazione e serializzazione
-    :param url_prefix: Prefisso URL opzionale (es. '/parties')
-    :param search_fields: Lista di campi (stringhe) su cui effettuare la ricerca 'q'
-    :param multipart: Se True, abilita il supporto per upload file (multipart/form-data)
-    :param csv_fields: Lista opzionale di campi da esportare nel CSV (default: tutti i campi dello schema)
-    :param eager_load: Lista di relazioni da caricare (es. ["supplier"]) per ottimizzare le query e includere dati correlati
+    :param blueprint: The Flask-Smorest Blueprint to register the routes on.
+    :param model: The SQLAlchemy model class.
+    :param schema: The Marshmallow schema for validation and serialization.
+    :param url_prefix: Optional URL prefix (e.g., '/parties').
+    :param search_fields: A list of string fields to perform the 'q' search on.
+    :param multipart: If True, enables support for file uploads (multipart/form-data).
+    :param csv_fields: Optional list of fields to export in the CSV (defaults to all schema fields).
+    :param eager_load: A list of relationships to eager load (e.g., ["supplier"]) to optimize queries.
     """
 
-    # Determina la location per i dati in ingresso
-    # 'form' gestisce i campi testuali di una richiesta multipart
-    # 'json' gestisce una richiesta application/json standard
+    # Determine the location for incoming data
+    # 'form' handles text fields of a multipart request
+    # 'json' handles a standard application/json request
     location = "form" if multipart else "json"
 
     def save_files(data):
-        """Salva i file caricati e aggiorna il dizionario dei dati con i nomi dei file."""
+        """Saves uploaded files and updates the data dictionary with the filenames."""
         if not multipart:
             return data
         
         upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
         
-        # request.files contiene i file caricati
-        for key, file in request.files.items():
-            if file and file.filename:
-                filename = secure_filename(file.filename)
-                # Assicurati che la cartella esista
+        # request.files contains the uploaded files
+        for key, file_storage in request.files.items():
+            if file_storage and file_storage.filename:
+                filename = secure_filename(file_storage.filename)
+                # Ensure the upload folder exists
                 os.makedirs(upload_folder, exist_ok=True)
                 
-                # Salva il file
+                # Save the file
                 file_path = os.path.join(upload_folder, filename)
-                file.save(file_path)
+                file_storage.save(file_path)
                 
-                # Aggiorna i dati con il nome del file da salvare nel DB
+                # Update the data with the filename to be saved in the DB
                 data[key] = filename
         return data
 
-    def apply_filters(query):
-        """Applica filtri di ricerca, data e ordinamento alla query."""
-        # Gestione filtro di ricerca generico 'q'
+    def apply_filters_to_query(query):
+        """Applies search, date, and sorting filters to the query."""
         
-        # Eager Loading (Join ottimizzate)
+        # Eager Loading (Optimized Joins)
         if eager_load:
             for relation in eager_load:
                 query = query.options(joinedload(getattr(model, relation)))
 
+        # Handle generic search filter 'q'
         q = request.args.get('q')
         if q and search_fields:
             filters = []
             for field in search_fields:
-            # Supporto per ricerca su campi relazionali (es. "supplier.name")
+                # Support for searching on related fields (e.g., "supplier.name")
                 if '.' in field:
-                    rel_name, rel_field = field.split('.')
+                    rel_name, rel_field = field.split('.', 1)
                     if hasattr(model, rel_name):
                         rel_attr = getattr(model, rel_name)
-                        # Ottieni la classe del modello correlato
                         rel_model = rel_attr.property.mapper.class_
                         if hasattr(rel_model, rel_field):
-                            # Join implicita se non già fatta (SQLAlchemy è smart, ma joinedload aiuta)
-                            # Nota: per il filtro WHERE serve la join esplicita a volte, 
-                            # ma se usiamo joinedload sopra, SQLAlchemy gestisce il path.
-                            # Per sicurezza sui filtri OR, usiamo has() o join esplicita.
-                            # Qui usiamo un approccio semplice: assumiamo che la relazione esista.
+                            # For OR filters, it's safer to use an explicit join
+                            query = query.join(getattr(model, rel_name), isouter=True)
                             filters.append(getattr(rel_model, rel_field).ilike(f"%{q}%"))
                 elif hasattr(model, field):
-                    # Usa ilike per ricerca case-insensitive
+                    # Use ilike for case-insensitive search
                     filters.append(getattr(model, field).ilike(f"%{q}%"))
+            
             if filters:
-            # Se ci sono filtri su relazioni, assicuriamoci che la query faccia la join
-            # Questo è un approccio semplificato. Per query complesse servirebbe logica più avanzata.
-                for field in search_fields:
-                    if '.' in field:
-                        rel_name = field.split('.')[0]
-                        query = query.join(getattr(model, rel_name))
                 query = query.filter(or_(*filters))
 
-        # Filtro per data (created_at)
+        # Date filter (created_at)
         date_from = request.args.get('date_from')
         date_to = request.args.get('date_to')
 
@@ -99,7 +90,7 @@ def register_crud_routes(blueprint, model, schema, url_prefix="", search_fields=
             if date_to:
                 query = query.filter(func.date(model.created_at) <= date_to)
 
-        # Ordinamento
+        # Sorting
         sort_by = request.args.get('sort_by')
         sort_order = request.args.get('sort_order', 'asc')
 
@@ -112,16 +103,16 @@ def register_crud_routes(blueprint, model, schema, url_prefix="", search_fields=
 
         return query
 
-    # Rotte per la Collezione (Lista e Creazione)
+    # Routes for the Collection (List and Create)
     @blueprint.route(url_prefix + "/")
     class CollectionResource(MethodView):
         @jwt_required()
         @blueprint.response(200, schema(many=True))
         def get(self):
-            """Lista tutti gli elementi"""
-            query = apply_filters(model.query)
+            """List all items."""
+            query = apply_filters_to_query(model.query)
 
-            # Paginazione
+            # Pagination
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', 10, type=int)
             
@@ -140,62 +131,61 @@ def register_crud_routes(blueprint, model, schema, url_prefix="", search_fields=
         @blueprint.arguments(schema, location=location)
         @blueprint.response(201, schema)
         def post(self, item_data):
-            """Crea un nuovo elemento"""
+            """Create a new item."""
             item_data = save_files(item_data)
             item = model(**item_data)
             db.session.add(item)
             db.session.commit()
             return item
 
-    # Rotta per Esportazione CSV
+    # Route for CSV Export
     @blueprint.route(url_prefix + "/export")
     class ExportResource(MethodView):
         @jwt_required()
         def get(self):
-            """Esporta i dati filtrati in CSV"""
-            # Applica gli stessi filtri della lista, ma senza paginazione
-            query = apply_filters(model.query)
+            """Export filtered data to CSV."""
+            # Apply the same filters as the list, but without pagination
+            query = apply_filters_to_query(model.query)
             items = query.all()
             
-            # Genera CSV in memoria
-            si = io.StringIO()
-            cw = csv.writer(si)
+            # Generate CSV in memory
+            string_io = io.StringIO()
+            csv_writer = csv.writer(string_io)
             
-            # Intestazioni (dai campi dello schema)
             schema_instance = schema()
             
-            # Determina i campi da esportare:
-            # 1. Se specificati via query param 'fields' (es. ?fields=name,email)
-            # 2. Se specificati nella configurazione della rotta (csv_fields)
-            # 3. Default: tutti i campi dello schema
+            # Determine which fields to export:
+            # 1. From 'fields' query param (e.g., ?fields=name,email)
+            # 2. From the route configuration (csv_fields)
+            # 3. Default: all schema fields
             req_fields = request.args.get('fields')
             export_fields = req_fields.split(',') if req_fields else (csv_fields or list(schema_instance.fields.keys()))
             
-            cw.writerow(export_fields)
+            csv_writer.writerow(export_fields)
             
             for item in items:
                 data = schema_instance.dump(item)
-                cw.writerow([data.get(f, '') for f in export_fields])
+                csv_writer.writerow([data.get(f, '') for f in export_fields])
                 
-            output = make_response(si.getvalue())
+            output = make_response(string_io.getvalue())
             output.headers["Content-Disposition"] = "attachment; filename=export.csv"
             output.headers["Content-type"] = "text/csv"
             return output
 
-    # Rotte per il Singolo Elemento (Dettaglio, Modifica, Cancellazione)
+    # Routes for a Single Item (Detail, Update, Delete)
     @blueprint.route(url_prefix + "/<int:item_id>")
     class ItemResource(MethodView):
         @jwt_required()
         @blueprint.response(200, schema)
         def get(self, item_id):
-            """Recupera un elemento specifico"""
+            """Retrieve a specific item."""
             return model.query.get_or_404(item_id)
 
         @jwt_required()
         @blueprint.arguments(schema, location=location)
         @blueprint.response(200, schema)
         def put(self, item_data, item_id):
-            """Aggiorna un elemento esistente"""
+            """Update an existing item."""
             item = model.query.get_or_404(item_id)
             
             item_data = save_files(item_data)
@@ -208,7 +198,7 @@ def register_crud_routes(blueprint, model, schema, url_prefix="", search_fields=
         @jwt_required()
         @blueprint.response(204)
         def delete(self, item_id):
-            """Elimina un elemento"""
+            """Delete an item."""
             item = model.query.get_or_404(item_id)
             db.session.delete(item)
             db.session.commit()

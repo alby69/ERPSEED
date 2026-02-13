@@ -1,35 +1,32 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from .models import User
-from .extensions import db
+
 from .schemas import UserDisplaySchema, UserRegisterSchema, AdminPasswordResetSchema, UserUpdateSchema
 from .decorators import admin_required
-from .utils import apply_filters, paginate, apply_sorting
+from .services import UserService
 
 blp = Blueprint("users", __name__, description="Operations on users")
+
+user_service = UserService()
+
 
 @blp.route("/register")
 class UserRegister(MethodView):
     @blp.arguments(UserRegisterSchema)
     @blp.response(201, UserDisplaySchema)
     def post(self, user_data):
-        """Registra un nuovo utente"""
-        # user_data is a dict because load_instance=False in UserSchema
-        email = user_data["email"].lower()
-        if User.query.filter_by(email=email).first():
-            abort(409, message="A user with that email already exists.")
-
-        # Separate password before creating the model instance
-        password = user_data.pop("password")
-        user = User(**user_data)
-        user.email = email  # Ensure it's lowercase
-        user.set_password(password)
+        """Register a new user"""
+        data = user_data.__dict__ if hasattr(user_data, '__dict__') else user_data
         
-        db.session.add(user)
-        db.session.commit()
+        return user_service.register(
+            email=data['email'],
+            password=data['password'],
+            first_name=data.get('first_name'),
+            last_name=data.get('last_name'),
+            role=data.get('role', 'user')
+        )
 
-        return user
 
 @blp.route("/users")
 class UserList(MethodView):
@@ -38,11 +35,9 @@ class UserList(MethodView):
     @blp.response(200, UserDisplaySchema(many=True))
     def get(self):
         """List all users (Admins only)"""
-        query = User.query
-        query = apply_filters(query, User, ['email', 'first_name', 'last_name'])
-        query = apply_sorting(query, User)
-        items, headers = paginate(query)
+        items, headers = user_service.get_all(search_fields=['email', 'first_name', 'last_name'])
         return items, 200, headers
+
 
 @blp.route("/users/<int:user_id>")
 class UserResource(MethodView):
@@ -51,7 +46,7 @@ class UserResource(MethodView):
     @blp.response(200, UserDisplaySchema)
     def get(self, user_id):
         """Get user details (Admins only)"""
-        return User.query.get_or_404(user_id)
+        return user_service.get_by_id(user_id)
 
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
@@ -59,21 +54,8 @@ class UserResource(MethodView):
     @blp.response(200, UserDisplaySchema)
     def put(self, update_data, user_id):
         """Update user details (Admins only)"""
-        user = User.query.get_or_404(user_id)
-
-        if "email" in update_data:
-            email = update_data["email"].lower()
-            if email != user.email:
-                if User.query.filter_by(email=email).first():
-                    abort(409, message="Email already in use.")
-                user.email = email
-
-        for field in ["first_name", "last_name", "role", "is_active"]:
-            if field in update_data:
-                setattr(user, field, update_data[field])
-
-        db.session.commit()
-        return user
+        data = update_data.__dict__ if hasattr(update_data, '__dict__') else update_data
+        return user_service.update(user_id, data)
 
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
@@ -81,13 +63,9 @@ class UserResource(MethodView):
     def delete(self, user_id):
         """Delete a user (Admins only)"""
         current_user_id = get_jwt_identity()
-        if int(current_user_id) == user_id:
-            abort(403, message="You cannot delete your own account.")
-
-        user = User.query.get_or_404(user_id)
-        db.session.delete(user)
-        db.session.commit()
+        user_service.delete(user_id, current_user_id)
         return ""
+
 
 @blp.route("/users/<int:user_id>/password")
 class AdminUserPasswordReset(MethodView):
@@ -96,8 +74,5 @@ class AdminUserPasswordReset(MethodView):
     @blp.arguments(AdminPasswordResetSchema)
     def put(self, data, user_id):
         """Reset a user's password (Admins only)"""
-        user = User.query.get_or_404(user_id)
-        user.set_password(data["new_password"])
-        user.force_password_change = True
-        db.session.commit()
-        return {"message": f"Password for user {user.email} has been reset."}
+        password_data = data.__dict__ if hasattr(data, '__dict__') else data
+        return {"message": user_service.reset_password(user_id, password_data['new_password'])}

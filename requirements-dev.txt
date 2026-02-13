@@ -1,0 +1,5 @@
+# Test dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-flask>=1.2.0
+faker>=18.0.0

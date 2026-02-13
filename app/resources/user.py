@@ -9,11 +9,11 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
 from flask_mail import Message
 from marshmallow import fields
 from app.extensions import db, mail
-from app.models.user import User
+from backend.models import User
 from app.decorators import admin_required
 from app.schemas import UserSchema, UserLoginSchema, PasswordResetRequestSchema, PasswordResetSchema, PasswordChangeSchema, AdminPasswordResetSchema
 
-# Schema per la modifica utente: permette password vuote (che verranno ignorate)
+# Schema for user editing: allows empty password (which will be ignored)
 class UserEditSchema(UserSchema):
     password = fields.String(load_default=None, allow_none=True, validate=None)
 
@@ -32,13 +32,14 @@ class UserRegister(MethodView):
     @blp.arguments(UserSchema)
     @blp.response(201, UserSchema)
     def post(self, user_data):
+        """Register a new user."""
         if User.query.filter_by(email=user_data["email"]).first():
             abort(409, message="A user with that email already exists.")
 
         user = User(
-            email=user_data["email"],
-            password_hash=generate_password_hash(user_data["password"])
+            email=user_data["email"]
         )
+        user.set_password(user_data["password"])
         db.session.add(user)
         db.session.commit()
 
@@ -48,6 +49,7 @@ class UserRegister(MethodView):
 class UserLogin(MethodView):
     @blp.arguments(UserLoginSchema)
     def post(self, user_data):
+        """Logs a user in and returns tokens."""
         user = User.query.filter_by(email=user_data["email"]).first()
         if user and user.check_password(user_data["password"]):
             access_token = create_access_token(identity=str(user.id))
@@ -63,7 +65,7 @@ class UserLogin(MethodView):
 class TokenRefresh(MethodView):
     @jwt_required(refresh=True)
     def post(self):
-        """Genera un nuovo access token usando il refresh token"""
+        """Generate a new access token using the refresh token."""
         current_user = get_jwt_identity()
         new_access_token = create_access_token(identity=current_user)
         return {"access_token": new_access_token}
@@ -73,18 +75,18 @@ class UserMe(MethodView):
     @jwt_required()
     @blp.response(200, UserSchema)
     def get(self):
-        """Recupera i dati dell'utente loggato (Richiede Token)"""
+        """Get the data of the logged-in user (Token Required)."""
         user_id = get_jwt_identity()
         return User.query.get_or_404(user_id)
 
     @jwt_required()
     @blp.response(200, UserSchema)
     def put(self):
-        """Aggiorna il profilo dell'utente loggato (Avatar, Nome, Cognome)"""
+        """Update the profile of the logged-in user (Avatar, Name, Surname)."""
         user_id = get_jwt_identity()
         user = User.query.get_or_404(user_id)
         
-        # Gestione multipart/form-data per upload file
+        # Handle multipart/form-data for file upload
         if 'avatar' in request.files:
             filename = save_avatar(request.files['avatar'])
             if filename:
@@ -102,14 +104,14 @@ class UserPasswordChange(MethodView):
     @jwt_required()
     @blp.arguments(PasswordChangeSchema)
     def put(self, data):
-        """Cambia la password dell'utente loggato"""
+        """Change the password of the logged-in user."""
         user_id = get_jwt_identity()
         user = User.query.get_or_404(user_id)
 
         if not user.check_password(data["current_password"]):
             abort(401, message="Current password is incorrect.")
 
-        user.password_hash = generate_password_hash(data["new_password"])
+        user.set_password(data["new_password"])
         user.force_password_change = False
         db.session.commit()
         return {"message": "Password updated successfully."}
@@ -119,14 +121,14 @@ class UserList(MethodView):
     @admin_required()
     @blp.response(200, UserSchema(many=True))
     def get(self):
-        """Lista tutti gli utenti (Solo Admin)"""
+        """List all users (Admin Only)."""
         return User.query.all()
 
     @admin_required()
     @blp.arguments(UserSchema)
     @blp.response(201, UserSchema)
     def post(self, user_data):
-        """Crea un nuovo utente (Solo Admin)"""
+        """Create a new user (Admin Only)."""
         if User.query.filter_by(email=user_data["email"]).first():
             abort(409, message="A user with that email already exists.")
         
@@ -149,14 +151,14 @@ class UserResource(MethodView):
     @admin_required()
     @blp.response(200, UserSchema)
     def get(self, user_id):
-        """Dettaglio utente (Solo Admin)"""
+        """Get user details (Admin Only)."""
         return User.query.get_or_404(user_id)
 
     @admin_required()
     @blp.arguments(UserEditSchema(partial=True))
     @blp.response(200, UserSchema)
     def put(self, user_data, user_id):
-        """Modifica utente (Solo Admin)"""
+        """Edit a user (Admin Only)."""
         user = User.query.get_or_404(user_id)
         
         if "email" in user_data and user_data["email"] != user.email:
@@ -176,7 +178,7 @@ class UserResource(MethodView):
     @admin_required()
     @blp.response(204)
     def delete(self, user_id):
-        """Elimina utente (Solo Admin)"""
+        """Delete a user (Admin Only)."""
         user = User.query.get_or_404(user_id)
         current_user_id = get_jwt_identity()
         if str(user.id) == str(current_user_id):
@@ -191,9 +193,9 @@ class AdminUserPasswordReset(MethodView):
     @admin_required()
     @blp.arguments(AdminPasswordResetSchema)
     def put(self, data, user_id):
-        """Reset password utente (Solo Admin)"""
+        """Reset a user's password (Admin Only)."""
         user = User.query.get_or_404(user_id)
-        user.password_hash = generate_password_hash(data["new_password"])
+        user.set_password(data["new_password"])
         user.force_password_change = True
         db.session.commit()
         return {"message": f"Password for user {user.email} reset successfully."}
@@ -202,27 +204,28 @@ class AdminUserPasswordReset(MethodView):
 class ForgotPassword(MethodView):
     @blp.arguments(PasswordResetRequestSchema)
     def post(self, data):
-        """Richiede il reset della password (invia email simulata)"""
+        """Request a password reset (sends a simulated email)."""
         user = User.query.filter_by(email=data["email"]).first()
         if not user:
-            # Per sicurezza, non riveliamo se l'email esiste o no
+            # For security, we don't reveal if the email exists or not
             return {"message": "If the email exists, a reset link has been sent."}
         
-        # Crea un token valido per 15 minuti
+        # Create a token valid for 15 minutes
         expires = timedelta(minutes=15)
         reset_token = create_access_token(identity=str(user.id), additional_claims={"type": "reset"}, expires_delta=expires)
         
+        # TODO: The URL should not be hardcoded
         link = f"http://localhost:5173/reset-password?token={reset_token}"
         
         msg = Message("Password Reset Request", recipients=[user.email])
         msg.body = f"To reset your password, visit the following link: {link}"
         
-        # Invia l'email (assicurati che MAIL_SERVER sia configurato o usa un blocco try/except per dev)
+        # Send the email (make sure MAIL_SERVER is configured or use a try/except block for dev)
         try:
             mail.send(msg)
         except Exception as e:
             print(f"Error sending email: {e}")
-            # In dev mode, stampiamo comunque il link
+            # In dev mode, we still print the link for testing
             print(f"RESET LINK FOR {user.email}: {link}")
         
         return {"message": "If the email exists, a reset link has been sent.", "debug_link": link}
@@ -231,11 +234,9 @@ class ForgotPassword(MethodView):
 class ResetPassword(MethodView):
     @blp.arguments(PasswordResetSchema)
     def post(self, data):
-        """Resetta la password usando il token"""
-        user_id = get_jwt_identity() # Questo funziona perché il token viene validato da @jwt_required o manualmente
-        # Nota: flask-smorest/jwt-extended richiedono il token nell'header Authorization di solito.
-        # Qui lo passiamo nel body, quindi dobbiamo decodificarlo manualmente o usare un approccio diverso.
-        # Per semplicità, usiamo il token passato nel body e lo decodifichiamo.
+        """Reset the password using the token."""
+        # Note: flask-smorest/jwt-extended usually expect the token in the Authorization header.
+        # Here we pass it in the body, so we have to decode it manually.
         try:
             decoded_token = decode_token(data["token"])
             if decoded_token.get("type") != "reset":
@@ -246,7 +247,7 @@ class ResetPassword(MethodView):
             if not user:
                 abort(404, message="User not found.")
                 
-            user.password_hash = generate_password_hash(data["new_password"])
+            user.set_password(data["new_password"])
             db.session.commit()
             
             return {"message": "Password reset successfully."}

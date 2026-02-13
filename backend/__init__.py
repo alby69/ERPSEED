@@ -15,6 +15,14 @@ from .sales import blp as sales_bp
 from .builder import blp as builder_bp
 from .analytics import blp as analytics_bp
 from .dynamic_api import blp as dynamic_api_bp
+from .webhook_routes import blp as webhooks_bp
+from .workflow_routes import blp as workflows_bp
+
+# Import plugins
+from .plugins import PluginRegistry
+from .plugins.accounting.plugin import get_plugin as get_accounting_plugin
+from .plugins.hr.plugin import get_plugin as get_hr_plugin
+
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -57,7 +65,6 @@ def create_app(db_url=None):
     socketio.init_app(app, cors_allowed_origins="*")
     
     # --- CORS Configuration ---
-    # This allows the frontend at localhost:5173 to make requests to the backend.
     CORS(app, resources={r"/*": {
         "origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
         "expose_headers": ["X-Total-Count", "X-Pages", "X-Current-Page", "X-Per-Page", "Content-Range"],
@@ -85,5 +92,24 @@ def create_app(db_url=None):
     api.register_blueprint(builder_bp)
     api.register_blueprint(analytics_bp)
     api.register_blueprint(dynamic_api_bp)
+    api.register_blueprint(webhooks_bp)
+    api.register_blueprint(workflows_bp)
+
+    # --- Initialize Plugins ---
+    _init_plugins(app, api, db)
 
     return app
+
+
+def _init_plugins(app, api, db):
+    """Initialize and register plugins."""
+    # Register plugins
+    PluginRegistry.register(get_accounting_plugin())
+    PluginRegistry.register(get_hr_plugin())
+    
+    # Enable plugins
+    try:
+        PluginRegistry.enable('accounting', app=app, db=db, api=api)
+        PluginRegistry.enable('hr', app=app, db=db, api=api)
+    except Exception as e:
+        print(f"Warning: Could not enable some plugins: {e}")

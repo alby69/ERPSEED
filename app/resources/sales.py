@@ -3,9 +3,9 @@ from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask_jwt_extended import jwt_required
 from weasyprint import HTML
-from app.models.sales import SalesOrder
+from backend.models import SalesOrder
 from app.schemas import SalesOrderSchema
-from app.crud import register_crud_routes
+from backend.crud import register_crud_routes
 
 blp = Blueprint("sales", __name__, description="Operations on sales orders")
 
@@ -14,9 +14,9 @@ register_crud_routes(
     SalesOrder,
     SalesOrderSchema,
     url_prefix="/sales",
-    # Semantic Search: Cerca nel numero ordine O nel nome del cliente correlato
+    # Semantic Search: Search in the order number OR in the related customer's name
     search_fields=["number", "customer.name"],
-    # Semantic Load: Carica cliente e righe in un'unica query
+    # Semantic Load: Load customer and lines in a single query
     eager_load=["customer", "lines"]
 )
 
@@ -24,8 +24,10 @@ register_crud_routes(
 class SalesOrderPdf(MethodView):
     @jwt_required()
     def get(self, order_id):
-        """Genera il PDF dell'ordine"""
+        """Generate a PDF of the sales order"""
         order = SalesOrder.query.get_or_404(order_id)
+        # Note: render_template will look in the root 'templates' folder if it exists,
+        # or relative to the blueprint's folder. The file 'order_pdf.html' is in the root.
         html = render_template('order_pdf.html', order=order)
         pdf = HTML(string=html).write_pdf()
         

@@ -12,7 +12,8 @@ import {
     LogoutOutlined,
     HomeOutlined,
     DashboardOutlined,
-    SettingOutlined
+    SettingOutlined,
+    ApiOutlined
 } from '@ant-design/icons';
 import './Sidebar.css';
 
@@ -25,6 +26,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     // Voci di menu statiche per la sezione di amministrazione
     const adminItems = [
         { key: '/admin/builder', label: 'Builder', icon: <BuildOutlined /> },
+        { key: '/admin/workflows', label: 'Workflows', icon: <ApiOutlined /> },
         { key: '/users', label: 'Users', icon: <TeamOutlined /> },
         { key: '/admin/projects', label: 'Projects Admin', icon: <ProjectOutlined /> },
         { key: '/admin/audit-logs', label: 'Audit Logs', icon: <AuditOutlined /> },

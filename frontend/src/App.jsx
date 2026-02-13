@@ -8,6 +8,7 @@ import SysModelList from './pages/SysModelList';
 import ProjectLayout from './ProjectLayout'; // Path corretto
 import DynamicModelPage from './pages/DynamicModelPage';
 import AuditLogs from './pages/AuditLogs';
+import WorkflowsPage from './pages/WorkflowsPage';
 
 
 function App() {
@@ -169,6 +170,14 @@ function App() {
           element={
             <ProtectedRoute roles={['admin']}>
               <AuditLogs />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/workflows" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <WorkflowsPage />
             </ProtectedRoute>
           } 
         />

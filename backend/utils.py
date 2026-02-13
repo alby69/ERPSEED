@@ -8,7 +8,7 @@ from .models import AuditLog
 from flask_smorest import abort
 
 def apply_filters(query, model, search_fields):
-    """Applica filtri di ricerca testuale (q) alla query."""
+    """Apply text search filters (q) to the query."""
     q = request.args.get('q')
     if q and search_fields:
         filters = []
@@ -20,7 +20,7 @@ def apply_filters(query, model, search_fields):
     return query
 
 def apply_sorting(query, model):
-    """Applica ordinamento alla query basato su sort_by e sort_order."""
+    """Apply sorting to the query based on sort_by and sort_order."""
     sort_by = request.args.get('sort_by')
     sort_order = request.args.get('sort_order', 'asc')
 
@@ -33,7 +33,7 @@ def apply_sorting(query, model):
     return query
 
 def apply_date_filters(query, model, date_field='created_at'):
-    """Applica filtri per range di date (date_from, date_to)."""
+    """Apply date range filters (date_from, date_to)."""
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
 
@@ -60,7 +60,6 @@ def _build_column_definition(field):
     """Helper to build a single column's SQL definition string from a SysField."""
     type_mapping = _get_type_mapping()
 
-    # Computed fields are not real columns
     if field.type in ['formula', 'summary', 'lookup', 'calculated']:
         return None
 
@@ -99,9 +98,8 @@ def _get_foreign_key_definition(field, schema=None):
 
 def generate_create_table_sql(sys_model, schema=None):
     """
-    Genera una stringa SQL 'CREATE TABLE' da un oggetto SysModel, gestendo le relazioni.
+    Generate a 'CREATE TABLE' SQL string from a SysModel object, handling relations.
     """
-    # Mappatura dei tipi di campo a tipi di colonna PostgreSQL
     type_mapping = _get_type_mapping()
 
     table_name = sys_model.name
@@ -123,7 +121,6 @@ def generate_create_table_sql(sys_model, schema=None):
         if col_def:
             columns.append(col_def)
 
-        # Gestione delle relazioni (FOREIGN KEY)
         fk_def = _get_foreign_key_definition(field, schema=schema)
         if fk_def:
             foreign_keys.append(fk_def)
@@ -151,62 +148,43 @@ def generate_schema_diff_sql(sys_model, db_engine, schema=None):
     
     table_identifier = f'"{schema}"."{table_name}"' if schema else f'"{table_name}"'
 
-    # Get existing unique constraints
-    # unique_constraints is a list of dicts: [{'name': '...', 'column_names': ['...'], ...}]
     db_unique_constraints = inspector.get_unique_constraints(table_name, schema=schema)
-    # Map column name to constraint name for single-column unique constraints
     db_unique_map = {uc['column_names'][0]: uc['name'] 
                      for uc in db_unique_constraints if len(uc['column_names']) == 1}
     
-    # Get existing foreign keys
-    # foreign_keys is a list of dicts: [{'name': '...', 'constrained_columns': ['...'], 'referred_table': '...', ...}]
     db_foreign_keys = inspector.get_foreign_keys(table_name, schema=schema)
-    # Map column name to constraint name for single-column foreign keys
     db_fk_map = {fk['constrained_columns'][0]: fk['name'] 
                  for fk in db_foreign_keys if len(fk['constrained_columns']) == 1}
 
     db_column_names = set(db_columns.keys()) - {'id', 'created_at', 'updated_at'}
     model_field_names = set(model_fields.keys())
 
-    # --- 1. Find columns to ADD ---
     for field_name in model_field_names - db_column_names:
         field = model_fields[field_name]
         col_def = _build_column_definition(field)
         if col_def:
             sql_commands.append(f'ALTER TABLE {table_identifier} ADD COLUMN {col_def};')
 
-    # --- 2. Find columns to DROP ---
     for col_name in db_column_names - model_field_names:
         sql_commands.append(f'ALTER TABLE {table_identifier} DROP COLUMN "{col_name}" CASCADE;')
 
-    # --- 3. Find columns to MODIFY (NOT NULL, TYPE, UNIQUE, and FK changes) ---
     for field_name in model_field_names.intersection(db_column_names):
         field = model_fields[field_name]
         db_col = db_columns[field_name]
         
-        # Check NOT NULL constraint
         is_db_nullable = db_col.get('nullable', True)
         if field.required and is_db_nullable:
             sql_commands.append(f'ALTER TABLE {table_identifier} ALTER COLUMN "{field_name}" SET NOT NULL;')
         elif not field.required and not is_db_nullable:
             sql_commands.append(f'ALTER TABLE {table_identifier} ALTER COLUMN "{field_name}" DROP NOT NULL;')
 
-        # Check TYPE changes
         target_type_str = type_mapping.get(field.type)
         if target_type_str:
-            # Extract base type (e.g., 'VARCHAR' from 'VARCHAR(255)') for comparison
             target_base_type = target_type_str.split('(')[0]
-            # DB type from inspector is usually an object, convert to string
             current_db_type = str(db_col['type']).upper()
             
-            # Simple heuristic comparison (can be improved)
-            # e.g. if target is TEXT and current is VARCHAR, we might want to alter
-            # Note: SQLAlchemy inspector types can be complex (e.g. VARCHAR(255)), so we check containment or exact match
             if target_base_type not in current_db_type and current_db_type not in target_type_str:
-                 # Generate ALTER COLUMN TYPE with USING clause for safe conversion
-                 # The USING clause is critical for casting (e.g. text to integer)
                  using_clause = f'USING "{field_name}"::{target_type_str}'
-                 # Special case for boolean: cast from integer 0/1 or strings
                  if field.type == 'boolean':
                      using_clause = f'USING CASE WHEN "{field_name}" IN (\'true\', \'1\', \'t\', \'y\', \'yes\') THEN TRUE ELSE FALSE END'
                  
@@ -215,17 +193,14 @@ def generate_schema_diff_sql(sys_model, db_engine, schema=None):
     return sql_commands
 
 def get_table_object(model_name, schema=None):
-    """Riflette il database e restituisce un oggetto SQLAlchemy Table."""
+    """Reflect the database and return a SQLAlchemy Table object."""
     try:
-        # autoload_with=db.engine is a key part: it inspects the DB
         return Table(model_name, db.metadata, autoload_with=db.engine, schema=schema, extend_existing=True)
     except Exception as e:
-        # This will catch if the table doesn't exist in the database
-        # Using a generic exception catch as the specific one can vary (e.g., NoSuchTableError)
         abort(404, message=f"Table '{model_name}' not found in the database. Please generate it first.")
 
 def serialize_value(value):
-    """Converte tipi speciali (date, decimali) in formati JSON-serializzabili."""
+    """Convert special types (dates, decimals) to JSON-serializable formats."""
     if isinstance(value, (datetime.datetime, datetime.date)):
         return value.isoformat()
     if isinstance(value, decimal.Decimal):
@@ -233,7 +208,7 @@ def serialize_value(value):
     return value
 
 def paginate(query):
-    """Pagina la query e restituisce items e headers per il frontend."""
+    """Paginate the query and return items and headers for the frontend."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -245,13 +220,11 @@ def paginate(query):
         'X-Per-Page': str(pagination.per_page),
     }
     
-    # Aggiungi Content-Range per compatibilità con React Admin e altri frontend
     start = (pagination.page - 1) * pagination.per_page
     end = start + len(pagination.items) - 1
     if pagination.total == 0:
         headers['Content-Range'] = 'items */0'
     else:
-        # Gestione caso pagina vuota o fuori range
         if len(pagination.items) == 0:
             headers['Content-Range'] = f'items */{pagination.total}'
         else:
