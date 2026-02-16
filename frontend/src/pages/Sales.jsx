@@ -11,10 +11,10 @@ function Sales() {
 
   const columns = [
     { accessor: 'id', header: 'ID', sortField: 'id' },
-    { accessor: 'party.name', header: 'Cliente', sortField: 'party.name' },
-    { accessor: 'order_date', header: 'Data Ordine', render: (row) => new Date(row.order_date).toLocaleDateString(), sortField: 'order_date' },
-    { accessor: 'total_amount', header: 'Totale', render: (row) => currencyFormatter.format(row.total_amount), sortField: 'total_amount' },
-    { accessor: 'status', header: 'Stato', sortField: 'status' },
+    { accessor: 'party.name', header: 'Customer', sortField: 'party.name' },
+    { accessor: 'order_date', header: 'Order Date', render: (row) => new Date(row.order_date).toLocaleDateString(), sortField: 'order_date' },
+    { accessor: 'total_amount', header: 'Total', render: (row) => currencyFormatter.format(row.total_amount), sortField: 'total_amount' },
+    { accessor: 'status', header: 'Status', sortField: 'status' },
   ];
   
   const handleEdit = (item) => {
@@ -28,14 +28,14 @@ function Sales() {
   return (
     <Layout>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Ordini di Vendita</h2>
+        <h2>Sales Orders</h2>
         <div className="d-flex align-items-center gap-2">
           <SearchBar onSearch={(term) => setFilters({ q: term })} />
-          <button className="btn btn-primary" onClick={handleNew}>Nuovo Ordine</button>
+          <button className="btn btn-primary" onClick={handleNew}>New Order</button>
         </div>
       </div>
 
-      {loading && <div className="text-center">Caricamento...</div>}
+      {loading && <div className="text-center">Loading...</div>}
       {error && <div className="alert alert-danger">{error}</div>}
       
       <DataTable

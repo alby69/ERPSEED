@@ -14,7 +14,7 @@ class ProductList(MethodView):
     @jwt_required()
     @blp.response(200, ProductSchema(many=True))
     def get(self):
-        """Lista tutti i prodotti"""
+        """List all products"""
         query = Product.query
         query = apply_filters(query, Product, ['name', 'code', 'description'])
         query = apply_sorting(query, Product)
@@ -26,7 +26,7 @@ class ProductList(MethodView):
     @blp.arguments(ProductSchema)
     @blp.response(201, ProductSchema)
     def post(self, product_data):
-        """Crea un nuovo prodotto"""
+        """Create a new product"""
         # product_data is already a Product instance due to load_instance=True in ProductSchema
         if product_data.code and Product.query.filter_by(code=product_data.code).first():
             abort(409, message="Product code already exists")

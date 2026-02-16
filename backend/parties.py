@@ -14,7 +14,7 @@ class PartyList(MethodView):
     @jwt_required()
     @blp.response(200, PartySchema(many=True))
     def get(self):
-        """Lista tutti i clienti/fornitori"""
+        """List all customers/suppliers"""
         query = Party.query
         query = apply_filters(query, Party, ['name', 'email', 'vat_number'])
         query = apply_date_filters(query, Party)
@@ -27,7 +27,7 @@ class PartyList(MethodView):
     @blp.arguments(PartySchema)
     @blp.response(201, PartySchema)
     def post(self, party_data):
-        """Crea un nuovo cliente/fornitore"""
+        """Create a new customer/supplier"""
         # party_data is already a Party instance due to load_instance=True in PartySchema
         if party_data.vat_number and Party.query.filter_by(vat_number=party_data.vat_number).first():
             abort(409, message=f"Party with VAT number '{party_data.vat_number}' already exists.")
@@ -44,5 +44,5 @@ class PartyResource(MethodView):
     @jwt_required()
     @blp.response(200, PartySchema)
     def get(self, party_id):
-        """Dettaglio cliente/fornitore"""
+        """Customer/supplier detail"""
         return Party.query.get_or_404(party_id)

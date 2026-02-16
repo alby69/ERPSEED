@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Button, Table, Space, message, Popconfirm } from 'antd';
 import ProjectForm from '../components/ProjectForm';
 import ImportProjectButton from './ImportProjectButton';
-import { apiFetch } from '../utils/api'; // Assumo che tu abbia un helper per le API
+import { apiFetch } from '../utils/api'; // Assuming you have an API helper
 
 const ProjectsPage = () => {
     const [projects, setProjects] = useState([]);
@@ -18,10 +18,10 @@ const ProjectsPage = () => {
                 const data = await response.json();
                 setProjects(data);
             } else {
-                message.error('Errore nel caricamento dei progetti.');
+                message.error('Error loading projects.');
             }
         } catch (error) {
-            message.error('Si è verificato un errore durante il caricamento dei progetti.');
+            message.error('An error occurred while loading projects.');
         } finally {
             setLoading(false);
         }
@@ -45,14 +45,14 @@ const ProjectsPage = () => {
         try {
             const response = await apiFetch(`/projects/${projectId}`, { method: 'DELETE' });
             if (response.ok) {
-                message.success('Progetto eliminato con successo');
-                fetchProjects(); // Aggiorna la lista
+                message.success('Project deleted successfully');
+                fetchProjects(); // Refresh the list
             } else {
                 const errorData = await response.json();
-                message.error(errorData.message || 'Errore nell\'eliminazione del progetto.');
+                message.error(errorData.message || 'Error deleting the project.');
             }
         } catch (error) {
-            message.error('Si è verificato un errore durante l\'eliminazione del progetto.');
+            message.error('An error occurred while deleting the project.');
         }
     };
 
@@ -70,12 +70,12 @@ const ProjectsPage = () => {
                 a.click();
                 window.URL.revokeObjectURL(url);
                 a.remove();
-                message.success(`Template per '${project.title}' esportato.`);
+                message.success(`Template for '${project.title}' exported.`);
             } else {
-                message.error('Errore nell\'esportazione del template.');
+                message.error('Error exporting the template.');
             }
         } catch (error) {
-            message.error('Si è verificato un errore durante l\'esportazione del template.');
+            message.error('An error occurred while exporting the template.');
         }
     };
 
@@ -86,29 +86,29 @@ const ProjectsPage = () => {
 
     const handleFormSuccess = () => {
         handleModalClose();
-        fetchProjects(); // Aggiorna la lista dopo il successo
+        fetchProjects(); // Refresh the list after success
     };
 
     const columns = [
-        { title: 'Nome Interno', dataIndex: 'name', key: 'name', sorter: (a, b) => a.name.localeCompare(b.name) },
-        { title: 'Titolo', dataIndex: 'title', key: 'title' },
-        { title: 'Versione', dataIndex: 'version', key: 'version' },
-        { title: 'Proprietario', dataIndex: ['owner', 'email'], key: 'owner' },
+        { title: 'Internal Name', dataIndex: 'name', key: 'name', sorter: (a, b) => a.name.localeCompare(b.name) },
+        { title: 'Title', dataIndex: 'title', key: 'title' },
+        { title: 'Version', dataIndex: 'version', key: 'version' },
+        { title: 'Owner', dataIndex: ['owner', 'email'], key: 'owner' },
         {
-            title: 'Azione',
+            title: 'Action',
             key: 'action',
             render: (_, record) => (
                 <Space size="middle">
-                    <Button type="link" onClick={() => handleEdit(record)}>Modifica</Button>
+                    <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
                     <Button type="link" onClick={() => handleExport(record)}>Export</Button>
                     <Popconfirm
-                        title="Elimina il progetto"
-                        description="Sei sicuro di voler eliminare questo progetto? L'azione è irreversibile."
+                        title="Delete the project"
+                        description="Are you sure you want to delete this project? This action is irreversible."
                         onConfirm={() => handleDelete(record.id)}
-                        okText="Sì"
+                        okText="Yes"
                         cancelText="No"
                     >
-                        <Button type="link" danger>Elimina</Button>
+                        <Button type="link" danger>Delete</Button>
                     </Popconfirm>
                 </Space>
             ),
@@ -118,20 +118,20 @@ const ProjectsPage = () => {
     return (
         <div>
             <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1>Gestione Progetti</h1>
+                <h1>Project Management</h1>
                 <Space>
                     <ImportProjectButton onSuccess={fetchProjects} />
                     <Button type="primary" onClick={handleCreate}>
-                        Crea Nuovo Progetto
+                        Create New Project
                     </Button>
                 </Space>
             </div>
             <Table columns={columns} dataSource={projects} rowKey="id" loading={loading} />
             <Modal
-                title={editingProject ? 'Modifica Progetto' : 'Crea Nuovo Progetto'}
+                title={editingProject ? 'Edit Project' : 'Create New Project'}
                 open={isModalVisible}
                 onCancel={handleModalClose}
-                footer={null} // Il footer è gestito dal form
+                footer={null} // The footer is managed by the form
             >
                 <ProjectForm project={editingProject} onSuccess={handleFormSuccess} onCancel={handleModalClose} />
             </Modal>

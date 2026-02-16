@@ -5,9 +5,11 @@ flask-jwt-extended
 Flask-Migrate
 flask-socketio
 flask-smorest
+flask-babel
 psycopg2-binary
 python-dotenv
 gunicorn
 eventlet
 flask-marshmallow
 marshmallow-sqlalchemy
+requests

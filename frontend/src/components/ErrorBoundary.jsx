@@ -22,10 +22,10 @@ class ErrorBoundary extends React.Component {
       return (
         <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
             <div className="text-center p-4">
-                <h1 className="display-1 fw-bold">Errore</h1>
-                <p className="fs-3"> <span className="text-danger">Oops!</span> Qualcosa è andato storto.</p>
-                <p className="lead">Si è verificato un errore inatteso nell'applicazione.</p>
-                <button className="btn btn-primary" onClick={() => window.location.reload()}>Ricarica la Pagina</button>
+                <h1 className="display-1 fw-bold">Error</h1>
+                <p className="fs-3"> <span className="text-danger">Oops!</span> Something went wrong.</p>
+                <p className="lead">An unexpected error occurred in the application.</p>
+                <button className="btn btn-primary" onClick={() => window.location.reload()}>Reload Page</button>
             </div>
         </div>
       );

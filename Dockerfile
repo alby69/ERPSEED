@@ -26,5 +26,6 @@ COPY ./backend ./backend
 # Imposta la variabile d'ambiente per Flask e per i log
 ENV FLASK_APP=backend
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 
 EXPOSE 5000

@@ -1,91 +1,91 @@
-# Manuale Utente del Builder
+# Builder User Manual
 
-Il **Builder** è il cuore "Low-Code" di FlaskERP. Permette agli amministratori di creare, modificare ed estendere le funzionalità dell'applicazione direttamente dall'interfaccia web, senza scrivere una singola riga di codice.
+The **Builder** is the "Low-Code" heart of FlaskERP. It allows administrators to create, modify, and extend the application's functionalities directly from the web interface, without writing a single line of code.
 
-Questa guida ti accompagnerà attraverso i passaggi fondamentali per utilizzare il Builder e creare la tua applicazione personalizzata.
+This guide will walk you through the fundamental steps to use the Builder and create your own custom application.
 
-## 1. Gestione dei Progetti
+## 1. Project Management
 
-Un **Progetto** è un contenitore isolato per le tue applicazioni. Ogni progetto ha i propri modelli, dati, membri e impostazioni.
+A **Project** is an isolated container for your applications. Each project has its own models, data, members, and settings.
 
-### Creare un Nuovo Progetto
+### Creating a New Project
 
-1.  Naviga alla pagina di **Selezione Progetto**.
-2.  Se sei un amministratore, vedrai un pulsante **"Crea Progetto"**. Cliccalo.
-3.  Compila il form:
-    -   **Nome Interno**: Un identificatore unico per il progetto (es. `gestione_flotta`). Usa solo lettere minuscole, numeri e underscore. **Non può essere modificato dopo la creazione.**
-    -   **Titolo Visibile**: Il nome che apparirà nell'interfaccia (es. "Gestione Flotta Aziendale").
-    -   **Versione**: La versione iniziale del tuo progetto (es. `1.0.0`).
-    -   **Descrizione**: Una breve spiegazione dello scopo del progetto.
-4.  Clicca su **"Crea"**. Verrai reindirizzato alla dashboard del nuovo progetto.
+1.  Navigate to the **Project Selection** page.
+2.  If you are an administrator, you will see a **"Create Project"** button. Click it.
+3.  Fill out the form:
+    -   **Internal Name**: A unique identifier for the project (e.g., `fleet_management`). Use only lowercase letters, numbers, and underscores. **Cannot be changed after creation.**
+    -   **Visible Title**: The name that will appear in the interface (e.g., "Company Fleet Management").
+    -   **Version**: The initial version of your project (e.g., `1.0.0`).
+    -   **Description**: A brief explanation of the project's purpose.
+4.  Click **"Create"**. You will be redirected to the new project's dashboard.
 
-### Gestire le Impostazioni di un Progetto
+### Managing Project Settings
 
-Una volta dentro un progetto, puoi modificarne le impostazioni:
-1.  Nel menu laterale, clicca su **"Impostazioni"**.
-2.  Da qui puoi aggiornare il **Titolo**, la **Descrizione** e la **Versione**.
-3.  In fondo alla pagina, nella "Danger Zone", puoi **eliminare il progetto**. Questa azione è irreversibile e cancellerà tutti i modelli e i dati associati.
+Once inside a project, you can modify its settings:
+1.  In the side menu, click on **"Settings"**.
+2.  From here you can update the **Title**, **Description**, and **Version**.
+3.  At the bottom of the page, in the "Danger Zone", you can **delete the project**. This action is irreversible and will delete all associated models and data.
 
-### Gestire i Membri del Progetto
+### Managing Project Members
 
-Puoi decidere quali utenti hanno accesso a un progetto.
-1.  Nel menu laterale, clicca su **"Membri del Team"**.
-2.  Vedrai la lista degli utenti che fanno parte del progetto.
-3.  Per aggiungere un nuovo membro, clicca su **"Aggiungi Membro"**.
-    -   Se sei **Admin**, potrai selezionare un utente da una lista.
-    -   Se sei **Owner** (proprietario), dovrai inserire l'ID numerico dell'utente.
-4.  Per rimuovere un membro, clicca sull'icona del cestino accanto al suo nome.
-
----
-
-## 2. Gestione dei Modelli (Tabelle)
-
-Un **Modello** rappresenta una tabella nel database (es. `Veicoli`, `Manutenzioni`).
-
-### Creare un Nuovo Modello
-
-1.  Assicurati di essere nel progetto corretto.
-2.  Nel menu laterale, vai su **Amministrazione -> Builder**.
-3.  Clicca su **"Create New Model"**.
-4.  Seleziona il **Progetto** a cui appartiene il modello.
-5.  Compila i campi:
-    -   **Internal Name**: Il nome della tabella (es. `vehicles`).
-    -   **Display Title**: Il nome che apparirà nel menu (es. `Veicoli`).
-6.  Clicca **Create**.
-
-### Configurare i Permessi (ACL)
-
-⚠️ **Passaggio Fondamentale**: Senza permessi, nessuno (nemmeno l'admin) potrà vedere o usare il nuovo modulo.
-
-1.  Dalla lista dei modelli nel Builder, clicca su **"Manage"** accanto al tuo nuovo modello.
-2.  Nella pagina di dettaglio, clicca su **"Edit Model"**.
-3.  Nella sezione **Permissions (ACL)**, spunta le caselle per i ruoli che devono accedere.
-    -   **Read**: Permette di visualizzare i dati.
-    -   **Write**: Permette di creare, modificare ed eliminare dati.
-4.  Clicca **"Update Model"**.
-
-### Aggiungere Campi al Modello
-
-Nella pagina di dettaglio del modello, vedrai la lista dei campi.
-1.  Clicca su **"Add New Field"**.
-2.  Compila il form:
-    -   **Field Name**: Nome della colonna nel DB (es. `license_plate`).
-    -   **Field Title**: Etichetta visualizzata nel form (es. `Targa`).
-    -   **Type**: Il tipo di dato. Scegli tra `String`, `Integer`, `Date`, `Select`, `Relation`, etc.
-    -   **Required/Unique**: Imposta se il campo è obbligatorio o deve essere unico.
-3.  A seconda del tipo, appariranno opzioni aggiuntive (es. opzioni per `Select`, tabella target per `Relation`).
-4.  Salva il campo.
-
-### Generare la Tabella nel Database
-
-Dopo aver definito i campi, devi creare la tabella fisica nel database.
-1.  Nella pagina di dettaglio del modello, clicca sul pulsante blu **"Generate/Update DB Table"**.
-2.  Conferma l'operazione.
-
-Se in futuro modificherai i campi (aggiungendo, rimuovendo o cambiando tipo), dovrai cliccare di nuovo su questo pulsante per sincronizzare lo schema del database.
+You can decide which users have access to a project.
+1.  In the side menu, click on **"Team Members"**.
+2.  You will see the list of users who are part of the project.
+3.  To add a new member, click on **"Add Member"**.
+    -   If you are an **Admin**, you can select a user from a list.
+    -   If you are an **Owner**, you will need to enter the user's numeric ID.
+4.  To remove a member, click the trash icon next to their name.
 
 ---
 
-## 3. Utilizzare l'Applicazione Creata
+## 2. Model Management (Tables)
 
-Una volta generata la tabella, ricarica la pagina (F5). Nel menu laterale, sotto la voce **"Applicazioni"**, apparirà il tuo nuovo modulo. Cliccandoci, accederai a una pagina CRUD completa per gestire i tuoi dati.
+A **Model** represents a table in the database (e.g., `Vehicles`, `Maintenance`).
+
+### Creating a New Model
+
+1.  Make sure you are in the correct project.
+2.  In the side menu, go to **Administration -> Builder**.
+3.  Click on **"Create New Model"**.
+4.  Select the **Project** to which the model belongs.
+5.  Fill in the fields:
+    -   **Internal Name**: The name of the table (e.g., `vehicles`).
+    -   **Display Title**: The name that will appear in the menu (e.g., `Vehicles`).
+6.  Click **Create**.
+
+### Configuring Permissions (ACL)
+
+⚠️ **Fundamental Step**: Without permissions, no one (not even the admin) will be able to see or use the new module.
+
+1.  From the list of models in the Builder, click on **"Manage"** next to your new model.
+2.  On the detail page, click on **"Edit Model"**.
+3.  In the **Permissions (ACL)** section, check the boxes for the roles that need access.
+    -   **Read**: Allows viewing data.
+    -   **Write**: Allows creating, modifying, and deleting data.
+4.  Click **"Update Model"**.
+
+### Adding Fields to the Model
+
+On the model detail page, you will see the list of fields.
+1.  Click on **"Add New Field"**.
+2.  Fill out the form:
+    -   **Field Name**: Name of the column in the DB (e.g., `license_plate`).
+    -   **Field Title**: Label displayed in the form (e.g., `License Plate`).
+    -   **Type**: The data type. Choose from `String`, `Integer`, `Date`, `Select`, `Relation`, etc.
+    -   **Required/Unique**: Set whether the field is mandatory or must be unique.
+3.  Depending on the type, additional options will appear (e.g., options for `Select`, target table for `Relation`).
+4.  Save the field.
+
+### Generating the Table in the Database
+
+After defining the fields, you need to create the physical table in the database.
+1.  On the model detail page, click the blue **"Generate/Update DB Table"** button.
+2.  Confirm the operation.
+
+If you modify the fields in the future (adding, removing, or changing type), you will have to click this button again to synchronize the database schema.
+
+---
+
+## 3. Using the Created Application
+
+Once the table is generated, reload the page (F5). In the side menu, under the **"Applications"** item, your new module will appear. By clicking on it, you will access a complete CRUD page to manage your data.

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,12 +47,12 @@
                     // Reindirizza alla dashboard
                     window.location.href = 'dashboard.html';
                 } else {
-                    errorDiv.textContent = data.message || 'Errore durante il login';
+                    errorDiv.textContent = data.message || 'Login error';
                     errorDiv.classList.remove('d-none');
                 }
             } catch (error) {
-                console.error('Errore:', error);
-                errorDiv.textContent = 'Errore di connessione al server';
+                console.error('Error:', error);
+                errorDiv.textContent = 'Server connection error';
                 errorDiv.classList.remove('d-none');
             }
         });

@@ -113,12 +113,12 @@ function FormLines({ name, value = [], onChange, columns, fields, compute }) {
                 </td>
               ))}
               <td>
-                <button type="button" className="btn btn-xs btn-link p-0 me-2" onClick={() => handleEdit(idx)}>Modifica</button>
-                <button type="button" className="btn btn-xs btn-link p-0 text-danger" onClick={() => handleDelete(idx)}>Rimuovi</button>
+                <button type="button" className="btn btn-xs btn-link p-0 me-2" onClick={() => handleEdit(idx)}>Edit</button>
+                <button type="button" className="btn btn-xs btn-link p-0 text-danger" onClick={() => handleDelete(idx)}>Remove</button>
               </td>
             </tr>
           ))}
-          {value.length === 0 && <tr><td colSpan={columns.length + 1} className="text-center text-muted">Nessuna riga inserita</td></tr>}
+          {value.length === 0 && <tr><td colSpan={columns.length + 1} className="text-center text-muted">No lines added</td></tr>}
         </tbody>
       </table>
 

@@ -23,7 +23,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     const navigate = useNavigate();
     const { projectId } = useParams();
 
-    // Voci di menu statiche per la sezione di amministrazione
+    // Static menu items for the administration section
     const adminItems = [
         { key: '/admin/builder', label: 'Builder', icon: <BuildOutlined /> },
         { key: '/admin/workflows', label: 'Workflows', icon: <ApiOutlined /> },
@@ -32,22 +32,22 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         { key: '/admin/audit-logs', label: 'Audit Logs', icon: <AuditOutlined /> },
     ];
 
-    // Costruisce dinamicamente le voci del menu
+    // Dynamically build menu items
     const items = [
-        { key: '/projects', label: 'Seleziona Progetto', icon: <HomeOutlined /> },
+        { key: '/projects', label: 'Select Project', icon: <HomeOutlined /> },
     ];
 
     if (projectId) {
-        items.push({ key: `/projects/${projectId}`, label: 'Dashboard Progetto', icon: <DashboardOutlined /> });
-        items.push({ key: `/projects/${projectId}/members`, label: 'Membri del Team', icon: <TeamOutlined /> });
-        items.push({ key: `/projects/${projectId}/settings`, label: 'Impostazioni', icon: <SettingOutlined /> });
+        items.push({ key: `/projects/${projectId}`, label: 'Project Dashboard', icon: <DashboardOutlined /> });
+        items.push({ key: `/projects/${projectId}/members`, label: 'Team Members', icon: <TeamOutlined /> });
+        items.push({ key: `/projects/${projectId}/settings`, label: 'Settings', icon: <SettingOutlined /> });
     }
 
-    // Aggiunge le applicazioni del progetto corrente, se presenti
+    // Add the applications of the current project, if present
     if (projectMenuItems.length > 0) {
         items.push({
             key: 'project-apps',
-            label: 'Applicazioni',
+            label: 'Applications',
             icon: <AppstoreOutlined />,
             children: projectMenuItems.map(item => ({
                 key: item.path,
@@ -56,18 +56,18 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         });
     }
 
-    // Aggiunge la sezione di amministrazione se l'utente è un admin
+    // Add the administration section if the user is an admin
     if (user?.role === 'admin') {
         items.push({ type: 'divider' });
         items.push({
             key: 'admin-section',
-            label: 'Amministrazione',
+            label: 'Administration',
             icon: <BarChartOutlined />,
             children: adminItems,
         });
     }
 
-    // Aggiunge il pulsante di logout in fondo
+    // Add the logout button at the bottom
     items.push({ type: 'divider' });
     items.push({ key: 'logout', label: 'Logout', icon: <LogoutOutlined />, danger: true });
 

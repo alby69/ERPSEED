@@ -55,13 +55,13 @@ function Profile() {
     try {
       const res = await apiFetch('/me', { method: 'PUT', body: formData });
       if (res.ok) {
-        setMessage({ type: 'success', text: 'Profilo aggiornato!' });
-        if (refreshUser) refreshUser(); // Aggiorna il contesto utente
+        setMessage({ type: 'success', text: 'Profile updated!' });
+        if (refreshUser) refreshUser();
       } else {
-        setMessage({ type: 'danger', text: 'Errore aggiornamento profilo' });
+        setMessage({ type: 'danger', text: 'Error updating profile' });
       }
     } catch (err) {
-      setMessage({ type: 'danger', text: 'Errore di connessione' });
+      setMessage({ type: 'danger', text: 'Connection error' });
     }
   };
 
@@ -82,29 +82,29 @@ function Profile() {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage({ type: 'success', text: 'Password aggiornata con successo!' });
+        setMessage({ type: 'success', text: 'Password updated successfully!' });
         setPasswords({ current: '', new: '' });
         if (isForced) {
             setTimeout(() => navigate('/dashboard'), 1500);
         }
       } else {
-        setMessage({ type: 'danger', text: data.message || 'Errore durante l\'aggiornamento' });
+        setMessage({ type: 'danger', text: data.message || 'Error updating password' });
       }
     } catch (err) {
-      setMessage({ type: 'danger', text: 'Errore di connessione' });
+      setMessage({ type: 'danger', text: 'Connection error' });
     }
   };
 
   return (
     <Layout>
-      <h2>Profilo Utente</h2>
+      <h2>User Profile</h2>
       <hr />
 
       <div className="row">
         <div className="col-md-6 mb-4">
           <div className="card shadow-sm h-100">
             <div className="card-body">
-              <h5 className="card-title mb-3">Dati Personali</h5>
+              <h5 className="card-title mb-3">Personal Data</h5>
               <form onSubmit={handleProfileSubmit}>
                 <div className="text-center mb-3">
                   <div className="position-relative d-inline-block">
@@ -121,18 +121,18 @@ function Profile() {
                   </div>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Nome</label>
+                  <label className="form-label">First Name</label>
                   <input type="text" className="form-control" name="first_name" value={profileData.first_name} onChange={handleProfileChange} />
                 </div>
                 <div className="mb-3">
-                  <label className="form-label">Cognome</label>
+                  <label className="form-label">Last Name</label>
                   <input type="text" className="form-control" name="last_name" value={profileData.last_name} onChange={handleProfileChange} />
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Email</label>
                   <input type="text" className="form-control" value={user?.email} disabled readOnly />
                 </div>
-                <button type="submit" className="btn btn-success">Salva Profilo</button>
+                <button type="submit" className="btn btn-success">Save Profile</button>
               </form>
             </div>
           </div>
@@ -141,10 +141,10 @@ function Profile() {
         <div className="col-md-6 mb-4">
           <div className="card shadow-sm h-100">
             <div className="card-body">
-          <h5 className="card-title mb-3">Cambia Password</h5>
+          <h5 className="card-title mb-3">Change Password</h5>
           {isForced && (
             <div className="alert alert-warning">
-              <strong>Attenzione:</strong> È necessario cambiare la password al primo accesso o dopo un reset.
+              <strong>Warning:</strong> You must change your password on first login or after a reset.
             </div>
           )}
 
@@ -152,7 +152,7 @@ function Profile() {
           
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label">Password Attuale</label>
+              <label className="form-label">Current Password</label>
               <input 
                 type="password" 
                 className="form-control" 
@@ -163,7 +163,7 @@ function Profile() {
               />
             </div>
             <div className="mb-3">
-              <label className="form-label">Nuova Password</label>
+              <label className="form-label">New Password</label>
               <input 
                 type="password" 
                 className="form-control" 
@@ -174,7 +174,7 @@ function Profile() {
                 minLength="6"
               />
             </div>
-            <button type="submit" className="btn btn-primary">Aggiorna Password</button>
+            <button type="submit" className="btn btn-primary">Update Password</button>
           </form>
         </div>
       </div>

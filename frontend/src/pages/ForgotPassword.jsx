@@ -24,17 +24,17 @@ function ForgotPassword() {
       if (response.ok) {
         setMessage(data.message + (data.debug_link ? ` (Debug: ${data.debug_link})` : ''));
       } else {
-        setError(data.message || 'Errore nella richiesta');
+        setError(data.message || 'Error in request');
       }
     } catch (err) {
-      setError('Errore di connessione');
+      setError('Connection error');
     }
   };
 
   return (
     <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
       <div className="card shadow p-4" style={{ width: '400px' }}>
-        <h3 className="text-center mb-4">Recupero Password</h3>
+        <h3 className="text-center mb-4">Password Recovery</h3>
         {message && <div className="alert alert-success">{message}</div>}
         {error && <div className="alert alert-danger">{error}</div>}
         <form onSubmit={handleSubmit}>
@@ -42,9 +42,9 @@ function ForgotPassword() {
             <label className="form-label">Email</label>
             <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
-          <button type="submit" className="btn btn-primary w-100 mb-3">Invia Link</button>
+          <button type="submit" className="btn btn-primary w-100 mb-3">Send Link</button>
           <div className="text-center">
-            <Link to="/login">Torna al Login</Link>
+            <Link to="/login">Back to Login</Link>
           </div>
         </form>
       </div>

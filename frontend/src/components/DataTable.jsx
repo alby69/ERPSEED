@@ -69,7 +69,7 @@ function DataTable({ columns, data, onEdit, onDelete, actions, sortConfig, onSor
                         className="btn btn-sm btn-outline-primary me-2" 
                         onClick={() => onEdit(row)}
                       >
-                        Modifica
+                        Edit
                       </button>
                     )}
                     {onDelete && (
@@ -77,7 +77,7 @@ function DataTable({ columns, data, onEdit, onDelete, actions, sortConfig, onSor
                         className="btn btn-sm btn-outline-danger" 
                         onClick={() => onDelete(row.id)}
                       >
-                        Elimina
+                        Delete
                       </button>
                     )}
                   </td>
@@ -87,7 +87,7 @@ function DataTable({ columns, data, onEdit, onDelete, actions, sortConfig, onSor
             {data.length === 0 && (
               <tr>
                 <td colSpan={columns.length + (onEdit || onDelete || actions ? 1 : 0) + (selectable ? 1 : 0)} className="text-center py-4 text-muted">
-                  Nessun dato trovato.
+                  No data found.
                 </td>
               </tr>
             )}

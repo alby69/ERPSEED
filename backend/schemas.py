@@ -27,10 +27,10 @@ class UserRegisterSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
         load_instance = False  # Set to False to handle password hashing in the view
-        # Nasconde l'hash della password dalla serializzazione
+        # Exclude password_hash from serialization
         exclude = ("password_hash",)
     
-    # Campo password per il caricamento (non viene mai mostrato in output)
+    # Password field for loading (never shown in output)
     password = mm_fields.Str(required=True, load_only=True)
 
 class UserUpdateSchema(ma.SQLAlchemyAutoSchema):
@@ -38,7 +38,7 @@ class UserUpdateSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = False
         exclude = ("password_hash",)
-        # Tutti i campi sono opzionali per gli aggiornamenti
+        # All fields are optional for updates
         partial = True
 
 class AdminPasswordResetSchema(ma.Schema):
@@ -60,16 +60,16 @@ class PasswordChangeSchema(ma.Schema):
     current_password = mm_fields.Str(required=True)
     new_password = mm_fields.Str(required=True)
 
-# --- Schemi per i Progetti ---
+# --- Schemas for Projects ---
 class ProjectSchema(ma.SQLAlchemyAutoSchema):
-    # Mostra i dettagli del proprietario in sola lettura
+    # Show owner details in read-only mode
     owner = mm_fields.Nested(UserDisplaySchema(only=("id", "email")), dump_only=True)
     
     class Meta:
         model = Project
         load_instance = True
         include_fk = True
-        # Campi gestiti automaticamente dal server
+        # Fields managed automatically by the server
         dump_only = ("id", "created_at", "updated_at", "owner")
 
 class ProjectUpdateSchema(ma.SQLAlchemyAutoSchema):
@@ -77,13 +77,13 @@ class ProjectUpdateSchema(ma.SQLAlchemyAutoSchema):
         model = Project
         load_instance = True
         partial = True
-        # Non permettere di cambiare il proprietario tramite API
+        # Do not allow changing the owner via API
         exclude = ("owner_id",)
 
 class ProjectMemberSchema(ma.Schema):
     user_id = mm_fields.Int(required=True)
 
-# --- Schemi per il Builder ---
+# --- Schemas for the Builder ---
 class SysFieldSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SysField
@@ -115,7 +115,7 @@ class AuditLogSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
 
-# --- Schemi Anagrafiche ---
+# --- Master Data Schemas ---
 class PartySchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Party
@@ -128,13 +128,13 @@ class ProductSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
 
-# --- Schemi Vendite ---
+# --- Sales Schemas ---
 class SalesOrderLineSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SalesOrderLine
         load_instance = True
         include_fk = True
-        exclude = ("order",) # Evita ricorsione
+        exclude = ("order",) # Avoid recursion
 
 class SalesOrderSchema(ma.SQLAlchemyAutoSchema):
     lines = mm_fields.List(mm_fields.Nested(SalesOrderLineSchema))
@@ -144,7 +144,7 @@ class SalesOrderSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
 
-# --- Schemi Analytics ---
+# --- Analytics Schemas ---
 class SysChartSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SysChart

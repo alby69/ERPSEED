@@ -56,10 +56,13 @@ function Dashboard() {
     .then(data => setUsersList(data));
   };
 
-  if (!user) return null; // Layout will handle loading/redirect
+  if (!user) return null;
 
-  return (
-    <Layout>
+  // Se siamo dentro un progetto, non usare il Layout principale (già incluso in ProjectLayout)
+  const isInProject = !!projectId;
+
+  const dashboardContent = (
+    <>
       <div className="d-flex justify-content-between align-items-center">
         <h2>Dashboard</h2>
         <div className="d-flex gap-2 align-items-center">
@@ -79,7 +82,7 @@ function Dashboard() {
       {/* Selettore Dashboard */}
       {dashboards.length > 0 && (
         <div className="mb-4">
-          <label htmlFor="dashboard-selector" className="form-label fw-bold">Visualizza Dashboard</label>
+          <label htmlFor="dashboard-selector" className="form-label fw-bold">View Dashboard</label>
           <select 
             id="dashboard-selector" 
             className="form-select" 
@@ -120,6 +123,16 @@ function Dashboard() {
           </ul>
         </div>
       )}
+    </>
+  );
+
+  if (isInProject) {
+    return dashboardContent;
+  }
+
+  return (
+    <Layout>
+      {dashboardContent}
     </Layout>
   );
 }

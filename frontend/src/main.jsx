@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import { AuthProvider, NotificationProvider } from './context'
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+import './i18n.js';
 import 'bootstrap/dist/css/bootstrap.min.css' // Importa Bootstrap CSS
 
 ReactDOM.createRoot(document.getElementById('root')).render(

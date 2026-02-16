@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
       const res = await apiFetch('/me');
       if (res.ok) setUser(await res.json());
     } catch (e) {
-      console.error("Errore recupero utente dopo login", e);
+      console.error("Error retrieving user after login", e);
     }
   };
 

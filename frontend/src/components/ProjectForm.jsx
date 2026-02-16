@@ -24,14 +24,14 @@ const ProjectForm = ({ project, onSuccess, onCancel }) => {
             });
 
             if (response.ok) {
-                message.success(`Progetto ${project ? 'aggiornato' : 'creato'} con successo`);
+                message.success(`Project ${project ? 'updated' : 'created'} successfully`);
                 if (onSuccess) onSuccess();
             } else {
                 const errorData = await response.json();
-                message.error(errorData.message || `Errore nel ${project ? 'aggiornare' : 'creare'} il progetto.`);
+                message.error(errorData.message || `Error ${project ? 'updating' : 'creating'} the project.`);
             }
         } catch (error) {
-            message.error('Si è verificato un errore durante il salvataggio del progetto.');
+            message.error('An error occurred while saving the project.');
         }
     };
 
@@ -39,27 +39,27 @@ const ProjectForm = ({ project, onSuccess, onCancel }) => {
         <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ name: '', title: '', description: '', version: '1.0.0' }}>
             <Form.Item
                 name="name"
-                label="Nome Interno"
+                label="Internal Name"
                 rules={[
-                    { required: true, message: 'Per favore, inserisci il nome interno!' },
-                    { pattern: /^[a-z0-9_]+$/, message: 'Solo lettere minuscole, numeri e underscore sono permessi.' }
+                    { required: true, message: 'Please enter the internal name!' },
+                    { pattern: /^[a-z0-9_]+$/, message: 'Only lowercase letters, numbers, and underscores are allowed.' }
                 ]}
-                help="Usato per riferimenti interni (es. fleet_management)."
+                help="Used for internal references (e.g., fleet_management)."
             >
                 <Input disabled={!!project} />
             </Form.Item>
-            <Form.Item name="title" label="Titolo Visibile" rules={[{ required: true, message: 'Per favore, inserisci il titolo!' }]} help="Il nome mostrato nell'interfaccia utente.">
+            <Form.Item name="title" label="Visible Title" rules={[{ required: true, message: 'Please enter the title!' }]} help="The name displayed in the user interface.">
                 <Input />
             </Form.Item>
-            <Form.Item name="version" label="Versione" rules={[{ required: true, message: 'Inserisci la versione!' }]}>
+            <Form.Item name="version" label="Version" rules={[{ required: true, message: 'Please enter the version!' }]}>
                 <Input placeholder="1.0.0" />
             </Form.Item>
-            <Form.Item name="description" label="Descrizione">
+            <Form.Item name="description" label="Description">
                 <Input.TextArea rows={4} />
             </Form.Item>
             <Form.Item style={{ textAlign: 'right' }}>
-                <Button onClick={onCancel} style={{ marginRight: 8 }}>Annulla</Button>
-                <Button type="primary" htmlType="submit">{project ? 'Aggiorna' : 'Crea'}</Button>
+                <Button onClick={onCancel} style={{ marginRight: 8 }}>Cancel</Button>
+                <Button type="primary" htmlType="submit">{project ? 'Update' : 'Create'}</Button>
             </Form.Item>
         </Form>
     );

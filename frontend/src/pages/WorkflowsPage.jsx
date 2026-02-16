@@ -31,7 +31,7 @@ const WorkflowsPage = () => {
             const response = await api.get(`/workflows?project_id=${projectId || ''}`);
             setWorkflows(response.data);
         } catch (error) {
-            message.error('Errore nel caricamento dei workflow');
+            message.error('Error loading workflows');
         } finally {
             setLoading(false);
         }
@@ -60,7 +60,7 @@ const WorkflowsPage = () => {
             const response = await api.get(`/workflows/${workflowId}/executions`);
             setExecutions(response.data);
         } catch (error) {
-            message.error('Errore nel caricamento delle esecuzioni');
+            message.error('Error loading executions');
         }
     };
 
@@ -79,10 +79,10 @@ const WorkflowsPage = () => {
     const handleDelete = async (id) => {
         try {
             await api.delete(`/workflows/${id}`);
-            message.success('Workflow eliminato');
+            message.success('Workflow deleted');
             fetchWorkflows();
         } catch (error) {
-            message.error('Errore nell\'eliminazione del workflow');
+            message.error('Error deleting workflow');
         }
     };
 
@@ -90,15 +90,15 @@ const WorkflowsPage = () => {
         try {
             if (editingWorkflow) {
                 await api.put(`/workflows/${editingWorkflow.id}`, values);
-                message.success('Workflow aggiornato');
+                message.success('Workflow updated');
             } else {
                 await api.post('/workflows', { ...values, project_id: projectId });
-                message.success('Workflow creato');
+                message.success('Workflow created');
             }
             setModalVisible(false);
             fetchWorkflows();
         } catch (error) {
-            message.error('Errore nel salvataggio del workflow');
+            message.error('Error saving workflow');
         }
     };
 
@@ -107,7 +107,7 @@ const WorkflowsPage = () => {
             await api.put(`/workflows/${workflow.id}`, { is_active: !workflow.is_active });
             fetchWorkflows();
         } catch (error) {
-            message.error('Errore nell\'aggiornamento del workflow');
+            message.error('Error updating workflow');
         }
     };
 
@@ -115,15 +115,15 @@ const WorkflowsPage = () => {
         try {
             const response = await api.post(`/workflows/${workflow.id}/test`, {});
             if (response.data.status === 'completed') {
-                message.success('Workflow test completato con successo');
+                message.success('Workflow test completed successfully');
             } else {
-                message.error(`Workflow test fallito: ${response.data.error}`);
+                message.error(`Workflow test failed: ${response.data.error}`);
             }
             fetchExecutions(workflow.id);
             setSelectedWorkflow(workflow);
             setActiveTab('executions');
         } catch (error) {
-            message.error('Errore nel test del workflow');
+            message.error('Error testing workflow');
         }
     };
 
@@ -134,13 +134,13 @@ const WorkflowsPage = () => {
             fetchExecutions(workflow.id);
             setActiveTab('detail');
         } catch (error) {
-            message.error('Errore nel caricamento dei dettagli');
+            message.error('Error loading details');
         }
     };
 
     const columns = [
         {
-            title: 'Nome',
+            title: 'Name',
             dataIndex: 'name',
             key: 'name',
         },
@@ -156,20 +156,20 @@ const WorkflowsPage = () => {
             key: 'steps_count',
         },
         {
-            title: 'Stato',
+            title: 'Status',
             dataIndex: 'is_active',
             key: 'is_active',
             render: (active, record) => (
                 <Switch
                     checked={active}
                     onChange={() => handleToggleActive(record)}
-                    checkedChildren="Attivo"
-                    unCheckedChildren="Inattivo"
+                    checkedChildren="Active"
+                    unCheckedChildren="Inactive"
                 />
             ),
         },
         {
-            title: 'Azioni',
+            title: 'Actions',
             key: 'actions',
             render: (_, record) => (
                 <Space>
@@ -177,7 +177,7 @@ const WorkflowsPage = () => {
                         Test
                     </Button>
                     <Button type="link" icon={<ApiOutlined />} onClick={() => handleViewWorkflow(record)}>
-                        Dettagli
+                        Details
                     </Button>
                     <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
                     <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
@@ -193,12 +193,12 @@ const WorkflowsPage = () => {
             key: 'id',
         },
         {
-            title: 'Evento',
+            title: 'Event',
             dataIndex: 'trigger_event',
             key: 'trigger_event',
         },
         {
-            title: 'Stato',
+            title: 'Status',
             dataIndex: 'status',
             key: 'status',
             render: (status) => {
@@ -212,19 +212,19 @@ const WorkflowsPage = () => {
             },
         },
         {
-            title: 'Iniziato',
+            title: 'Started',
             dataIndex: 'started_at',
             key: 'started_at',
             render: (text) => text ? new Date(text).toLocaleString() : '-',
         },
         {
-            title: 'Completato',
+            title: 'Completed',
             dataIndex: 'completed_at',
             key: 'completed_at',
             render: (text) => text ? new Date(text).toLocaleString() : '-',
         },
         {
-            title: 'Errore',
+            title: 'Error',
             dataIndex: 'error_message',
             key: 'error_message',
             render: (text) => text ? <span style={{ color: 'red' }}>{text}</span> : '-',
@@ -235,7 +235,7 @@ const WorkflowsPage = () => {
         <div style={{ padding: '24px' }}>
             <h1>Workflow Automation</h1>
             <Alert
-                message="I workflow ti permettono di automatizzare azioni basate su eventi. Crea un workflow e aggiungi step per definire la logica di automazione."
+                message="Workflows allow you to automate actions based on events. Create a workflow and add steps to define automation logic."
                 type="info"
                 showIcon
                 style={{ marginBottom: '16px' }}
@@ -256,7 +256,7 @@ const WorkflowsPage = () => {
                                     onClick={handleCreate}
                                     style={{ marginBottom: '16px' }}
                                 >
-                                    Nuovo Workflow
+New Workflow
                                 </Button>
                                 <Table
                                     columns={columns}
@@ -269,14 +269,14 @@ const WorkflowsPage = () => {
                     },
                     {
                         key: 'detail',
-                        label: 'Dettagli Workflow',
+                        label: 'Workflow Details',
                         disabled: !selectedWorkflow,
                         children: selectedWorkflow ? (
                             <Card>
                                 <h2>{selectedWorkflow.name}</h2>
                                 <p>{selectedWorkflow.description}</p>
                                 <p><strong>Trigger:</strong> <Tag color="blue">{selectedWorkflow.trigger_event}</Tag></p>
-                                <p><strong>Stato:</strong> {selectedWorkflow.is_active ? 'Attivo' : 'Inattivo'}</p>
+                                <p><strong>Status:</strong> {selectedWorkflow.is_active ? 'Active' : 'Inactive'}</p>
                                 
                                 <h3>Steps</h3>
                                 {selectedWorkflow.steps && selectedWorkflow.steps.length > 0 ? (
@@ -285,18 +285,18 @@ const WorkflowsPage = () => {
                                         rowKey="id"
                                         pagination={false}
                                         columns={[
-                                            { title: 'Ordine', dataIndex: 'order', key: 'order' },
-                                            { title: 'Nome', dataIndex: 'name', key: 'name' },
-                                            { title: 'Tipo', dataIndex: 'step_type', key: 'step_type' },
-                                            { title: 'Configurazione', dataIndex: 'config', key: 'config', 
+                                            { title: 'Order', dataIndex: 'order', key: 'order' },
+                                            { title: 'Name', dataIndex: 'name', key: 'name' },
+                                            { title: 'Type', dataIndex: 'step_type', key: 'step_type' },
+                                            { title: 'Configuration', dataIndex: 'config', key: 'config', 
                                               render: (config) => <pre>{JSON.stringify(config, null, 2)}</pre> },
                                         ]}
                                     />
                                 ) : (
-                                    <p>Nessuno step definito</p>
+                                    <p>No steps defined</p>
                                 )}
 
-                                <h3 style={{ marginTop: '24px' }}>Esecuzioni Recenti</h3>
+                                <h3 style={{ marginTop: '24px' }}>Recent Executions</h3>
                                 <Table
                                     dataSource={executions}
                                     rowKey="id"
@@ -305,14 +305,14 @@ const WorkflowsPage = () => {
                                 />
                             </Card>
                         ) : (
-                            <p>Seleziona un workflow per vedere i dettagli</p>
+                            <p>Select a workflow to view details</p>
                         ),
                     },
                 ]}
             />
 
             <Modal
-                title={editingWorkflow ? 'Modifica Workflow' : 'Nuovo Workflow'}
+                title={editingWorkflow ? 'Edit Workflow' : 'New Workflow'}
                 open={modalVisible}
                 onCancel={() => setModalVisible(false)}
                 onOk={form.submit}
@@ -320,24 +320,24 @@ const WorkflowsPage = () => {
                 <Form form={form} layout="vertical" onFinish={handleSubmit}>
                     <Form.Item
                         name="name"
-                        label="Nome"
-                        rules={[{ required: true, message: 'Inserisci il nome del workflow' }]}
+                        label="Name"
+                        rules={[{ required: true, message: 'Enter workflow name' }]}
                     >
                         <Input />
                     </Form.Item>
                     <Form.Item
                         name="description"
-                        label="Descrizione"
+                        label="Description"
                     >
                         <TextArea rows={3} />
                     </Form.Item>
                     <Form.Item
                         name="trigger_event"
-                        label="Evento Trigger"
-                        rules={[{ required: true, message: 'Seleziona un evento trigger' }]}
+                        label="Trigger Event"
+                        rules={[{ required: true, message: 'Select a trigger event' }]}
                     >
                         <Select>
-                            <Select.Option value="*">Qualsiasi evento</Select.Option>
+                            <Select.Option value="*">Any event</Select.Option>
                             {triggers.map((trigger) => (
                                 <Select.Option key={trigger} value={trigger}>
                                     {trigger}

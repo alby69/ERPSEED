@@ -22,7 +22,7 @@ const ProjectSettingsPage = () => {
             const response = await apiFetch(`/projects/${projectId}`);
             if (!response.ok) {
                 const err = await response.json();
-                throw new Error(err.message || "Impossibile caricare i dettagli del progetto.");
+                throw new Error(err.message || "Unable to load project details.");
             }
             const data = await response.json();
             setProject(data);
@@ -51,9 +51,9 @@ const ProjectSettingsPage = () => {
             });
             if (!response.ok) {
                 const err = await response.json();
-                throw new Error(err.message || "Errore durante il salvataggio.");
+                throw new Error(err.message || "Error during save.");
             }
-            message.success("Impostazioni del progetto salvate con successo!");
+            message.success("Project settings saved successfully!");
         } catch (err) {
             message.error(err.message);
         } finally {
@@ -63,23 +63,23 @@ const ProjectSettingsPage = () => {
 
     const handleDeleteProject = () => {
         Modal.confirm({
-            title: 'Sei assolutamente sicuro?',
+            title: 'Are you absolutely sure?',
             icon: <ExclamationCircleOutlined />,
             content: (
                 <div>
-                    <p>Questa azione è irreversibile e non può essere annullata.</p>
-                    <p>Verranno eliminati permanentemente il progetto <strong>{project.title}</strong>, tutti i suoi modelli, i campi e <strong>TUTTI I DATI</strong> associati.</p>
-                    <p className="mt-3">Per confermare, digita il nome del progetto: <strong>{project.name}</strong></p>
+                    <p>This action is irreversible and cannot be undone.</p>
+                    <p>The project <strong>{project.title}</strong>, all its models, fields, and <strong>ALL DATA</strong> associated with it will be permanently deleted.</p>
+                    <p className="mt-3">To confirm, type the name of the project: <strong>{project.name}</strong></p>
                     <Input id="delete-confirm-input" placeholder={project.name} />
                 </div>
             ),
-            okText: 'Sì, elimina questo progetto',
+            okText: 'Yes, delete this project',
             okType: 'danger',
-            cancelText: 'Annulla',
+            cancelText: 'Cancel',
             async onOk() {
                 const confirmInput = document.getElementById('delete-confirm-input').value;
                 if (confirmInput !== project.name) {
-                    message.error('Il nome del progetto non corrisponde. Eliminazione annullata.');
+                    message.error('The project name does not match. Deletion cancelled.');
                     return Promise.reject('Confirmation text does not match');
                 }
                 
@@ -87,9 +87,9 @@ const ProjectSettingsPage = () => {
                     const response = await apiFetch(`/projects/${projectId}`, { method: 'DELETE' });
                     if (!response.ok) {
                         const err = await response.json();
-                        throw new Error(err.message || 'Errore durante l\'eliminazione del progetto.');
+                        throw new Error(err.message || 'Error deleting the project.');
                     }
-                    message.success('Progetto eliminato con successo.');
+                    message.success('Project deleted successfully.');
                     navigate('/projects'); // Redirect to project selection
                 } catch (err) {
                     message.error(err.message);
@@ -100,28 +100,28 @@ const ProjectSettingsPage = () => {
     };
 
     if (loading) {
-        return <Spin tip="Caricamento impostazioni..." style={{ display: 'block', marginTop: '50px' }} />;
+        return <Spin tip="Loading settings..." style={{ display: 'block', marginTop: '50px' }} />;
     }
 
     if (error) {
-        return <Alert message="Errore" description={error} type="error" showIcon />;
+        return <Alert message="Error" description={error} type="error" showIcon />;
     }
 
     return (
         <>
-            <Card title="Impostazioni del Progetto">
+            <Card title="Project Settings">
                 <Form form={form} layout="vertical" onFinish={onFinish}>
-                    <Form.Item name="title" label="Titolo del Progetto" rules={[{ required: true, message: 'Il titolo è obbligatorio.' }]}>
-                        <Input placeholder="Il nome visualizzato del progetto" />
+                    <Form.Item name="title" label="Project Title" rules={[{ required: true, message: 'The title is required.' }]}>
+                        <Input placeholder="The display name of the project" />
                     </Form.Item>
-                    <Form.Item name="description" label="Descrizione">
-                        <Input.TextArea rows={4} placeholder="Una breve descrizione del progetto" />
+                    <Form.Item name="description" label="Description">
+                        <Input.TextArea rows={4} placeholder="A brief description of the project" />
                     </Form.Item>
-                    <Form.Item name="version" label="Versione" rules={[{ required: true, message: 'La versione è obbligatoria.' }]}>
-                        <Input placeholder="Es. 1.0.1" />
+                    <Form.Item name="version" label="Version" rules={[{ required: true, message: 'The version is required.' }]}>
+                        <Input placeholder="e.g., 1.0.1" />
                     </Form.Item>
                     <Form.Item>
-                        <Button type="primary" htmlType="submit" loading={saving}>Salva Impostazioni</Button>
+                        <Button type="primary" htmlType="submit" loading={saving}>Save Settings</Button>
                     </Form.Item>
                 </Form>
             </Card>
@@ -131,11 +131,11 @@ const ProjectSettingsPage = () => {
             <Card title="Danger Zone" styles={{ header: { color: '#cf1322', backgroundColor: '#fff1f0' } }} style={{ borderColor: '#ffccc7' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                        <h5 style={{ color: '#cf1322' }}>Elimina questo progetto</h5>
-                        <p className="text-muted mb-0">Una volta eliminato, non c'è modo di tornare indietro. Assicurati.</p>
+                        <h5 style={{ color: '#cf1322' }}>Delete this project</h5>
+                        <p className="text-muted mb-0">Once deleted, there is no going back. Be sure.</p>
                     </div>
                     <Button type="primary" danger onClick={handleDeleteProject} disabled={!user || !project || (user.role !== 'admin' && user.id !== project.owner_id)}>
-                        Elimina Progetto
+                        Delete Project
                     </Button>
                 </div>
             </Card>

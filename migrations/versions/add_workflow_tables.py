@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 revision = 'add_workflow_tables'
-down_revision = '273d4507ec04_aggiunge_relazione_membri_progetti'
+down_revision = '273d4507ec04_add_project_members_relation'
 branch_labels = None
 depends_on = None
 

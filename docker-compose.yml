@@ -26,7 +26,7 @@ services:
       - ./backend:/app/backend
       - ./migrations:/app/migrations
     ports:
-      - "5000:5000"
+      - "5001:5000"
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/flaskerp
     depends_on:

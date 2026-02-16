@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Crea una cartella per i template/progetti
+# Create a folder for templates/projects
 RUN mkdir -p /app/projects
 
 COPY . .

@@ -53,7 +53,7 @@ const TagInput = ({ value = [], onChange, disabled }) => {
           </span>
         ))}
       </div>
-      {!disabled && <input type="text" className="form-control form-control-sm" placeholder="Scrivi e premi Invio..." value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} />}
+      {!disabled && <input type="text" className="form-control form-control-sm" placeholder="Type and press Enter..." value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} />}
     </div>
   );
 };
@@ -286,18 +286,18 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Sei sicuro di voler eliminare questo elemento?")) return;
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
 
     try {
       await deleteItem(id);
     } catch (err) {
       // L'errore è gestito dal hook o possiamo mostrarlo qui
-      alert(err.message || "Errore durante l'eliminazione");
+      alert(err.message || "Error during deletion");
     }
   };
 
   const handleClone = async (item) => {
-    if (!window.confirm("Vuoi duplicare questo elemento?")) return;
+    if (!window.confirm("Do you want to duplicate this item?")) return;
 
     try {
       const res = await apiFetch(`${apiPath}/${item.id}/clone`, {
@@ -306,11 +306,11 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
       if (res.ok) {
         refresh();
       } else {
-        alert("Errore durante la duplicazione");
+        alert("Error during duplication");
       }
     } catch (err) {
       console.error(err);
-      alert("Errore di connessione");
+      alert("Connection error");
     }
   };
 
@@ -347,13 +347,13 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!window.confirm(`Sei sicuro di voler eliminare ${selectedIds.length} elementi?`)) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} items?`)) return;
 
     try {
       await bulkDeleteItem(selectedIds);
       setSelectedIds([]); // Clear selection after deletion
     } catch (err) {
-      alert(err.message || "Errore durante l'eliminazione multipla");
+      alert(err.message || "Error during bulk deletion");
     }
   };
 
@@ -383,11 +383,11 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
       const value = formData[field.name];
 
       if (required && (value === null || value === undefined || value === '')) {
-        newErrors[field.name] = 'Questo campo è obbligatorio.';
+        newErrors[field.name] = 'This field is required.';
       } else if (field.validationRegex && value) {
         try {
           if (!new RegExp(field.validationRegex).test(String(value))) {
-            newErrors[field.name] = field.validationMessage || 'Formato non valido';
+            newErrors[field.name] = field.validationMessage || 'Invalid format';
           }
         } catch (e) {
           console.warn(`Invalid regex for field ${field.name}:`, e);
@@ -438,7 +438,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
       // Se il backend restituisce errori di validazione specifici (422), 
       // idealmente il hook dovrebbe restituirli in un formato gestibile.
       // Per ora mostriamo l'errore generico.
-      alert(err.message || "Errore durante il salvataggio");
+      alert(err.message || "Error during save");
     }
   };
 
@@ -466,7 +466,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
         a.click();
         a.remove();
       } else {
-        alert("Errore durante l'esportazione");
+        alert("Error during export");
       }
     } catch (err) {
       console.error(err);
@@ -526,7 +526,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
             disabled={isReadOnly}
           />
           {editingId && typeof formData[field.name] === 'string' && formData[field.name] && (
-             <div className="form-text text-muted">File attuale: {formData[field.name]}</div>
+             <div className="form-text text-muted">Current file: {formData[field.name]}</div>
           )}
         </div>
       );
@@ -568,7 +568,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
       const options = field.options || dynamicOptions[field.name] || [];
       return (
         <select className="form-select" {...commonProps}>
-          <option value="">Seleziona...</option>
+          <option value="">Select...</option>
           {options.map(opt => {
             // Determina valore e etichetta: supporta config custom (valueKey/labelKey) o default (id/name o value/label)
             const value = field.valueKey ? opt[field.valueKey] : (opt.value !== undefined ? opt.value : opt.id);
@@ -614,10 +614,10 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
         {selectedIds.length > 0 ? (
           <div className="d-flex gap-2">
             <button className="btn btn-danger" onClick={handleBulkDelete}>
-              Elimina Selezionati ({selectedIds.length})
+              Delete Selected ({selectedIds.length})
             </button>
             <button className="btn btn-secondary" onClick={() => setSelectedIds([])}>
-              Annulla
+              Cancel
             </button>
           </div>
         ) : (
@@ -627,14 +627,14 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
               <button 
                 className={`btn btn-outline-secondary ${viewMode === 'table' ? 'active' : ''}`} 
                 onClick={() => setViewMode('table')}
-                title="Vista Tabella"
+                title="Table View"
               >
                 <i className="bi bi-list"></i>
               </button>
               <button 
                 className={`btn btn-outline-secondary ${viewMode === 'card' ? 'active' : ''}`} 
                 onClick={() => setViewMode('card')}
-                title="Vista Griglia"
+                title="Grid View"
               >
                 <i className="bi bi-grid"></i>
             </button>
@@ -642,7 +642,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
               <button
                 className={`btn btn-outline-secondary ${viewMode === 'kanban' ? 'active' : ''}`}
                 onClick={() => setViewMode('kanban')}
-                title="Vista Kanban">
+                title="Kanban View">
                 <i className="bi bi-kanban"></i>
               </button>
             }
@@ -654,14 +654,14 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
                   className="form-control" 
                   value={dateFilters.from} 
                   onChange={(e) => handleDateFilterChange('from', e.target.value)}
-                  title="Data Inizio"
+                  title="Start Date"
                 />
                 <input 
                   type="date" 
                   className="form-control" 
                   value={dateFilters.to} 
                   onChange={(e) => handleDateFilterChange('to', e.target.value)}
-                  title="Data Fine"
+                  title="End Date"
                 />
               </div>
             )}
@@ -675,7 +675,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
             />
             <button className="btn btn-outline-primary" onClick={handleImportClick}>Import CSV</button>
             <button className="btn btn-outline-success" onClick={handleExport}>CSV</button>
-            <button className="btn btn-primary" onClick={openNewModal}>Nuovo</button>
+            <button className="btn btn-primary" onClick={openNewModal}>New</button>
           </div>
         )}
       </div>
@@ -698,7 +698,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
         </ul>
       )}
 
-      {loading && <div className="text-center my-2 text-muted">Caricamento in corso...</div>}
+      {loading && <div className="text-center my-2 text-muted">Loading...</div>}
       {hookError && <div className="alert alert-danger">{hookError}</div>}
 
       {viewMode === 'table' ? (
@@ -711,7 +711,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
             <button 
               className="btn btn-sm btn-outline-secondary me-2" 
               onClick={() => handleClone(row)}
-              title="Duplica"
+title="Duplicate"
             >
               <i className="bi bi-files"></i>
             </button>
@@ -754,7 +754,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
               </div>
             </div>
           ))}
-          {data.length === 0 && <div className="col-12 text-center text-muted py-5">Nessun dato trovato.</div>}
+          {data.length === 0 && <div className="col-12 text-center text-muted py-5">No data found.</div>}
         </div>
       )}
 
@@ -769,7 +769,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">{editingId ? 'Modifica' : 'Nuovo'} {pageTitle}</h5>
+                <h5 className="modal-title">{editingId ? 'Edit' : 'New'} {pageTitle}</h5>
                 <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
               </div>
               <div className="modal-body">
@@ -806,8 +806,8 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
                     })}
                   </div>
                   <div className="d-flex justify-content-end gap-2 mt-3">
-                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Annulla</button>
-                    <button type="submit" className="btn btn-primary">Salva</button>
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                    <button type="submit" className="btn btn-primary">Save</button>
                   </div>
                 </form>
               </div>

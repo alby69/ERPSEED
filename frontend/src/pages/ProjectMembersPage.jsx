@@ -15,7 +15,7 @@ const ProjectMembersPage = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [form] = Form.useForm();
     
-    // Stato per la selezione utenti (solo per Admin)
+    // State for user selection (Admin only)
     const [availableUsers, setAvailableUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
 
@@ -29,11 +29,11 @@ const ProjectMembersPage = () => {
                 const data = await response.json();
                 setMembers(data);
             } else {
-                message.error("Impossibile caricare i membri del progetto.");
+                message.error("Could not load project members.");
             }
         } catch (error) {
             console.error(error);
-            message.error("Errore di connessione.");
+            message.error("Connection error.");
         } finally {
             setLoading(false);
         }
@@ -43,7 +43,7 @@ const ProjectMembersPage = () => {
         fetchMembers();
     }, [fetchMembers]);
 
-    // Carica tutti gli utenti per la select (Solo Admin)
+    // Load all users for the select (Admin only)
     const fetchAllUsers = async () => {
         if (!isAdmin) return;
         setLoadingUsers(true);
@@ -51,7 +51,7 @@ const ProjectMembersPage = () => {
             const response = await apiFetch('/users');
             if (response.ok) {
                 const data = await response.json();
-                // Filtra gli utenti che sono già membri
+                // Filter users who are already members
                 const memberIds = new Set(members.map(m => m.id));
                 setAvailableUsers(data.filter(u => !memberIds.has(u.id)));
             }
@@ -77,16 +77,16 @@ const ProjectMembersPage = () => {
             });
 
             if (response.ok) {
-                message.success("Membro aggiunto con successo!");
+                message.success("Member added successfully!");
                 setIsModalVisible(false);
                 form.resetFields();
                 fetchMembers();
             } else {
                 const err = await response.json();
-                message.error(err.message || "Errore durante l'aggiunta del membro.");
+                message.error(err.message || "Error adding the member.");
             }
         } catch (error) {
-            message.error("Errore di connessione.");
+            message.error("Connection error.");
         }
     };
 
@@ -97,20 +97,20 @@ const ProjectMembersPage = () => {
             });
 
             if (response.ok) {
-                message.success("Membro rimosso.");
+                message.success("Member removed.");
                 fetchMembers();
             } else {
                 const err = await response.json();
-                message.error(err.message || "Impossibile rimuovere il membro.");
+                message.error(err.message || "Could not remove the member.");
             }
         } catch (error) {
-            message.error("Errore di connessione.");
+            message.error("Connection error.");
         }
     };
 
     const columns = [
         {
-            title: 'Utente',
+            title: 'User',
             dataIndex: 'email',
             key: 'email',
             render: (text, record) => (
@@ -124,7 +124,7 @@ const ProjectMembersPage = () => {
             )
         },
         {
-            title: 'Ruolo Sistema',
+            title: 'System Role',
             dataIndex: 'role',
             key: 'role',
             render: (role) => (
@@ -134,14 +134,14 @@ const ProjectMembersPage = () => {
             )
         },
         {
-            title: 'Azioni',
+            title: 'Actions',
             key: 'actions',
             render: (_, record) => (
                 <Popconfirm
-                    title="Rimuovere membro?"
-                    description={`Sei sicuro di voler rimuovere ${record.email} dal progetto?`}
+                    title="Remove member?"
+                    description={`Are you sure you want to remove ${record.email} from the project?`}
                     onConfirm={() => handleRemoveMember(record.id)}
-                    okText="Sì"
+                    okText="Yes"
                     cancelText="No"
                     disabled={record.id === user.id}
                 >
@@ -154,9 +154,9 @@ const ProjectMembersPage = () => {
     return (
         <div style={{ padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h2>Membri del Team</h2>
+                <h2>Team Members</h2>
                 <Button type="primary" icon={<UserAddOutlined />} onClick={handleOpenModal}>
-                    Aggiungi Membro
+                    Add Member
                 </Button>
             </div>
 
@@ -169,7 +169,7 @@ const ProjectMembersPage = () => {
             />
 
             <Modal
-                title="Aggiungi Membro al Progetto"
+                title="Add Member to Project"
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
                 onOk={() => form.submit()}
@@ -179,11 +179,11 @@ const ProjectMembersPage = () => {
                     {isAdmin ? (
                         <Form.Item 
                             name="user_id" 
-                            label="Seleziona Utente" 
-                            rules={[{ required: true, message: 'Seleziona un utente' }]}
+                            label="Select User" 
+                            rules={[{ required: true, message: 'Select a user' }]}
                         >
                             <Select 
-                                placeholder="Cerca utente..." 
+                                placeholder="Search user..." 
                                 showSearch
                                 optionFilterProp="children"
                                 loading={loadingUsers}
@@ -199,14 +199,14 @@ const ProjectMembersPage = () => {
                         <>
                             <Form.Item 
                                 name="user_id" 
-                                label="ID Utente" 
-                                rules={[{ required: true, message: 'Inserisci l\'ID dell\'utente' }]}
-                                help="Inserisci l'ID numerico dell'utente da invitare."
+                                label="User ID" 
+                                rules={[{ required: true, message: 'Enter the user ID' }]}
+                                help="Enter the numeric ID of the user to invite."
                             >
-                                <Input type="number" placeholder="Es. 5" />
+                                <Input type="number" placeholder="e.g., 5" />
                             </Form.Item>
                             <div style={{ marginBottom: 16, color: '#faad14', fontSize: '12px' }}>
-                                Nota: Come proprietario, devi conoscere l'ID dell'utente. Contatta un amministratore per cercare utenti per nome.
+                                Note: As an owner, you need to know the user's ID. Contact an administrator to search for users by name.
                             </div>
                         </>
                     )}

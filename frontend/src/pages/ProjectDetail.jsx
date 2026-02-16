@@ -12,9 +12,9 @@ import { apiFetch, BASE_URL } from '../utils';
 const TASK_STATUSES = ['todo', 'in_progress', 'review', 'done'];
 const STATUS_LABELS = {
   todo: 'To Do',
-  in_progress: 'In Corso',
-  review: 'In Revisione',
-  done: 'Completato'
+  in_progress: 'In Progress',
+  review: 'In Review',
+  done: 'Completed'
 };
 
 function ProjectDetail() {
@@ -88,11 +88,11 @@ function ProjectDetail() {
       setTasks((prev) => prev.filter((t) => t.id !== deletedTask.id));
     });
 
-    // Ascolta i nuovi commenti per aggiornare il modale se aperto
+    // Listen for new comments to update the modal if open
     socket.on('comment_created', (newComment) => {
-      // L'evento viene gestito all'interno del TaskDetailModal se attivo,
-      // ma potremmo voler aggiornare un contatore sulla card in futuro.
-      // Per ora lasciamo che il modale gestisca la sua lista.
+      // The event is handled inside the TaskDetailModal if active,
+      // but we might want to update a counter on the card in the future.
+      // For now, let the modal handle its own list.
     });
 
     return () => {
@@ -153,7 +153,7 @@ function ProjectDetail() {
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (!window.confirm("Sei sicuro di voler eliminare questo task?")) return;
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
     try {
       const res = await apiFetch(`/project-tasks/${taskId}`, {
         method: 'DELETE'
@@ -161,7 +161,7 @@ function ProjectDetail() {
       if (res.ok) {
         setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
       } else {
-        alert("Errore durante l'eliminazione");
+        alert("Error during deletion");
       }
     } catch (error) {
       console.error("Failed to delete task", error);
@@ -187,7 +187,7 @@ function ProjectDetail() {
         setShowTaskModal(false);
         setNewTask({ name: '', description: '', status: 'todo', due_date: '', assigned_to_id: '' });
       } else {
-        alert("Errore durante la creazione del task");
+        alert("Error creating the task");
       }
     } catch (error) {
       console.error("Failed to create task", error);
@@ -195,7 +195,7 @@ function ProjectDetail() {
   };
 
   if (isLoading) {
-    return <Layout><div className="p-4">Caricamento...</div></Layout>;
+    return <Layout><div className="p-4">Loading...</div></Layout>;
   }
 
   return (
@@ -203,13 +203,13 @@ function ProjectDetail() {
       <div className="p-4">
         <nav aria-label="breadcrumb">
           <ol className="breadcrumb">
-            <li className="breadcrumb-item"><Link to="/projects">Progetti</Link></li>
+            <li className="breadcrumb-item"><Link to="/projects">Projects</Link></li>
             <li className="breadcrumb-item active" aria-current="page">{project?.name}</li>
           </ol>
         </nav>
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className="mb-0">Kanban Board: {project?.name}</h2>
-          <button className="btn btn-primary" onClick={() => setShowTaskModal(true)}>+ Nuovo Task</button>
+          <button className="btn btn-primary" onClick={() => setShowTaskModal(true)}>+ New Task</button>
         </div>
         <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
           <div className="d-flex gap-3" style={{ overflowX: 'auto' }}>
@@ -231,13 +231,13 @@ function ProjectDetail() {
             <div className="modal-dialog">
               <div className="modal-content">
                 <div className="modal-header">
-                  <h5 className="modal-title">Nuovo Task</h5>
+                  <h5 className="modal-title">New Task</h5>
                   <button type="button" className="btn-close" onClick={() => setShowTaskModal(false)}></button>
                 </div>
                 <form onSubmit={handleCreateTask}>
                   <div className="modal-body">
                     <div className="mb-3">
-                      <label className="form-label">Titolo</label>
+                      <label className="form-label">Title</label>
                       <input 
                         type="text" 
                         className="form-control" 
@@ -247,7 +247,7 @@ function ProjectDetail() {
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Descrizione</label>
+                      <label className="form-label">Description</label>
                       <textarea 
                         className="form-control" 
                         rows="3"
@@ -257,7 +257,7 @@ function ProjectDetail() {
                     </div>
                     <div className="row">
                       <div className="col-md-6 mb-3">
-                          <label className="form-label">Stato</label>
+                          <label className="form-label">Status</label>
                           <select 
                               className="form-select"
                               value={newTask.status}
@@ -267,7 +267,7 @@ function ProjectDetail() {
                           </select>
                       </div>
                       <div className="col-md-6 mb-3">
-                          <label className="form-label">Scadenza</label>
+                          <label className="form-label">Due Date</label>
                           <input 
                               type="date" 
                               className="form-control"
@@ -277,13 +277,13 @@ function ProjectDetail() {
                       </div>
                     </div>
                     <div className="mb-3">
-                      <label className="form-label">Assegna a</label>
+                      <label className="form-label">Assign to</label>
                       <select 
                           className="form-select"
                           value={newTask.assigned_to_id}
                           onChange={(e) => setNewTask({...newTask, assigned_to_id: e.target.value})}
                       >
-                          <option value="">Nessuno</option>
+                          <option value="">None</option>
                           {users.map(u => (
                               <option key={u.id} value={u.id}>{u.first_name} {u.last_name} ({u.email})</option>
                           ))}
@@ -291,8 +291,8 @@ function ProjectDetail() {
                     </div>
                   </div>
                   <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" onClick={() => setShowTaskModal(false)}>Annulla</button>
-                    <button type="submit" className="btn btn-primary">Crea</button>
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowTaskModal(false)}>Cancel</button>
+                    <button type="submit" className="btn btn-primary">Create</button>
                   </div>
                 </form>
               </div>
@@ -379,7 +379,7 @@ const TaskCard = React.memo(function TaskCard({ task, onDelete, onClick }) {
               className="btn btn-sm btn-outline-danger py-0 px-2" 
               onClick={onDelete}
               onPointerDown={(e) => e.stopPropagation()} // Prevents drag start
-              title="Elimina"
+              title="Delete"
             >
               &times;
             </button>
@@ -387,7 +387,7 @@ const TaskCard = React.memo(function TaskCard({ task, onDelete, onClick }) {
           <p className="small text-muted">{task.description}</p>
           <div className="d-flex justify-content-between align-items-center mt-2">
             <small className="text-muted">
-              {task.due_date ? `Scadenza: ${new Date(task.due_date).toLocaleDateString()}` : ''}
+              {task.due_date ? `Due: ${new Date(task.due_date).toLocaleDateString()}` : ''}
             </small>
             {assignedUser && (
               <img
@@ -413,13 +413,13 @@ function TaskDetailModal({ task, onClose }) {
   const commentsEndRef = useRef(null);
 
   useEffect(() => {
-    // Carica commenti iniziali
+    // Load initial comments
     apiFetch(`/task-comments?task_id=${task.id}`)
       .then(res => res.json())
       .then(setComments)
       .catch(console.error);
 
-    // Setup socket listener locale per questo modale
+    // Setup local socket listener for this modal
     const socket = io(BASE_URL);
     socket.emit('join', { room: `project_${task.project_id}` });
     
@@ -460,19 +460,19 @@ function TaskDetailModal({ task, onClose }) {
           </div>
           <div className="modal-body d-flex flex-column">
             <div className="mb-4">
-              <h6>Descrizione</h6>
-              <p className="text-muted">{task.description || "Nessuna descrizione."}</p>
+              <h6>Description</h6>
+              <p className="text-muted">{task.description || "No description."}</p>
             </div>
             <hr />
-            <h6 className="mb-3">Commenti</h6>
+            <h6 className="mb-3">Comments</h6>
             <div className="flex-grow-1 overflow-auto bg-light p-3 rounded mb-3">
-              {comments.length === 0 && <p className="text-center text-muted small">Nessun commento ancora.</p>}
+              {comments.length === 0 && <p className="text-center text-muted small">No comments yet.</p>}
               {comments.map(c => (
                 <div key={c.id} className={`d-flex mb-3 ${c.user?.id === user?.id ? 'justify-content-end' : ''}`}>
                   <div className={`card ${c.user?.id === user?.id ? 'bg-primary text-white' : 'bg-white'}`} style={{ maxWidth: '75%' }}>
                     <div className="card-body p-2">
                       <small className={`d-block fw-bold mb-1 ${c.user?.id === user?.id ? 'text-white-50' : 'text-muted'}`}>
-                        {c.user?.full_name || 'Utente'} - {new Date(c.created_at).toLocaleString()}
+                        {c.user?.full_name || 'User'} - {new Date(c.created_at).toLocaleString()}
                       </small>
                       {c.content}
                     </div>
@@ -482,8 +482,8 @@ function TaskDetailModal({ task, onClose }) {
               <div ref={commentsEndRef} />
             </div>
             <form onSubmit={handleSendComment} className="d-flex gap-2">
-              <input type="text" className="form-control" placeholder="Scrivi un commento..." value={newComment} onChange={e => setNewComment(e.target.value)} />
-              <button type="submit" className="btn btn-primary">Invia</button>
+              <input type="text" className="form-control" placeholder="Write a comment..." value={newComment} onChange={e => setNewComment(e.target.value)} />
+              <button type="submit" className="btn btn-primary">Send</button>
             </form>
           </div>
         </div>

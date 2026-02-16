@@ -72,11 +72,11 @@ function SysModelList() {
       });
       
       if (response.ok) {
-        alert('Modello clonato con successo! Ricordati di generare la tabella nel DB.');
-        window.location.reload(); // Aggiorna lista e sidebar
+alert('Model cloned successfully! Remember to generate the table in the DB.');
+        window.location.reload();
       } else {
         const data = await response.json();
-        alert(data.message || 'Errore durante la clonazione');
+        alert(data.message || 'Error during cloning');
       }
     } catch (err) {
       alert(err.message);

@@ -15,17 +15,17 @@ function SalesOrderDetail() {
     const currencyFormatter = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
 
     const lineColumns = [
-        { accessor: 'product.name', header: 'Prodotto' },
-        { accessor: 'quantity', header: 'Quantità' },
-        { accessor: 'unit_price', header: 'Prezzo Unit.', render: (row) => currencyFormatter.format(row.unit_price) },
-        { accessor: 'line_total', header: 'Totale', render: (row) => currencyFormatter.format(row.line_total) },
+        { accessor: 'product.name', header: 'Product' },
+        { accessor: 'quantity', header: 'Quantity' },
+        { accessor: 'unit_price', header: 'Unit Price', render: (row) => currencyFormatter.format(row.unit_price) },
+        { accessor: 'line_total', header: 'Total', render: (row) => currencyFormatter.format(row.line_total) },
     ];
 
     const lineFields = [
-        { name: 'product_id', label: 'Prodotto', type: 'select', apiUrl: '/products', valueKey: 'id', labelKey: 'name', colClass: 'col-md-5' },
-        { name: 'quantity', label: 'Qtà', type: 'number', colClass: 'col-md-2' },
-        { name: 'unit_price', label: 'Prezzo', type: 'currency', colClass: 'col-md-2' },
-        { name: 'line_total', label: 'Totale', type: 'currency', readOnly: true, colClass: 'col-md-3' },
+        { name: 'product_id', label: 'Product', type: 'select', apiUrl: '/products', valueKey: 'id', labelKey: 'name', colClass: 'col-md-5' },
+        { name: 'quantity', label: 'Qty', type: 'number', colClass: 'col-md-2' },
+        { name: 'unit_price', label: 'Price', type: 'currency', colClass: 'col-md-2' },
+        { name: 'line_total', label: 'Total', type: 'currency', readOnly: true, colClass: 'col-md-3' },
     ];
     
     const computeTotals = (lines = []) => {
@@ -98,45 +98,45 @@ function SalesOrderDetail() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            alert('Ordine salvato con successo!');
+            alert('Order saved successfully!');
             navigate('/sales');
         } catch (err) {
-            alert(`Errore nel salvataggio: ${err.message}`);
+            alert(`Error saving: ${err.message}`);
         }
     };
 
-    if (loading) return <Layout><div>Caricamento ordine...</div></Layout>;
+    if (loading) return <Layout><div>Loading order...</div></Layout>;
     if (error) return <Layout><div className="alert alert-danger m-4">{error}</div></Layout>;
-    if (!order) return <Layout><div>Ordine non trovato.</div></Layout>;
+    if (!order) return <Layout><div>Order not found.</div></Layout>;
 
     return (
         <Layout>
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>{isNew ? 'Nuovo Ordine di Vendita' : `Ordine di Vendita #${order.id}`}</h2>
+                <h2>{isNew ? 'New Sales Order' : `Sales Order #${order.id}`}</h2>
                 <div>
-                    <Link to="/sales" className="btn btn-secondary me-2">Indietro</Link>
-                    <button onClick={handleSave} className="btn btn-primary">Salva Ordine</button>
+                    <Link to="/sales" className="btn btn-secondary me-2">Back</Link>
+                    <button onClick={handleSave} className="btn btn-primary">Save Order</button>
                 </div>
             </div>
 
             <div className="card">
-                <div className="card-header">Dettagli Ordine</div>
+                <div className="card-header">Order Details</div>
                 <div className="card-body">
                     <div className="row">
                         <div className="col-md-6 mb-3">
-                            <label className="form-label">Cliente</label>
+                            <label className="form-label">Customer</label>
                             <select name="party_id" value={order.party_id} onChange={handleHeaderChange} className="form-select">
-                                <option value="">Seleziona Cliente</option>
+                                <option value="">Select Customer</option>
                                 {(dynamicOptions.parties || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
                         </div>
                         <div className="col-md-6 mb-3">
-                            <label className="form-label">Data Ordine</label>
+                            <label className="form-label">Order Date</label>
                             <input type="date" name="order_date" value={(order.order_date || '').substring(0, 10)} onChange={handleHeaderChange} className="form-control" />
                         </div>
                     </div>
                     <hr />
-                    <h5>Linee Ordine</h5>
+                    <h5>Order Lines</h5>
                     <FormLines name="lines" value={order.lines} onChange={handleLinesChange} columns={lineColumns} fields={lineFields} />
                     <div className="text-end mt-3"><h4>Totale: {currencyFormatter.format(order.total_amount)}</h4></div>
                 </div>

@@ -12,13 +12,13 @@ import WorkflowsPage from './pages/WorkflowsPage';
 
 
 function App() {
-  // Componente per le rotte pubbliche (es. Login)
-  // Se l'utente è già autenticato, lo reindirizza alla dashboard
+  // Component for public routes (e.g., Login)
+  // If the user is already authenticated, redirect to the dashboard
   const PublicRoute = ({ children }) => {
     const { user, isLoading } = useAuth();
 
     if (isLoading) {
-      return <div className="p-5 text-center">Caricamento...</div>;
+      return <div className="p-5 text-center">Loading...</div>;
     }
 
     if (user) {
@@ -28,19 +28,19 @@ function App() {
     return children;
   };
 
-  // Componente per proteggere le rotte in base all'autenticazione e al ruolo
+  // Component to protect routes based on authentication and role
   const ProtectedRoute = ({ children, roles }) => {
     const { user, isLoading } = useAuth();
 
     if (isLoading) {
-      return <div className="p-5 text-center">Caricamento...</div>;
+      return <div className="p-5 text-center">Loading...</div>;
     }
 
     if (!user) {
       return <Navigate to="/login" replace />;
     }
 
-    // Fix: Supporta sia user.role (stringa) che user.roles (array di oggetti)
+    // Fix: Support both user.role (string) and user.roles (array of objects)
     const hasRole = !roles || roles.includes(user.role) || user.roles?.some(r => roles.includes(r.name));
     if (!hasRole) {
       return <Navigate to="/dashboard" replace />; // Redirect to a safe page
@@ -49,11 +49,12 @@ function App() {
     return children;
   };
 
-  return (
+return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route 
-          path="/login" 
+          path="/login"
           element={
             <PublicRoute>
               <Login />
@@ -66,9 +67,9 @@ function App() {
         <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectLayout /></ProtectedRoute>}>
             {/* A default page for a project, e.g. a dashboard */}
             <Route index element={<Dashboard />} /> 
-            {/* Pagina gestione membri */}
+            {/* Member management page */}
             <Route path="members" element={<ProjectMembersPage />} />
-            {/* Pagina impostazioni progetto */}
+            {/* Project settings page */}
             <Route path="settings" element={<ProjectSettingsPage />} />
             {/* The route for dynamic models, now nested */}
             <Route path="data/:modelName" element={<DynamicModelPage />} /> 
@@ -161,7 +162,7 @@ function App() {
           path="/admin/bi-builder" 
           element={
             <ProtectedRoute roles={['admin']}>
-              <div className="p-5 text-center"><h2>BI Builder</h2><p>Modulo in arrivo...</p></div>
+              <div className="p-5 text-center"><h2>BI Builder</h2><p>Module coming soon...</p></div>
             </ProtectedRoute>
           } 
         />
@@ -181,7 +182,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        {/* Reindirizza tutto alla dashboard; se non loggato, ProtectedRoute manderà al login */}
+        {/* Redirect everything to the dashboard; if not logged in, ProtectedRoute will send to login */}
         <Route path="*" element={<Navigate to="/projects" replace />} />
       </Routes>
     </BrowserRouter>

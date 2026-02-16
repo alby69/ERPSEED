@@ -24,30 +24,30 @@ function ResetPassword() {
 
       const data = await response.json();
       if (response.ok) {
-        setMessage('Password aggiornata con successo! Reindirizzamento...');
+        setMessage('Password updated successfully! Redirecting...');
         setTimeout(() => navigate('/login'), 2000);
       } else {
-        setError(data.message || 'Errore nel reset della password');
+        setError(data.message || 'Error resetting password');
       }
     } catch (err) {
-      setError('Errore di connessione');
+      setError('Connection error');
     }
   };
 
-  if (!token) return <div className="p-5 text-center">Token mancante.</div>;
+  if (!token) return <div className="p-5 text-center">Missing token.</div>;
 
   return (
     <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
       <div className="card shadow p-4" style={{ width: '400px' }}>
-        <h3 className="text-center mb-4">Nuova Password</h3>
+        <h3 className="text-center mb-4">New Password</h3>
         {message && <div className="alert alert-success">{message}</div>}
         {error && <div className="alert alert-danger">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label className="form-label">Nuova Password</label>
+            <label className="form-label">New Password</label>
             <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required minLength="6" />
           </div>
-          <button type="submit" className="btn btn-primary w-100">Salva Password</button>
+          <button type="submit" className="btn btn-primary w-100">Save Password</button>
         </form>
       </div>
     </div>

@@ -11,8 +11,8 @@ const ImportProjectButton = ({ onSuccess }) => {
 
         setLoading(true);
         try {
-            // Nota: Non impostiamo 'Content-Type' esplicitamente.
-            // Il browser lo imposterà automaticamente come 'multipart/form-data' con il boundary corretto.
+            // Note: We don't set 'Content-Type' explicitly.
+            // The browser will automatically set it as 'multipart/form-data' with the correct boundary.
             const response = await apiFetch('/projects/import', {
                 method: 'POST',
                 body: formData,
@@ -20,16 +20,16 @@ const ImportProjectButton = ({ onSuccess }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                message.success(data.message || 'Progetto importato con successo!');
+                message.success(data.message || 'Project imported successfully!');
                 onUploadSuccess(data);
                 if (onSuccess) onSuccess();
             } else {
                 const error = await response.json();
-                message.error(error.message || 'Errore durante l\'importazione.');
+                message.error(error.message || 'Error during import.');
                 onError(new Error(error.message));
             }
         } catch (err) {
-            message.error('Errore di connessione durante l\'upload.');
+            message.error('Connection error during upload.');
             onError(err);
         } finally {
             setLoading(false);
@@ -38,7 +38,7 @@ const ImportProjectButton = ({ onSuccess }) => {
 
     return (
         <Upload customRequest={customRequest} showUploadList={false} accept=".json">
-            <Button loading={loading}>Importa Template</Button>
+            <Button loading={loading}>Import Template</Button>
         </Upload>
     );
 };

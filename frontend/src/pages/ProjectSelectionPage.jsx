@@ -26,12 +26,12 @@ const ProjectSelectionPage = () => {
             const response = await apiFetch('/projects');                
             if (!response.ok) {
                 const err = await response.json();
-                throw new Error(err.message || "Impossibile caricare i progetti.");
+                throw new Error(err.message || "Unable to load projects.");
             }
             const data = await response.json();
             setProjects(data);
         } catch (err) {
-            setError("Errore di connessione al server.");
+            setError("Server connection error.");
         } finally {
             setLoading(false);
         }
@@ -87,7 +87,7 @@ const ProjectSelectionPage = () => {
 
     if (loading) {
         return (
-            <Spin size="large" tip="Caricamento progetti..." fullscreen />
+            <Spin size="large" tip="Loading projects..." fullscreen />
         );
     }
 
@@ -95,7 +95,7 @@ const ProjectSelectionPage = () => {
         <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                 <Title level={2} style={{ margin: 0 }}>
-                    Seleziona un Progetto
+                    Select a Project
                 </Title>
                 <div style={{ display: 'flex', gap: '16px' }}>
                     <Radio.Group value={viewMode} onChange={handleViewChange}>
@@ -107,20 +107,20 @@ const ProjectSelectionPage = () => {
                         onChange={setSortOrder}
                         style={{ width: 180 }}
                     >
-                        <Option value="title_asc">Ordina per Titolo (A-Z)</Option>
-                        <Option value="title_desc">Ordina per Titolo (Z-A)</Option>
-                        <Option value="date_desc">Più Recenti</Option>
-                        <Option value="date_asc">Meno Recenti</Option>
+                        <Option value="title_asc">Sort by Title (A-Z)</Option>
+                        <Option value="title_desc">Sort by Title (Z-A)</Option>
+                        <Option value="date_desc">Most Recent</Option>
+                        <Option value="date_asc">Least Recent</Option>
                     </Select>
                     <Input.Search
-                        placeholder="Cerca progetto..."
+                        placeholder="Search project..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{ width: 250 }}
                     />
                     {user?.role === 'admin' && (
                         <Button type="primary" icon={<PlusOutlined />} onClick={handleShowModal}>
-                            Crea Progetto
+                            Create Project
                         </Button>
                     )}
                 </div>
@@ -128,7 +128,7 @@ const ProjectSelectionPage = () => {
 
             {error && (
                 <Alert 
-                    message="Errore" 
+                    message="Error" 
                     description={error} 
                     type="error" 
                     showIcon 
@@ -145,17 +145,17 @@ const ProjectSelectionPage = () => {
                         <List.Item
                             actions={[
                                 <Button type="primary" onClick={() => handleSelectProject(project.id)}>
-                                    Apri
+                                    Open
                                 </Button>,
                             ]}
                         >
                             <List.Item.Meta
                                 avatar={<Avatar shape="square" size="large" icon={<ProjectOutlined />} />}
                                 title={<a onClick={() => handleSelectProject(project.id)}>{project.title}</a>}
-                                description={project.description || "Nessuna descrizione disponibile."}
+                                description={project.description || "No description available."}
                             />
                             <div style={{ textAlign: 'right', marginLeft: 24, flexShrink: 0 }}>
-                                <Text type="secondary" style={{ fontSize: '12px' }}>Versione</Text>
+                                <Text type="secondary" style={{ fontSize: '12px' }}>Version</Text>
                                 <br />
                                 <Text>{project.version}</Text>
                             </div>
@@ -173,16 +173,16 @@ const ProjectSelectionPage = () => {
                                     styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column' } }}
                                     actions={[
                                         <Button type="primary" block onClick={() => handleSelectProject(project.id)}>
-                                            Apri Progetto
+                                            Open Project
                                         </Button>
                                     ]}
                                 >
                                     <Paragraph ellipsis={{ rows: 3, expandable: false }}>
-                                        {project.description || "Nessuna descrizione disponibile."}
+                                        {project.description || "No description available."}
                                     </Paragraph>
                                     <div style={{ marginTop: 'auto' }}>
                                         <Text type="secondary" style={{ fontSize: '12px' }}>
-                                            Versione: {project.version}
+                                            Version: {project.version}
                                         </Text>
                                     </div>
                                 </Card>
@@ -193,14 +193,14 @@ const ProjectSelectionPage = () => {
             ) : (
                 !loading && !error && (
                     <div style={{ textAlign: 'center', padding: '40px', background: '#f5f5f5', borderRadius: '8px' }}>
-                        <Title level={4}>Nessun progetto disponibile</Title>
-                        <Paragraph>Non ci sono progetti visibili che corrispondono alla tua ricerca.</Paragraph>
+                        <Title level={4}>No projects available</Title>
+                        <Paragraph>There are no visible projects that match your search.</Paragraph>
                     </div>
                 )
             )}
 
             <Modal
-                title="Crea Nuovo Progetto"
+                title="Create New Project"
                 open={isModalVisible}
                 onCancel={handleModalClose}
                 footer={null}

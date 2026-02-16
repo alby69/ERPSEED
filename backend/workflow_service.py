@@ -12,8 +12,12 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from flask import current_app
 
-from .base import BaseService
-from ..webhooks import WebhookEvent
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from services.base import BaseService
+from backend.webhooks import WebhookEvent
 
 
 class WorkflowService(BaseService):
@@ -32,7 +36,7 @@ class WorkflowService(BaseService):
             data: Event payload data
             project_id: Optional project scope
         """
-        from ..workflows import Workflow, WorkflowExecution, WorkflowLog
+        from backend.workflows import Workflow, WorkflowExecution, WorkflowLog
         
         query = Workflow.query.filter_by(is_active=True)
         if project_id:
@@ -49,7 +53,7 @@ class WorkflowService(BaseService):
     @staticmethod
     def _execute_workflow(workflow, event: str, data: Dict[str, Any]):
         """Execute a single workflow."""
-        from ..workflows import WorkflowExecution, WorkflowLog
+        from backend.workflows import WorkflowExecution, WorkflowLog
         from backend.extensions import db as db_ext
         
         execution = WorkflowExecution(
@@ -283,7 +287,7 @@ class WorkflowService(BaseService):
     def create_workflow(name: str, trigger_event: str, description: str = None, 
                        project_id: int = None, user_id: int = None) -> 'Workflow':
         """Create a new workflow."""
-        from ..workflows import Workflow
+        from backend.workflows import Workflow
         from backend.extensions import db
         
         workflow = Workflow(
@@ -303,14 +307,14 @@ class WorkflowService(BaseService):
     def add_step(workflow_id: int, step_type: str, name: str, config: dict, 
                  order: int = 0) -> 'WorkflowStep':
         """Add a step to a workflow."""
-        from ..workflows import WorkflowStep
+        from backend.workflows import WorkflowStep
         from backend.extensions import db
         
         step = WorkflowStep(
             workflow_id=workflow_id,
             step_type=step_type,
             name=name,
-            set_config(config),
+            config=config,
             order=order
         )
         
@@ -322,7 +326,7 @@ class WorkflowService(BaseService):
     @staticmethod
     def update_workflow(workflow_id: int, data: dict) -> 'Workflow':
         """Update a workflow."""
-        from ..workflows import Workflow
+        from backend.workflows import Workflow
         from backend.extensions import db
         
         workflow = db.session.get(Workflow, workflow_id)
@@ -346,7 +350,7 @@ class WorkflowService(BaseService):
     @staticmethod
     def delete_workflow(workflow_id: int):
         """Delete a workflow."""
-        from ..workflows import Workflow
+        from backend.workflows import Workflow
         from backend.extensions import db
         
         workflow = db.session.get(Workflow, workflow_id)
@@ -357,7 +361,7 @@ class WorkflowService(BaseService):
     @staticmethod
     def get_workflows(project_id: int = None, active_only: bool = True):
         """Get workflows with optional filters."""
-        from ..workflows import Workflow
+        from backend.workflows import Workflow
         
         query = Workflow.query
         
@@ -374,7 +378,7 @@ class WorkflowService(BaseService):
     @staticmethod
     def get_workflow_executions(workflow_id: int, limit: int = 50):
         """Get workflow execution history."""
-        from ..workflows import WorkflowExecution
+        from backend.workflows import WorkflowExecution
         from sqlalchemy import desc
         
         return WorkflowExecution.query.filter_by(

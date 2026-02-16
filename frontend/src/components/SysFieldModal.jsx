@@ -2,53 +2,53 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../utils';
 
 const FIELD_TYPES = [
-  { value: 'string', label: 'String (Testo breve)' },
-  { value: 'text', label: 'Text (Testo lungo)' },
-  { value: 'integer', label: 'Integer (Numero intero)' },
-  { value: 'float', label: 'Float (Numero decimale)' },
-  { value: 'currency', label: 'Currency (Valuta)' },
-  { value: 'boolean', label: 'Boolean (Vero/Falso)' },
-  { value: 'date', label: 'Date (Data)' },
-  { value: 'datetime', label: 'DateTime (Data e Ora)' },
-  { value: 'tags', label: 'Tags (Etichette multiple)' },
-  { value: 'color', label: 'Color (Selettore Colore)' },
-  { value: 'select', label: 'Select (Menu a tendina)' },
-  { value: 'relation', label: 'Relation (Relazione 1-a-N)' },
-  { value: 'file', label: 'File (Allegato generico)' },
-  { value: 'image', label: 'Image (Immagine)' },
-  { value: 'formula', label: 'Formula (Campo calcolato)' },
-  { value: 'summary', label: 'Summary (Campo di riepilogo)' },
-  { value: 'calculated', label: 'Calculated (Frontend)' },
-  { value: 'lookup', label: 'Lookup (Campo di ricerca)' },
-  { value: 'lines', label: 'Master-Detail (Linee/Righe)' },
+  { value: 'string', label: 'String' },
+  { value: 'text', label: 'Text' },
+  { value: 'integer', label: 'Integer' },
+  { value: 'float', label: 'Float' },
+  { value: 'currency', label: 'Currency' },
+  { value: 'boolean', label: 'Boolean' },
+  { value: 'date', label: 'Date' },
+  { value: 'datetime', label: 'DateTime' },
+  { value: 'tags', label: 'Tags' },
+  { value: 'color', label: 'Color' },
+  { value: 'select', label: 'Select' },
+  { value: 'relation', label: 'Relation' },
+  { value: 'file', label: 'File' },
+  { value: 'image', label: 'Image' },
+  { value: 'formula', label: 'Formula' },
+  { value: 'summary', label: 'Summary' },
+  { value: 'calculated', label: 'Calculated' },
+  { value: 'lookup', label: 'Lookup' },
+  { value: 'lines', label: 'Master-Detail' },
 ];
 
 const AGGREGATION_FUNCTIONS = [
-  { value: 'SUM', label: 'Somma (SUM)' },
-  { value: 'AVG', label: 'Media (AVG)' },
-  { value: 'COUNT', label: 'Conteggio (COUNT)' },
-  { value: 'MIN', label: 'Minimo (MIN)' },
-  { value: 'MAX', label: 'Massimo (MAX)' },
+  { value: 'SUM', label: 'Sum' },
+  { value: 'AVG', label: 'Average' },
+  { value: 'COUNT', label: 'Count' },
+  { value: 'MIN', label: 'Min' },
+  { value: 'MAX', label: 'Max' },
 ];
 
 const NUMBER_FORMATS = [
-  { value: '', label: 'Standard (es. 1.234,56)' },
-  { value: 'currency_eur', label: 'Valuta (€ EUR)' },
-  { value: 'currency_usd', label: 'Valuta ($ USD)' },
-  { value: 'percent', label: 'Percentuale (0.1 -> 10%)' },
-  { value: 'decimal_2', label: 'Decimale (2 cifre fisse)' },
+  { value: '', label: 'Standard (e.g. 1,234.56)' },
+  { value: 'currency_eur', label: 'Currency (€ EUR)' },
+  { value: 'currency_usd', label: 'Currency ($ USD)' },
+  { value: 'percent', label: 'Percentage (0.1 -> 10%)' },
+  { value: 'decimal_2', label: 'Decimal (2 fixed digits)' },
   { value: 'progress', label: 'Progress Bar (0-100)' },
 ];
 
 const BOOTSTRAP_COLORS = [
-  { value: 'primary', label: 'Blu (Primary)' },
-  { value: 'secondary', label: 'Grigio (Secondary)' },
-  { value: 'success', label: 'Verde (Success)' },
-  { value: 'danger', label: 'Rosso (Danger)' },
-  { value: 'warning', label: 'Giallo (Warning)' },
-  { value: 'info', label: 'Azzurro (Info)' },
-  { value: 'light', label: 'Chiaro (Light)' },
-  { value: 'dark', label: 'Scuro (Dark)' },
+  { value: 'primary', label: 'Blue (Primary)' },
+  { value: 'secondary', label: 'Gray (Secondary)' },
+  { value: 'success', label: 'Green (Success)' },
+  { value: 'danger', label: 'Red (Danger)' },
+  { value: 'warning', label: 'Yellow (Warning)' },
+  { value: 'info', label: 'Light Blue (Info)' },
+  { value: 'light', label: 'Light (Light)' },
+  { value: 'dark', label: 'Dark (Dark)' },
 ];
 
 function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
@@ -196,7 +196,7 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
               <div className="row">
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Field Name (es. `license_plate`)</label>
-                  <input type="text" name="name" value={field.name} onChange={handleChange} className="form-control" required pattern="[a-z0-9_]+" title="Solo lettere minuscole, numeri e underscore." />
+                  <input type="text" name="name" value={field.name} onChange={handleChange} className="form-control" required pattern="[a-z0-9_]+" title="Only lowercase letters, numbers and underscore." />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">Field Title (es. `Targa`)</label>
@@ -205,7 +205,7 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
               </div>
               <div className="mb-3">
                 <label className="form-label">Tooltip (Help Text)</label>
-                <input type="text" name="tooltip" value={field.tooltip} onChange={handleChange} className="form-control" placeholder="Testo informativo che appare accanto all'etichetta" />
+                <input type="text" name="tooltip" value={field.tooltip} onChange={handleChange} className="form-control" placeholder="Informative text that appears next to the label" />
               </div>
               <div className="row">
                 <div className="col-md-6 mb-3">
@@ -282,7 +282,7 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
 
               {field.type === 'select' && (
                 <div className="border p-3 rounded mt-3 bg-light">
-                  <h6 className="text-muted small fw-bold">Colori Badge (Opzionale)</h6>
+                  <h6 className="text-muted small fw-bold">Badge Colors (Optional)</h6>
                   <div className="row g-2">
                     {(() => {
                         try {
@@ -290,7 +290,7 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                             const values = Array.isArray(parsed) ? parsed : (parsed.values || []);
                             const badgeColors = (Array.isArray(parsed) ? {} : parsed.badge_colors) || {};
                             
-                            if (values.length === 0) return <div className="text-muted small">Aggiungi prima delle opzioni sopra.</div>;
+                            if (values.length === 0) return <div className="text-muted small">Add options above first.</div>;
 
                             return values.map((opt, idx) => {
                                 const val = typeof opt === 'object' ? opt.value : opt;
@@ -316,7 +316,7 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                                                 });
                                             }}
                                         >
-                                            <option value="">Nessuno (Testo)</option>
+                                            <option value="">None (Text)</option>
                                             {BOOTSTRAP_COLORS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                                         </select>
                                     </div>
@@ -330,10 +330,10 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
 
               {['integer', 'float', 'currency'].includes(field.type) && (
                 <div className="mb-3 border p-3 rounded bg-light">
-                  <label className="form-label fw-bold small">Formattazione Numerica</label>
+                  <label className="form-label fw-bold small">Number Formatting</label>
                   <div className="row">
                     <div className="col-md-6">
-                      <label className="form-label small">Formato</label>
+                      <label className="form-label small">Format</label>
                       <select 
                         className="form-select form-select-sm"
                         value={(() => { try { return JSON.parse(field.options || '{}').format || ''; } catch { return ''; } })()}
@@ -343,11 +343,11 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                       </select>
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label small">Suffisso Personalizzato</label>
+                      <label className="form-label small">Custom Suffix</label>
                       <input 
                         type="text" 
                         className="form-control form-control-sm" 
-                        placeholder="es. kg, m², pz"
+                        placeholder="e.g. kg, m², pcs"
                         value={(() => { try { return JSON.parse(field.options || '{}').suffix || ''; } catch { return ''; } })()}
                         onChange={(e) => setField(prev => ({ ...prev, options: JSON.stringify({ ...JSON.parse(prev.options || '{}'), suffix: e.target.value }) }))}
                       />
@@ -358,11 +358,11 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
 
               {['lines', 'summary'].includes(field.type) && (
                 <div className="mb-3">
-                  <label className="form-label">Foreign Key Field (nella tabella Detail)</label>
+                  <label className="form-label">Foreign Key Field (in Detail table)</label>
                   <input 
                     type="text" 
                     className="form-control" 
-                    placeholder="es. invoice_id"
+                    placeholder="e.g. invoice_id"
                     value={(() => { try { return JSON.parse(field.options || '{}').foreign_key || ''; } catch { return ''; } })()}
                     onChange={(e) => setField(prev => ({ ...prev, options: JSON.stringify({ ...JSON.parse(prev.options || '{}'), foreign_key: e.target.value }) }))}
                   />
@@ -371,10 +371,10 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
 
               {/* Conditional Visibility Section */}
               <div className="border p-3 rounded mt-3 bg-light">
-                <h6 className="text-muted small fw-bold">Visibilità Condizionale</h6>
+                <h6 className="text-muted small fw-bold">Conditional Visibility</h6>
                 <div className="row">
                   <div className="col-md-6">
-                    <label className="form-label small">Mostra solo se il campo...</label>
+                    <label className="form-label small">Show only if field...</label>
                     <select 
                       className="form-select form-select-sm"
                       value={(() => { try { return JSON.parse(field.options || '{}').visibility?.field || ''; } catch { return ''; } })()}
@@ -393,18 +393,18 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                         });
                       }}
                     >
-                      <option value="">-- Sempre Visibile --</option>
+                      <option value="">-- Always Visible --</option>
                       {currentModelFields.filter(f => f.name !== field.name).map(f => (
                         <option key={f.id} value={f.name}>{f.title} ({f.name})</option>
                       ))}
                     </select>
                   </div>
                   <div className="col-md-6">
-                    <label className="form-label small">Ha valore...</label>
+                    <label className="form-label small">Has value...</label>
                     <input 
                       type="text" 
                       className="form-control form-control-sm"
-                      placeholder="Valore esatto"
+                      placeholder="Exact value"
                       value={(() => { try { return JSON.parse(field.options || '{}').visibility?.value || ''; } catch { return ''; } })()}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -425,10 +425,10 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
 
               {/* Conditional Requirement Section */}
               <div className="border p-3 rounded mt-3">
-                <h6 className="text-muted small fw-bold">Requisito Condizionale</h6>
+                <h6 className="text-muted small fw-bold">Conditional Requirement</h6>
                 <div className="row">
                   <div className="col-md-6">
-                    <label className="form-label small">Obbligatorio se il campo...</label>
+                    <label className="form-label small">Required if field...</label>
                     <select 
                       className="form-select form-select-sm"
                       value={(() => { try { return JSON.parse(field.options || '{}').requirement?.field || ''; } catch { return ''; } })()}
@@ -446,7 +446,7 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                         });
                       }}
                     >
-                      <option value="">-- Sempre (se spuntato sopra) --</option>
+                      <option value="">-- Always (if checked above) --</option>
                       {currentModelFields.filter(f => f.name !== field.name).map(f => (
                         <option key={f.id} value={f.name}>{f.title} ({f.name})</option>
                       ))}
@@ -485,10 +485,10 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
 
               {showSummary && (
                 <div className="mb-3">
-                  <label className="form-label">Configurazione Riepilogo</label>
+                  <label className="form-label">Summary Configuration</label>
                   <div className="d-flex gap-2">
                     <div style={{ flex: 1 }}>
-                      <label className="form-label small text-muted">Funzione</label>
+                      <label className="form-label small text-muted">Function</label>
                       <select
                         className="form-select"
                         value={field.summary_expression ? field.summary_expression.match(/^(\w+)\(/)?.[1] || 'SUM' : 'SUM'}
@@ -507,7 +507,7 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                       </select>
                     </div>
                     <div style={{ flex: 2 }}>
-                      <label className="form-label small text-muted">Campo Target</label>
+                      <label className="form-label small text-muted">Target Field</label>
                       <select 
                         className="form-select"
                         value={field.summary_expression ? field.summary_expression.match(/\((.*?)\)/)?.[1] || '' : ''}
@@ -520,7 +520,7 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                           }));
                         }}
                       >
-                        <option value="">Seleziona un campo...</option>
+                        <option value="">Select a field...</option>
                         <option value="id">ID (Primary Key)</option>
                         {targetFields.map(f => (
                           <option key={f.name} value={f.name}>{f.title} ({f.name})</option>
@@ -528,12 +528,12 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                       </select>
                     </div>
                   </div>
-                  <div className="form-text mt-1">Espressione generata: {field.summary_expression}</div>
+                  <div className="form-text mt-1">Generated expression: {field.summary_expression}</div>
                 </div>
               )}
 
               {field.type === 'color' && (
-                <div className="form-text mb-3">Questo campo mostrerà un selettore di colore (Color Picker).</div>
+                <div className="form-text mb-3">This field will display a color picker.</div>
               )}
 
               {showRegexValidation && (
@@ -545,7 +545,7 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                   </div>
                   <div>
                     <label className="form-label">Validation Error Message</label>
-                    <input type="text" name="validation_message" value={field.validation_message} onChange={handleChange} className="form-control" placeholder="es. Il formato della targa non è valido." />
+                    <input type="text" name="validation_message" value={field.validation_message} onChange={handleChange} className="form-control" placeholder="e.g. The license plate format is not valid." />
                   </div>
                 </div>
               )}

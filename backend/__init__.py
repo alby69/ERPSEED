@@ -1,6 +1,7 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_babel import Babel, gettext as _
 from werkzeug.exceptions import HTTPException
 
 from .extensions import db, socketio, api, jwt, ma, migrate
@@ -46,6 +47,15 @@ def create_app(db_url=None):
     api.init_app(app)
     jwt.init_app(app)
     ma.init_app(app)
+    
+    # --- Initialize Babel ---
+    app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+    
+    def get_locale():
+        # Get language from header Accept-Language
+        return request.accept_languages.best_match(['en', 'it']) if request.accept_languages else 'en'
+    
+    babel = Babel(app, locale_selector=get_locale)
 
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_payload):

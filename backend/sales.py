@@ -14,7 +14,7 @@ class SalesOrderList(MethodView):
     @jwt_required()
     @blp.response(200, SalesOrderSchema(many=True))
     def get(self):
-        """Lista ordini di vendita"""
+        """List sales orders"""
         query = SalesOrder.query
         query = apply_filters(query, SalesOrder, ['number'])
         query = apply_date_filters(query, SalesOrder, 'date')
@@ -27,7 +27,7 @@ class SalesOrderList(MethodView):
     @blp.arguments(SalesOrderSchema)
     @blp.response(201, SalesOrderSchema)
     def post(self, order_data):
-        """Crea un nuovo ordine"""
+        """Create a new order"""
         # order_data is a SalesOrder instance with nested SalesOrderLine instances
         # Marshmallow-SQLAlchemy with load_instance=True handles object creation.
         
