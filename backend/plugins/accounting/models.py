@@ -14,8 +14,11 @@ class ChartOfAccounts(db.Model):
     """Chart of Accounts - master list of all accounts."""
     __tablename__ = 'coa'
     
+    # Multi-tenant support
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
+    
     id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    code = db.Column(db.String(20), nullable=False, index=True)
     name = db.Column(db.String(150), nullable=False)
     type = db.Column(db.String(20), nullable=False)  # asset, liability, equity, revenue, expense
     parent_id = db.Column(db.Integer, db.ForeignKey('coa.id'), nullable=True)
@@ -25,7 +28,13 @@ class ChartOfAccounts(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     parent = db.relationship('ChartOfAccounts', remote_side=[id], backref='children')
-    accounts = db.relationship('Account', back_populates='coa', lazy='dynamic')
+    accounts = db.relationship('Account', back_populates='coa', lazy='dynamic', foreign_keys='Account.coa_id')
+    tenant = db.relationship('Tenant', backref=db.backref('coa_accounts', lazy='dynamic'))
+    
+    __table_args__ = (
+        db.UniqueConstraint('tenant_id', 'code', name='uix_tenant_coa_code'),
+        db.Index('ix_coa_tenant_type', 'tenant_id', 'type'),
+    )
     
     def __repr__(self):
         return f'<COA {self.code}: {self.name}>'
@@ -35,9 +44,12 @@ class Account(db.Model):
     """Individual account within the Chart of Accounts."""
     __tablename__ = 'accounts'
     
+    # Multi-tenant support
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
+    
     id = db.Column(db.Integer, primary_key=True)
     coa_id = db.Column(db.Integer, db.ForeignKey('coa.id'), nullable=False)
-    code = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    code = db.Column(db.String(20), nullable=False, index=True)
     name = db.Column(db.String(150), nullable=False)
     description = db.Column(db.Text)
     balance = db.Column(db.Float, default=0.0)
@@ -45,8 +57,13 @@ class Account(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    coa = db.relationship('ChartOfAccounts', back_populates='accounts')
+    coa = db.relationship('ChartOfAccounts', back_populates='accounts', foreign_keys=[coa_id])
     journal_lines = db.relationship('JournalEntryLine', back_populates='account', lazy='dynamic')
+    tenant = db.relationship('Tenant', backref=db.backref('accounts', lazy='dynamic'))
+    
+    __table_args__ = (
+        db.UniqueConstraint('tenant_id', 'code', name='uix_tenant_account_code'),
+    )
     
     def __repr__(self):
         return f'<Account {self.code}: {self.name}>'
@@ -56,8 +73,11 @@ class JournalEntry(db.Model):
     """General Journal Entry - records all financial transactions."""
     __tablename__ = 'journal_entries'
     
+    # Multi-tenant support
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
+    
     id = db.Column(db.Integer, primary_key=True)
-    entry_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    entry_number = db.Column(db.String(50), nullable=False, index=True)
     date = db.Column(db.Date, nullable=False, default=datetime.now().date)
     description = db.Column(db.String(255), nullable=False)
     reference = db.Column(db.String(100))
@@ -68,6 +88,12 @@ class JournalEntry(db.Model):
     
     lines = db.relationship('JournalEntryLine', back_populates='entry', cascade='all, delete-orphan', lazy='dynamic')
     creator = db.relationship('User')
+    tenant = db.relationship('Tenant', backref=db.backref('journal_entries', lazy='dynamic'))
+    
+    __table_args__ = (
+        db.Index('ix_journal_tenant_number', 'tenant_id', 'entry_number'),
+        db.Index('ix_journal_tenant_date', 'tenant_id', 'date'),
+    )
     
     def __repr__(self):
         return f'<JournalEntry {self.entry_number}>'
@@ -92,6 +118,9 @@ class JournalEntryLine(db.Model):
     """Individual line in a Journal Entry."""
     __tablename__ = 'journal_entry_lines'
     
+    # Multi-tenant support
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
+    
     id = db.Column(db.Integer, primary_key=True)
     entry_id = db.Column(db.Integer, db.ForeignKey('journal_entries.id'), nullable=False)
     account_id = db.Column(db.Integer, db.ForeignKey('accounts.id'), nullable=False)
@@ -102,6 +131,7 @@ class JournalEntryLine(db.Model):
     
     entry = db.relationship('JournalEntry', back_populates='lines')
     account = db.relationship('Account', back_populates='journal_lines')
+    tenant = db.relationship('Tenant', backref=db.backref('journal_lines', lazy='dynamic'))
     
     def __repr__(self):
         return f'<JournalLine {self.account_id}: Dr {self.debit} / Cr {self.credit}>'
@@ -111,8 +141,11 @@ class Invoice(db.Model):
     """Invoice - Accounts Receivable or Payable."""
     __tablename__ = 'invoices'
     
+    # Multi-tenant support
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
+    
     id = db.Column(db.Integer, primary_key=True)
-    invoice_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    invoice_number = db.Column(db.String(50), nullable=False, index=True)
     invoice_type = db.Column(db.String(10), nullable=False)  # AR (receivable), AP (payable)
     party_id = db.Column(db.Integer, db.ForeignKey('parties.id'), nullable=False)
     date = db.Column(db.Date, nullable=False, default=datetime.now().date)
@@ -129,6 +162,11 @@ class Invoice(db.Model):
     party = db.relationship('Party')
     lines = db.relationship('InvoiceLine', back_populates='invoice', cascade='all, delete-orphan')
     journal_entry = db.relationship('JournalEntry')
+    tenant = db.relationship('Tenant', backref=db.backref('invoices', lazy='dynamic'))
+    
+    __table_args__ = (
+        db.Index('ix_invoice_tenant_number', 'tenant_id', 'invoice_number'),
+    )
     
     def __repr__(self):
         return f'<Invoice {self.invoice_number}>'
@@ -137,6 +175,9 @@ class Invoice(db.Model):
 class InvoiceLine(db.Model):
     """Individual line in an Invoice."""
     __tablename__ = 'invoice_lines'
+    
+    # Multi-tenant support
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
     
     id = db.Column(db.Integer, primary_key=True)
     invoice_id = db.Column(db.Integer, db.ForeignKey('invoices.id'), nullable=False)
@@ -151,6 +192,7 @@ class InvoiceLine(db.Model):
     
     invoice = db.relationship('Invoice', back_populates='lines')
     product = db.relationship('Product')
+    tenant = db.relationship('Tenant', backref=db.backref('invoice_lines', lazy='dynamic'))
     
     def calculate(self):
         """Calculate line amount."""

@@ -1,11 +1,23 @@
 from flask import request
 from sqlalchemy import or_, desc, asc, func, inspect, Table
 import json
-import datetime
 import decimal
+from datetime import datetime
 from .extensions import db
-from .models import AuditLog
 from flask_smorest import abort
+
+# Import AuditLog from core if available, else create dummy
+try:
+    from backend.core.models import AuditLog
+except ImportError:
+    # Fallback for migration period
+    class AuditLog:
+        @staticmethod
+        def log_create(*args, **kwargs):
+            pass
+        @staticmethod
+        def log_login(*args, **kwargs):
+            pass
 
 def apply_filters(query, model, search_fields):
     """Apply text search filters (q) to the query."""

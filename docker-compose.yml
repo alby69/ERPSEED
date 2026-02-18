@@ -1,4 +1,5 @@
 services:
+  # Database PostgreSQL
   db:
     image: postgres:15-alpine
     container_name: flaskerp_db
@@ -18,31 +19,58 @@ services:
       timeout: 5s
       retries: 5
 
-  web:
-    container_name: flaskerp_web
-    build: .
-    command: gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:5000 --reload backend.wsgi:app
-    volumes:
-      - ./backend:/app/backend
-      - ./migrations:/app/migrations
+  # Redis per cache e code
+  redis:
+    image: redis:7-alpine
+    container_name: flaskerp_redis
     ports:
-      - "5001:5000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/flaskerp
-    depends_on:
-      db:
-        condition: service_healthy
+      - "6380:6379"
     networks:
       - flaskerp_net
 
+  # Backend Flask
+  backend:
+    container_name: flaskerp_backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: flask --app backend run --host 0.0.0.0 --port 5000 --reload
+    volumes:
+      - .:/app
+      - /app/.venv
+    ports:
+      - "5002:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - DATABASE_URL=postgresql://postgres:password@db:5432/flaskerp
+      - SECRET_KEY=dev-secret-key-change-in-prod
+      - JWT_SECRET=dev-jwt-secret-change-in-prod
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - flaskerp_net
+    stdin_open: true
+    tty: true
+
+  # Frontend React/Vite
   frontend:
     container_name: flaskerp_frontend
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     volumes:
       - ./frontend:/app
       - /app/node_modules
     ports:
       - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5002
+    depends_on:
+      - backend
     networks:
       - flaskerp_net
 

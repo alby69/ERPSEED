@@ -6,6 +6,10 @@ from werkzeug.exceptions import HTTPException
 
 from .extensions import db, socketio, api, jwt, ma, migrate
 
+# Import Core Middleware
+from .core.middleware.tenant_middleware import TenantMiddleware
+from .core.services.query_filter import TenantQueryFilter, SoftDeleteFilter
+
 # Import Blueprints
 from .auth import auth_bp
 from .users import blp as users_bp
@@ -13,6 +17,8 @@ from .parties import blp as parties_bp
 from .products import blp as products_bp
 from .projects import blp as projects_bp
 from .sales import blp as sales_bp
+from .purchases import blp as purchases_bp
+from .dashboard import blp as dashboard_bp
 from .builder import blp as builder_bp
 from .analytics import blp as analytics_bp
 from .dynamic_api import blp as dynamic_api_bp
@@ -23,6 +29,11 @@ from .workflow_routes import blp as workflows_bp
 from .plugins import PluginRegistry
 from .plugins.accounting.plugin import get_plugin as get_accounting_plugin
 from .plugins.hr.plugin import get_plugin as get_hr_plugin
+from .plugins.inventory.plugin import get_plugin as get_inventory_plugin
+
+# Import Core API blueprints
+from .core.api.auth import auth_bp as core_auth_bp
+from .core.api.tenant import tenant_bp
 
 
 def create_app(db_url=None):
@@ -47,6 +58,13 @@ def create_app(db_url=None):
     api.init_app(app)
     jwt.init_app(app)
     ma.init_app(app)
+    
+    # --- Initialize Multi-tenant Filters ---
+    TenantQueryFilter.init_app(app)
+    SoftDeleteFilter.init_app(app)
+    
+    # --- Initialize Tenant Middleware ---
+    TenantMiddleware.init_app(app)
     
     # --- Initialize Babel ---
     app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
@@ -76,7 +94,9 @@ def create_app(db_url=None):
     
     # --- CORS Configuration ---
     CORS(app, resources={r"/*": {
-        "origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
+        "origins": ["http://localhost:5173", "http://127.0.0.1:5173", "http://0.0.0.0:5173"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
         "expose_headers": ["X-Total-Count", "X-Pages", "X-Current-Page", "X-Per-Page", "Content-Range"],
         "supports_credentials": True
     }})
@@ -93,12 +113,19 @@ def create_app(db_url=None):
         return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
 
     # --- Register Blueprints ---
-    api.register_blueprint(auth_bp)
+    # Core API con Marshmallow (nuovo)
+    api.register_blueprint(core_auth_bp, url_prefix='/api/v1/auth')
+    api.register_blueprint(tenant_bp, url_prefix='/api/v1/tenant')
+    
+    # Vecchi blueprint per retrocompatibilità frontend - rinominati per evitare conflitti
+    api.register_blueprint(auth_bp, name='legacy_auth')  # /login, /me, etc.
     api.register_blueprint(users_bp)
     api.register_blueprint(parties_bp)
     api.register_blueprint(products_bp)
     api.register_blueprint(projects_bp)
     api.register_blueprint(sales_bp)
+    api.register_blueprint(purchases_bp)
+    api.register_blueprint(dashboard_bp)
     api.register_blueprint(builder_bp)
     api.register_blueprint(analytics_bp)
     api.register_blueprint(dynamic_api_bp)
@@ -116,10 +143,12 @@ def _init_plugins(app, api, db):
     # Register plugins
     PluginRegistry.register(get_accounting_plugin())
     PluginRegistry.register(get_hr_plugin())
+    PluginRegistry.register(get_inventory_plugin())
     
     # Enable plugins
     try:
         PluginRegistry.enable('accounting', app=app, db=db, api=api)
         PluginRegistry.enable('hr', app=app, db=db, api=api)
+        PluginRegistry.enable('inventory', app=app, db=db, api=api)
     except Exception as e:
         print(f"Warning: Could not enable some plugins: {e}")

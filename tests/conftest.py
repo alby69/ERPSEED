@@ -25,17 +25,25 @@ def app():
 def db(app):
     """Create database for testing."""
     from backend.extensions import db as _db
+    from backend.core.models import Tenant, AuditLog
+    from backend.models import User, Party, Product, SalesOrder
     
     with app.app_context():
+        # Create all tables
         _db.create_all()
+        
         yield _db
+        
+        # Clean up after test
         try:
             _db.session.rollback()
+            # Delete all data from all tables
             for table in reversed(_db.metadata.sorted_tables):
                 _db.session.execute(table.delete())
             _db.session.commit()
-        except:
+        except Exception as e:
             _db.session.rollback()
+            print(f"Cleanup error: {e}")
         finally:
             _db.drop_all()
 
@@ -54,15 +62,51 @@ def client(app):
 
 
 @pytest.fixture
-def admin_user(db, session):
+def tenant(db, session):
+    """Create a test tenant."""
+    from backend.core.models import Tenant
+    
+    tenant = Tenant(
+        name='Test Company',
+        slug='test-company-' + str(id(session)),
+        email='admin@test.com',
+        is_active=True
+    )
+    session.add(tenant)
+    session.commit()
+    session.refresh(tenant)
+    return tenant
+
+
+@pytest.fixture
+def tenant2(db, session):
+    """Create a second test tenant for isolation testing."""
+    from backend.core.models import Tenant
+    
+    tenant = Tenant(
+        name='Second Company',
+        slug='second-company-' + str(id(session)),
+        email='admin@second.com',
+        is_active=True
+    )
+    session.add(tenant)
+    session.commit()
+    session.refresh(tenant)
+    return tenant
+
+
+@pytest.fixture
+def admin_user(db, session, tenant):
     """Create an admin user."""
     from backend.models import User
     
     user = User(
+        tenant_id=tenant.id,
         email='admin@test.com',
         first_name='Admin',
         last_name='User',
-        role='admin'
+        role='admin',
+        is_primary=True
     )
     user.set_password('admin123')
     session.add(user)
@@ -72,11 +116,12 @@ def admin_user(db, session):
 
 
 @pytest.fixture
-def regular_user(db, session):
+def regular_user(db, session, tenant):
     """Create a regular user."""
     from backend.models import User
     
     user = User(
+        tenant_id=tenant.id,
         email='user@test.com',
         first_name='Regular',
         last_name='User',
@@ -90,56 +135,93 @@ def regular_user(db, session):
 
 
 @pytest.fixture
-def project(db, session, admin_user):
-    """Create a test project."""
-    from backend.models import Project
+def admin_user2(db, session, tenant2):
+    """Create an admin user for second tenant."""
+    from backend.models import User
     
-    project = Project(
-        name='test_project',
-        title='Test Project',
-        description='A test project',
-        owner_id=admin_user.id
+    user = User(
+        tenant_id=tenant2.id,
+        email='admin@second.com',
+        first_name='Admin2',
+        last_name='User2',
+        role='admin',
+        is_primary=True
     )
-    project.members.append(admin_user)
-    session.add(project)
+    user.set_password('admin123')
+    session.add(user)
     session.commit()
-    session.refresh(project)
-    return project
+    session.refresh(user)
+    return user
 
 
 @pytest.fixture
-def sys_model(db, session, project):
-    """Create a test SysModel."""
-    from backend.models import SysModel
+def party(db, session, tenant):
+    """Create a test party."""
+    from backend.models import Party
     
-    model = SysModel(
-        name='customers',
-        title='Customers',
-        description='Customer records',
-        project_id=project.id
+    party = Party(
+        tenant_id=tenant.id,
+        name='Test Customer',
+        party_type='customer',
+        email='customer@test.com',
+        vat_number='IT12345678901'
     )
-    session.add(model)
+    session.add(party)
     session.commit()
-    session.refresh(model)
-    return model
+    session.refresh(party)
+    return party
 
 
 @pytest.fixture
-def sys_field(db, session, sys_model):
-    """Create a test SysField."""
-    from backend.models import SysField
+def party2(db, session, tenant2):
+    """Create a test party for tenant2."""
+    from backend.models import Party
     
-    field = SysField(
-        name='name',
-        title='Name',
-        type='string',
-        required=True,
-        model_id=sys_model.id
+    party = Party(
+        tenant_id=tenant2.id,
+        name='Customer Two',
+        party_type='customer',
+        email='customer@second.com',
+        vat_number='IT98765432109'
     )
-    session.add(field)
+    session.add(party)
     session.commit()
-    session.refresh(field)
-    return field
+    session.refresh(party)
+    return party
+
+
+@pytest.fixture
+def product(db, session, tenant):
+    """Create a test product."""
+    from backend.models import Product
+    
+    product = Product(
+        tenant_id=tenant.id,
+        name='Test Product',
+        code='PROD001',
+        unit_price=100.00
+    )
+    session.add(product)
+    session.commit()
+    session.refresh(product)
+    return product
+
+
+@pytest.fixture
+def product2(db, session, tenant2):
+    """Create a test product for tenant2."""
+    from backend.models import Product
+    
+    product = Product(
+        tenant_id=tenant2.id,
+        name='Product Two',
+        code='PROD002',
+        unit_price=200.00
+    )
+    session.add(product)
+    session.commit()
+    session.refresh(product)
+    return product
 
 
 @pytest.fixture

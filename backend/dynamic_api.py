@@ -146,7 +146,11 @@ class AuditLogList(MethodView):
         if not user or user.role != 'admin':
             abort(403, message="Access denied")
         
-        from .models import AuditLog
+        try:
+            from backend.core.models import AuditLog as CoreAuditLog
+            AuditLog = CoreAuditLog
+        except ImportError:
+            from .models import AuditLog
         from sqlalchemy import desc
         
         page = request.args.get('page', 1, type=int)

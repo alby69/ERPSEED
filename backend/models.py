@@ -2,6 +2,12 @@ from .extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 
+# Import core models to register them with SQLAlchemy
+try:
+    from backend.core.models import Tenant
+except ImportError:
+    pass
+
 class BaseModel(db.Model):
     """Base model with common fields for all other models."""
     __abstract__ = True
@@ -36,7 +42,12 @@ class Project(BaseModel):
 class User(BaseModel):
     """User model for system users."""
     __tablename__ = 'users'
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    
+    # Tenant (required - will be added via migration)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=True, index=True)
+    
+    # Credentials
+    email = db.Column(db.String(120), nullable=False, index=True)
     password_hash = db.Column(db.String(256))
     first_name = db.Column(db.String(80))
     last_name = db.Column(db.String(80))
@@ -44,17 +55,64 @@ class User(BaseModel):
     is_active = db.Column(db.Boolean, default=True)
     force_password_change = db.Column(db.Boolean, default=False)
     avatar = db.Column(db.String(255), nullable=True)
-
+    
+    # Multi-tenant fields
+    is_primary = db.Column(db.Boolean, default=False, comment="Primary admin of tenant")
+    last_login_at = db.Column(db.DateTime)
+    login_count = db.Column(db.Integer, default=0)
+    password_reset_token = db.Column(db.String(255))
+    password_reset_expires = db.Column(db.DateTime)
+    deleted_at = db.Column(db.DateTime, nullable=True, index=True)
+    
+    # Relationships
+    tenant = db.relationship('Tenant', backref=db.backref('tenant_users', lazy='dynamic'))
     projects = db.relationship('Project', secondary=project_members, back_populates='members', lazy='dynamic')
-
+    
+    # Constraints
+    __table_args__ = (
+        db.UniqueConstraint('tenant_id', 'email', name='uix_tenant_email'),
+    )
+    
+    def __repr__(self):
+        return f'<User {self.email}>'
+    
+    @property
+    def full_name(self):
+        full = f"{self.first_name or ''} {self.last_name or ''}".strip()
+        return full or self.email
+    
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
+        self.force_password_change = False
+        self.password_reset_token = None
+        self.password_reset_expires = None
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
-    def __repr__(self):
-        return f'<User {self.email}>'
+    
+    def record_login(self):
+        """Record user login."""
+        self.last_login_at = datetime.datetime.utcnow()
+        self.login_count += 1
+    
+    def to_dict(self, include_email=True):
+        """Serialize user."""
+        result = {
+            'id': self.id,
+            'email': self.email,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'full_name': self.full_name,
+            'role': self.role,
+            'is_active': self.is_active,
+            'is_primary': self.is_primary,
+            'tenant_id': self.tenant_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+        if not include_email:
+            result.pop('email', None)
+        return result
 
 class SysModel(BaseModel):
     """Definition of a model (table) created dynamically by the Builder."""
@@ -97,29 +155,55 @@ class SysField(BaseModel):
     def __repr__(self):
         return f'<SysField {self.name} in {self.model.name}>'
 
-class AuditLog(BaseModel):
-    """Log of significant actions performed in the system."""
-    __tablename__ = 'audit_logs'
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    model_name = db.Column(db.String(80))
-    record_id = db.Column(db.Integer)
-    action = db.Column(db.String(50), comment="CREATE, UPDATE, DELETE, LOGIN, etc.")
-    changes = db.Column(db.Text, comment="JSON diff of the changes")
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
-    
-    user = db.relationship('User')
+# NOTE: AuditLog moved to backend/core/models/audit.py
+# Keeping old class for compatibility during migration
+
+# class AuditLog(BaseModel):
+#     """Log of significant actions performed in the system."""
+#     __tablename__ = 'audit_logs'
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     model_name = db.Column(db.String(80))
+#     record_id = db.Column(db.Integer)
+#     action = db.Column(db.String(50), comment="CREATE, UPDATE, DELETE, LOGIN, etc.")
+#     changes = db.Column(db.Text, comment="JSON diff of the changes")
+#     timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
+#     
+#     user = db.relationship('User')
 
 class Party(BaseModel):
     """Generic master data for customers, suppliers, etc."""
     __tablename__ = 'parties'
     
+    # Multi-tenant support
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
+    
     name = db.Column(db.String(150), nullable=False, index=True)
     party_type = db.Column(db.String(50), nullable=False, default='Customer', comment="E.g., Customer, Supplier")
-    email = db.Column(db.String(120), unique=True)
+    email = db.Column(db.String(120))
     phone = db.Column(db.String(50))
-    vat_number = db.Column(db.String(50), unique=True, index=True)
-    fiscal_code = db.Column(db.String(50), unique=True)
-
+    vat_number = db.Column(db.String(50), index=True)
+    fiscal_code = db.Column(db.String(50))
+    address = db.Column(db.String(255))
+    city = db.Column(db.String(100))
+    postal_code = db.Column(db.String(20))
+    country = db.Column(db.String(2), default='IT')
+    status = db.Column(db.String(20), default='active')
+    notes = db.Column(db.Text)
+    is_company = db.Column(db.Boolean, default=True)
+    first_name = db.Column(db.String(80))
+    last_name = db.Column(db.String(80))
+    website = db.Column(db.String(255))
+    source = db.Column(db.String(50))
+    tags = db.Column(db.Text)
+    
+    # Relationships
+    tenant = db.relationship('Tenant', backref=db.backref('parties', lazy='dynamic'))
+    
+    # Constraints
+    __table_args__ = (
+        db.Index('ix_party_tenant_type', 'tenant_id', 'party_type'),
+    )
+    
     def __repr__(self):
         return f'<Party {self.name}>'
 
@@ -127,10 +211,31 @@ class Product(BaseModel):
     """Product/Service master data."""
     __tablename__ = 'products'
     
-    name = db.Column(db.String(150), nullable=False)
-    code = db.Column(db.String(50), unique=True, index=True)
+    # Multi-tenant support
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
+    
+    name = db.Column(db.String(150), nullable=False, index=True)
+    code = db.Column(db.String(50), index=True)
     description = db.Column(db.Text)
     unit_price = db.Column(db.Float)
+    category = db.Column(db.String(100))
+    sku = db.Column(db.String(50))
+    barcode = db.Column(db.String(50))
+    is_active = db.Column(db.Boolean, default=True)
+    track_inventory = db.Column(db.Boolean, default=False)
+    current_stock = db.Column(db.Float, default=0)
+    reorder_level = db.Column(db.Float, default=0)
+    unit_of_measure = db.Column(db.String(20), default='pcs')
+    weight = db.Column(db.Float)
+    dimensions = db.Column(db.String(50))
+    
+    # Relationships
+    tenant = db.relationship('Tenant', backref=db.backref('products', lazy='dynamic'))
+    
+    # Constraints
+    __table_args__ = (
+        db.Index('ix_product_tenant_code', 'tenant_id', 'code'),
+    )
     
     def __repr__(self):
         return f'<Product {self.name}>'
@@ -138,23 +243,82 @@ class Product(BaseModel):
 class SalesOrder(BaseModel):
     __tablename__ = 'sales_orders'
     
-    number = db.Column(db.String(50), unique=True, nullable=False)
+    # Multi-tenant support
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
+    
+    number = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, default=datetime.date.today)
     customer_id = db.Column(db.Integer, db.ForeignKey('parties.id'), nullable=False)
+    status = db.Column(db.String(20), default='draft')
+    total_amount = db.Column(db.Float, default=0)
+    notes = db.Column(db.Text)
     
+    # Relationships
+    tenant = db.relationship('Tenant', backref=db.backref('sales_orders', lazy='dynamic'))
     customer = db.relationship('Party')
     lines = db.relationship('SalesOrderLine', back_populates='order', cascade="all, delete-orphan")
+    
+    # Constraints
+    __table_args__ = (
+        db.Index('ix_order_tenant_number', 'tenant_id', 'number'),
+    )
 
 class SalesOrderLine(BaseModel):
     __tablename__ = 'sales_order_lines'
+    
+    # Multi-tenant support
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
     
     order_id = db.Column(db.Integer, db.ForeignKey('sales_orders.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     description = db.Column(db.String(255))
     quantity = db.Column(db.Float, nullable=False)
     unit_price = db.Column(db.Float, nullable=False)
+    total_price = db.Column(db.Float, nullable=False)
     
+    # Relationships
+    tenant = db.relationship('Tenant')
     order = db.relationship('SalesOrder', back_populates='lines')
+    product = db.relationship('Product')
+
+
+class PurchaseOrder(BaseModel):
+    __tablename__ = 'purchase_orders'
+    
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
+    
+    number = db.Column(db.String(50), nullable=False)
+    date = db.Column(db.Date, default=datetime.date.today)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('parties.id'), nullable=False)
+    status = db.Column(db.String(20), default='draft')
+    total_amount = db.Column(db.Float, default=0)
+    expected_date = db.Column(db.Date)
+    notes = db.Column(db.Text)
+    
+    tenant = db.relationship('Tenant', backref=db.backref('purchase_orders', lazy='dynamic'))
+    supplier = db.relationship('Party')
+    lines = db.relationship('PurchaseOrderLine', back_populates='order', cascade="all, delete-orphan")
+    
+    __table_args__ = (
+        db.Index('ix_purchase_tenant_number', 'tenant_id', 'number'),
+    )
+
+
+class PurchaseOrderLine(BaseModel):
+    __tablename__ = 'purchase_order_lines'
+    
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
+    
+    order_id = db.Column(db.Integer, db.ForeignKey('purchase_orders.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    description = db.Column(db.String(255))
+    quantity = db.Column(db.Float, nullable=False)
+    unit_price = db.Column(db.Float, nullable=False)
+    total_price = db.Column(db.Float, nullable=False)
+    quantity_received = db.Column(db.Float, default=0)
+    
+    tenant = db.relationship('Tenant')
+    order = db.relationship('PurchaseOrder', back_populates='lines')
     product = db.relationship('Product')
 
 class SysChart(BaseModel):

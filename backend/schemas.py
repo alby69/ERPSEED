@@ -1,6 +1,12 @@
 from marshmallow import fields as mm_fields
 from .extensions import ma
-from .models import User, Project, SysModel, SysField, AuditLog, Party, Product, SalesOrder, SalesOrderLine, SysChart, SysDashboard
+from .models import User, Project, SysModel, SysField, Party, Product, SalesOrder, SalesOrderLine, SysChart, SysDashboard
+
+# Import new AuditLog if available
+try:
+    from backend.core.models import AuditLog
+except ImportError:
+    pass
 
 class UserSummarySchema(ma.SQLAlchemyAutoSchema):
     class Meta:

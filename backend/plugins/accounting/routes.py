@@ -14,8 +14,18 @@ from sqlalchemy import func
 import datetime
 
 from .models import ChartOfAccounts, Account, JournalEntry, JournalEntryLine, Invoice, InvoiceLine
+from backend.core.services.tenant_context import TenantContext
+from backend.extensions import db
 
 blp = Blueprint("accounting", __name__, url_prefix="/accounting", description="Accounting Operations")
+
+
+def get_tenant_query(model):
+    """Get query filtered by current tenant."""
+    tenant_id = TenantContext.get_tenant_id()
+    if tenant_id is None:
+        abort(403, message="Tenant context not found")
+    return model.query.filter_by(tenant_id=tenant_id)
 
 
 @blp.route("/coa")
@@ -26,7 +36,10 @@ class COAList(MethodView):
     @jwt_required()
     def get(self):
         """List all accounts in Chart of Accounts."""
-        query = ChartOfAccounts.query.filter_by(is_active=True).order_by(ChartOfAccounts.code)
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        query = ChartOfAccounts.query.filter_by(tenant_id=tenant_id, is_active=True).order_by(ChartOfAccounts.code)
         return query.all()
     
     @blp.doc(security=[{"jwt": []}])
@@ -34,12 +47,16 @@ class COAList(MethodView):
     def post(self):
         """Create new account in Chart of Accounts."""
         data = request.get_json()
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
         
-        existing = ChartOfAccounts.query.filter_by(code=data['code']).first()
+        existing = ChartOfAccounts.query.filter_by(tenant_id=tenant_id, code=data['code']).first()
         if existing:
             abort(409, message=f"Account code '{data['code']}' already exists.")
         
         coa = ChartOfAccounts(
+            tenant_id=tenant_id,
             code=data['code'],
             name=data['name'],
             type=data['type'],
@@ -47,7 +64,6 @@ class COAList(MethodView):
             allow_transaction=data.get('allow_transaction', True)
         )
         
-        from backend.extensions import db
         db.session.add(coa)
         db.session.commit()
         
@@ -62,7 +78,12 @@ class COAResource(MethodView):
     @jwt_required()
     def get(self, coa_id):
         """Get account by ID."""
-        coa = ChartOfAccounts.query.get_or_404(coa_id)
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        coa = ChartOfAccounts.query.filter_by(id=coa_id, tenant_id=tenant_id).first()
+        if not coa:
+            abort(404, message="Account not found")
         return coa
     
     @blp.doc(security=[{"jwt": []}])
@@ -70,13 +91,17 @@ class COAResource(MethodView):
     def put(self, coa_id):
         """Update account."""
         data = request.get_json()
-        coa = ChartOfAccounts.query.get_or_404(coa_id)
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        coa = ChartOfAccounts.query.filter_by(id=coa_id, tenant_id=tenant_id).first()
+        if not coa:
+            abort(404, message="Account not found")
         
         for key, value in data.items():
             if hasattr(coa, key):
                 setattr(coa, key, value)
         
-        from backend.extensions import db
         db.session.commit()
         return coa
     
@@ -84,10 +109,14 @@ class COAResource(MethodView):
     @jwt_required()
     def delete(self, coa_id):
         """Deactivate account (soft delete)."""
-        coa = ChartOfAccounts.query.get_or_404(coa_id)
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        coa = ChartOfAccounts.query.filter_by(id=coa_id, tenant_id=tenant_id).first()
+        if not coa:
+            abort(404, message="Account not found")
         coa.is_active = False
         
-        from backend.extensions import db
         db.session.commit()
         return '', 204
 
@@ -100,7 +129,10 @@ class AccountList(MethodView):
     @jwt_required()
     def get(self):
         """List all active accounts."""
-        query = Account.query.filter_by(is_active=True).order_by(Account.code)
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        query = Account.query.filter_by(tenant_id=tenant_id, is_active=True).order_by(Account.code)
         return query.all()
     
     @blp.doc(security=[{"jwt": []}])
@@ -108,19 +140,22 @@ class AccountList(MethodView):
     def post(self):
         """Create new account."""
         data = request.get_json()
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
         
-        existing = Account.query.filter_by(code=data['code']).first()
+        existing = Account.query.filter_by(tenant_id=tenant_id, code=data['code']).first()
         if existing:
             abort(409, message=f"Account code '{data['code']}' already exists.")
         
         account = Account(
+            tenant_id=tenant_id,
             coa_id=data['coa_id'],
             code=data['code'],
             name=data['name'],
             description=data.get('description')
         )
         
-        from backend.extensions import db
         db.session.add(account)
         db.session.commit()
         
@@ -135,10 +170,14 @@ class JournalEntryList(MethodView):
     @jwt_required()
     def get(self):
         """List journal entries."""
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         
-        query = JournalEntry.query.order_by(JournalEntry.date.desc(), JournalEntry.entry_number.desc())
+        query = JournalEntry.query.filter_by(tenant_id=tenant_id).order_by(JournalEntry.date.desc(), JournalEntry.entry_number.desc())
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
         
         return pagination.items
@@ -150,7 +189,9 @@ class JournalEntryList(MethodView):
         data = request.get_json()
         lines = data.pop('lines', [])
         
-        from backend.extensions import db
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
         
         total_debit = sum(l.get('debit', 0) for l in lines)
         total_credit = sum(l.get('credit', 0) for l in lines)
@@ -158,9 +199,10 @@ class JournalEntryList(MethodView):
         if abs(total_debit - total_credit) > 0.01:
             abort(400, message=f"Debits ({total_debit}) must equal credits ({total_credit}).")
         
-        entry_number = self._generate_entry_number()
+        entry_number = self._generate_entry_number(tenant_id)
         
         entry = JournalEntry(
+            tenant_id=tenant_id,
             entry_number=entry_number,
             date=data.get('date', datetime.date.today()),
             description=data['description'],
@@ -172,6 +214,7 @@ class JournalEntryList(MethodView):
         
         for line_data in lines:
             line = JournalEntryLine(
+                tenant_id=tenant_id,
                 entry_id=entry.id,
                 account_id=line_data['account_id'],
                 debit=line_data.get('debit', 0),
@@ -180,7 +223,7 @@ class JournalEntryList(MethodView):
             )
             db.session.add(line)
             
-            account = Account.query.get(line_data['account_id'])
+            account = Account.query.filter_by(id=line_data['account_id'], tenant_id=tenant_id).first()
             if account:
                 account.balance += line_data.get('debit', 0) - line_data.get('credit', 0)
         
@@ -194,12 +237,13 @@ class JournalEntryList(MethodView):
         
         return entry, 201
     
-    def _generate_entry_number(self):
+    def _generate_entry_number(self, tenant_id):
         """Generate unique entry number."""
         today = datetime.date.today()
         year = today.year
         
         last_entry = JournalEntry.query.filter(
+            JournalEntry.tenant_id == tenant_id,
             JournalEntry.entry_number.like(f'JE-{year}%')
         ).order_by(JournalEntry.entry_number.desc()).first()
         
@@ -220,14 +264,24 @@ class JournalEntryResource(MethodView):
     @jwt_required()
     def get(self, entry_id):
         """Get journal entry with lines."""
-        entry = JournalEntry.query.get_or_404(entry_id)
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        entry = JournalEntry.query.filter_by(id=entry_id, tenant_id=tenant_id).first()
+        if not entry:
+            abort(404, message="Journal entry not found")
         return entry
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     def post(self, entry_id):
         """Post (validate and finalize) journal entry."""
-        entry = JournalEntry.query.get_or_404(entry_id)
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        entry = JournalEntry.query.filter_by(id=entry_id, tenant_id=tenant_id).first()
+        if not entry:
+            abort(404, message="Journal entry not found")
         
         if entry.status != 'draft':
             abort(400, message="Only draft entries can be posted.")
@@ -236,8 +290,6 @@ class JournalEntryResource(MethodView):
             abort(400, message="Entry must be balanced before posting.")
         
         entry.status = 'posted'
-        
-        from backend.extensions import db
         db.session.commit()
         
         return entry
@@ -251,10 +303,14 @@ class InvoiceList(MethodView):
     @jwt_required()
     def get(self):
         """List invoices."""
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        
         invoice_type = request.args.get('type')
         status = request.args.get('status')
         
-        query = Invoice.query
+        query = Invoice.query.filter_by(tenant_id=tenant_id)
         if invoice_type:
             query = query.filter_by(invoice_type=invoice_type)
         if status:
@@ -269,11 +325,14 @@ class InvoiceList(MethodView):
         data = request.get_json()
         lines = data.pop('lines', [])
         
-        from backend.extensions import db
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
         
-        invoice_number = self._generate_invoice_number(data['invoice_type'])
+        invoice_number = self._generate_invoice_number(tenant_id, data['invoice_type'])
         
         invoice = Invoice(
+            tenant_id=tenant_id,
             invoice_number=invoice_number,
             invoice_type=data['invoice_type'],
             party_id=data['party_id'],
@@ -285,6 +344,7 @@ class InvoiceList(MethodView):
         subtotal = 0
         for line_data in lines:
             line = InvoiceLine(
+                tenant_id=tenant_id,
                 product_id=line_data.get('product_id'),
                 description=line_data.get('description'),
                 quantity=line_data.get('quantity', 1),
@@ -311,12 +371,13 @@ class InvoiceList(MethodView):
         
         return invoice, 201
     
-    def _generate_invoice_number(self, invoice_type):
+    def _generate_invoice_number(self, tenant_id, invoice_type):
         """Generate unique invoice number."""
         prefix = 'AR' if invoice_type == 'AR' else 'AP'
         today = datetime.date.today()
         
         last_invoice = Invoice.query.filter(
+            Invoice.tenant_id == tenant_id,
             Invoice.invoice_number.like(f'{prefix}%')
         ).order_by(Invoice.invoice_number.desc()).first()
         
@@ -337,21 +398,29 @@ class InvoiceResource(MethodView):
     @jwt_required()
     def get(self, invoice_id):
         """Get invoice with lines."""
-        invoice = Invoice.query.get_or_404(invoice_id)
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        invoice = Invoice.query.filter_by(id=invoice_id, tenant_id=tenant_id).first()
+        if not invoice:
+            abort(404, message="Invoice not found")
         return invoice
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     def post(self, invoice_id):
         """Send/Confirm invoice."""
-        invoice = Invoice.query.get_or_404(invoice_id)
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
+        invoice = Invoice.query.filter_by(id=invoice_id, tenant_id=tenant_id).first()
+        if not invoice:
+            abort(404, message="Invoice not found")
         
         if invoice.status != 'draft':
             abort(400, message="Only draft invoices can be sent.")
         
         invoice.status = 'sent'
-        
-        from backend.extensions import db
         db.session.commit()
         
         return invoice
@@ -365,9 +434,11 @@ class TrialBalance(MethodView):
     @jwt_required()
     def get(self):
         """Generate trial balance report."""
-        accounts = Account.query.filter_by(is_active=True).all()
+        tenant_id = TenantContext.get_tenant_id()
+        if tenant_id is None:
+            abort(403, message="Tenant context not found")
         
-        from backend.extensions import db
+        accounts = Account.query.filter_by(tenant_id=tenant_id, is_active=True).all()
         
         result = []
         total_debit = 0
@@ -377,7 +448,10 @@ class TrialBalance(MethodView):
             balance = db.session.query(
                 func.coalesce(func.sum(JournalEntryLine.debit), 0) - 
                 func.coalesce(func.sum(JournalEntryLine.credit), 0)
-            ).filter(JournalEntryLine.account_id == account.id).scalar()
+            ).filter(
+                JournalEntryLine.account_id == account.id,
+                JournalEntryLine.tenant_id == tenant_id
+            ).scalar()
             
             entry = {
                 'code': account.code,

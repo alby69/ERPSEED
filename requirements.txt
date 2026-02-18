@@ -1,3 +1,5 @@
+# FlaskERP Dependencies
+# Core
 flask
 flask-cors
 flask-sqlalchemy
@@ -6,10 +8,27 @@ Flask-Migrate
 flask-socketio
 flask-smorest
 flask-babel
-psycopg2-binary
-python-dotenv
-gunicorn
-eventlet
+flask-mail
 flask-marshmallow
 marshmallow-sqlalchemy
+
+# Database
+psycopg2-binary
+sqlalchemy
+
+# Utilities
+python-dotenv
+werkzeug
+pytz
+marshmallow
 requests
+
+# Server
+gunicorn
+eventlet
+
+# Development
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-flask>=1.2.0
+faker>=18.0.0
