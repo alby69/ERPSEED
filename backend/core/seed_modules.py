@@ -10,8 +10,18 @@ from backend.core.services.tenant_module_service import TenantModuleService
 
 def load_module_config():
     """Carica configurazione moduli da file YAML."""
-    config_path = Path(__file__).parent.parent.parent / 'config' / 'modules.yml'
+    config_path = Path('/app/config/modules.yml')
     
+    if not config_path.exists():
+        config_path = Path(__file__).parent.parent.parent / 'config' / 'modules.yml'
+    
+    if not config_path.exists():
+        # Try relative to current working directory
+        config_path = Path('config/modules.yml')
+    
+    if not config_path.exists():
+        return None
+        
     with open(config_path, 'r') as f:
         return yaml.safe_load(f)
 
@@ -22,11 +32,18 @@ def seed_modules():
     
     config = load_module_config()
     
-    if not config or 'modules' not in config:
+    if not config:
         print("No modules configuration found")
         return
     
-    for module_id, mod_def in config['modules'].items():
+    # Get module definitions (exclude 'plans' key)
+    module_configs = {k: v for k, v in config.items() if k != 'plans'}
+    
+    if not module_configs:
+        print("No modules configuration found")
+        return
+    
+    for module_id, mod_def in module_configs.items():
         try:
             ModuleService.register_module(
                 module_id=module_id,
@@ -99,3 +116,9 @@ if __name__ == '__main__':
     
     with app.app_context():
         seed_modules()
+        # Also seed modules for the default tenant
+        from backend.extensions import db
+        from backend.core.models.tenant import Tenant
+        tenant = Tenant.query.first()
+        if tenant:
+            seed_modules_for_tenant(tenant.id, 'starter')

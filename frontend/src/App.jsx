@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context';
-import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, Parties, Products, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage } from './pages';
+import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, Parties, Products, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
 import Sales from './pages/Sales';
 import SalesOrderDetail from './pages/SalesOrderDetail';
 import SysModelDetail from './pages/SysModelDetail';
@@ -115,6 +115,14 @@ return (
           element={
             <ProtectedRoute roles={['admin']}>
               <Products />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/modules" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <ModulesPage />
             </ProtectedRoute>
           } 
         />

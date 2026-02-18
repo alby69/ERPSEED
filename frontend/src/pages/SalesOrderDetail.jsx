@@ -105,6 +105,33 @@ function SalesOrderDetail() {
         }
     };
 
+    const handleDownloadPDF = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/v1/pdf/sales-order/${orderId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Errore download PDF');
+            }
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ordine_${orderId}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            alert(`Errore PDF: ${err.message}`);
+        }
+    };
+
     if (loading) return <Layout><div>Loading order...</div></Layout>;
     if (error) return <Layout><div className="alert alert-danger m-4">{error}</div></Layout>;
     if (!order) return <Layout><div>Order not found.</div></Layout>;
@@ -115,6 +142,11 @@ function SalesOrderDetail() {
                 <h2>{isNew ? 'New Sales Order' : `Sales Order #${order.id}`}</h2>
                 <div>
                     <Link to="/sales" className="btn btn-secondary me-2">Back</Link>
+                    {!isNew && (
+                        <button onClick={handleDownloadPDF} className="btn btn-danger me-2">
+                            Download PDF
+                        </button>
+                    )}
                     <button onClick={handleSave} className="btn btn-primary">Save Order</button>
                 </div>
             </div>

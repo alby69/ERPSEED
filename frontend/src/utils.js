@@ -64,5 +64,19 @@ export const apiFetch = async (endpoint, options = {}) => {
     }
   }
 
+  // Lancia errore per risposte non ok
+  if (!response.ok) {
+    let errorMessage = `Errore ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.message || errorData.error || errorMessage;
+    } catch (e) {
+      // Se non è JSON, usa il testo dello stato
+    }
+    const error = new Error(errorMessage);
+    error.response = response;
+    throw error;
+  }
+
   return response;
 };

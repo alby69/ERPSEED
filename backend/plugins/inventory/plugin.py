@@ -8,7 +8,8 @@ Provides inventory management functionality:
 - Inventory Counts
 """
 from typing import List
-from backend.plugins.base import BasePlugin, register_plugin
+from backend.plugins.base import BasePlugin
+from backend.plugins.registry import register_plugin
 
 
 class InventoryPlugin(BasePlugin):

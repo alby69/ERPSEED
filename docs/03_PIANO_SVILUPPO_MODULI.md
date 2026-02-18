@@ -6,20 +6,131 @@
 
 ## 1. Stato Attuale dei Moduli
 
+### Legenda
+
+| Simbolo | Significato |
+|---------|-------------|
+| ✅ | Completato e funzionante |
+| 🟡 | Funzionante con limitazioni |
+| ⏳ | Non ancora iniziato |
+
 ### 1.1 Moduli Esistenti
 
 | Modulo | Stato | Percorso | Completamento |
 |--------|-------|----------|---------------|
-| **Accounting** | ✅ Implementato | `backend/plugins/accounting/` | 80% |
-| **HR** | ✅ Implementato | `backend/plugins/hr/` | 70% |
-| **Base Plugin System** | ✅ Implementato | `backend/plugins/base.py` | 90% |
+| **Core Multi-Tenant** | ✅ | `backend/core/` | 100% |
+| **Parties** | ✅ | `backend/parties.py` | 95% |
+| **Products** | ✅ | `backend/products.py` | 95% |
+| **Sales** | ✅ | `backend/sales.py` | 95% |
+| **Inventory** | ✅ | `backend/plugins/inventory/` | 95% |
+| **Purchases** | ✅ | `backend/purchases.py` | 95% |
+| **Accounting** | 🟡 | `backend/plugins/accounting/` | 70% |
+| **HR** | 🟡 | `backend/plugins/hr/` | 50% |
+| **Dashboard** | 🟡 | `backend/dashboard.py` | 40% |
+| **Base Plugin System** | ✅ | `backend/plugins/base.py` | 100% |
 
 ### 1.2 Dettaglio Moduli Esistenti
 
-#### Accounting (80% completo)
+#### ✅ Core Multi-Tenant (100%)
 
 ```
-Moduli inclusi:
+Componenti:
+├── BaseModel con tenant_id
+├── Tenant, User, AuditLog
+├── TenantContext, TenantMiddleware
+├── AuthService, PermissionService
+├── API Auth e Tenant
+└── Test coverage ~83%
+```
+
+#### ✅ Parties (95%)
+
+```
+Entità:
+├── Party (anagrafica)
+├── PartyAddress (indirizzi)
+├── PartyContact (contatti)
+└── PartyGroup (gruppi)
+
+Funzionalità:
+├── CRUD completo
+├── Ricerca e filtri
+└── Filtraggio automatico tenant
+
+Mancante: Import/Export avanzato
+```
+
+#### ✅ Products (95%)
+
+```
+Entità:
+├── Product (prodotto)
+├── ProductCategory (gerarchia)
+├── ProductVariant (varianti)
+├── ProductPrice (listini)
+└── PriceList
+
+Funzionalità:
+├── CRUD completo
+├── Categorie gerarchiche
+├── Varianti prodotto
+└── Listini multipli
+
+Mancante: Immagini prodotto
+```
+
+#### ✅ Sales (95%)
+
+```
+Entità:
+├── SalesOrder, SalesOrderLine
+├── SalesQuote, SalesQuoteLine
+├── SalesDelivery, SalesDeliveryLine
+└── PaymentTerm
+
+Funzionalità:
+├── CRUD ordini e preventivi
+├── Workflow ordine (draft→confirmed→shipped)
+├── Calcoli totali automatici
+└── Conversione preventivo→ordine
+
+Mancante: PDF generazione
+```
+
+#### ✅ Inventory (95%)
+
+```
+Entità:
+├── InventoryLocation
+├── ProductStock
+├── StockMovement
+├── InventoryCount
+└── InventoryCountLine
+
+Funzionalità:
+├── Movimenti carico/scarico
+├── Giacenze per magazzino
+├── Inventario
+└── Test isolation multi-tenant
+```
+
+#### ✅ Purchases (95%)
+
+```
+Entità:
+├── PurchaseOrder
+└── PurchaseOrderLine
+
+Funzionalità:
+├── CRUD ordini fornitore
+├── Conferma ordine
+└── Ricezione merce
+```
+
+#### 🟡 Accounting (70%)
+
+```
+Entità:
 ├── ChartOfAccounts (Piano dei Conti)
 ├── Account (Conti correnti)
 ├── JournalEntry (Partita doppia)
@@ -27,27 +138,53 @@ Moduli inclusi:
 ├── Invoice (Fatture attive/passive)
 └── InvoiceLine (Righe fattura)
 
-Funzionalità mancanti:
+Funzionante:
+├── CRUD completo
+├── Partita doppia
+├── Report Trial Balance
+└── Filtraggio tenant
+
+Mancante:
 - Generazione PDF fatture
 - Integrazione SDI (fattura elettronica)
 - Scadenzario pagamenti
-- Riclassificazioni contabili
+- Bilancio riclassificato
 ```
 
-#### HR (70% completo)
+#### 🟡 HR (50%)
 
 ```
-Moduli inclusi:
+Entità:
 ├── Department (Reparti)
 ├── Employee (Dipendenti)
 ├── Attendance (Presenze)
 └── LeaveRequest (Ferie/permessi)
 
-Funzionalità mancanti:
+Funzionante:
+├── CRUD base dipendenti
+└── Presenze base
+
+Mancante:
 - Timesheet settimanale
-- Calcolo stipendi base
+- Calcolo stipendi
 - Documenti dipendenti
 - Dashboard HR
+- API complete
+```
+
+#### 🟡 Dashboard (40%)
+
+```
+Funzionante:
+├── KPI summary (clienti, fornitori, prodotti)
+├── Sales summary per stato
+├── Purchases summary per stato
+└── Recent orders
+
+Mancante:
+- Grafici
+- Report avanzati
+- UI dedicata
 ```
 
 ---
@@ -281,21 +418,23 @@ Stima sviluppo: 4-6 settimane
 
 ### 6.2 Ordine di Sviluppo Raccomandato
 
-1. **Core** - Fondamenta non negoziabili
-2. **Parties** - Anagrafiche sono alla base di tutto
-3. **Products** - Necessario per qualsiasi attività
-4. **Sales** - Caso d'uso più comune
-5. **Inventory** - Fondamentale per retail
-6. **Accounting** - Obbligatorio per PMI italiano
-7. **HR** - Già parzialmente implementato
-8. **Purchases** - Complementare a sales
-9. **Projects** - Per gestione commesse
-10. **CRM** - Per acquisizione clienti
-11. **Dashboard** - Visibilità KPI
-12. **Documents** - Miglioramento UX
-13. **Manufacturing** - Solo se richiesto
-14. **POS** - Solo retail
-15. **E-commerce** - Solo se richiesto
+| # | Modulo | Stato Attuale | Prossimo Step |
+|---|--------|---------------|---------------|
+| 1 | **Core** | ✅ Completo | Manutenzione |
+| 2 | **Parties** | ✅ Completo | Manutenzione |
+| 3 | **Products** | ✅ Completo | Manutenzione |
+| 4 | **Sales** | ✅ Completo | PDF generation |
+| 5 | **Inventory** | ✅ Completo | Manutenzione |
+| 6 | **Purchases** | ✅ Completo | Manutenzione |
+| 7 | **Accounting** | 🟡 70% | PDF, SDI, Scadenzario |
+| 8 | **HR** | 🟡 50% | API complete, Dashboard |
+| 9 | **Dashboard** | 🟡 40% | UI, Grafici, Report |
+| 10 | **Projects** | ⏳ Non iniziato | Da sviluppare |
+| 11 | **CRM** | ⏳ Non iniziato | Da sviluppare |
+| 12 | **Documents** | ⏳ Non iniziato | Da sviluppare |
+| 13 | **Manufacturing** | ⏳ Non iniziato | Futuro |
+| 14 | **POS** | ⏳ Non iniziato | Futuro |
+| 15 | **E-commerce** | ⏳ Non iniziato | Futuro |
 
 ---
 

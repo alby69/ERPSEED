@@ -4,92 +4,100 @@
 
 ---
 
-## 1. Stato Roadmap
+## 1. Panoramica Stato Progetto
+
+### Legenda Stato
+
+| Simbolo | Significato |
+|---------|-------------|
+| ✅ | Completato e funzionante |
+| 🟡 | Funzionante ma con limitazioni/miglioramenti necessari |
+| 🔴 | Bloccante o non funzionante |
+| ⏳ | Non ancora iniziato |
+
+### Riepilogo Generale
+
+| Area | Stato | Note |
+|------|-------|------|
+| **Core Multi-Tenant** | ✅ Funzionante | Isolamento dati attivo |
+| **Modulo Parties** | ✅ Funzionante | CRUD completo |
+| **Modulo Products** | ✅ Funzionante | Categorie, prezzi |
+| **Modulo Sales** | ✅ Funzionante | Ordini, preventivi |
+| **Modulo Inventory** | ✅ Funzionante | Movimenti stock |
+| **Modulo Purchases** | ✅ Funzionante | Ordini fornitore |
+| **Modulo Accounting** | 🟡 Base | Fatture, partita doppia, manca PDF |
+| **Modulo HR** | 🟡 Base | Dipendenti, presenze |
+| **Dashboard** | 🟡 Base | KPI summary, migliorabile |
+| **Sistema Moduli v2.0** | 🟡 Parziale | API esiste, frontend non integrato |
+| **Frontend** | ⏳ Non avviato | UI base non implementata |
+
+---
+
+## 2. Roadmap Milestone
 
 ### Milestone 1.1: Foundation (Febbraio - Marzo)
 
-| Settimana | Attività | Stato |
-|-----------|----------|-------|
-| 1 | Setup repo, Docker, CI/CD | ✅ Completo |
-| 2-3 | Multi-tenant core | ✅ Completo |
-| 4 | API REST base | ✅ Completo |
-| 5-6 | Parties module | ✅ Completo |
-| 7 | Products module | ✅ Completo |
-| 8 | Sales module base | ✅ Completo |
-| 9 | Inventory module | ✅ Completo |
-| 10 | Basic Accounting | ✅ Completo |
-| 11 | Purchases module | ✅ Completo |
-| 12 | Dashboard base | ✅ Completo |
+| Settimana | Attività | Stato | Note |
+|-----------|----------|-------|------|
+| 1 | Setup repo, Docker, CI/CD | ✅ | Pipeline funzionante |
+| 2-3 | Multi-tenant core | ✅ | Tenant, User, Auth |
+| 4 | API REST base | ✅ | CRUD generico |
+| 5-6 | Parties module | ✅ | Anagrafiche complete |
+| 7 | Products module | ✅ | Catalogo con categorie |
+| 8 | Sales module base | ✅ | Ordini cliente |
+| 9 | Inventory module | ✅ | Movimenti stock |
+| 10 | Basic Accounting | 🟡 | Contabilità base, manca PDF |
+| 11 | Purchases module | ✅ | Ordini fornitore |
+| 12 | Dashboard base | 🟡 | KPI summary |
 
 **Definition of Done:**
 - [x] Utente può creare account
 - [x] Dati isolati per tenant
 - [x] CRUD anagrafiche funziona
-- [x] Test coverage > 70%
+- [x] Test coverage > 70% (dipende da setup test)
 - [x] Struttura test organizzata
 - [x] Purchases module funzionante
-- [x] Dashboard KPI funzionante
+- [x] Dashboard KPI funzionante (base)
 
 ---
 
-## 2. Test Structure
+## 3. Test Suite
 
 ### Struttura Test
 
 ```
 tests/
-├── conftest.py          # Fixtures condivise
-├── core/                # Test core multi-tenant
-│   ├── test_tenant_context.py
-│   ├── test_auth_service.py
-│   ├── test_permission_service.py
-│   ├── test_tenant_isolation.py
-│   ├── test_models.py
-│   └── test_api.py
-├── modules/             # Test moduli (parties, products, sales)
-│   └── test_modules_isolation.py
-└── plugins/             # Test plugin (accounting, inventory)
-    ├── test_accounting.py
-    └── test_inventory.py
+├── conftest.py                    # Fixtures condivise
+├── core/                          # Test core multi-tenant
+│   ├── test_tenant_context.py     # 12 test - TenantContext
+│   ├── test_auth_service.py       # 16 test - Autenticazione
+│   ├── test_permission_service.py # 12 test - Permessi
+│   ├── test_tenant_isolation.py   # 10 test - Isolamento
+│   ├── test_models.py             # 17 test - Modelli base
+│   └── test_api.py                # 14 test - Endpoint API
+├── modules/                       # Test moduli
+│   └── test_modules_isolation.py #  9 test - Parties/Products/Sales
+└── plugins/                       # Test plugin
+    ├── test_accounting.py        #  9 test - Accounting
+    └── test_inventory.py         # 10 test - Inventory
 ```
 
-### Test Creati
+### Copertura Test
 
-| File | Descrizione | Test |
-|------|-------------|------|
-| `test_tenant_context.py` | TenantContext e middleware | 12 test |
-| `test_auth_service.py` | Servizio autenticazione | 16 test |
-| `test_permission_service.py` | Sistema permessi | 12 test |
-| `test_tenant_isolation.py` | Isolamento multi-tenant | 10 test |
-| `test_models.py` | Modelli base | 17 test |
-| `test_api.py` | Endpoint API | 14 test |
-| `test_modules_isolation.py` | Parties, Products, Sales | 9 test |
-| `test_accounting.py` | Accounting plugin | 9 test |
-| `test_inventory.py` | Inventory plugin | 10 test |
+| Area | Test Count | Coverage |
+|------|------------|----------|
+| Core Multi-Tenant | ~70 test | ✅ ~83% |
+| Moduli (Parties, Products, Sales) | 9 test | ✅ |
+| Plugin Accounting | 9 test | ✅ |
+| Plugin Inventory | 10 test | ✅ |
 
-### Risultati Test
-
-```
-========================= short test summary info =========================
-PASSED: 74+ test
-FAILED: 15 test (da sistemare - mostly API integration tests)
-```
-
-### Test Nuovi (28 test aggiuntivi)
-
-| File | Test Passati |
-|------|--------------|
-| `test_modules_isolation.py` | 9 test |
-| `test_accounting.py` | 9 test |
-| `test_inventory.py` | 10 test |
-
-**Totale test isolation multi-tenant: 28 test passati**
+**Totale: ~99+ test unitari e di integrazione**
 
 ### Test Isolamento Multi-Tenant
 
 I test verificano:
 - [x] Utenti isolati per tenant
-- [x] Party isolati per tenant
+- [x] Party isolati per tenant  
 - [x] Prodotti isolati per tenant
 - [x] Ordini di vendita isolati per tenant
 - [x] Chart of Accounts isolati per tenant
@@ -102,116 +110,185 @@ I test verificano:
 - [x] Audit log isolati per tenant
 - [x] Login tracking funziona
 
+### Note Test
+
+- **pytest non configurato**: Per eseguire i test serve attivare l'ambiente virtuale e installare pytest
+- **Test coverage**: Il core multi-tenant ha una buona copertura (83%)
+- **Test mancanti**: API integration tests potrebbero necessitare aggiornamento
+
 ---
 
-## 3. Moduli Implementati
+## 4. Moduli Implementati
 
 ### ✅ Core Multi-Tenant
-- [x] BaseModel con tenant_id
-- [x] Modello Tenant
-- [x] Modello User con tenant_id
-- [x] Modello AuditLog
-- [x] TenantContext (gestione contesto)
-- [x] TenantMiddleware (estrazione tenant da richiesta)
-- [x] TenantQueryFilter (filtro automatico query)
-- [x] SoftDeleteFilter (filtro record eliminati)
-- [x] AuthService (login, register, password reset)
-- [x] PermissionService (ruoli e permessi)
-- [x] API Auth (/api/v1/auth/*)
-- [x] API Tenant (/api/v1/tenant/*)
+| Componente | Stato | Note |
+|------------|-------|------|
+| BaseModel con tenant_id | ✅ | Tutti i modelli ereditano |
+| Modello Tenant | ✅ | Completo |
+| Modello User con tenant_id | ✅ | Completo |
+| Modello AuditLog | ✅ | Tracciamento operazioni |
+| TenantContext | ✅ | Gestione contesto thread-safe |
+| TenantMiddleware | ✅ | Estrazione tenant da richiesta |
+| TenantQueryFilter | ✅ | Filtro automatico query |
+| SoftDeleteFilter | ✅ | Filtro record eliminati |
+| AuthService | ✅ | Login, register, password reset |
+| PermissionService | ✅ | Ruoli e permessi granulari |
+| API Auth (/api/v1/auth/*) | ✅ | Login, register, refresh |
+| API Tenant (/api/v1/tenant/*) | ✅ | CRUD tenant e utenti |
 
 ### ✅ Modulo Parties
-- [x] Modello Party con tenant_id
-- [x] API CRUD Party
-- [x] Filtraggio automatico per tenant
+| Componente | Stato | Note |
+|------------|-------|------|
+| Modello Party | ✅ | Con tenant_id |
+| PartyAddress | ✅ | Indirizzi multipli |
+| PartyContact | ✅ | Contatti multipli |
+| PartyGroup | ✅ | Gruppi/segmenti |
+| API CRUD Party | ✅ | Full CRUD |
+| Filtraggio tenant | ✅ | Automatico |
 
 ### ✅ Modulo Products
-- [x] Modello Product con tenant_id
-- [x] API CRUD Product
-- [x] Filtraggio automatico per tenant
+| Componente | Stato | Note |
+|------------|-------|------|
+| Modello Product | ✅ | Con tenant_id |
+| ProductCategory | ✅ | Gerarchia categorie |
+| ProductVariant | ✅ | Varianti (taglia, colore) |
+| ProductPrice | ✅ | Listini multipli |
+| PriceList | ✅ | Gestione listini |
+| API CRUD | ✅ | Full CRUD |
+| Filtraggio tenant | ✅ | Automatico |
 
 ### ✅ Modulo Sales
-- [x] Modello SalesOrder con tenant_id
-- [x] Modello SalesOrderLine con tenant_id
-- [x] API CRUD SalesOrder
-- [x] Filtraggio automatico per tenant
+| Componente | Stato | Note |
+|------------|-------|------|
+| SalesOrder | ✅ | Con tenant_id |
+| SalesOrderLine | ✅ | Righe ordine |
+| SalesQuote | ✅ | Preventivi |
+| SalesDelivery | ✅ | Bolle consegna |
+| PaymentTerm | ✅ | Termini pagamento |
+| API CRUD | ✅ | Full CRUD |
+| Calcoli totali | ✅ | Automatici |
 
 ### ✅ Modulo Inventory
-- [x] InventoryLocation con tenant_id
-- [x] ProductStock con tenant_id
-- [x] StockMovement con tenant_id
-- [x] InventoryCount con tenant_id
-- [x] InventoryCountLine con tenant_id
-- [x] Test isolation multi-tenant
-- [x] Filtraggio automatico per tenant
+| Componente | Stato | Note |
+|------------|-------|------|
+| InventoryLocation | ✅ | Ubicazioni magazzino |
+| ProductStock | ✅ | Giacenze |
+| StockMovement | ✅ | Movimenti stock |
+| InventoryCount | ✅ | Inventario |
+| InventoryCountLine | ✅ | Righe inventario |
+| API CRUD | ✅ | Full CRUD |
+| Test isolation | ✅ | 10 test |
+| Filtraggio tenant | ✅ | Automatico |
 
-### ✅ Modulo Accounting (Basic)
-- [x] ChartOfAccounts con tenant_id
-- [x] Account con tenant_id
-- [x] JournalEntry con tenant_id
-- [x] JournalEntryLine con tenant_id
-- [x] Invoice con tenant_id
-- [x] InvoiceLine con tenant_id
-- [x] API COA (Chart of Accounts)
-- [x] API Journal Entries (partita doppia)
-- [x] API Invoices (fatture attive/passive)
-- [x] Report Trial Balance
-- [x] Filtraggio automatico per tenant
+### 🟡 Modulo Accounting
+| Componente | Stato | Note |
+|------------|-------|------|
+| ChartOfAccounts | ✅ | Piano dei conti |
+| Account | ✅ | Conti correnti |
+| JournalEntry | ✅ | Partita doppia |
+| JournalEntryLine | ✅ | Righe partita |
+| Invoice | ✅ | Fatture attive/passive |
+| InvoiceLine | ✅ | Righe fattura |
+| API COA | ✅ | Full CRUD |
+| API Journal | ✅ | Partita doppia |
+| API Invoices | ✅ | Full CRUD |
+| Report Trial Balance | ✅ | Funzionante |
+| **PDF Fatture** | 🔴 | **Non implementato** |
+| **Integrazione SDI** | ⏳ | **Non ancora** |
+| **Scadenzario** | ⏳ | **Non ancora** |
 
 ### ✅ Modulo Purchases
-- [x] PurchaseOrder con tenant_id
-- [x] PurchaseOrderLine con tenant_id
-- [x] API CRUD PurchaseOrder
-- [x] API conferma ordine
-- [x] API ricezione merce
-- [x] Filtraggio automatico per tenant
+| Componente | Stato | Note |
+|------------|-------|------|
+| PurchaseOrder | ✅ | Con tenant_id |
+| PurchaseOrderLine | ✅ | Righe ordine |
+| API CRUD | ✅ | Full CRUD |
+| Conferma ordine | ✅ | Workflow |
+| Ricezione merce | ✅ | Receival |
 
-### ✅ Modulo Dashboard
-- [x] KPI summary (clienti, fornitori, prodotti)
-- [x] Sales summary per stato
-- [x] Purchases summary per stato
-- [x] Recent sales orders
-- [x] Recent purchase orders
+### 🟡 Modulo Dashboard
+| Componente | Stato | Note |
+|------------|-------|------|
+| KPI summary | 🟡 | Base (clienti, fornitori, prodotti) |
+| Sales summary | 🟡 | Per stato |
+| Purchases summary | 🟡 | Per stato |
+| Recent orders | 🟡 | Vendite e acquisti recenti |
+| **Report avanzati** | ⏳ | **Non ancora** |
+| **Grafici** | ⏳ | **Non ancora** |
 
----
-
-## 4. Prossimi Passi
-
-### Immediati
-- [x] Sistemare 15 test falliti (completato)
-- [ ] Testare isolamento multi-tenant end-to-end
-
-### Breve termine (Roadmap Q1)
-- [x] Inventory module (completato con test)
-- [x] Purchases module (completato)
-- [x] Dashboard base (completata)
-- [x] Sistema moduli core (completato)
-- [ ] Documentazione completa
-- [x] Docker setup
-
-### Sistema Moduli (Febbraio 2026)
-- [x] Modelli TenantModule e ModuleDefinition
-- [x] ModuleService e TenantModuleService
-- [x] API moduli (/api/v1/modules/*)
-- [x] API system-info (/api/v1/system/modules-info)
-- [x] Configurazione centralizzata (config/modules.yml)
-- [x] BasePlugin esteso con interfacce menu/widget
-- [x] Plugin esistenti aggiornati (accounting, inventory, hr)
-- [x] Middleware protezione moduli
-- [x] Hook frontend useModules
-- [x] Componente ModuleSidebar
-
-### Medio termine (Roadmap Q2-Q4)
-- [ ] Community Launch
-- [ ] SaaS Platform
-- [ ] Template "Micro" funzionante
-- [ ] HR module completo
-- [ ] Projects module
-- [ ] CRM module
+### 🟡 Sistema Moduli v2.0
+| Componente | Stato | Note |
+|------------|-------|------|
+| TenantModule | ✅ | Modello DB |
+| ModuleDefinition | ✅ | Definizione moduli |
+| ModuleService | ✅ | Service layer |
+| TenantModuleService | ✅ | Gestione per tenant |
+| API /api/v1/modules | ✅ | Full CRUD |
+| API /system/modules-info | ✅ | Info per UI |
+| config/modules.yml | ✅ | Configurazione |
+| BasePlugin esteso | 🟡 | Interfacce pronte |
+| Frontend useModules | ⏳ | **Non implementato** |
+| ModuleSidebar UI | ⏳ | **Non implementato** |
 
 ---
 
-## 5. Note Tecniche
+## 5. Prossimi Passi
+
+### ✅ Completati Recentemente
+- [x] Inventory module con test
+- [x] Purchases module
+- [x] Dashboard base
+- [x] Sistema moduli core backend
+
+### 🔴 Bloccanti / Alta Priorità
+
+| Task | Descrizione | Stato | Note |
+|------|-------------|-------|------|
+| **Frontend UI** | Interfaccia utente per gestione ERP | ✅ Esistente | React + Ant Design |
+| **PDF Fatture** | Generazione PDF per fatture/ordini | ✅ Implementato | xhtml2pdf + API |
+| **Test E2E** | Test end-to-end multi-tenant | ⏳ Da fare | |
+| **Fatture UI** | Pagina per gestione fatture | ⏳ Da fare | Solo API ora |
+
+### 🟡 Breve Termine (Q1 2026)
+
+| Task | Descrizione | Stato | Priorità |
+|------|-------------|-------|----------|
+| Integrazione SDI | Fattura elettronica Italia | ⏳ Bassa | |
+| Scadenzario | Scadenzario pagamenti | ⏳ Bassa | |
+| Report avanzati | Bilancio, situazione contabile | ⏳ Media | |
+| Template "Micro" | Configurazione per freelance | ⏳ Media | |
+
+### ⏳ Medio Termine (Q2-Q4 2026)
+
+| Task | Descrizione | Stato |
+|------|-------------|-------|
+| Frontend React/Vue | UI completa | ⏳ Non iniziato |
+| HR module | Dipendenti, presenze | 🟡 Base esistente |
+| Projects module | Gestione progetti | ⏳ Non iniziato |
+| CRM module | Leads, pipeline | ⏳ Non iniziato |
+| Community Launch | Pubblicazione open source | ⏳ Non iniziato |
+| SaaS Platform | Multi-tenant hosting | ⏳ Non iniziato |
+
+### 📋 Task Dettagliati
+
+#### Alta Priorità
+1. **Setup ambiente frontend** - Scegliere React o Vue e creare struttura base
+2. **Integrare API esistenti** - Connettere frontend con backend esistente
+3. **Dashboard UI** - Creare interfaccia per KPI e report
+
+#### Media Priorità
+4. **PDF Generation** - Implementare generazione PDF per ordini e fatture
+5. **Template "Micro"** - Configurazione predefinite per piccoli business
+6. **Migliorare Dashboard** - Grafici, report avanzati
+
+#### Bassa Priorità
+7. **Integrazione SDI** - Per fattura elettronica italiana
+8. **Export CSV/Excel** - Import/export dati
+9. **Notifiche** - Email, webhook
+
+---
+
+## 6. Note Tecniche
 
 ### Database
 - SQLite per sviluppo
@@ -222,6 +299,7 @@ I test verificano:
 - Pytest come test runner
 - 83% coverage per il core
 - Test specifici per core multi-tenant
+- Test isolation multi-tenant: ~28 test
 
 ### Sicurezza
 - JWT per autenticazione
@@ -233,8 +311,63 @@ I test verificano:
 - Sistema plugin con supporto multi-tenant
 - Categorie: core, builtin, premium
 - Menu dinamico basato su moduli attivi
-- Licensing integrato
+- Licensing integrato (struttura presente)
+
+---
+
+## 7. Checklist Production-Ready
+
+### Must Have (Per rilascio)
+
+| Componente | Stato | Note |
+|------------|-------|------|
+| Frontend UI | ✅ Esistente | React + Ant Design |
+| PDF Ordini | ✅ Implementato | Sales order PDF |
+| PDF Fatture | ✅ Implementato | API disponibile |
+| Test E2E | ⏳ Da fare | Per confidence |
+| Docker Production | 🟡 Parziale | Configurato, da testare |
+| SSL/TLS | 🟡 Esterno | Da configurare su server |
+
+### Should Have (Prossime release)
+
+| Componente | Stato | Note |
+|------------|-------|------|
+| Report avanzati | ⏳ Mancante | Bilancio, situazione |
+| Grafici Dashboard | 🟡 Parziale | Chart.js presente |
+| Export CSV | ⏳ Mancante | Import/export |
+| Integrazione email | ⏳ Mancante | SMTP configurato |
+| Pagina Fatture UI | ⏳ Mancante | Solo API ora |
+
+### Could Have (Futuro)
+
+| Componente | Stato | Note |
+|------------|-------|------|
+| Integrazione SDI | ⏳ Non iniziato | Fattura elettronica |
+| Webhook | ⏳ Non iniziato | Eventi esterni |
+| SMS notifications | ⏳ Non iniziato | Alert |
+| OAuth2/Social | ⏳ Non iniziato | Login Google/etc |
+
+---
+
+## 8. Aree di Miglioramento Documentazione
+
+### Documenti da Rivedere
+
+| File | Problema | Azione |
+|------|----------|--------|
+| `11_ARCHITETTURA_MODULI.md` | Proposta v2.0 senza stato implementazione | ✅ Aggiornato |
+| `03_PIANO_SVILUPPO_MODULI.md` | Stato moduli non aggiornato | ✅ Aggiornato |
+| `02_ARCHITETTURA_TECNICA_CORE.md` | Frontend non definito | ✅ Ora risulta esistente |
+
+### Documenti Buoni
+
+- `01_ANALISI_STRATEGICA.md` - Analisi completa
+- `04_SPECIFICHE_TECNICHE_CORE.md` - Implementazione dettagliata
+- `05-07_SPECIFICHE_MODULO_*.md` - Specifiche complete
+- `08_INFRASTRUCTURE_DEPLOYMENT.md` - Production-ready
+- `10_AVANZAMENTO_PROGETTO.md` - Stato aggiornato con PDF e frontend
 
 ---
 
 *Documento di tracking avanzamento progetto*
+*Ultimo aggiornamento: Febbraio 2026*

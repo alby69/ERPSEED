@@ -1,9 +1,17 @@
-# Fase 1: Build - Installa le dipendenze
+# Fase 1: Build - Installa le dipendenze di sistema per pycairo
 FROM python:3.12-slim as builder
 
 WORKDIR /app
 
-# Installa le dipendenze di build
+# Installa le dipendenze di build e runtime per pycairo (richiesto da xhtml2pdf)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcairo2-dev \
+    libffi-dev \
+    build-essential \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Installa le dipendenze Python
 RUN pip install --upgrade pip
 
 # Copia il file delle dipendenze e crea i "wheels" (pacchetti pre-compilati)
@@ -14,6 +22,12 @@ RUN pip wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
 FROM python:3.12-slim
 
 WORKDIR /app
+
+# Installa le dipendenze di runtime per pycairo
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcairo2 \
+    libffi8 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copia le dipendenze pre-compilate dalla fase di build e installale
 COPY --from=builder /app/wheels /wheels

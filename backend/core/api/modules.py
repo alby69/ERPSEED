@@ -24,7 +24,7 @@ class ModuleEnableSchema(Schema):
     """Schema per attivazione modulo."""
     module_id = fields.Str(required=True)
     license_key = fields.Str(required=False, allow_none=True)
-    config = fields.Dict(required=False, default={})
+    config = fields.Dict(required=False, load_default={})
 
 
 class ModuleConfigSchema(Schema):

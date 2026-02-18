@@ -39,7 +39,12 @@ class TenantModule(BaseModel):
     
     # Relationships
     tenant = db.relationship('Tenant', backref=db.backref('modules', lazy='dynamic'))
-    module = db.relationship('ModuleDefinition', foreign_keys=[module_id])
+    
+    @property
+    def module(self):
+        """Get module definition (lazy load)."""
+        from backend.core.models.module_definition import ModuleDefinition
+        return ModuleDefinition.query.filter_by(module_id=self.module_id).first()
     
     __table_args__ = (
         db.UniqueConstraint('tenant_id', 'module_id', name='uix_tenant_module'),

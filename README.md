@@ -115,18 +115,24 @@ This approach avoids complex inheritance and allows an entity to have multiple r
     - [x] CRUD (Create, Read, Update, Delete) APIs with filtering and pagination.
     - [x] UI for managing basic master data.
 
-4.  **Phase 3: First Functional Module (e.g., Sales) (In Progress)**
+4.  **Phase 3: First Functional Module (Sales) (Completed)**
     - [x] `SalesOrder` and `SalesOrderLine` models.
     - [x] API for creating and managing orders.
-    - [ ] Advanced UI for order management (e.g., Master-Detail).
+    - [x] Advanced UI for order management (Master-Detail).
+    - [x] PDF generation for orders.
 
-5.  **Phase 4: Subsequent Modules**
-    - [ ] Iterative development of Purchasing, Warehouse, and Fixed Assets modules.
+5.  **Phase 4: Inventory & Purchases (Completed)**
+    - [x] Inventory module (Locations, Stock, Movements, Counts).
+    - [x] Purchases module (Purchase Orders).
+    - [x] API and UI for inventory management.
 
-6.  **Phase 5: Accounting and Reporting**
-    - [ ] Models for Chart of Accounts (`ChartOfAccounts`), Entries (`GlEntry`), VAT (`VatLedger`).
-    - [ ] Logic for generating the General Ledger and VAT settlement.
-    - [ ] Integration with other modules for automatic accounting.
+6.  **Phase 5: Accounting (In Progress)**
+    - [x] Chart of Accounts (`ChartOfAccounts`).
+    - [x] Journal Entries (Double-entry bookkeeping).
+    - [x] Invoices (Active/Passive).
+    - [x] Trial Balance report.
+    - [ ] PDF generation for invoices.
+    - [ ] SDI integration (Italian electronic invoicing).
 
 7.  **Phase 6: ERP Builder (No-Code) (Completed)**
     - [x] System models (`SysModel`, `SysField`) to define tables and fields.
@@ -142,6 +148,21 @@ This approach avoids complex inheritance and allows an entity to have multiple r
         - [x] API to create, read, update, and delete Projects.
         - [x] Import/Export functionality for an entire Project as a JSON template.
         - [x] Project Versioning and Automatic Backups.
+
+8.  **Phase 7: Module System (Completed)**
+    - [x] Centralized module management (`ModuleDefinition`, `TenantModule`).
+    - [x] Module enable/disable per tenant.
+    - [x] Module licensing system (plans: starter, professional, enterprise).
+    - [x] Frontend module management UI.
+    - [x] Dynamic menu based on enabled modules.
+
+9.  **Phase 8: HR Module (In Progress)**
+    - [x] Departments.
+    - [x] Employees.
+    - [x] Attendance tracking.
+    - [x] Leave requests.
+    - [ ] Dashboard HR.
+    - [ ] Payroll calculation.
         
 ---
 

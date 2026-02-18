@@ -2,7 +2,7 @@ from flask import request
 from sqlalchemy import or_, desc, asc, func, inspect, Table
 import json
 import decimal
-from datetime import datetime
+from datetime import datetime, date
 from .extensions import db
 from flask_smorest import abort
 
@@ -213,7 +213,7 @@ def get_table_object(model_name, schema=None):
 
 def serialize_value(value):
     """Convert special types (dates, decimals) to JSON-serializable formats."""
-    if isinstance(value, (datetime.datetime, datetime.date)):
+    if isinstance(value, (datetime, date)):
         return value.isoformat()
     if isinstance(value, decimal.Decimal):
         return float(value)

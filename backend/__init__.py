@@ -36,6 +36,7 @@ from .core.api.auth import auth_bp as core_auth_bp
 from .core.api.tenant import tenant_bp
 from .core.api.modules import blp as modules_bp
 from .core.api.system import blp as system_bp
+from .core.api.pdf import pdf_bp
 
 
 def create_app(db_url=None):
@@ -120,6 +121,7 @@ def create_app(db_url=None):
     api.register_blueprint(tenant_bp, url_prefix='/api/v1/tenant')
     api.register_blueprint(modules_bp)
     api.register_blueprint(system_bp)
+    api.register_blueprint(pdf_bp)
     
     # Vecchi blueprint per retrocompatibilità frontend - rinominati per evitare conflitti
     api.register_blueprint(auth_bp, name='legacy_auth')  # /login, /me, etc.

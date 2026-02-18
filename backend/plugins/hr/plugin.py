@@ -2,7 +2,8 @@
 HR Plugin Entry Point.
 """
 from typing import List
-from backend.plugins.base import BasePlugin, register_plugin
+from backend.plugins.base import BasePlugin
+from backend.plugins.registry import register_plugin
 from .routes import blp
 
 

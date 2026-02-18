@@ -1142,23 +1142,35 @@ def seed_modules():
 
 ## 11. Prossimi Passi Implementativi
 
-### Priorità 1: Core
-- [ ] Aggiungere modelli TenantModule e ModuleDefinition
-- [ ] Creare ModuleService e TenantModuleService
-- [ ] Implementare API moduli
-- [ ] Creare config/modules.yml
+### ✅ Completati
+- [x] Modelli TenantModule e ModuleDefinition
+- [x] ModuleService e TenantModuleService
+- [x] API moduli (/api/v1/modules/*)
+- [x] Creare config/modules.yml
+- [x] Estendere BasePlugin con interfacce menu/widget
+- [x] Aggiornare PluginRegistry per supporto per-tenant
+- [x] Implementare middleware protezione moduli
+- [x] API system-info (/api/v1/system/modules-info)
 
-### Priorità 2: Plugin System
-- [ ] Estendere BasePlugin con nuove interfacce
-- [ ] Aggiornare PluginRegistry per supportare per-tenant
-- [ ] Implementare middleware protezione
+### 🟡 In Corso / Parziale
 
-### Priorità 3: Frontend
-- [ ] Creare hook useModules
-- [ ] Modificare Sidebar per usare menu dinamico
+| Componente | Stato | Note |
+|------------|-------|------|
+| Hook frontend useModules | ⏳ Non implementato | React/Vue non ancora configurato |
+| ModuleSidebar UI | ⏳ Non implementato | Componente non creato |
+| Pagina gestione moduli admin | ⏳ Non implementato | UI non creata |
+| Validazione license_key | ⏳ Struttura presente | Da implementare logic |
+| Verifica piano tenant | ⏳ Struttura presente | Da completare |
+
+### ⏳ Da Implementare
+
+### Priorità 1: Frontend (Bloccante)
+- [ ] Creare struttura frontend (React o Vue)
+- [ ] Implementare hook useModules
+- [ ] Creare componente ModuleSidebar
 - [ ] Creare pagina gestione moduli (admin)
 
-### Priorità 4: Licensing
+### Priorità 2: Licensing
 - [ ] Implementare validazione license_key
 - [ ] Aggiungere verifica piano
 - [ ] Integrare con sistema pagamenti (futuro)
@@ -1174,4 +1186,32 @@ def seed_modules():
 
 ---
 
+## 13. Stato Implementazione Attuale
+
+### Riepilogo
+
+| Componente Backend | Stato |
+|-------------------|-------|
+| TenantModule (modello) | ✅ Implementato |
+| ModuleDefinition (modello) | ✅ Implementato |
+| ModuleService | ✅ Implementato |
+| TenantModuleService | ✅ Implementato |
+| API /api/v1/modules | ✅ Implementato |
+| API /api/v1/system/modules-info | ✅ Implementato |
+| config/modules.yml | ✅ Implementato |
+| BasePlugin esteso | 🟡 Parziale |
+| Middleware protezione | ✅ Implementato |
+| Hook frontend | ⏳ Non implementato |
+| UI moduli | ⏳ Non implementato |
+
+### Dipendenze Future
+
+Per completare il sistema moduli è necessario:
+1. **Frontend**: Setup React/Vue per UI
+2. **Integrazione**: Connettere hook useModules al backend
+3. **UI Admin**: Pagina per gestione moduli
+
+---
+
 *Documento tecnico per implementazione sistema moduli FlaskERP*
+*Stato: Backend completato, Frontend da implementare*

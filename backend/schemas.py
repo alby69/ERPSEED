@@ -127,6 +127,7 @@ class PartySchema(ma.SQLAlchemyAutoSchema):
         model = Party
         load_instance = True
         include_fk = True
+        exclude = ('tenant_id',)
 
 class ProductSchema(ma.SQLAlchemyAutoSchema):
     class Meta:

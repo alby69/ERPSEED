@@ -1,0 +1,461 @@
+"""
+PDF Generation Service per FlaskERP
+Supporta: Sales Orders, Invoices, Quotes
+
+Per utilizzare questo servizio:
+1. Installare xhtml2pdf: pip install xhtml2pdf
+"""
+import io
+from datetime import datetime
+from typing import Optional, Dict, Any
+
+# xhtml2pdf sarà importato solo quando necessario per gestire l'errore se non installato
+try:
+    from xhtml2pdf import pisa
+    XHTML2PDF_AVAILABLE = True
+except ImportError:
+    XHTML2PDF_AVAILABLE = False
+    pisa = None
+
+from backend.extensions import db
+from backend.core.models.tenant import Tenant
+
+
+class PDFService:
+    """Service per generazione PDF documenti."""
+
+    @staticmethod
+    def generate_sales_order(order_id: int, tenant_id: int) -> bytes:
+        """
+        Genera PDF per ordine di vendita.
+        
+        Args:
+            order_id: ID dell'ordine
+            tenant_id: ID del tenant
+            
+        Returns:
+            bytes: PDF in formato binario
+        """
+        from backend.sales import SalesOrder, SalesOrderLine
+        
+        order = SalesOrder.query.filter_by(
+            id=order_id, 
+            tenant_id=tenant_id
+        ).first()
+        
+        if not order:
+            raise ValueError("Ordine non trovato")
+        
+        tenant = Tenant.query.get(tenant_id)
+        
+        html = PDFService._render_sales_order_html(order, tenant)
+        return PDFService._convert_to_pdf(html)
+    
+    @staticmethod
+    def generate_invoice(invoice_id: int, tenant_id: int) -> bytes:
+        """
+        Genera PDF per fattura.
+        
+        Args:
+            invoice_id: ID della fattura
+            tenant_id: ID del tenant
+            
+        Returns:
+            bytes: PDF in formato binario
+        """
+        from backend.plugins.accounting.models import Invoice, InvoiceLine
+        
+        invoice = Invoice.query.filter_by(
+            id=invoice_id, 
+            tenant_id=tenant_id
+        ).first()
+        
+        if not invoice:
+            raise ValueError("Fattura non trovata")
+        
+        tenant = Tenant.query.get(tenant_id)
+        
+        html = PDFService._render_invoice_html(invoice, tenant)
+        return PDFService._convert_to_pdf(html)
+    
+    @staticmethod
+    def generate_quote(quote_id: int, tenant_id: int) -> bytes:
+        """
+        Genera PDF per preventivo/quote.
+        
+        Args:
+            quote_id: ID del preventivo
+            tenant_id: ID del tenant
+            
+        Returns:
+            bytes: PDF in formato binario
+        """
+        raise NotImplementedError("SalesQuote non ancora implementato")
+    
+    @staticmethod
+    def _convert_to_pdf(html: str) -> bytes:
+        """
+        Converte HTML in PDF.
+        
+        Args:
+            html: Stringa HTML
+            
+        Returns:
+            bytes: PDF in formato binario
+            
+        Raises:
+            ImportError: Se xhtml2pdf non è installato
+        """
+        if not XHTML2PDF_AVAILABLE:
+            raise ImportError(
+                "xhtml2pdf non è installato. Installalo con: pip install xhtml2pdf"
+            )
+        
+        buffer = io.BytesIO()
+        pisa_status = pisa.CreatePDF(
+            html,
+            dest=buffer
+        )
+        
+        if pisa_status.err:
+            raise Exception("Errore durante la generazione del PDF")
+        
+        buffer.seek(0)
+        return buffer.getvalue()
+    
+    @staticmethod
+    def _format_currency(amount: float, currency: str = 'EUR') -> str:
+        """Formatta importo in valuta."""
+        return f"€ {amount:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+    
+    @staticmethod
+    def _render_sales_order_html(order, tenant) -> str:
+        """Renderizza HTML per ordine di vendita."""
+        
+        lines_html = ""
+        for line in order.lines:
+            lines_html += f"""
+            <tr>
+                <td>{line.product_name or 'Prodotto'}</td>
+                <td class="text-right">{line.quantity}</td>
+                <td class="text-right">{PDFService._format_currency(line.unit_price)}</td>
+                <td class="text-right">{line.discount_percent}%</td>
+                <td class="text-right">{PDFService._format_currency(line.total)}</td>
+            </tr>
+            """
+        
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: Arial, sans-serif; font-size: 12px; }}
+                .header {{ display: flex; justify-content: space-between; margin-bottom: 30px; }}
+                .company-info {{ width: 45%; }}
+                .document-info {{ width: 45%; text-align: right; }}
+                h1 {{ color: #333; margin-bottom: 5px; }}
+                table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+                th {{ background: #f5f5f5; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }}
+                td {{ padding: 10px; border-bottom: 1px solid #eee; }}
+                .text-right {{ text-align: right; }}
+                .totals {{ margin-top: 20px; text-align: right; }}
+                .totals table {{ width: 300px; margin-left: auto; }}
+                .totals td {{ padding: 5px 10px; }}
+                .totals .total-row {{ background: #f5f5f5; font-weight: bold; font-size: 14px; }}
+                .footer {{ margin-top: 50px; font-size: 10px; color: #666; text-align: center; }}
+                .badge {{ 
+                    display: inline-block; padding: 5px 10px; 
+                    background: #007bff; color: white; border-radius: 3px; font-size: 11px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="company-info">
+                    <h2>{tenant.name}</h2>
+                    <p>{tenant.address or ''}</p>
+                    <p>{tenant.city or ''} {tenant.postal_code or ''}</p>
+                    <p>P.IVA: {tenant.vat_number or '-'}</p>
+                </div>
+                <div class="document-info">
+                    <h1>ORDINE DI VENDITA</h1>
+                    <p><strong>N.</strong> {order.order_number}</p>
+                    <p><strong>Data:</strong> {order.order_date.strftime('%d/%m/%Y') if order.order_date else '-'}</p>
+                    <p><strong>Stato:</strong> <span class="badge">{order.state.upper()}</span></p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>Cliente</h3>
+                <p><strong>{order.party.name}</strong></p>
+                <p>{order.party.address or ''}</p>
+                <p>{order.party.city or ''} {order.party.postal_code or ''}</p>
+                <p>P.IVA: {order.party.vat_number or '-'}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descrizione</th>
+                        <th class="text-right">Qty</th>
+                        <th class="text-right">Prezzo</th>
+                        <th class="text-right">Sconto</th>
+                        <th class="text-right">Totale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {lines_html}
+                </tbody>
+            </table>
+            
+            <div class="totals">
+                <table>
+                    <tr>
+                        <td>Subtotale:</td>
+                        <td>{PDFService._format_currency(order.subtotal)}</td>
+                    </tr>
+                    <tr>
+                        <td>Sconto:</td>
+                        <td>- {PDFService._format_currency(order.discount_amount)}</td>
+                    </tr>
+                    <tr>
+                        <td>IVA:</td>
+                        <td>{PDFService._format_currency(order.tax_amount)}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>Totale:</td>
+                        <td>{PDFService._format_currency(order.total)}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            {f'<div><h4>Note:</h4><p>{order.note}</p></div>' if order.note else ''}
+            
+            <div class="footer">
+                <p>Documento generato da FlaskERP il {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+            </div>
+        </body>
+        </html>
+        """
+    
+    @staticmethod
+    def _render_invoice_html(invoice, tenant) -> str:
+        """Renderizza HTML per fattura."""
+        
+        lines_html = ""
+        for line in invoice.lines:
+            lines_html += f"""
+            <tr>
+                <td>{line.product_name or 'Prodotto'}</td>
+                <td class="text-right">{line.quantity}</td>
+                <td class="text-right">{PDFService._format_currency(line.unit_price)}</td>
+                <td class="text-right">{line.tax_percent}%</td>
+                <td class="text-right">{PDFService._format_currency(line.total)}</td>
+            </tr>
+            """
+        
+        invoice_type = "FATTURA" if invoice.invoice_type == 'out' else "FATTURA RICEVUTA"
+        
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: Arial, sans-serif; font-size: 12px; }}
+                .header {{ display: flex; justify-content: space-between; margin-bottom: 30px; }}
+                .company-info {{ width: 45%; }}
+                .document-info {{ width: 45%; text-align: right; }}
+                h1 {{ color: #333; margin-bottom: 5px; }}
+                table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+                th {{ background: #f5f5f5; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }}
+                td {{ padding: 10px; border-bottom: 1px solid #eee; }}
+                .text-right {{ text-align: right; }}
+                .totals {{ margin-top: 20px; text-align: right; }}
+                .totals table {{ width: 300px; margin-left: auto; }}
+                .totals td {{ padding: 5px 10px; }}
+                .totals .total-row {{ background: #f5f5f5; font-weight: bold; font-size: 14px; }}
+                .footer {{ margin-top: 50px; font-size: 10px; color: #666; text-align: center; }}
+                .badge {{ 
+                    display: inline-block; padding: 5px 10px; 
+                    background: #28a745; color: white; border-radius: 3px; font-size: 11px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="company-info">
+                    <h2>{tenant.name}</h2>
+                    <p>{tenant.address or ''}</p>
+                    <p>{tenant.city or ''} {tenant.postal_code or ''}</p>
+                    <p>P.IVA: {tenant.vat_number or '-'}</p>
+                </div>
+                <div class="document-info">
+                    <h1>{invoice_type}</h1>
+                    <p><strong>N.</strong> {invoice.invoice_number}</p>
+                    <p><strong>Data:</strong> {invoice.invoice_date.strftime('%d/%m/%Y') if invoice.invoice_date else '-'}</p>
+                    <p><strong>Stato:</strong> <span class="badge">{invoice.state.upper()}</span></p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>Cliente/Fornitore</h3>
+                <p><strong>{invoice.party.name}</strong></p>
+                <p>{invoice.party.address or ''}</p>
+                <p>{invoice.party.city or ''} {invoice.party.postal_code or ''}</p>
+                <p>P.IVA: {invoice.party.vat_number or '-'}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descrizione</th>
+                        <th class="text-right">Qty</th>
+                        <th class="text-right">Prezzo</th>
+                        <th class="text-right">IVA</th>
+                        <th class="text-right">Totale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {lines_html}
+                </tbody>
+            </table>
+            
+            <div class="totals">
+                <table>
+                    <tr>
+                        <td>Subtotale:</td>
+                        <td>{PDFService._format_currency(invoice.subtotal)}</td>
+                    </tr>
+                    <tr>
+                        <td>IVA:</td>
+                        <td>{PDFService._format_currency(invoice.tax_amount)}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>Totale:</td>
+                        <td>{PDFService._format_currency(invoice.total)}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            {f'<div><h4>Note:</h4><p>{invoice.note}</p></div>' if invoice.note else ''}
+            
+            <div class="footer">
+                <p>Documento generato da FlaskERP il {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+            </div>
+        </body>
+        </html>
+        """
+    
+    @staticmethod
+    def _render_quote_html(quote, tenant) -> str:
+        """Renderizza HTML per preventivo."""
+        
+        lines_html = ""
+        for line in quote.lines:
+            lines_html += f"""
+            <tr>
+                <td>{line.product_name or 'Prodotto'}</td>
+                <td class="text-right">{line.quantity}</td>
+                <td class="text-right">{PDFService._format_currency(line.unit_price)}</td>
+                <td class="text-right">{line.discount_percent}%</td>
+                <td class="text-right">{PDFService._format_currency(line.total)}</td>
+            </tr>
+            """
+        
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: Arial, sans-serif; font-size: 12px; }}
+                .header {{ display: flex; justify-content: space-between; margin-bottom: 30px; }}
+                .company-info {{ width: 45%; }}
+                .document-info {{ width: 45%; text-align: right; }}
+                h1 {{ color: #333; margin-bottom: 5px; }}
+                table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+                th {{ background: #f5f5f5; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }}
+                td {{ padding: 10px; border-bottom: 1px solid #eee; }}
+                .text-right {{ text-align: right; }}
+                .totals {{ margin-top: 20px; text-align: right; }}
+                .totals table {{ width: 300px; margin-left: auto; }}
+                .totals td {{ padding: 5px 10px; }}
+                .totals .total-row {{ background: #f5f5f5; font-weight: bold; font-size: 14px; }}
+                .footer {{ margin-top: 50px; font-size: 10px; color: #666; text-align: center; }}
+                .badge {{ 
+                    display: inline-block; padding: 5px 10px; 
+                    background: #ffc107; color: #333; border-radius: 3px; font-size: 11px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="company-info">
+                    <h2>{tenant.name}</h2>
+                    <p>{tenant.address or ''}</p>
+                    <p>{tenant.city or ''} {tenant.postal_code or ''}</p>
+                    <p>P.IVA: {tenant.vat_number or '-'}</p>
+                </div>
+                <div class="document-info">
+                    <h1>PREVENTIVO</h1>
+                    <p><strong>N.</strong> {quote.quote_number}</p>
+                    <p><strong>Data:</strong> {quote.quote_date.strftime('%d/%m/%Y') if quote.quote_date else '-'}</p>
+                    <p><strong>Valido fino:</strong> {quote.valid_until.strftime('%d/%m/%Y') if quote.valid_until else '-'}</p>
+                    <p><strong>Stato:</strong> <span class="badge">{quote.state.upper()}</span></p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <h3>Cliente</h3>
+                <p><strong>{quote.party.name}</strong></p>
+                <p>{quote.party.address or ''}</p>
+                <p>{quote.party.city or ''} {quote.party.postal_code or ''}</p>
+                <p>P.IVA: {quote.party.vat_number or '-'}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descrizione</th>
+                        <th class="text-right">Qty</th>
+                        <th class="text-right">Prezzo</th>
+                        <th class="text-right">Sconto</th>
+                        <th class="text-right">Totale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {lines_html}
+                </tbody>
+            </table>
+            
+            <div class="totals">
+                <table>
+                    <tr>
+                        <td>Subtotale:</td>
+                        <td>{PDFService._format_currency(quote.subtotal)}</td>
+                    </tr>
+                    <tr>
+                        <td>Sconto:</td>
+                        <td>- {PDFService._format_currency(quote.discount_amount)}</td>
+                    </tr>
+                    <tr>
+                        <td>IVA:</td>
+                        <td>{PDFService._format_currency(quote.tax_amount)}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>Totale:</td>
+                        <td>{PDFService._format_currency(quote.total)}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            {f'<div><h4>Note:</h4><p>{quote.note}</p></div>' if quote.note else ''}
+            
+            <div class="footer">
+                <p>Documento generato da FlaskERP il {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+            </div>
+        </body>
+        </html>
+        """

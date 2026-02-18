@@ -23,6 +23,9 @@ pytz
 marshmallow
 requests
 
+# PDF Generation
+xhtml2pdf>=0.2.11
+
 # Server
 gunicorn
 eventlet

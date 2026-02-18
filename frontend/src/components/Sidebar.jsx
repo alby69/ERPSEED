@@ -28,8 +28,16 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         { key: '/admin/builder', label: 'Builder', icon: <BuildOutlined /> },
         { key: '/admin/workflows', label: 'Workflows', icon: <ApiOutlined /> },
         { key: '/users', label: 'Users', icon: <TeamOutlined /> },
+        { key: '/modules', label: 'Modules', icon: <AppstoreOutlined /> },
         { key: '/admin/projects', label: 'Projects Admin', icon: <ProjectOutlined /> },
         { key: '/admin/audit-logs', label: 'Audit Logs', icon: <AuditOutlined /> },
+    ];
+
+    // Main application menu items (from enabled modules)
+    const appMenuItems = [
+        { key: '/anagrafiche', label: 'Anagrafiche', icon: <TeamOutlined /> },
+        { key: '/products', label: 'Prodotti', icon: <AppstoreOutlined /> },
+        { key: '/sales', label: 'Vendite', icon: <ProjectOutlined /> },
     ];
 
     // Dynamically build menu items
@@ -37,24 +45,30 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         { key: '/projects', label: 'Select Project', icon: <HomeOutlined /> },
     ];
 
-    if (projectId) {
-        items.push({ key: `/projects/${projectId}`, label: 'Project Dashboard', icon: <DashboardOutlined /> });
-        items.push({ key: `/projects/${projectId}/members`, label: 'Team Members', icon: <TeamOutlined /> });
-        items.push({ key: `/projects/${projectId}/settings`, label: 'Settings', icon: <SettingOutlined /> });
-    }
-
-    // Add the applications of the current project, if present
+    // Add main application menu
+    items.push({ type: 'divider' });
+    
+    // Combine static app items with dynamic project menu items
+    const allAppItems = [...appMenuItems];
     if (projectMenuItems.length > 0) {
-        items.push({
-            key: 'project-apps',
-            label: 'Applications',
-            icon: <AppstoreOutlined />,
-            children: projectMenuItems.map(item => ({
-                key: item.path,
-                label: item.label,
-            }))
+        projectMenuItems.forEach(item => {
+            // Avoid duplicates
+            if (!allAppItems.find(i => i.key === item.path)) {
+                allAppItems.push({
+                    key: item.path,
+                    label: item.label,
+                    icon: <AppstoreOutlined />
+                });
+            }
         });
     }
+    
+    items.push({
+        key: 'app-section',
+        label: 'Applicazioni',
+        icon: <AppstoreOutlined />,
+        children: allAppItems,
+    });
 
     // Add the administration section if the user is an admin
     if (user?.role === 'admin') {
