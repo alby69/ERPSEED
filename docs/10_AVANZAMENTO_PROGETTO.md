@@ -178,15 +178,28 @@ I test verificano:
 ## 4. Prossimi Passi
 
 ### Immediati
-- [ ] Sistemare 15 test falliti (principalmente API integration)
+- [x] Sistemare 15 test falliti (completato)
 - [ ] Testare isolamento multi-tenant end-to-end
 
 ### Breve termine (Roadmap Q1)
 - [x] Inventory module (completato con test)
 - [x] Purchases module (completato)
 - [x] Dashboard base (completata)
+- [x] Sistema moduli core (completato)
 - [ ] Documentazione completa
 - [x] Docker setup
+
+### Sistema Moduli (Febbraio 2026)
+- [x] Modelli TenantModule e ModuleDefinition
+- [x] ModuleService e TenantModuleService
+- [x] API moduli (/api/v1/modules/*)
+- [x] API system-info (/api/v1/system/modules-info)
+- [x] Configurazione centralizzata (config/modules.yml)
+- [x] BasePlugin esteso con interfacce menu/widget
+- [x] Plugin esistenti aggiornati (accounting, inventory, hr)
+- [x] Middleware protezione moduli
+- [x] Hook frontend useModules
+- [x] Componente ModuleSidebar
 
 ### Medio termine (Roadmap Q2-Q4)
 - [ ] Community Launch
@@ -214,6 +227,13 @@ I test verificano:
 - JWT per autenticazione
 - Isolamento dati per tenant
 - Audit log per tutte le operazioni
+- Protezione moduli per-tenant
+
+### Moduli
+- Sistema plugin con supporto multi-tenant
+- Categorie: core, builtin, premium
+- Menu dinamico basato su moduli attivi
+- Licensing integrato
 
 ---
 

@@ -1,0 +1,171 @@
+# FlaskERP Module Configuration
+# Definizione centralizzata dei moduli disponibili
+
+# ==============================================================================
+# MODULI CORE - Sempre disponibili
+# ==============================================================================
+
+parties:
+  name: "Anagrafiche"
+  description: "Gestione clienti, fornitori e contatti"
+  category: "core"
+  icon: "users"
+  menu_position: 10
+  builtin: true
+
+products:
+  name: "Prodotti"
+  description: "Catalogo prodotti e servizi"
+  category: "core"
+  icon: "package"
+  menu_position: 20
+  builtin: true
+
+sales:
+  name: "Vendite"
+  description: "Ordini di vendita e fatturazione attiva"
+  category: "core"
+  icon: "shopping-cart"
+  menu_position: 30
+  builtin: true
+
+purchases:
+  name: "Acquisti"
+  description: "Ordini di acquisto e fatturazione passiva"
+  category: "core"
+  icon: "truck"
+  menu_position: 40
+  builtin: true
+
+# ==============================================================================
+# MODULI BUILTIN - Inclusi nel piano base
+# ==============================================================================
+
+accounting:
+  name: "Contabilità"
+  description: "Contabilità con partita doppia, piano dei conti, registri"
+  category: "builtin"
+  icon: "calculator"
+  menu_position: 50
+  is_free: true
+  dependencies: []
+
+inventory:
+  name: "Magazzino"
+  description: "Gestione stock, movimenti, inventari"
+  category: "builtin"
+  icon: "warehouse"
+  menu_position: 60
+  is_free: true
+  dependencies: ["products"]
+
+hr:
+  name: "Risorse Umane"
+  description: "Dipendenti, reparti, presenze"
+  category: "builtin"
+  icon: "users"
+  menu_position: 70
+  is_free: true
+  dependencies: []
+
+# ==============================================================================
+# MODULI PREMIUM - A pagamento
+# ==============================================================================
+
+projects:
+  name: "Progetti"
+  description: "Gestione progetti, task, milestone"
+  category: "premium"
+  icon: "folder"
+  menu_position: 80
+  is_free: false
+  price: 99.00
+  plan_required: "professional"
+  dependencies: []
+
+crm:
+  name: "CRM"
+  description: "Gestione relazioni clienti, pipeline vendite"
+  category: "premium"
+  icon: "heart"
+  menu_position: 90
+  is_free: false
+  price: 149.00
+  plan_required: "professional"
+  dependencies: []
+
+manufacturing:
+  name: "Produzione"
+  description: "Distinte base, cicli di produzione"
+  category: "premium"
+  icon: "factory"
+  menu_position: 100
+  is_free: false
+  price: 199.00
+  plan_required: "enterprise"
+  dependencies: ["inventory"]
+
+helpdesk:
+  name: "Helpdesk"
+  description: "Sistema di ticket e supporto"
+  category: "premium"
+  icon: "life-buoy"
+  menu_position: 110
+  is_free: false
+  price: 79.00
+  plan_required: "professional"
+  dependencies: []
+
+documents:
+  name: "Documenti"
+  description: "Gestione documentale e archiviazione"
+  category: "premium"
+  icon: "file-text"
+  menu_position: 120
+  is_free: false
+  price: 59.00
+  plan_required: "professional"
+  dependencies: []
+
+# ==============================================================================
+# PIANI - Moduli inclusi per piano
+# ==============================================================================
+
+plans:
+  starter:
+    modules:
+      - parties
+      - products
+      - sales
+      - purchases
+      - accounting
+      - inventory
+
+  professional:
+    modules:
+      - parties
+      - products
+      - sales
+      - purchases
+      - accounting
+      - inventory
+      - hr
+      - projects
+      - crm
+      - helpdesk
+      - documents
+
+  enterprise:
+    modules:
+      - parties
+      - products
+      - sales
+      - purchases
+      - accounting
+      - inventory
+      - hr
+      - projects
+      - crm
+      - manufacturing
+      - helpdesk
+      - documents

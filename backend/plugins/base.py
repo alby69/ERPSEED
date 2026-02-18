@@ -10,19 +10,33 @@ from typing import List, Optional, Dict, Any
 
 class BasePlugin(ABC):
     """
-    Base class for all plugins.
+    Base class for all plugins with multi-tenant support.
     
     Attributes:
         name: Unique identifier for the plugin.
         version: Plugin version string.
         description: Human-readable description.
+        icon: Icon name for UI.
         dependencies: List of other plugin names required by this plugin.
+        is_free: Whether the module is free or premium.
+        price: Price for premium modules.
+        plan_required: Minimum plan required to use this module.
     """
     
+    # Metadata
     name: str = "base_plugin"
     version: str = "1.0.0"
     description: str = "Base plugin"
+    icon: str = "box"
+    
+    # Licensing
+    is_free: bool = True
+    price: Optional[float] = None
+    plan_required: str = "starter"
+    
+    # Dependencies
     dependencies: List[str] = []
+    core_version_min: str = "1.0.0"
     
     def __init__(self, app=None, db=None, api=None):
         """
@@ -43,6 +57,8 @@ class BasePlugin(ABC):
         """Check if plugin is enabled."""
         return self._enabled
     
+    # === Metodi Obbligatori ===
+    
     @abstractmethod
     def register(self):
         """
@@ -58,6 +74,8 @@ class BasePlugin(ABC):
         This is called during app initialization.
         """
         pass
+    
+    # === Lifecycle ===
     
     def install(self):
         """
@@ -75,6 +93,120 @@ class BasePlugin(ABC):
         """
         self._enabled = False
     
+    # === Hook Opzionali ===
+    
+    def before_request(self, tenant_id: int):
+        """
+        Hook called before each request.
+        
+        Args:
+            tenant_id: Current tenant ID.
+        """
+        pass
+    
+    def after_request(self, response, tenant_id: int):
+        """
+        Hook called after each request.
+        
+        Args:
+            response: Flask response object.
+            tenant_id: Current tenant ID.
+            
+        Returns:
+            Modified response object.
+        """
+        return response
+    
+    def on_enable(self, tenant_id: int, config: dict):
+        """
+        Called when tenant enables module.
+        
+        Args:
+            tenant_id: Tenant ID that enabled the module.
+            config: Module configuration for this tenant.
+        """
+        pass
+    
+    def on_disable(self, tenant_id: int):
+        """
+        Called when tenant disables module.
+        
+        Args:
+            tenant_id: Tenant ID that disabled the module.
+        """
+        pass
+    
+    # === UI Hooks ===
+    
+    def get_menu_items(self, tenant_id: int) -> List[dict]:
+        """
+        Restituisce voci di menu per il modulo.
+        
+        Args:
+            tenant_id: Current tenant ID.
+            
+        Returns:
+            List of menu item dictionaries.
+            Format: [
+                {
+                    'id': 'module_id',
+                    'label': 'Label',
+                    'icon': 'icon-name',
+                    'path': '/path',
+                    'menu_position': 100,
+                    'children': [...]  # optional sub-items
+                }
+            ]
+        """
+        return []
+    
+    def get_widgets(self, tenant_id: int) -> List[dict]:
+        """
+        Restituisce widget per la dashboard.
+        
+        Args:
+            tenant_id: Current tenant ID.
+            
+        Returns:
+            List of widget dictionaries.
+            Format: [
+                {
+                    'id': 'widget_id',
+                    'type': 'chart|table|text',
+                    'title': 'Widget Title',
+                    'size': 'small|medium|large',
+                    'config': {...}
+                }
+            ]
+        """
+        return []
+    
+    def get_api_routes(self) -> List[str]:
+        """
+        Restituisce rotte API esposte.
+        
+        Returns:
+            List of API route paths.
+        """
+        return []
+    
+    # === Licensing ===
+    
+    def validate_license(self, license_key: str, tenant_id: int) -> bool:
+        """
+        Valida licenza per modulo premium.
+        
+        Args:
+            license_key: License key to validate.
+            tenant_id: Tenant requesting validation.
+            
+        Returns:
+            True if valid, False otherwise.
+        """
+        return True
+    
+    # === Info ===
+    
     def get_info(self) -> Dict[str, Any]:
         """
         Get plugin information.
@@ -86,28 +218,13 @@ class BasePlugin(ABC):
             'name': self.name,
             'version': self.version,
             'description': self.description,
+            'icon': self.icon,
             'dependencies': self.dependencies,
+            'is_free': self.is_free,
+            'price': self.price,
+            'plan_required': self.plan_required,
             'enabled': self.enabled
         }
-    
-    def before_request(self):
-        """
-        Hook called before each request.
-        Override to add custom request processing.
-        """
-        pass
-    
-    def after_request(self, response):
-        """
-        Hook called after each request.
-        
-        Args:
-            response: Flask response object.
-            
-        Returns:
-            Modified response object.
-        """
-        return response
 
 
 class PluginMixin:

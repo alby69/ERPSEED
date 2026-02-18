@@ -157,6 +157,13 @@ class AuthService:
         access_token = AuthService._create_access_token(user)
         refresh_token = create_refresh_token(identity=str(user.id))
         
+        # Seed modules for new tenant based on plan
+        try:
+            from backend.core.seed_modules import seed_modules_for_tenant
+            seed_modules_for_tenant(tenant.id, tenant.plan)
+        except Exception as e:
+            print(f"Warning: Could not seed modules: {e}")
+        
         return {
             'access_token': access_token,
             'refresh_token': refresh_token,

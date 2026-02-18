@@ -37,7 +37,7 @@ class TestAuthService:
             assert result['tenant']['name'] == 'New Company'
             assert result['tenant']['slug'] == 'new-company'
     
-    def test_register_duplicate_slug(self, app, db, session, tenant):
+    def test_register_duplicate_slug(self, app, db, session, admin_user):
         """Test registering with duplicate slug fails."""
         with app.app_context():
             with pytest.raises(ValueError, match="Slug already in use"):
@@ -47,7 +47,7 @@ class TestAuthService:
                     first_name='Admin',
                     last_name='Two',
                     tenant_name='Test Company',
-                    tenant_slug='test-company'  # Duplicate slug
+                    tenant_slug='test-company'  # Duplicate slug from fixture tenant
                 )
     
     def test_login_success(self, app, db, session, admin_user):
@@ -101,11 +101,13 @@ class TestAuthService:
                     password='password123'
                 )
     
-    def test_login_inactive_tenant(self, app, db, session, tenant):
+    def test_login_inactive_tenant(self, app, db, session, admin_user):
         """Test login with inactive tenant fails."""
         with app.app_context():
+            tenant = session.merge(admin_user.tenant)
             tenant.is_active = False
             session.commit()
+            session.refresh(tenant)
             
             with pytest.raises(ValueError, match="Organization is disabled"):
                 AuthService.login(
@@ -126,27 +128,22 @@ class TestAuthService:
     
     def test_refresh_token(self, app, db, session, admin_user):
         """Test token refresh."""
+        import jwt as pyjwt
+        from flask import Flask
+        from flask_jwt_extended import create_refresh_token
+        
         with app.app_context():
-            # First login to get a refresh token
-            login_result = AuthService.login(
-                email='admin@test.com',
-                password='admin123'
-            )
-            refresh_token = login_result['refresh_token']
-            
-            # Now refresh
-            from flask_jwt_extended import create_refresh_token, jwt_required, get_jwt_identity
-            from backend.extensions import db as _db
-            
-            # Create a new refresh token manually for testing
-            with app.test_request_context():
+            with app.test_client() as client:
                 refresh_token = create_refresh_token(identity=str(admin_user.id))
-            
-            # Test refresh_token method directly
-            result = AuthService.refresh_token()
-            
-            assert result is not None
-            assert 'access_token' in result
+                
+                response = client.post(
+                    '/api/v1/auth/refresh',
+                    headers={'Authorization': f'Bearer {refresh_token}'}
+                )
+                
+                assert response.status_code == 200
+                data = response.json
+                assert 'access_token' in data
     
     def test_request_password_reset_existing_user(self, app, db, session, admin_user):
         """Test password reset request for existing user."""

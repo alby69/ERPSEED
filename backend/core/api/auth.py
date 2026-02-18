@@ -81,7 +81,6 @@ class Login(MethodView):
 class CurrentUser(MethodView):
     @auth_bp.doc(security=[{"bearerAuth": []}])
     @jwt_required()
-    @auth_bp.response(200, UserSchema)
     def get(self):
         """Get current user info."""
         user_id = get_jwt_identity()

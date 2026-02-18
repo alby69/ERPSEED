@@ -68,7 +68,7 @@ def tenant(db, session):
     
     tenant = Tenant(
         name='Test Company',
-        slug='test-company-' + str(id(session)),
+        slug='test-company',
         email='admin@test.com',
         is_active=True
     )
@@ -85,7 +85,7 @@ def tenant2(db, session):
     
     tenant = Tenant(
         name='Second Company',
-        slug='second-company-' + str(id(session)),
+        slug='second-company',
         email='admin@second.com',
         is_active=True
     )

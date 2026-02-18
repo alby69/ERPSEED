@@ -34,6 +34,8 @@ from .plugins.inventory.plugin import get_plugin as get_inventory_plugin
 # Import Core API blueprints
 from .core.api.auth import auth_bp as core_auth_bp
 from .core.api.tenant import tenant_bp
+from .core.api.modules import blp as modules_bp
+from .core.api.system import blp as system_bp
 
 
 def create_app(db_url=None):
@@ -116,6 +118,8 @@ def create_app(db_url=None):
     # Core API con Marshmallow (nuovo)
     api.register_blueprint(core_auth_bp, url_prefix='/api/v1/auth')
     api.register_blueprint(tenant_bp, url_prefix='/api/v1/tenant')
+    api.register_blueprint(modules_bp)
+    api.register_blueprint(system_bp)
     
     # Vecchi blueprint per retrocompatibilità frontend - rinominati per evitare conflitti
     api.register_blueprint(auth_bp, name='legacy_auth')  # /login, /me, etc.
