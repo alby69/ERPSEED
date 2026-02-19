@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context';
-import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, Parties, Products, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
+import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, Parties, SoggettiPage, RuoliPage, IndirizziPage, ContattiPage, Products, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
 import Sales from './pages/Sales';
 import SalesOrderDetail from './pages/SalesOrderDetail';
 import SysModelDetail from './pages/SysModelDetail';
 import SysModelList from './pages/SysModelList';
-import ProjectLayout from './ProjectLayout'; // Path corretto
+import ProjectLayout from './ProjectLayout';
 import DynamicModelPage from './pages/DynamicModelPage';
 import AuditLogs from './pages/AuditLogs';
 import WorkflowsPage from './pages/WorkflowsPage';
@@ -106,7 +106,31 @@ return (
           path="/anagrafiche" 
           element={
             <ProtectedRoute roles={['admin']}>
-              <Parties />
+              <SoggettiPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/ruoli" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <RuoliPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/indirizzi" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <IndirizziPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/contatti" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <ContattiPage />
             </ProtectedRoute>
           } 
         />

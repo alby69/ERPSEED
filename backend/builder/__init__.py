@@ -4,11 +4,12 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import text, select, desc
 
-from .extensions import db
-from .schemas import SysModelSchema, SysFieldSchema, AuditLogSchema
-from .utils import apply_filters, apply_sorting, paginate
-from .services import BuilderService
-from .decorators import admin_required
+from ..extensions import db
+from ..schemas import SysModelSchema, SysFieldSchema, AuditLogSchema
+from ..utils import apply_filters, apply_sorting, paginate
+from ..services import BuilderService
+from ..decorators import admin_required
+from .generator import CodeGenerator, TemplateValidator, AdaptiveBuilder
 
 blp = Blueprint("builder", __name__, description="No-Code Builder Operations")
 
@@ -222,3 +223,52 @@ class AuditLogList(MethodView):
         items, total = builder_service.get_audit_logs(page, per_page)
         
         return items
+
+
+@blp.route("/sys-models/<int:model_id>/generate-code")
+class SysModelGenerateCode(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self, model_id):
+        """Generate Python code from model definition."""
+        model = builder_service.get_model(model_id)
+        if not model:
+            abort(404, message="Model not found.")
+        
+        validator = TemplateValidator()
+        errors = validator.validate(model)
+        if errors:
+            abort(400, message=f"Validation errors: {', '.join(errors)}")
+        
+        generator = CodeGenerator()
+        
+        api_prefix = request.args.get('api_prefix', '/api')
+        
+        code = generator.generate_module(model, api_prefix)
+        
+        return {
+            "model": model.name,
+            "code": code
+        }
+
+
+@blp.route("/sys-models/<int:model_id>/validate")
+class SysModelValidate(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self, model_id):
+        """Validate model definition."""
+        model = builder_service.get_model(model_id)
+        if not model:
+            abort(404, message="Model not found.")
+        
+        validator = TemplateValidator()
+        errors = validator.validate(model)
+        
+        return {
+            "valid": len(errors) == 0,
+            "errors": errors
+        }
+
+
+__all__ = ['blp', 'CodeGenerator', 'TemplateValidator', 'AdaptiveBuilder']

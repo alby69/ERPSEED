@@ -38,6 +38,9 @@ from .core.api.modules import blp as modules_bp
 from .core.api.system import blp as system_bp
 from .core.api.pdf import pdf_bp
 
+# Import Entities (Vision Archetypes)
+from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
+
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -137,6 +140,12 @@ def create_app(db_url=None):
     api.register_blueprint(dynamic_api_bp)
     api.register_blueprint(webhooks_bp)
     api.register_blueprint(workflows_bp)
+    
+    # Vision Entities (Archetypes)
+    api.register_blueprint(soggetto_blp, url_prefix='/api/v1')
+    api.register_blueprint(ruolo_blp, url_prefix='/api/v1')
+    api.register_blueprint(indirizzo_blp, url_prefix='/api/v1')
+    api.register_blueprint(contatto_blp, url_prefix='/api/v1')
 
     # --- Initialize Plugins ---
     _init_plugins(app, api, db)

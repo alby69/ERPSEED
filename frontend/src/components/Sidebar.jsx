@@ -13,7 +13,10 @@ import {
     HomeOutlined,
     DashboardOutlined,
     SettingOutlined,
-    ApiOutlined
+    ApiOutlined,
+    EnvironmentOutlined,
+    PhoneOutlined,
+    UserOutlined
 } from '@ant-design/icons';
 import './Sidebar.css';
 
@@ -33,9 +36,12 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         { key: '/admin/audit-logs', label: 'Audit Logs', icon: <AuditOutlined /> },
     ];
 
-    // Main application menu items (from enabled modules)
+    // Main application menu items (from enabled modules) - VISION SYSTEM
     const appMenuItems = [
-        { key: '/anagrafiche', label: 'Anagrafiche', icon: <TeamOutlined /> },
+        { key: '/anagrafiche', label: 'Anagrafiche', icon: <UserOutlined /> },
+        { key: '/ruoli', label: 'Ruoli', icon: <TeamOutlined /> },
+        { key: '/indirizzi', label: 'Indirizzi', icon: <EnvironmentOutlined /> },
+        { key: '/contatti', label: 'Contatti', icon: <PhoneOutlined /> },
         { key: '/products', label: 'Prodotti', icon: <AppstoreOutlined /> },
         { key: '/sales', label: 'Vendite', icon: <ProjectOutlined /> },
     ];
