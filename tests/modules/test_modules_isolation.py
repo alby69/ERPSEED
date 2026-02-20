@@ -2,7 +2,8 @@
 Tests for Parties, Products, and Sales modules with multi-tenant isolation.
 """
 import pytest
-from backend.models import Party, Product, SalesOrder
+from backend.entities.soggetto import Soggetto
+from backend.models import Product, SalesOrder
 
 
 class TestPartiesIsolation:
@@ -11,57 +12,57 @@ class TestPartiesIsolation:
     def test_create_party_in_tenant(self, app, db, session, tenant):
         """Test creating a party."""
         with app.app_context():
-            party = Party(
+            party = Soggetto(
                 tenant_id=tenant.id,
-                name='Test Customer',
-                party_type='customer',
-                email='test@test.com'
+                nome='Test Customer',
+                tipo_soggetto='persona_fisica',
+                email_principale='test@test.com'
             )
             session.add(party)
             session.commit()
             
             assert party.id is not None
-            assert party.name == 'Test Customer'
+            assert party.nome == 'Test Customer'
             assert party.tenant_id == tenant.id
     
     def test_parties_isolated_between_tenants(self, app, db, session, tenant, tenant2):
         """Test parties are isolated between tenants."""
         with app.app_context():
             # Create party for tenant 1
-            party1 = Party(
+            party1 = Soggetto(
                 tenant_id=tenant.id,
-                name='Customer One',
-                party_type='customer'
+                nome='Customer One',
+                tipo_soggetto='persona_fisica'
             )
             session.add(party1)
             
             # Create party for tenant 2
-            party2 = Party(
+            party2 = Soggetto(
                 tenant_id=tenant2.id,
-                name='Customer Two',
-                party_type='customer'
+                nome='Customer Two',
+                tipo_soggetto='persona_fisica'
             )
             session.add(party2)
             session.commit()
             
             # Each tenant should only see their parties
-            parties1 = Party.query.filter_by(tenant_id=tenant.id).all()
-            parties2 = Party.query.filter_by(tenant_id=tenant2.id).all()
+            parties1 = Soggetto.query.filter_by(tenant_id=tenant.id).all()
+            parties2 = Soggetto.query.filter_by(tenant_id=tenant2.id).all()
             
             assert len(parties1) == 1
             assert len(parties2) == 1
-            assert parties1[0].name == 'Customer One'
-            assert parties2[0].name == 'Customer Two'
+            assert parties1[0].nome == 'Customer One'
+            assert parties2[0].nome == 'Customer Two'
     
     def test_party_unique_constraint_per_tenant(self, app, db, session, tenant):
         """Test same email can exist in different tenants."""
         with app.app_context():
             # Create party in tenant 1
-            party1 = Party(
+            party1 = Soggetto(
                 tenant_id=tenant.id,
-                name='Customer One',
-                party_type='customer',
-                email='same@test.com'
+                nome='Customer One',
+                tipo_soggetto='persona_fisica',
+                email_principale='same@test.com'
             )
             session.add(party1)
             session.commit()
@@ -76,11 +77,11 @@ class TestPartiesIsolation:
             session.add(tenant2)
             session.flush()
             
-            party2 = Party(
+            party2 = Soggetto(
                 tenant_id=tenant2.id,
-                name='Customer Two',
-                party_type='customer',
-                email='same@test.com'  # Same email, different tenant
+                nome='Customer Two',
+                tipo_soggetto='persona_fisica',
+                email_principale='same@test.com'  # Same email, different tenant
             )
             session.add(party2)
             session.commit()  # Should not raise

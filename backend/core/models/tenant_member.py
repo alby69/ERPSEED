@@ -46,7 +46,7 @@ class TenantMember(BaseModel):
     
     # Relations
     tenant = db.relationship('Tenant', back_populates='members')
-    user = db.relationship('User', back_populates='tenant_members')
+    user = db.relationship('User', back_populates='tenant_members', foreign_keys=[user_id])
     invited_by = db.relationship('User', foreign_keys=[invited_by_id])
     
     __table_args__ = (

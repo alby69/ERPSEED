@@ -53,6 +53,7 @@ class User(BaseModel):
     
     # Relations
     tenant = db.relationship('Tenant', back_populates='users')
+    # Note: tenant_members is defined in backend/models.py (User class)
     
     # Constraints
     __table_args__ = (

@@ -18,7 +18,7 @@ const ContattiPage = () => {
   const fetchContatti = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiFetch('/contatti');
+      const response = await apiFetch('/api/v1/contatti');
       if (response.ok) {
         const data = await response.json();
         setContatti(data);
@@ -32,7 +32,7 @@ const ContattiPage = () => {
 
   const fetchSoggetti = useCallback(async () => {
     try {
-      const response = await apiFetch('/soggetti');
+      const response = await apiFetch('/api/v1/soggetti');
       if (response.ok) {
         const data = await response.json();
         setSoggetti(data);

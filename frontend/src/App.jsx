@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context';
-import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, Parties, SoggettiPage, RuoliPage, IndirizziPage, ContattiPage, Products, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
+import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, SoggettiPage, RuoliPage, IndirizziPage, ComuniPage, ContattiPage, Products, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
 import Sales from './pages/Sales';
 import SalesOrderDetail from './pages/SalesOrderDetail';
 import SysModelDetail from './pages/SysModelDetail';
@@ -123,6 +123,14 @@ return (
           element={
             <ProtectedRoute roles={['admin']}>
               <IndirizziPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/comuni" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <ComuniPage />
             </ProtectedRoute>
           } 
         />

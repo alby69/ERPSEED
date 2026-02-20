@@ -13,7 +13,6 @@ from .core.services.query_filter import TenantQueryFilter, SoftDeleteFilter
 # Import Blueprints
 from .auth import auth_bp
 from .users import blp as users_bp
-from .parties import blp as parties_bp
 from .products import blp as products_bp
 from .projects import blp as projects_bp
 from .sales import blp as sales_bp
@@ -40,6 +39,8 @@ from .core.api.pdf import pdf_bp
 
 # Import Entities (Vision Archetypes)
 from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
+from .entities.indirizzo_geografico import geografico_blp
+from .entities.comuni_routes import comuni_blp
 
 
 def create_app(db_url=None):
@@ -129,7 +130,6 @@ def create_app(db_url=None):
     # Vecchi blueprint per retrocompatibilità frontend - rinominati per evitare conflitti
     api.register_blueprint(auth_bp, name='legacy_auth')  # /login, /me, etc.
     api.register_blueprint(users_bp)
-    api.register_blueprint(parties_bp)
     api.register_blueprint(products_bp)
     api.register_blueprint(projects_bp)
     api.register_blueprint(sales_bp)
@@ -146,6 +146,8 @@ def create_app(db_url=None):
     api.register_blueprint(ruolo_blp, url_prefix='/api/v1')
     api.register_blueprint(indirizzo_blp, url_prefix='/api/v1')
     api.register_blueprint(contatto_blp, url_prefix='/api/v1')
+    api.register_blueprint(geografico_blp)
+    api.register_blueprint(comuni_blp)
 
     # --- Initialize Plugins ---
     _init_plugins(app, api, db)

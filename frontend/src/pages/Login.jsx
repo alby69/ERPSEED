@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { BASE_URL } from '@/utils';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/context/AuthContext';
 
 function Login() {
   const { t } = useTranslation();
@@ -11,6 +12,7 @@ function Login() {
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,9 +28,7 @@ function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        const storage = rememberMe ? localStorage : sessionStorage;
-        storage.setItem('access_token', data.access_token);
-        storage.setItem('refresh_token', data.refresh_token);
+        await login(data.access_token, data.refresh_token, rememberMe);
         
         if (data.force_password_change) {
           navigate('/profile?force=true');

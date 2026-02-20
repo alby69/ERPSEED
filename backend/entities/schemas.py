@@ -57,6 +57,9 @@ class IndirizzoSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         dump_only = ("id", "created_at", "updated_at")
+    
+    regione = mm_fields.Str(required=False, allow_none=True)
+    città = mm_fields.Str(required=False, allow_none=True)
 
 
 class SoggettoIndirizzoSchema(ma.SQLAlchemyAutoSchema):

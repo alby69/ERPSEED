@@ -147,7 +147,7 @@ class Invoice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     invoice_number = db.Column(db.String(50), nullable=False, index=True)
     invoice_type = db.Column(db.String(10), nullable=False)  # AR (receivable), AP (payable)
-    party_id = db.Column(db.Integer, db.ForeignKey('parties.id'), nullable=False)
+    party_id = db.Column(db.Integer, db.ForeignKey('soggetti.id'), nullable=False)
     date = db.Column(db.Date, nullable=False, default=datetime.now().date)
     due_date = db.Column(db.Date)
     description = db.Column(db.String(255))
@@ -159,7 +159,7 @@ class Invoice(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    party = db.relationship('Party')
+    party = db.relationship('Soggetto')
     lines = db.relationship('InvoiceLine', back_populates='invoice', cascade='all, delete-orphan')
     journal_entry = db.relationship('JournalEntry')
     tenant = db.relationship('Tenant', backref=db.backref('invoices', lazy='dynamic'))

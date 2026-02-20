@@ -1,7 +1,8 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
-from .models import PurchaseOrder, PurchaseOrderLine, Party
+from .models import PurchaseOrder, PurchaseOrderLine
+from backend.entities.soggetto import Soggetto
 from .extensions import db
 from .schemas import SalesOrderSchema
 from .utils import apply_filters, paginate, apply_sorting, apply_date_filters
@@ -43,7 +44,7 @@ class PurchaseOrderList(MethodView):
         
         order_data.tenant_id = tenant_id
         
-        if not Party.query.filter_by(id=order_data.customer_id, tenant_id=tenant_id).first():
+        if not Soggetto.query.filter_by(id=order_data.customer_id, tenant_id=tenant_id).first():
             abort(404, message="Supplier not found")
 
         for line in order_data.lines:

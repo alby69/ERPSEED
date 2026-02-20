@@ -1,9 +1,9 @@
 """
 Tests for multi-tenant isolation.
-This is the most critical test suite - verifying data isolation between tenants.
 """
 import pytest
-from backend.models import Party, Product, SalesOrder, User
+from backend.entities.soggetto import Soggetto
+from backend.models import Product, SalesOrder, User
 from backend.core.models import Tenant
 
 
@@ -44,31 +44,30 @@ class TestTenantIsolation:
         """Test parties are isolated by tenant."""
         with app.app_context():
             # Create parties in different tenants
-            party1 = Party(
+            party1 = Soggetto(
                 tenant_id=tenant.id,
-                name='Customer One',
-                party_type='customer',
-                email='customer1@test.com'
+                nome='Customer One',
+                tipo_soggetto='persona_fisica',
+                email_principale='customer1@test.com'
             )
             session.add(party1)
             
-            party2 = Party(
+            party2 = Soggetto(
                 tenant_id=tenant2.id,
-                name='Customer Two',
-                party_type='customer',
-                email='customer2@test.com'
+                nome='Customer Two',
+                tipo_soggetto='persona_fisica',
+                email_principale='customer2@test.com'
             )
-            session.add(party2)
             session.commit()
             
             # Each tenant should only see their parties
-            parties_tenant1 = Party.query.filter_by(tenant_id=tenant.id).all()
-            parties_tenant2 = Party.query.filter_by(tenant_id=tenant2.id).all()
+            parties_tenant1 = Soggetto.query.filter_by(tenant_id=tenant.id).all()
+            parties_tenant2 = Soggetto.query.filter_by(tenant_id=tenant2.id).all()
             
             assert len(parties_tenant1) == 1
             assert len(parties_tenant2) == 1
-            assert parties_tenant1[0].name == 'Customer One'
-            assert parties_tenant2[0].name == 'Customer Two'
+            assert parties_tenant1[0].nome == 'Customer One'
+            assert parties_tenant2[0].nome == 'Customer Two'
     
     def test_products_isolated_by_tenant(self, app, db, session, tenant, tenant2):
         """Test products are isolated by tenant."""
@@ -104,10 +103,10 @@ class TestTenantIsolation:
         """Test sales orders are isolated by tenant."""
         with app.app_context():
             # Create parties for tenant2
-            party2 = Party(
+            party2 = Soggetto(
                 tenant_id=tenant2.id,
-                name='Customer Two',
-                party_type='customer'
+                nome='Customer Two',
+                tipo_soggetto='persona_fisica'
             )
             session.add(party2)
             session.flush()
@@ -159,17 +158,17 @@ class TestTenantIsolation:
             user1.set_password('password')
             session.add(user1)
             
-            party1 = Party(
+            party1 = Soggetto(
                 tenant_id=tenant.id,
-                name='Secret Customer',
-                party_type='customer'
+                nome='Secret Customer',
+                tipo_soggetto='persona_fisica'
             )
             session.add(party1)
             session.commit()
             
             # Query from tenant2 perspective
             users = User.query.filter_by(tenant_id=tenant2.id).all()
-            parties = Party.query.filter_by(tenant_id=tenant2.id).all()
+            parties = Soggetto.query.filter_by(tenant_id=tenant2.id).all()
             
             # Should not find tenant1's data
             assert len(users) == 0

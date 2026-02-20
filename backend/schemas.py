@@ -1,10 +1,16 @@
 from marshmallow import fields as mm_fields
 from .extensions import ma
-from .models import User, Project, SysModel, SysField, Party, Product, SalesOrder, SalesOrderLine, SysChart, SysDashboard
+from .models import User, Project, SysModel, SysField, Product, SalesOrder, SalesOrderLine, SysChart, SysDashboard
 
 # Import new AuditLog if available
 try:
     from backend.core.models import AuditLog
+except ImportError:
+    pass
+
+# Import Soggetto (replaces Party)
+try:
+    from backend.entities.soggetto import Soggetto
 except ImportError:
     pass
 
@@ -20,8 +26,14 @@ class ProjectSummarySchema(ma.SQLAlchemyAutoSchema):
 
 class PartySummarySchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = Party
-        fields = ("id", "name")
+        model = Soggetto
+        fields = ("id", "codice", "denominazione", "nome", "cognome", "ragione_sociale")
+
+class SoggettoSummarySchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Soggetto
+        fields = ("id", "codice", "denominazione", "nome", "cognome", "ragione_sociale")
+
 class UserDisplaySchema(ma.SQLAlchemyAutoSchema):
     """Schema for displaying user data (output)."""
     class Meta:
@@ -124,7 +136,14 @@ class AuditLogSchema(ma.SQLAlchemyAutoSchema):
 # --- Master Data Schemas ---
 class PartySchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = Party
+        model = Soggetto
+        load_instance = True
+        include_fk = True
+        exclude = ('tenant_id',)
+
+class SoggettoSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Soggetto
         load_instance = True
         include_fk = True
         exclude = ('tenant_id',)
@@ -145,7 +164,7 @@ class SalesOrderLineSchema(ma.SQLAlchemyAutoSchema):
 
 class SalesOrderSchema(ma.SQLAlchemyAutoSchema):
     lines = mm_fields.List(mm_fields.Nested(SalesOrderLineSchema))
-    customer = mm_fields.Nested(PartySchema(only=("id", "name")), dump_only=True)
+    customer = mm_fields.Nested(PartySchema(only=("id", "codice", "nome", "cognome", "ragione_sociale")), dump_only=True)
     class Meta:
         model = SalesOrder
         load_instance = True

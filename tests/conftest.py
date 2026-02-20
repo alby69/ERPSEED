@@ -26,7 +26,8 @@ def db(app):
     """Create database for testing."""
     from backend.extensions import db as _db
     from backend.core.models import Tenant, AuditLog
-    from backend.models import User, Party, Product, SalesOrder
+    from backend.models import User, Product, SalesOrder
+    from backend.entities.soggetto import Soggetto
     
     with app.app_context():
         # Create all tables
@@ -157,14 +158,14 @@ def admin_user2(db, session, tenant2):
 @pytest.fixture
 def party(db, session, tenant):
     """Create a test party."""
-    from backend.models import Party
+    from backend.entities.soggetto import Soggetto
     
-    party = Party(
+    party = Soggetto(
         tenant_id=tenant.id,
-        name='Test Customer',
-        party_type='customer',
-        email='customer@test.com',
-        vat_number='IT12345678901'
+        nome='Test Customer',
+        tipo_soggetto='persona_fisica',
+        email_principale='customer@test.com',
+        partita_iva='IT12345678901'
     )
     session.add(party)
     session.commit()
@@ -175,14 +176,14 @@ def party(db, session, tenant):
 @pytest.fixture
 def party2(db, session, tenant2):
     """Create a test party for tenant2."""
-    from backend.models import Party
+    from backend.entities.soggetto import Soggetto
     
-    party = Party(
+    party = Soggetto(
         tenant_id=tenant2.id,
-        name='Customer Two',
-        party_type='customer',
-        email='customer@second.com',
-        vat_number='IT98765432109'
+        nome='Customer Two',
+        tipo_soggetto='persona_fisica',
+        email_principale='customer@second.com',
+        partita_iva='IT98765432109'
     )
     session.add(party)
     session.commit()

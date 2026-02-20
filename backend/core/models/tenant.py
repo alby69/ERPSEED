@@ -52,6 +52,7 @@ class Tenant(BaseModel):
     
     # Relations
     users = db.relationship('User', back_populates='tenant', lazy='dynamic', overlaps="tenant_users")
+    members = db.relationship('TenantMember', back_populates='tenant', lazy='dynamic')
     
     def __repr__(self):
         return f'<Tenant {self.slug}>'

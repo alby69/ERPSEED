@@ -2,6 +2,23 @@
 
 MakeERP is an open-source "Low-Code" engine designed to build, run, and deploy complex management systems. It's not just an ERP, but a platform to create *your* ERP (e.g., Fleet Management, CRM, WMS) through dynamic data definition.
 
+## 📚 Documentation
+
+The `docs/` folder contains comprehensive documentation:
+
+| File | Description |
+|------|-------------|
+| `docs/01_INTRODUZIONE.md` | Project introduction, core concepts, entities |
+| `docs/02_ARCHITETTURA.md` | Architecture, composition, Builder |
+| `docs/03_TECNICO.md` | Technical stack, multi-tenant, plugins |
+| `docs/04_MODULI.md` | Implemented modules (Sales, Inventory, etc.) |
+| `docs/05_ROADMAP.md` | Roadmap, strategy, project status |
+| `docs/06_DEPLOYMENT.md` | Infrastructure and deployment |
+| `docs/07_COMMUNITY.md` | Community and contributing |
+| `docs/08_GUIDE.md` | User guides (Builder) |
+
+For technical setup and development guides, see the main README below.
+
 ## Project Vision
 
 The goal is to create a flexible and powerful open-source alternative to traditional monolithic ERPs, following modern development principles:
@@ -216,7 +233,29 @@ We are migrating towards a cleaner architecture (KISS/DRY):
 
 ---
 
-## 📖 Builder User Manual
+## 📖 Documentation
+
+This project has two types of documentation:
+
+### Project Documentation (English - Technical)
+This README contains the technical documentation, setup guides, API references, and development guides.
+
+### Vision Documentation (Italian - Conceptual)
+The `vision/` folder contains the conceptual documentation about the project's architecture, roadmap, and strategy:
+
+| File | Description |
+|------|-------------|
+| `vision/01_FONDAMENTI_CONCETTUALI.md` | Conceptual foundations (DDD, Plugins, Metaprogramming) |
+| `vision/02_TABELLE_ARCHETIPICHE.md` | Core entities and module catalog |
+| `vision/03_MODELLO_COMPOSIZIONE.md` | Composition model (Block, Container, Robot) |
+| `vision/04_CODE_AS_DATA.md` | Adaptive programming techniques |
+| `vision/05_BUILDER_ENGINE.md` | Builder engine documentation |
+| `vision/06_ROADMAP_IMPLEMENTAZIONE.md` | Implementation roadmap |
+| `vision/07_ANALISI_STRATEGICA.md` | Strategic analysis |
+| `vision/08_ARCHITETTURA_TECNICA.md` | Technical architecture |
+| `vision/09_COMMUNITY.md` | Community and contributing guide |
+
+### Builder User Manual
 
 The **Builder** is the "Low-Code" heart of FlaskERP. It allows administrators to create, modify, and extend the application's functionalities directly from the web interface.
 

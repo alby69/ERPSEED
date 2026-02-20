@@ -172,9 +172,9 @@ class TestPartiesAPI:
                 '/parties',
                 headers={'Authorization': f'Bearer {access_token}'},
                 json={
-                    'name': 'New Party',
-                    'party_type': 'customer',
-                    'email': 'newparty@test.com'
+                    'nome': 'New Party',
+                    'tipo_soggetto': 'persona_fisica',
+                    'email_principale': 'newparty@test.com'
                 }
             )
 

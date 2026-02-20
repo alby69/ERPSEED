@@ -18,7 +18,7 @@ const RuoliPage = () => {
   const fetchRuoli = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiFetch('/ruoli');
+      const response = await apiFetch('/api/v1/ruoli');
       if (response.ok) {
         const data = await response.json();
         setRuoli(data);

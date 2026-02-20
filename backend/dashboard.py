@@ -26,10 +26,24 @@ class DashboardKPI(MethodView):
         """Get dashboard KPI summary"""
         tenant_id = get_tenant_id()
         
-        from .models import Party, Product, SalesOrder, PurchaseOrder
+        from .models import Product, SalesOrder, PurchaseOrder
+        from backend.entities.soggetto import Soggetto
+        from backend.entities.ruolo import SoggettoRuolo, Ruolo
         
-        total_customers = Party.query.filter_by(tenant_id=tenant_id, party_type='customer').count()
-        total_suppliers = Party.query.filter_by(tenant_id=tenant_id, party_type='supplier').count()
+        # Count customers (soggetti with Cliente role)
+        cliente_ruolo = Ruolo.query.filter_by(codice='Cliente', tenant_id=tenant_id).first()
+        if cliente_ruolo:
+            total_customers = SoggettoRuolo.query.filter_by(ruolo_id=cliente_ruolo.id).join(Soggetto).filter(Soggetto.tenant_id == tenant_id).count()
+        else:
+            total_customers = Soggetto.query.filter_by(tenant_id=tenant_id).count()
+        
+        # Count suppliers (soggetti with Fornitore role)
+        fornitore_ruolo = Ruolo.query.filter_by(codice='Fornitore', tenant_id=tenant_id).first()
+        if fornitore_ruolo:
+            total_suppliers = SoggettoRuolo.query.filter_by(ruolo_id=fornitore_ruolo.id).join(Soggetto).filter(Soggetto.tenant_id == tenant_id).count()
+        else:
+            total_suppliers = 0
+        
         total_products = Product.query.filter_by(tenant_id=tenant_id).count()
         
         total_sales = SalesOrder.query.filter_by(tenant_id=tenant_id).count()

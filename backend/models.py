@@ -4,7 +4,13 @@ import datetime
 
 # Import core models to register them with SQLAlchemy
 try:
-    from backend.core.models import Tenant
+    from backend.core.models import Tenant, TenantMember
+except ImportError:
+    pass
+
+# Import entities - Soggetto is the main subject entity
+try:
+    from backend.entities.soggetto import Soggetto
 except ImportError:
     pass
 
@@ -67,6 +73,7 @@ class User(BaseModel):
     # Relationships
     tenant = db.relationship('Tenant', backref=db.backref('tenant_users', lazy='dynamic'))
     projects = db.relationship('Project', secondary=project_members, back_populates='members', lazy='dynamic')
+    tenant_members = db.relationship('TenantMember', back_populates='user', foreign_keys='TenantMember.user_id', lazy='dynamic')
     
     # Constraints
     __table_args__ = (
@@ -170,42 +177,8 @@ class SysField(BaseModel):
 #     
 #     user = db.relationship('User')
 
-class Party(BaseModel):
-    """Generic master data for customers, suppliers, etc."""
-    __tablename__ = 'parties'
-    
-    # Multi-tenant support
-    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
-    
-    name = db.Column(db.String(150), nullable=False, index=True)
-    party_type = db.Column(db.String(50), nullable=False, default='Customer', comment="E.g., Customer, Supplier")
-    email = db.Column(db.String(120))
-    phone = db.Column(db.String(50))
-    vat_number = db.Column(db.String(50), index=True)
-    fiscal_code = db.Column(db.String(50))
-    address = db.Column(db.String(255))
-    city = db.Column(db.String(100))
-    postal_code = db.Column(db.String(20))
-    country = db.Column(db.String(2), default='IT')
-    status = db.Column(db.String(20), default='active')
-    notes = db.Column(db.Text)
-    is_company = db.Column(db.Boolean, default=True)
-    first_name = db.Column(db.String(80))
-    last_name = db.Column(db.String(80))
-    website = db.Column(db.String(255))
-    source = db.Column(db.String(50))
-    tags = db.Column(db.Text)
-    
-    # Relationships
-    tenant = db.relationship('Tenant', backref=db.backref('parties', lazy='dynamic'))
-    
-    # Constraints
-    __table_args__ = (
-        db.Index('ix_party_tenant_type', 'tenant_id', 'party_type'),
-    )
-    
-    def __repr__(self):
-        return f'<Party {self.name}>'
+# NOTE: Party model was replaced by Soggetto in backend/entities/soggetto.py
+# Use Soggetto directly or import from backend.entities.soggetto
 
 class Product(BaseModel):
     """Product/Service master data."""
@@ -248,14 +221,14 @@ class SalesOrder(BaseModel):
     
     number = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, default=datetime.date.today)
-    customer_id = db.Column(db.Integer, db.ForeignKey('parties.id'), nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('soggetti.id'), nullable=False)
     status = db.Column(db.String(20), default='draft')
     total_amount = db.Column(db.Float, default=0)
     notes = db.Column(db.Text)
     
     # Relationships
     tenant = db.relationship('Tenant', backref=db.backref('sales_orders', lazy='dynamic'))
-    customer = db.relationship('Party')
+    customer = db.relationship('Soggetto')
     lines = db.relationship('SalesOrderLine', back_populates='order', cascade="all, delete-orphan")
     
     # Constraints
@@ -289,14 +262,14 @@ class PurchaseOrder(BaseModel):
     
     number = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, default=datetime.date.today)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('parties.id'), nullable=False)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('soggetti.id'), nullable=False)
     status = db.Column(db.String(20), default='draft')
     total_amount = db.Column(db.Float, default=0)
     expected_date = db.Column(db.Date)
     notes = db.Column(db.Text)
     
     tenant = db.relationship('Tenant', backref=db.backref('purchase_orders', lazy='dynamic'))
-    supplier = db.relationship('Party')
+    supplier = db.relationship('Soggetto')
     lines = db.relationship('PurchaseOrderLine', back_populates='order', cascade="all, delete-orphan")
     
     __table_args__ = (

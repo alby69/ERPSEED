@@ -1,10 +1,10 @@
 export { default as Login } from './Login';
 export { default as Dashboard } from './Dashboard';
 export { default as Users } from './Users';
-export { default as Parties } from './Parties';
 export { default as SoggettiPage } from './SoggettiPage';
 export { default as RuoliPage } from './RuoliPage';
 export { default as IndirizziPage } from './IndirizziPage';
+export { default as ComuniPage } from './ComuniPage';
 export { default as ContattiPage } from './ContattiPage';
 export { default as Products } from './Products';
 export { default as Sales } from './Sales';
