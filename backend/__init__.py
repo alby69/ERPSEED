@@ -36,6 +36,7 @@ from .core.api.tenant import tenant_bp
 from .core.api.modules import blp as modules_bp
 from .core.api.system import blp as system_bp
 from .core.api.pdf import pdf_bp
+from .core.api.test_runner import blp as test_runner_bp
 
 # Import Entities (Vision Archetypes)
 from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
@@ -65,6 +66,64 @@ def create_app(db_url=None):
     api.init_app(app)
     jwt.init_app(app)
     ma.init_app(app)
+    
+    # Create test tables if they don't exist
+    with app.app_context():
+        from backend.core.models.test_models import TestSuite, TestCase, TestExecution, ModuleStatusHistory
+        db.create_all()
+        
+        # Add missing columns to existing tables
+        from sqlalchemy import text
+        try:
+            # sys_dashboards.updated_at
+            result = db.session.execute(text("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'sys_dashboards' AND column_name = 'updated_at'
+            """))
+            if not result.fetchone():
+                db.session.execute(text("ALTER TABLE sys_dashboards ADD COLUMN updated_at TIMESTAMP"))
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error adding sys_dashboards.updated_at: {e}")
+        
+        try:
+            # sys_models.updated_at
+            result = db.session.execute(text("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'sys_models' AND column_name = 'updated_at'
+            """))
+            if not result.fetchone():
+                db.session.execute(text("ALTER TABLE sys_models ADD COLUMN updated_at TIMESTAMP"))
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error adding sys_models.updated_at: {e}")
+        
+        try:
+            # sys_fields.created_at and sys_fields.updated_at
+            result = db.session.execute(text("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'sys_fields' AND column_name = 'created_at'
+            """))
+            if not result.fetchone():
+                db.session.execute(text("ALTER TABLE sys_fields ADD COLUMN created_at TIMESTAMP"))
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error adding sys_fields.created_at: {e}")
+        
+        try:
+            result = db.session.execute(text("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'sys_fields' AND column_name = 'updated_at'
+            """))
+            if not result.fetchone():
+                db.session.execute(text("ALTER TABLE sys_fields ADD COLUMN updated_at TIMESTAMP"))
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error adding sys_fields.updated_at: {e}")
     
     # --- Initialize Multi-tenant Filters ---
     TenantQueryFilter.init_app(app)
@@ -107,6 +166,9 @@ def create_app(db_url=None):
         "expose_headers": ["X-Total-Count", "X-Pages", "X-Current-Page", "X-Per-Page", "Content-Range"],
         "supports_credentials": True
     }})
+    
+    # Register CORS for test_runner blueprint
+    CORS(test_runner_bp)
 
     # --- Global Error Handler ---
     @app.errorhandler(Exception)
@@ -126,6 +188,7 @@ def create_app(db_url=None):
     api.register_blueprint(modules_bp)
     api.register_blueprint(system_bp)
     api.register_blueprint(pdf_bp)
+    api.register_blueprint(test_runner_bp)
     
     # Vecchi blueprint per retrocompatibilità frontend - rinominati per evitare conflitti
     api.register_blueprint(auth_bp, name='legacy_auth')  # /login, /me, etc.

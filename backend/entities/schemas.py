@@ -23,7 +23,7 @@ class SoggettoSchema(ma.SQLAlchemyAutoSchema):
 class SoggettoCreateSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Soggetto
-        load_instance = True
+        load_instance = False
         include_fk = True
         dump_only = ("id", "created_at", "updated_at")
     
@@ -35,7 +35,7 @@ class SoggettoCreateSchema(ma.SQLAlchemyAutoSchema):
 class RuoloSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Ruolo
-        load_instance = True
+        load_instance = False
         include_fk = True
         dump_only = ("id", "created_at", "updated_at")
 
@@ -54,7 +54,7 @@ class SoggettoRuoloSchema(ma.SQLAlchemyAutoSchema):
 class IndirizzoSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Indirizzo
-        load_instance = True
+        load_instance = False
         include_fk = True
         dump_only = ("id", "created_at", "updated_at")
     
@@ -65,7 +65,7 @@ class IndirizzoSchema(ma.SQLAlchemyAutoSchema):
 class SoggettoIndirizzoSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SoggettoIndirizzo
-        load_instance = True
+        load_instance = False
         include_fk = True
         dump_only = ("id", "created_at", "updated_at")
     
@@ -75,7 +75,7 @@ class SoggettoIndirizzoSchema(ma.SQLAlchemyAutoSchema):
 class ContattoSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Contatto
-        load_instance = True
+        load_instance = False
         include_fk = True
         dump_only = ("id", "created_at", "updated_at")
 
@@ -83,7 +83,7 @@ class ContattoSchema(ma.SQLAlchemyAutoSchema):
 class SoggettoContattoSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SoggettoContatto
-        load_instance = True
+        load_instance = False
         include_fk = True
         dump_only = ("id", "created_at", "updated_at")
     

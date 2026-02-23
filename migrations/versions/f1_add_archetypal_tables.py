@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'f1_add_archetypal_tables'
-down_revision = 'd8583977de68'
+down_revision = '001_add_tenant_support'
 branch_labels = None
 depends_on = None
 

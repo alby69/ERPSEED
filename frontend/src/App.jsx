@@ -9,6 +9,7 @@ import ProjectLayout from './ProjectLayout';
 import DynamicModelPage from './pages/DynamicModelPage';
 import AuditLogs from './pages/AuditLogs';
 import WorkflowsPage from './pages/WorkflowsPage';
+import TestRunnerPage from './pages/TestRunnerPage';
 
 
 function App() {
@@ -155,6 +156,14 @@ return (
           element={
             <ProtectedRoute roles={['admin']}>
               <ModulesPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/test-runner" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <TestRunnerPage />
             </ProtectedRoute>
           } 
         />

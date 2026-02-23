@@ -1,7 +1,7 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
-from backend.entities import Soggetto, SoggettoRuolo, Indirizzo, SoggettoIndirizzo, Contatto, SoggettoContatto
+from backend.entities import Soggetto, SoggettoRuolo, Indirizzo, SoggettoIndirizzo, Contatto, SoggettoContatto, Ruolo
 from backend.entities.schemas import (
     SoggettoSchema, SoggettoCreateSchema,
     RuoloSchema,
@@ -131,7 +131,7 @@ class SoggettoResource(MethodView):
     @soggetto_blp.response(200, SoggettoSchema)
     def get(self, soggetto_id):
         """Dettaglio soggetto"""
-        soggetto = get_tenant_query(Soggetto).get(soggetto_id)
+        soggetto = get_tenant_query(Soggetto).filter_by(id=soggetto_id).first()
         if not soggetto:
             abort(404, message="Soggetto not found")
         return soggetto
@@ -142,7 +142,7 @@ class SoggettoResource(MethodView):
     @soggetto_blp.response(200, SoggettoSchema)
     def put(self, data, soggetto_id):
         """Aggiorna soggetto"""
-        soggetto = get_tenant_query(Soggetto).get(soggetto_id)
+        soggetto = get_tenant_query(Soggetto).filter_by(id=soggetto_id).first()
         if not soggetto:
             abort(404, message="Soggetto not found")
         
@@ -158,7 +158,7 @@ class SoggettoResource(MethodView):
     @soggetto_blp.response(204)
     def delete(self, soggetto_id):
         """Elimina soggetto"""
-        soggetto = get_tenant_query(Soggetto).get(soggetto_id)
+        soggetto = get_tenant_query(Soggetto).filter_by(id=soggetto_id).first()
         if not soggetto:
             abort(404, message="Soggetto not found")
         
@@ -203,7 +203,7 @@ class RuoloResource(MethodView):
     @ruolo_blp.response(200, RuoloSchema)
     def get(self, ruolo_id):
         """Dettaglio ruolo"""
-        ruolo = get_tenant_query(Ruolo).get(ruolo_id)
+        ruolo = get_tenant_query(Ruolo).filter_by(id=ruolo_id).first()
         if not ruolo:
             abort(404, message="Ruolo not found")
         return ruolo
@@ -214,7 +214,7 @@ class RuoloResource(MethodView):
     @ruolo_blp.response(200, RuoloSchema)
     def put(self, data, ruolo_id):
         """Aggiorna ruolo"""
-        ruolo = get_tenant_query(Ruolo).get(ruolo_id)
+        ruolo = get_tenant_query(Ruolo).filter_by(id=ruolo_id).first()
         if not ruolo:
             abort(404, message="Ruolo not found")
         
@@ -230,7 +230,7 @@ class RuoloResource(MethodView):
     @ruolo_blp.response(204)
     def delete(self, ruolo_id):
         """Elimina ruolo"""
-        ruolo = get_tenant_query(Ruolo).get(ruolo_id)
+        ruolo = get_tenant_query(Ruolo).filter_by(id=ruolo_id).first()
         if not ruolo:
             abort(404, message="Ruolo not found")
         
@@ -275,7 +275,7 @@ class IndirizzoResource(MethodView):
     @indirizzo_blp.response(200, IndirizzoSchema)
     def get(self, indirizzo_id):
         """Dettaglio indirizzo"""
-        indirizzo = get_tenant_query(Indirizzo).get(indirizzo_id)
+        indirizzo = get_tenant_query(Indirizzo).filter_by(id=indirizzo_id).first()
         if not indirizzo:
             abort(404, message="Indirizzo not found")
         return indirizzo
@@ -286,7 +286,7 @@ class IndirizzoResource(MethodView):
     @indirizzo_blp.response(200, IndirizzoSchema)
     def put(self, data, indirizzo_id):
         """Aggiorna indirizzo"""
-        indirizzo = get_tenant_query(Indirizzo).get(indirizzo_id)
+        indirizzo = get_tenant_query(Indirizzo).filter_by(id=indirizzo_id).first()
         if not indirizzo:
             abort(404, message="Indirizzo not found")
         
@@ -302,7 +302,7 @@ class IndirizzoResource(MethodView):
     @indirizzo_blp.response(204)
     def delete(self, indirizzo_id):
         """Elimina indirizzo"""
-        indirizzo = get_tenant_query(Indirizzo).get(indirizzo_id)
+        indirizzo = get_tenant_query(Indirizzo).filter_by(id=indirizzo_id).first()
         if not indirizzo:
             abort(404, message="Indirizzo not found")
         
@@ -347,7 +347,7 @@ class ContattoResource(MethodView):
     @contatto_blp.response(200, ContattoSchema)
     def get(self, contatto_id):
         """Dettaglio contatto"""
-        contatto = get_tenant_query(Contatto).get(contatto_id)
+        contatto = get_tenant_query(Contatto).filter_by(id=contatto_id).first()
         if not contatto:
             abort(404, message="Contatto not found")
         return contatto
@@ -358,7 +358,7 @@ class ContattoResource(MethodView):
     @contatto_blp.response(200, ContattoSchema)
     def put(self, data, contatto_id):
         """Aggiorna contatto"""
-        contatto = get_tenant_query(Contatto).get(contatto_id)
+        contatto = get_tenant_query(Contatto).filter_by(id=contatto_id).first()
         if not contatto:
             abort(404, message="Contatto not found")
         
@@ -374,7 +374,7 @@ class ContattoResource(MethodView):
     @contatto_blp.response(204)
     def delete(self, contatto_id):
         """Elimina contatto"""
-        contatto = get_tenant_query(Contatto).get(contatto_id)
+        contatto = get_tenant_query(Contatto).filter_by(id=contatto_id).first()
         if not contatto:
             abort(404, message="Contatto not found")
         

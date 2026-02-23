@@ -17,7 +17,8 @@ import {
     EnvironmentOutlined,
     PhoneOutlined,
     UserOutlined,
-    GlobalOutlined
+    GlobalOutlined,
+    ExperimentOutlined
 } from '@ant-design/icons';
 import './Sidebar.css';
 
@@ -33,6 +34,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         { key: '/admin/workflows', label: 'Workflows', icon: <ApiOutlined /> },
         { key: '/users', label: 'Users', icon: <TeamOutlined /> },
         { key: '/modules', label: 'Modules', icon: <AppstoreOutlined /> },
+        { key: '/test-runner', label: 'Test Runner', icon: <ExperimentOutlined /> },
         { key: '/admin/projects', label: 'Projects Admin', icon: <ProjectOutlined /> },
         { key: '/admin/audit-logs', label: 'Audit Logs', icon: <AuditOutlined /> },
     ];

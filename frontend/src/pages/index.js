@@ -18,3 +18,4 @@ export { default as ProjectSelectionPage } from './ProjectSelectionPage';
 export { default as ProjectMembersPage } from './ProjectMembersPage';
 export { default as ProjectSettingsPage } from './ProjectSettingsPage';
 export { default as ModulesPage } from './ModulesPage';
+export { default as TestRunnerPage } from './TestRunnerPage';
