@@ -810,6 +810,7 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
                                     <Option value="delete">Delete</Option>
                                     <Option value="validation">Validation</Option>
                                     <Option value="api">API</Option>
+                                    <Option value="ui">UI (Playwright)</Option>
                                 </Select>
                             </Form.Item>
                             <Form.Item name="metodo" label="Metodo" initialValue="GET">
@@ -881,6 +882,13 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
                                     { title: 'Tipo', dataIndex: 'tipo', key: 'tipo' },
                                     { title: 'Esito', dataIndex: 'esito', key: 'esito', render: (e) => <Tag color={esitoColors[e]}>{e}</Tag> },
                                     { title: 'Messaggio', dataIndex: 'messaggio', key: 'messaggio' },
+                                    {
+                                        title: 'Screenshot',
+                                        key: 'screenshot',
+                                        render: (_, record) => record.dettagli?.screenshot_path ? (
+                                            <Button size="small" onClick={() => window.open(`${BASE_URL}/${record.dettagli.screenshot_path}`)}>Vedi</Button>
+                                        ) : '-'
+                                    }
                                 ]}
                             />
                         </div>

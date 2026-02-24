@@ -83,8 +83,9 @@ export const apiFetch = async (endpoint, options = {}) => {
 
 // Helper for accessing nested properties (e.g. "supplier.name")
 export const getNestedValue = (obj, path) => {
-  if (!path) return '';
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  if (!path || !obj) return '';
+  const result = path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  return result !== undefined && result !== null ? result : '';
 };
 
 // Format date to locale string
