@@ -255,6 +255,7 @@ hooks:
 | Frontend | React 19 + Ant Design |
 | Testing Core | Vitest + RTL |
 | Testing Moduli | Playwright |
+| Personalizzazione | Ant Design ConfigProvider |
 
 ### Struttura Directory
 
@@ -265,12 +266,38 @@ flaskERP/
 │   ├── entities/          # Entità core
 │   ├── composition/       # Block, Container, Robot
 │   ├── builder/           # Builder Engine
-│   ├── services/         # Servizi
-│   └── plugins/          # Plugin sistema
+│   ├── core/              # Testing Engine, Auth
+│   ├── services/          # Business Logic
+│   └── plugins/           # Plugin sistema
 ├── frontend/              # React SPA
-├── migrations/           # DB migrations
-└── docs/                 # Documentazione
+│   ├── src/
+│   │   ├── components/    # Componenti atomici e generici
+│   │   ├── context/       # Auth e Theme Context
+│   │   ├── pages/         # Pagine principali
+│   │   └── utils.js       # API fetcher e utility centralizzate
+├── migrations/            # DB migrations
+└── docs/                  # Documentazione
 ```
+
+---
+
+## Sistema di Personalizzazione (Theming)
+
+FlaskERP utilizza un approccio **Design-Driven** per permettere la personalizzazione visuale per-progetto.
+
+1. **Persistenza**: Le impostazioni estetiche (`primary_color`, `border_radius`, `theme_mode`) sono salvate nel database nel modello `Project`.
+2. **Distribuzione**: Il `ThemeContext` React carica queste impostazioni tramite API all'avvio o al cambio progetto.
+3. **Applicazione**: Utilizzando il `ConfigProvider` di Ant Design, i token di stile vengono iniettati globalmente nel DOM, aggiornando istantaneamente l'interfaccia senza ricaricare la pagina.
+
+---
+
+## Qualità e Strategia di Test
+
+Il sistema adotta una **Piramide dei Test** adattata ad un ambiente low-code:
+
+- **Base (Unit Tests)**: Vitest verifica le funzioni pure, le utility e i componenti UI standard nel frontend.
+- **Centro (Integration)**: Test API Flask verificano la correttezza dei controller e dell'isolamento tenant.
+- **Cima (E2E/Module)**: Playwright esegue test funzionali completi sui moduli generati dal Builder, simulando l'interazione utente reale e catturando screenshot per i report.
 
 ---
 

@@ -35,8 +35,6 @@ class TestResult:
         }
 
 
-import os
-
 class TestRunner:
     """
     Motore di test per eseguire test cases sui moduli FlaskERP.
@@ -199,7 +197,6 @@ class TestRunner:
                 }
 
                 # Salva screenshot
-
                 os.makedirs('media/test_screenshots', exist_ok=True)
                 page.screenshot(path=dettagli['screenshot_path'])
 

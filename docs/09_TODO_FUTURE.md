@@ -1,17 +1,22 @@
 # FlaskERP - Future Improvements & TODO
 
-## 🎨 Temi e Personalizzazione (Priorità Alta)
+## ✅ Completati Recentemente
 
-### 1.1 Gestione Temi Grafici
-**Obiettivo**: Permettere agli amministratori di cambiare l'aspetto dell'ERP senza modificare il codice.
-**Soluzione Consigliata**: Utilizzare **Ant Design ConfigProvider**.
-- **Perché**: Ant Design permette di iniettare un oggetto `theme` (token) che controlla colori primari, bordi, font e modalità (light/dark) in modo globale. È la soluzione più semplice da estendere e mantenere.
-- **Implementazione**:
-  - Aggiungere una tabella `sys_settings` o estendere `projects` con campi per i colori (es. `primary_color`, `border_radius`).
-  - Creare un context React `ThemeContext` che recupera queste impostazioni all'avvio.
-  - Avvolgere l'intera applicazione in `<ConfigProvider theme={userTheme}>`.
+### 🎨 Temi e Personalizzazione
+**Stato**: Implementato via **Ant Design ConfigProvider**.
+- Aggiunta persistenza del tema nel modello `Project` (primary color, border radius, dark mode).
+- Creato `ThemeContext.jsx` per l'applicazione globale dei token di stile.
+- Implementata interfaccia admin in `ProjectSettingsPage` per la personalizzazione real-time.
+
+### 🧪 Sistema di Testing Ibrido
+**Stato**: Implementato.
+- Configurato **Vitest** per test unitari del frontend.
+- Integrato **Playwright** nel backend per il test dei moduli dinamici low-code.
+- Creato dashboard `TestRunnerPage` per esecuzione e reportistica.
 
 ---
+
+## 🚀 Nuove Idee e Miglioramenti Futuri
 
 ## 📊 Reporting & Analytics (Priorità Media)
 
