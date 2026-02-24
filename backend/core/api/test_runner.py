@@ -34,9 +34,9 @@ class TestSuiteSchema(Schema):
     test_type = fields.Str()
     stato = fields.Str()
     is_active = fields.Bool()
-    ultimo_esito = fields.Str()
-    created_at = fields.DateTime()
-    updated_at = fields.DateTime()
+    ultimo_esito = fields.Str(dump_only=True)
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
     test_cases = fields.List(fields.Nested(TestCaseSchema))
 
 
@@ -75,9 +75,29 @@ blp = Blueprint('test_runner', __name__, url_prefix='/api/v1/tests', description
 class TestSuiteList(MethodView):
     @jwt_required()
     def get(self):
-        """Lista tutte le test suites."""
-        suites = TestSuite.query.order_by(TestSuite.created_at.desc()).all()
-        return {'test_suites': TestSuiteSchema(many=True).dump(suites)}
+        """Lista tutte le test suites con paginazione."""
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        modulo = request.args.get('modulo')
+        search = request.args.get('q')
+
+        query = TestSuite.query
+
+        if modulo:
+            query = query.filter_by(modulo_target=modulo)
+        if search:
+            query = query.filter(TestSuite.nome.ilike(f'%{search}%'))
+
+        pagination = query.order_by(TestSuite.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+
+        return {
+            'test_suites': TestSuiteSchema(many=True).dump(pagination.items),
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page
+        }
     
     @jwt_required()
     def post(self):
@@ -143,6 +163,15 @@ class TestCaseList(MethodView):
         suite = TestSuite.query.get_or_404(suite_id)
         data = request.get_json()
         
+        # Gestione payload se inviato come stringa JSON
+        payload = data.get('payload', {})
+        if isinstance(payload, str) and payload.strip():
+            try:
+                import json
+                payload = json.loads(payload)
+            except:
+                pass
+
         case = TestCase(
             test_suite_id=suite.id,
             nome=data['nome'],
@@ -150,7 +179,7 @@ class TestCaseList(MethodView):
             test_type=data['test_type'],
             metodo=data['metodo'],
             endpoint=data['endpoint'],
-            payload=data.get('payload', {}),
+            payload=payload,
             expected_status=data.get('expected_status', 200),
             expected_fields=data.get('expected_fields', []),
             ordine=data.get('ordine', 0)
@@ -159,6 +188,42 @@ class TestCaseList(MethodView):
         db.session.commit()
         
         return TestCaseSchema().dump(case), 201
+
+
+@blp.route('/cases/<int:case_id>')
+class TestCaseResource(MethodView):
+    @jwt_required()
+    def get(self, case_id):
+        """Dettagli di un test case."""
+        case = TestCase.query.get_or_404(case_id)
+        return TestCaseSchema().dump(case)
+
+    @jwt_required()
+    def put(self, case_id):
+        """Aggiorna un test case."""
+        case = TestCase.query.get_or_404(case_id)
+        data = request.get_json()
+
+        for key, value in data.items():
+            if hasattr(case, key):
+                if key == 'payload' and isinstance(value, str) and value.strip():
+                    try:
+                        import json
+                        value = json.loads(value)
+                    except:
+                        pass
+                setattr(case, key, value)
+
+        db.session.commit()
+        return TestCaseSchema().dump(case)
+
+    @jwt_required()
+    def delete(self, case_id):
+        """Elimina un test case."""
+        case = TestCase.query.get_or_404(case_id)
+        db.session.delete(case)
+        db.session.commit()
+        return {'message': 'TestCase eliminato'}
 
 
 @blp.route('/suites/<int:suite_id>/run')
@@ -176,9 +241,8 @@ class TestSuiteRun(MethodView):
         tenant_id = user.tenant_id if user else None
         
         auth_token = request.headers.get('Authorization', '').replace('Bearer ', '')
-        base_url = 'http://backend:5000/api/v1'
         
-        runner = TestRunner(base_url=base_url, auth_token=auth_token, tenant_id=tenant_id)
+        runner = TestRunner(auth_token=auth_token, tenant_id=tenant_id)
         
         execution = runner.esegui_suite(suite, user_id)
         

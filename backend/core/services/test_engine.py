@@ -34,13 +34,17 @@ class TestResult:
         }
 
 
+import os
+
 class TestRunner:
     """
     Motore di test per eseguire test cases sui moduli FlaskERP.
     Supporta test CRUD, validazione e API.
     """
     
-    def __init__(self, base_url: str = 'http://backend:5000', auth_token: str = None, tenant_id: int = None):
+    def __init__(self, base_url: str = None, auth_token: str = None, tenant_id: int = None):
+        if base_url is None:
+            base_url = os.getenv('BACKEND_URL', 'http://backend:5000')
         self.base_url = base_url
         self.auth_token = auth_token
         self.tenant_id = tenant_id
@@ -78,15 +82,17 @@ class TestRunner:
         url = f"{self.base_url}/{endpoint}"
         payload = self._add_tenant_to_payload(test_case.payload)
         
+        timeout = int(os.getenv('TEST_HTTP_TIMEOUT', 30))
+
         try:
             if test_case.metodo == 'GET':
-                response = self.session.get(url, params=payload or {})
+                response = self.session.get(url, params=payload or {}, timeout=timeout)
             elif test_case.metodo == 'POST':
-                response = self.session.post(url, json=payload or {})
+                response = self.session.post(url, json=payload or {}, timeout=timeout)
             elif test_case.metodo == 'PUT':
-                response = self.session.put(url, json=payload or {})
+                response = self.session.put(url, json=payload or {}, timeout=timeout)
             elif test_case.metodo == 'DELETE':
-                response = self.session.delete(url)
+                response = self.session.delete(url, timeout=timeout)
             else:
                 return TestResult(test_case, 'errore', f'Metodo non supportato: {test_case.metodo}')
             
@@ -209,6 +215,25 @@ class TestRunner:
         
         db.session.commit()
         
+        # Audit logging
+        try:
+            from backend.services.audit_service import AuditService
+            AuditService.log_action(
+                user_id=user_id,
+                action='test_execution',
+                model_name='TestSuite',
+                model_id=test_suite.id,
+                project_id=test_suite.id, # Assumiamo che test_suite sia collegata al progetto (se presente)
+                changes={
+                    'esito': esito_finale,
+                    'passati': test_passati,
+                    'falliti': test_falliti,
+                    'errori': test_errori
+                }
+            )
+        except:
+            pass
+
         return execution
 
 
