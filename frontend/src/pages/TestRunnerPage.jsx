@@ -16,12 +16,20 @@ function TestRunnerPage() {
     const [suiteModalOpen, setSuiteModalOpen] = useState(false);
     const [caseModalOpen, setCaseModalOpen] = useState(false);
     const [selectedSuite, setSelectedSuite] = useState(null);
+    const [editingCase, setEditingCase] = useState(null);
     const [generateModalOpen, setGenerateModalOpen] = useState(false);
+    const [executionDetailsOpen, setExecutionDetailsOpen] = useState(false);
+    const [selectedExecution, setSelectedExecution] = useState(null);
     const [activeTab, setActiveTab] = useState('suites');
     const [form] = Form.useForm();
     const [caseForm] = Form.useForm();
     const [generateForm] = Form.useForm();
     const navigate = useNavigate();
+
+    // Pagination state
+    const [suitesPage, setSuitesPage] = useState(1);
+    const [totalSuites, setTotalSuites] = useState(0);
+    const [searchTerm, setSearchTerm] = useState('');
     
     // Run All state
     const [runningAll, setRunningAll] = useState(false);
@@ -30,6 +38,10 @@ function TestRunnerPage() {
     // Delete All state
     const [deleteAllModalVisible, setDeleteAllModalVisible] = useState(false);
     const [deletingAll, setDeletingAll] = useState(false);
+
+    // Bulk Selection state
+    const [selectedSuiteIds, setSelectedSuiteIds] = useState([]);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
 
     const statoColors = {
         bozza: 'default',
@@ -47,18 +59,22 @@ function TestRunnerPage() {
     };
 
     useEffect(() => {
-        fetchSuites();
+        fetchSuites(suitesPage, searchTerm);
+    }, [suitesPage, searchTerm]);
+
+    useEffect(() => {
         fetchExecutions();
     }, []);
 
-    const fetchSuites = async () => {
+    const fetchSuites = async (page = 1, query = '') => {
         try {
             const token = localStorage.getItem('token');
-            const response = await apiFetch('/api/v1/tests/suites', {
+            const response = await apiFetch(`/api/v1/tests/suites?page=${page}&q=${query}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await response.json();
             setSuites(data.test_suites || []);
+            setTotalSuites(data.total || 0);
         } catch (error) {
             message.error('Errore nel caricamento test suites');
         } finally {
@@ -236,7 +252,8 @@ function TestRunnerPage() {
                     return;
                 }
                 message.success('TestSuite eliminata');
-                fetchSuites();
+                setSelectedSuiteIds(prev => prev.filter(id => id !== itemToDelete));
+                fetchSuites(suitesPage, searchTerm);
             } catch (error) {
                 console.error('Delete suite error:', error);
                 message.error('Errore nell\'eliminazione');
@@ -296,20 +313,58 @@ function TestRunnerPage() {
         }
     };
 
-    const handleAddCase = async (values) => {
+    const handleBulkDeleteSuites = async () => {
+        setBulkDeleting(true);
         try {
             const token = localStorage.getItem('token');
-            await apiFetch(`/api/v1/tests/suites/${selectedSuite.id}/cases`, {
-                method: 'POST',
+            for (const id of selectedSuiteIds) {
+                await apiFetch(`/api/v1/tests/suites/${id}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            }
+            message.success(`${selectedSuiteIds.length} TestSuite eliminate`);
+            setSelectedSuiteIds([]);
+            fetchSuites(suitesPage, searchTerm);
+        } catch (error) {
+            message.error('Errore nell\'eliminazione multipla');
+        } finally {
+            setBulkDeleting(false);
+        }
+    };
+
+    const handleAddOrUpdateCase = async (values) => {
+        try {
+            const token = localStorage.getItem('token');
+            const url = editingCase ? `/api/v1/tests/cases/${editingCase.id}` : `/api/v1/tests/suites/${selectedSuite.id}/cases`;
+            const method = editingCase ? 'PUT' : 'POST';
+
+            await apiFetch(url, {
+                method,
                 body: JSON.stringify(values),
                 headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
             });
-            message.success('TestCase aggiunto!');
+            message.success(editingCase ? 'TestCase aggiornato!' : 'TestCase aggiunto!');
             setCaseModalOpen(false);
+            setEditingCase(null);
             caseForm.resetFields();
-            fetchSuites();
+            fetchSuites(suitesPage, searchTerm);
         } catch (error) {
-            message.error('Errore nell\'aggiunta del test case');
+            message.error('Errore nel salvataggio del test case');
+        }
+    };
+
+    const handleDeleteCase = async (caseId) => {
+        try {
+            const token = localStorage.getItem('token');
+            await apiFetch(`/api/v1/tests/cases/${caseId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            message.success('TestCase eliminato');
+            fetchSuites(suitesPage, searchTerm);
+        } catch (error) {
+            message.error('Errore nell\'eliminazione');
         }
     };
 
@@ -332,7 +387,8 @@ function TestRunnerPage() {
         const report = `
 TEST REPORT - FlaskERP
 ======================
-Suite: ${execution.test_suite_id}
+ID Esecuzione: ${execution.id}
+Suite ID: ${execution.test_suite_id}
 Data: ${execution.created_at}
 Esito: ${execution.esito}
 Totale Test: ${execution.totale_test}
@@ -341,7 +397,10 @@ Falliti: ${execution.test_falliti}
 Errori: ${execution.test_errori}
 Durata: ${execution.durata_secondi}s
 
-${execution.errori?.length > 0 ? 'ERRORI:\n' + JSON.stringify(execution.errori, null, 2) : ''}
+DETTAGLI TEST:
+${(execution.dettagli || []).map(d => `[${d.esito.toUpperCase()}] ${d.nome} (${d.tipo}): ${d.messaggio}`).join('\n')}
+
+${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execution.errori, null, 2) : ''}
         `;
         
         const blob = new Blob([report], { type: 'text/plain' });
@@ -358,10 +417,30 @@ ${execution.errori?.length > 0 ? 'ERRORI:\n' + JSON.stringify(execution.errori, 
             dataIndex: 'nome',
             key: 'nome',
             render: (text, record) => (
-                <Space>
-                    <strong>{text}</strong>
-                    <Tag color={statoColors[record.stato]}>{record.stato}</Tag>
-                </Space>
+                <div>
+                    <Space>
+                        <strong>{text}</strong>
+                        <Tag color={statoColors[record.stato]}>{record.stato}</Tag>
+                    </Space>
+                    {record.test_cases && record.test_cases.length > 0 && (
+                        <div style={{ marginTop: 8, fontSize: '12px' }}>
+                            <Text type="secondary">Casi:</Text>
+                            {record.test_cases.map(c => (
+                                <Tag key={c.id} style={{ marginLeft: 4, cursor: 'pointer' }} onClick={() => {
+                                    setSelectedSuite(record);
+                                    setEditingCase(c);
+                                    caseForm.setFieldsValue({
+                                        ...c,
+                                        payload: typeof c.payload === 'object' ? JSON.stringify(c.payload, null, 2) : c.payload
+                                    });
+                                    setCaseModalOpen(true);
+                                }}>
+                                    {c.nome}
+                                </Tag>
+                            ))}
+                        </div>
+                    )}
+                </div>
             )
         },
         {
@@ -474,6 +553,12 @@ ${execution.errori?.length > 0 ? 'ERRORI:\n' + JSON.stringify(execution.errori, 
             key: 'azioni',
             render: (_, record) => (
                 <Space>
+                    <Button
+                        icon={<HistoryOutlined />}
+                        onClick={() => { setSelectedExecution(record); setExecutionDetailsOpen(true); }}
+                    >
+                        Dettagli
+                    </Button>
                     <Button 
                         icon={<ExportOutlined />} 
                         onClick={() => exportReport(record)}
@@ -580,12 +665,48 @@ ${execution.errori?.length > 0 ? 'ERRORI:\n' + JSON.stringify(execution.errori, 
                             key: 'suites',
                             label: 'Test Suites',
                             children: (
-                                <Table 
-                                    dataSource={suites} 
-                                    columns={suiteColumns} 
-                                    rowKey="id"
-                                    pagination={{ pageSize: 10 }}
-                                />
+                                <>
+                                    <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+                                        <Input.Search
+                                            placeholder="Cerca per nome..."
+                                            allowClear
+                                            onSearch={(val) => { setSearchTerm(val); setSuitesPage(1); }}
+                                            style={{ width: 300 }}
+                                        />
+                                        {selectedSuiteIds.length > 0 && (
+                                            <Button
+                                                danger
+                                                icon={<DeleteOutlined />}
+                                                onClick={() => {
+                                                    Modal.confirm({
+                                                        title: 'Eliminazione Multipla',
+                                                        content: `Sei sicuro di voler eliminare le ${selectedSuiteIds.length} suite selezionate?`,
+                                                        okType: 'danger',
+                                                        onOk: handleBulkDeleteSuites
+                                                    });
+                                                }}
+                                                loading={bulkDeleting}
+                                            >
+                                                Elimina Selezionate ({selectedSuiteIds.length})
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <Table
+                                        rowSelection={{
+                                            selectedRowKeys: selectedSuiteIds,
+                                            onChange: (keys) => setSelectedSuiteIds(keys)
+                                        }}
+                                        dataSource={suites}
+                                        columns={suiteColumns}
+                                        rowKey="id"
+                                        pagination={{
+                                            current: suitesPage,
+                                            pageSize: 20,
+                                            total: totalSuites,
+                                            onChange: (page) => setSuitesPage(page)
+                                        }}
+                                    />
+                                </>
                             )
                         },
                         {
@@ -667,13 +788,13 @@ ${execution.errori?.length > 0 ? 'ERRORI:\n' + JSON.stringify(execution.errori, 
                 </Modal>
 
                 <Modal
-                    title={`Aggiungi Test a ${selectedSuite?.nome}`}
+                    title={editingCase ? `Modifica Test: ${editingCase.nome}` : `Aggiungi Test a ${selectedSuite?.nome}`}
                     open={caseModalOpen}
-                    onCancel={() => setCaseModalOpen(false)}
+                    onCancel={() => { setCaseModalOpen(false); setEditingCase(null); caseForm.resetFields(); }}
                     footer={null}
                     width={600}
                 >
-                    <Form form={caseForm} onFinish={handleAddCase} layout="vertical">
+                    <Form form={caseForm} onFinish={handleAddOrUpdateCase} layout="vertical">
                         <Form.Item name="nome" label="Nome Test" rules={[{ required: true }]}>
                             <Input />
                         </Form.Item>
@@ -712,8 +833,58 @@ ${execution.errori?.length > 0 ? 'ERRORI:\n' + JSON.stringify(execution.errori, 
                         <Form.Item name="ordine" label="Ordine" initialValue={0}>
                             <Input type="number" />
                         </Form.Item>
-                        <Button type="primary" htmlType="submit">Aggiungi</Button>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Button type="primary" htmlType="submit">{editingCase ? 'Aggiorna' : 'Aggiungi'}</Button>
+                            {editingCase && (
+                                <Button danger onClick={() => {
+                                    Modal.confirm({
+                                        title: 'Sei sicuro?',
+                                        content: 'Vuoi davvero eliminare questo test case?',
+                                        onOk: () => {
+                                            handleDeleteCase(editingCase.id);
+                                            setCaseModalOpen(false);
+                                        }
+                                    });
+                                }}>Elimina Test</Button>
+                            )}
+                        </div>
                     </Form>
+                </Modal>
+
+                <Modal
+                    title={`Dettagli Esecuzione #${selectedExecution?.id}`}
+                    open={executionDetailsOpen}
+                    onCancel={() => setExecutionDetailsOpen(false)}
+                    width={800}
+                    footer={null}
+                >
+                    {selectedExecution && (
+                        <div>
+                            <Card size="small" style={{ marginBottom: 16 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <div>
+                                        <Text strong>Suite:</Text> {selectedExecution.test_suite_id}<br />
+                                        <Text strong>Data:</Text> {new Date(selectedExecution.created_at).toLocaleString()}
+                                    </div>
+                                    <div>
+                                        <Tag color={esitoColors[selectedExecution.esito]}>{selectedExecution.esito}</Tag>
+                                        <Text strong>{selectedExecution.test_passati}/{selectedExecution.totale_test} Passati</Text>
+                                    </div>
+                                </div>
+                            </Card>
+                            <Table
+                                size="small"
+                                dataSource={selectedExecution.dettagli || []}
+                                pagination={false}
+                                columns={[
+                                    { title: 'Test', dataIndex: 'nome', key: 'nome' },
+                                    { title: 'Tipo', dataIndex: 'tipo', key: 'tipo' },
+                                    { title: 'Esito', dataIndex: 'esito', key: 'esito', render: (e) => <Tag color={esitoColors[e]}>{e}</Tag> },
+                                    { title: 'Messaggio', dataIndex: 'messaggio', key: 'messaggio' },
+                                ]}
+                            />
+                        </div>
+                    )}
                 </Modal>
             </div>
         </Layout>
