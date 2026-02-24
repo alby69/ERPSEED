@@ -106,7 +106,7 @@ function SalesOrderDetail() {
 
     const handleDownloadPDF = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             const response = await fetch(`/api/v1/pdf/sales-order/${orderId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`

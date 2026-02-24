@@ -1,7 +1,7 @@
 import React from 'react';
-import { Menu } from 'antd';
+import { Menu, theme } from 'antd';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth, useTheme } from '@/context';
 import {
     AppstoreOutlined,
     TeamOutlined,
@@ -24,6 +24,8 @@ import './Sidebar.css';
 
 const Sidebar = ({ projectMenuItems = [] }) => {
     const { user, logout } = useAuth();
+    const { themeConfig } = useTheme();
+    const { token } = theme.useToken();
     const location = useLocation();
     const navigate = useNavigate();
     const { projectId } = useParams();
@@ -104,16 +106,17 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     };
 
     return (
-        <div className="sidebar">
-            <div className="sidebar-logo">
+        <div className="sidebar" style={{ background: themeConfig.mode === 'dark' ? token.colorBgContainer : '#fff' }}>
+            <div className="sidebar-logo" style={{ color: themeConfig.mode === 'dark' ? token.colorText : token.colorPrimary }}>
                 <Link to="/projects">FlaskERP</Link>
             </div>
             <Menu
-                theme="dark"
+                theme={themeConfig.mode === 'dark' ? 'dark' : 'light'}
                 mode="inline"
                 onClick={handleMenuClick}
                 selectedKeys={[location.pathname]}
                 items={items}
+                style={{ borderRight: 0 }}
             />
         </div>
     );

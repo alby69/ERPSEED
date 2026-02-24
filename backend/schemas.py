@@ -96,7 +96,7 @@ class ProjectUpdateSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         partial = True
         # Do not allow changing the owner via API
-        exclude = ("owner_id",)
+        exclude = ("owner_id", "name")
 
 class ProjectMemberSchema(ma.Schema):
     user_id = mm_fields.Int(required=True)

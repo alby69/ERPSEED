@@ -38,6 +38,11 @@ class Project(BaseModel):
     version = db.Column(db.String(20), default="1.0.0", comment="Project version")
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
+    # Theme Settings
+    primary_color = db.Column(db.String(20), default="#1677ff")
+    border_radius = db.Column(db.Integer, default=6)
+    theme_mode = db.Column(db.String(20), default="light") # light, dark
+
     models = db.relationship('SysModel', back_populates='project', lazy='dynamic', cascade="all, delete-orphan")
     owner = db.relationship('User')
     members = db.relationship('User', secondary=project_members, back_populates='projects', lazy='dynamic')

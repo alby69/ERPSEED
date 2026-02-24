@@ -9,9 +9,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
     font-size: 20px;
     font-weight: bold;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 .sidebar-logo a {
     color: inherit;

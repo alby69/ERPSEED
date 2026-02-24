@@ -14,10 +14,10 @@ def reset_db():
         db.create_all()
         
         print("Seeding admin user...")
-        create_admin('admin@example.com', 'admin123')
+        create_admin('admin@example.com', 'admin123', app=app)
         
         print("Seeding KPIs...")
-        seed_kpi()
+        seed_kpi(app=app)
         
         print("\n✅ Database reset complete! You can now restart your server.")
 

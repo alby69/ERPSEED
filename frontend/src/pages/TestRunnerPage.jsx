@@ -68,7 +68,7 @@ function TestRunnerPage() {
 
     const fetchSuites = async (page = 1, query = '') => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             const response = await apiFetch(`/api/v1/tests/suites?page=${page}&q=${query}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -84,7 +84,7 @@ function TestRunnerPage() {
 
     const fetchExecutions = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             const response = await apiFetch('/api/v1/tests/executions', {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -97,7 +97,7 @@ function TestRunnerPage() {
 
     const handleCreateSuite = async (values) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             await apiFetch('/api/v1/tests/suites', {
                 method: 'POST',
                 body: JSON.stringify(values),
@@ -114,7 +114,7 @@ function TestRunnerPage() {
 
     const handleGenerateSuite = async (values) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             await apiFetch('/api/v1/tests/generate', {
                 method: 'POST',
                 body: JSON.stringify(values),
@@ -132,7 +132,7 @@ function TestRunnerPage() {
     const handleRunSuite = async (suite) => {
         setRunningSuite(suite.id);
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             await apiFetch(`/api/v1/tests/suites/${suite.id}/run`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
@@ -176,7 +176,7 @@ function TestRunnerPage() {
             
             for (let retry = 0; retry < MAX_RETRIES; retry++) {
                 try {
-                    const token = localStorage.getItem('token');
+                    const token = localStorage.getItem('access_token');
                     const response = await apiFetch(`/api/v1/tests/suites/${suite.id}/run`, {
                         method: 'POST',
                         headers: { Authorization: `Bearer ${token}` }
@@ -240,7 +240,7 @@ function TestRunnerPage() {
         if (deleteType === 'suite') {
             console.log('Executing delete for suite:', itemToDelete);
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('access_token');
                 const response = await apiFetch(`/api/v1/tests/suites/${itemToDelete}`, {
                     method: 'DELETE',
                     headers: { Authorization: `Bearer ${token}` }
@@ -261,7 +261,7 @@ function TestRunnerPage() {
         } else if (deleteType === 'execution') {
             console.log('Executing delete for execution:', itemToDelete);
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('access_token');
                 const response = await apiFetch(`/api/v1/tests/executions/${itemToDelete}`, {
                     method: 'DELETE',
                     headers: { Authorization: `Bearer ${token}` }
@@ -296,7 +296,7 @@ function TestRunnerPage() {
     const handleDeleteAllExecutions = async () => {
         setDeletingAll(true);
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             for (const exec of executions) {
                 await apiFetch(`/api/v1/tests/executions/${exec.id}`, {
                     method: 'DELETE',
@@ -316,7 +316,7 @@ function TestRunnerPage() {
     const handleBulkDeleteSuites = async () => {
         setBulkDeleting(true);
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             for (const id of selectedSuiteIds) {
                 await apiFetch(`/api/v1/tests/suites/${id}`, {
                     method: 'DELETE',
@@ -335,7 +335,7 @@ function TestRunnerPage() {
 
     const handleAddOrUpdateCase = async (values) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             const url = editingCase ? `/api/v1/tests/cases/${editingCase.id}` : `/api/v1/tests/suites/${selectedSuite.id}/cases`;
             const method = editingCase ? 'PUT' : 'POST';
 
@@ -356,7 +356,7 @@ function TestRunnerPage() {
 
     const handleDeleteCase = async (caseId) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             await apiFetch(`/api/v1/tests/cases/${caseId}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
@@ -370,7 +370,7 @@ function TestRunnerPage() {
 
     const handleChangeStatus = async (moduloNome, nuovoStato) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             await apiFetch('/api/v1/tests/module/status', {
                 method: 'POST',
                 body: JSON.stringify({ modulo_nome: moduloNome, nuovo_stato: nuovoStato }),

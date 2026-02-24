@@ -3,10 +3,11 @@ Test Engine - Core testing logic for FlaskERP modules
 """
 import time
 import json
+import os
+import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 import requests
-import uuid
 
 from backend.extensions import db
 from backend.core.models.test_models import TestSuite, TestCase, TestExecution, ModuleStatusHistory
@@ -198,7 +199,7 @@ class TestRunner:
                 }
 
                 # Salva screenshot
-                import os
+
                 os.makedirs('media/test_screenshots', exist_ok=True)
                 page.screenshot(path=dettagli['screenshot_path'])
 
