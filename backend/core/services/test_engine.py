@@ -71,6 +71,8 @@ class TestRunner:
                 return self._test_crud(test_case)
             elif test_case.test_type == 'validation':
                 return self._test_validation(test_case)
+            elif test_case.test_type == 'ui':
+                return self._test_ui(test_case)
             else:
                 return TestResult(test_case, 'errore', f'Tipo test sconosciuto: {test_case.test_type}')
         except Exception as e:
@@ -145,6 +147,67 @@ class TestRunner:
         """Test di validazione."""
         return self._test_api(test_case)
     
+    def _test_ui(self, test_case: TestCase) -> TestResult:
+        """Test UI con Playwright."""
+        from playwright.sync_api import sync_playwright
+
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+        endpoint = test_case.endpoint.strip('/')
+        url = f"{frontend_url}/{endpoint}"
+
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                # Crea un contesto con il token JWT nel localStorage se disponibile
+                context = browser.new_context()
+
+                page = context.new_page()
+
+                # Inserimento token per bypassare login se possibile
+                if self.auth_token:
+                    page.goto(frontend_url)
+                    page.evaluate(f"localStorage.setItem('access_token', '{self.auth_token}')")
+
+                page.goto(url)
+
+                # Esegue script custom se presente nel payload
+                script = test_case.payload.get('script')
+                if script:
+                    page.evaluate(script)
+
+                # Verifica presenza elementi
+                expected_elements = test_case.payload.get('expected_elements', [])
+                missing = []
+                for selector in expected_elements:
+                    try:
+                        page.wait_for_selector(selector, timeout=5000)
+                    except:
+                        missing.append(selector)
+
+                if missing:
+                    esito = 'fallito'
+                    messaggio = f'Elementi non trovati: {missing}'
+                else:
+                    esito = 'successo'
+                    messaggio = 'Test UI completato con successo'
+
+                dettagli = {
+                    'url': url,
+                    'title': page.title(),
+                    'screenshot_path': f"media/test_screenshots/{test_case.id}_{int(time.time())}.png"
+                }
+
+                # Salva screenshot
+                import os
+                os.makedirs('media/test_screenshots', exist_ok=True)
+                page.screenshot(path=dettagli['screenshot_path'])
+
+                browser.close()
+                return TestResult(test_case, esito, messaggio, dettagli)
+
+        except Exception as e:
+            return TestResult(test_case, 'errore', f'Playwright error: {str(e)}')
+
     def esegui_suite(
         self,
         test_suite: TestSuite,
