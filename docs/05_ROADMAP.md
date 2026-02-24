@@ -153,7 +153,7 @@ tests/
 | Frontend UI - Integrazione API | Alta | Completato |
 | PDF Fatture | Alta | In corso |
 | Test Unitari & E2E (Vitest/Playwright) | Alta | Completato |
-| Gestione Temi Grafici | Media | Pianificato |
+| Gestione Temi Grafici | Media | Completato |
 | Integrazione SDI | Bassa | Bassa |
 | Scadenzario pagamenti | Bassa | Bassa |
 
