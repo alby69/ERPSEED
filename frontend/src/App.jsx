@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/context';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { useAuth, ThemeProvider, useTheme } from '@/context';
 import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, SoggettiPage, RuoliPage, IndirizziPage, ComuniPage, ContattiPage, Products, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
 import Sales from './pages/Sales';
 import SalesOrderDetail from './pages/SalesOrderDetail';
@@ -11,6 +12,22 @@ import AuditLogs from './pages/AuditLogs';
 import WorkflowsPage from './pages/WorkflowsPage';
 import TestRunnerPage from './pages/TestRunnerPage';
 
+
+// Helper component to load project theme
+const ProjectThemeLoader = ({ children }) => {
+    const { projectId } = useParams();
+    const { fetchTheme, resetTheme } = useTheme();
+
+    useEffect(() => {
+        if (projectId) {
+            fetchTheme(projectId);
+        } else {
+            resetTheme();
+        }
+    }, [projectId, fetchTheme, resetTheme]);
+
+    return children;
+};
 
 function App() {
   // Component for public routes (e.g., Login)
@@ -52,6 +69,7 @@ function App() {
 
 return (
     <BrowserRouter>
+      <ThemeProvider>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route 
@@ -65,7 +83,7 @@ return (
 
         {/* Project Selection and Project-specific routes */}
         <Route path="/projects" element={<ProtectedRoute><ProjectSelectionPage /></ProtectedRoute>} />
-        <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectLayout /></ProtectedRoute>}>
+        <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectThemeLoader><ProjectLayout /></ProjectThemeLoader></ProtectedRoute>}>
             {/* A default page for a project, e.g. a dashboard */}
             <Route index element={<Dashboard />} /> 
             {/* Member management page */}
@@ -234,6 +252,7 @@ return (
         {/* Redirect everything to the dashboard; if not logged in, ProtectedRoute will send to login */}
         <Route path="*" element={<Navigate to="/projects" replace />} />
       </Routes>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

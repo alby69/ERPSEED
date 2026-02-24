@@ -80,3 +80,22 @@ export const apiFetch = async (endpoint, options = {}) => {
 
   return response;
 };
+
+// Helper for accessing nested properties (e.g. "supplier.name")
+export const getNestedValue = (obj, path) => {
+  if (!path || !obj) return '';
+  const result = path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  return result !== undefined && result !== null ? result : '';
+};
+
+// Format date to locale string
+export const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString();
+};
+
+// Format currency
+export const formatCurrency = (amount, currency = 'EUR') => {
+  return new Intl.NumberFormat('it-IT', { style: 'currency', currency }).format(amount);
+};

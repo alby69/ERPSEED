@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Popconfirm, message } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { apiFetch } from '../utils/api';
+import { apiFetch } from '@/utils';
 
 const ResetTableButton = ({ modelId, onSuccess }) => {
     const [loading, setLoading] = useState(false);

@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { BASE_URL } from '@/utils';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth, useTheme } from '@/context';
+import { Button } from 'antd';
 
 function Login() {
   const { t } = useTranslation();
@@ -13,6 +14,7 @@ function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { themeConfig } = useTheme();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,9 +49,9 @@ function Login() {
     <div className="container-fluid vh-100">
       <div className="row h-100">
         {/* Colonna Sinistra: Immagine/Branding */}
-        <div className="col-md-6 d-none d-md-flex bg-primary text-white flex-column align-items-center justify-content-center p-5" 
+        <div className="col-md-6 d-none d-md-flex text-white flex-column align-items-center justify-content-center p-5"
              style={{ 
-               background: 'linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%)',
+               background: `linear-gradient(135deg, ${themeConfig.primaryColor} 0%, ${themeConfig.primaryColor}dd 100%)`,
                boxShadow: 'inset -5px 0 15px rgba(0,0,0,0.1)',
                position: 'relative'
              }}>
@@ -99,7 +101,7 @@ function Login() {
                 <Link to="/forgot-password" style={{ textDecoration: 'none', fontSize: '0.9rem' }}>Forgot password?</Link>
               </div>
 
-              <button type="submit" className="btn btn-primary w-100 py-2 fw-bold shadow-sm">Login</button>
+              <Button type="primary" htmlType="submit" size="large" className="w-100 py-2 fw-bold shadow-sm">Login</Button>
             </form>
           </div>
         </div>

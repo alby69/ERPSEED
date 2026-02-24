@@ -3,9 +3,10 @@ from backend.extensions import db
 from backend.models import User
 import sys
 
-def create_admin(email, password):
+def create_admin(email, password, app=None):
     email = email.lower()
-    app = create_app()
+    if app is None:
+        app = create_app()
     with app.app_context():
         # Controlla se l'utente esiste già
         user = User.query.filter_by(email=email).first()

@@ -1,3 +1,4 @@
 import { AuthProvider, useAuth } from './AuthContext';
 import { NotificationProvider, useNotification } from './NotificationContext';
-export { AuthProvider, useAuth, NotificationProvider, useNotification };
+import { ThemeProvider, useTheme } from './ThemeContext';
+export { AuthProvider, useAuth, NotificationProvider, useNotification, ThemeProvider, useTheme };

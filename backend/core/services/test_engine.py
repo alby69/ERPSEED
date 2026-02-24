@@ -3,10 +3,11 @@ Test Engine - Core testing logic for FlaskERP modules
 """
 import time
 import json
+import os
+import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 import requests
-import uuid
 
 from backend.extensions import db
 from backend.core.models.test_models import TestSuite, TestCase, TestExecution, ModuleStatusHistory
@@ -40,7 +41,9 @@ class TestRunner:
     Supporta test CRUD, validazione e API.
     """
     
-    def __init__(self, base_url: str = 'http://backend:5000', auth_token: str = None, tenant_id: int = None):
+    def __init__(self, base_url: str = None, auth_token: str = None, tenant_id: int = None):
+        if base_url is None:
+            base_url = os.getenv('BACKEND_URL', 'http://backend:5000')
         self.base_url = base_url
         self.auth_token = auth_token
         self.tenant_id = tenant_id
@@ -67,6 +70,8 @@ class TestRunner:
                 return self._test_crud(test_case)
             elif test_case.test_type == 'validation':
                 return self._test_validation(test_case)
+            elif test_case.test_type == 'ui':
+                return self._test_ui(test_case)
             else:
                 return TestResult(test_case, 'errore', f'Tipo test sconosciuto: {test_case.test_type}')
         except Exception as e:
@@ -78,15 +83,17 @@ class TestRunner:
         url = f"{self.base_url}/{endpoint}"
         payload = self._add_tenant_to_payload(test_case.payload)
         
+        timeout = int(os.getenv('TEST_HTTP_TIMEOUT', 30))
+
         try:
             if test_case.metodo == 'GET':
-                response = self.session.get(url, params=payload or {})
+                response = self.session.get(url, params=payload or {}, timeout=timeout)
             elif test_case.metodo == 'POST':
-                response = self.session.post(url, json=payload or {})
+                response = self.session.post(url, json=payload or {}, timeout=timeout)
             elif test_case.metodo == 'PUT':
-                response = self.session.put(url, json=payload or {})
+                response = self.session.put(url, json=payload or {}, timeout=timeout)
             elif test_case.metodo == 'DELETE':
-                response = self.session.delete(url)
+                response = self.session.delete(url, timeout=timeout)
             else:
                 return TestResult(test_case, 'errore', f'Metodo non supportato: {test_case.metodo}')
             
@@ -139,6 +146,66 @@ class TestRunner:
         """Test di validazione."""
         return self._test_api(test_case)
     
+    def _test_ui(self, test_case: TestCase) -> TestResult:
+        """Test UI con Playwright."""
+        from playwright.sync_api import sync_playwright
+
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+        endpoint = test_case.endpoint.strip('/')
+        url = f"{frontend_url}/{endpoint}"
+
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                # Crea un contesto con il token JWT nel localStorage se disponibile
+                context = browser.new_context()
+
+                page = context.new_page()
+
+                # Inserimento token per bypassare login se possibile
+                if self.auth_token:
+                    page.goto(frontend_url)
+                    page.evaluate(f"localStorage.setItem('access_token', '{self.auth_token}')")
+
+                page.goto(url)
+
+                # Esegue script custom se presente nel payload
+                script = test_case.payload.get('script')
+                if script:
+                    page.evaluate(script)
+
+                # Verifica presenza elementi
+                expected_elements = test_case.payload.get('expected_elements', [])
+                missing = []
+                for selector in expected_elements:
+                    try:
+                        page.wait_for_selector(selector, timeout=5000)
+                    except:
+                        missing.append(selector)
+
+                if missing:
+                    esito = 'fallito'
+                    messaggio = f'Elementi non trovati: {missing}'
+                else:
+                    esito = 'successo'
+                    messaggio = 'Test UI completato con successo'
+
+                dettagli = {
+                    'url': url,
+                    'title': page.title(),
+                    'screenshot_path': f"media/test_screenshots/{test_case.id}_{int(time.time())}.png"
+                }
+
+                # Salva screenshot
+                os.makedirs('media/test_screenshots', exist_ok=True)
+                page.screenshot(path=dettagli['screenshot_path'])
+
+                browser.close()
+                return TestResult(test_case, esito, messaggio, dettagli)
+
+        except Exception as e:
+            return TestResult(test_case, 'errore', f'Playwright error: {str(e)}')
+
     def esegui_suite(
         self,
         test_suite: TestSuite,
@@ -209,6 +276,25 @@ class TestRunner:
         
         db.session.commit()
         
+        # Audit logging
+        try:
+            from backend.services.audit_service import AuditService
+            AuditService.log_action(
+                user_id=user_id,
+                action='test_execution',
+                model_name='TestSuite',
+                model_id=test_suite.id,
+                project_id=test_suite.id, # Assumiamo che test_suite sia collegata al progetto (se presente)
+                changes={
+                    'esito': esito_finale,
+                    'passati': test_passati,
+                    'falliti': test_falliti,
+                    'errori': test_errori
+                }
+            )
+        except:
+            pass
+
         return execution
 
 

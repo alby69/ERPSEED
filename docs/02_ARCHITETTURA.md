@@ -252,7 +252,9 @@ hooks:
 | Database | PostgreSQL 14+ |
 | Auth | Flask-JWT-Extended |
 | Cache | Redis |
-| Frontend | React + Ant Design |
+| Frontend | React 19 + Ant Design |
+| Testing Core | Vitest + RTL |
+| Testing Moduli | Playwright |
 
 ### Struttura Directory
 

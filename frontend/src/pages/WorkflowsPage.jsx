@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Select, Switch, Tag, Space, message, Tabs, Alert } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, ApiOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import api from './api';
+import { apiFetch } from '@/utils';
 
 const { TextArea } = Input;
 
@@ -28,8 +28,9 @@ const WorkflowsPage = () => {
 
     const fetchWorkflows = async () => {
         try {
-            const response = await api.get(`/workflows?project_id=${projectId || ''}`);
-            setWorkflows(response.data);
+            const response = await apiFetch(`/workflows?project_id=${projectId || ''}`);
+            const data = await response.json();
+            setWorkflows(data);
         } catch (error) {
             message.error('Error loading workflows');
         } finally {
@@ -39,8 +40,9 @@ const WorkflowsPage = () => {
 
     const fetchTriggers = async () => {
         try {
-            const response = await api.get('/workflows/triggers');
-            setTriggers(response.data.triggers);
+            const response = await apiFetch('/workflows/triggers');
+            const data = await response.json();
+            setTriggers(data.triggers);
         } catch (error) {
             console.error('Error fetching triggers:', error);
         }
@@ -48,8 +50,9 @@ const WorkflowsPage = () => {
 
     const fetchStepTypes = async () => {
         try {
-            const response = await api.get('/workflows/step-types');
-            setStepTypes(response.data);
+            const response = await apiFetch('/workflows/step-types');
+            const data = await response.json();
+            setStepTypes(data);
         } catch (error) {
             console.error('Error fetching step types:', error);
         }
@@ -57,8 +60,9 @@ const WorkflowsPage = () => {
 
     const fetchExecutions = async (workflowId) => {
         try {
-            const response = await api.get(`/workflows/${workflowId}/executions`);
-            setExecutions(response.data);
+            const response = await apiFetch(`/workflows/${workflowId}/executions`);
+            const data = await response.json();
+            setExecutions(data);
         } catch (error) {
             message.error('Error loading executions');
         }
@@ -78,7 +82,7 @@ const WorkflowsPage = () => {
 
     const handleDelete = async (id) => {
         try {
-            await api.delete(`/workflows/${id}`);
+            await apiFetch(`/workflows/${id}`, { method: 'DELETE' });
             message.success('Workflow deleted');
             fetchWorkflows();
         } catch (error) {
@@ -89,10 +93,16 @@ const WorkflowsPage = () => {
     const handleSubmit = async (values) => {
         try {
             if (editingWorkflow) {
-                await api.put(`/workflows/${editingWorkflow.id}`, values);
+                await apiFetch(`/workflows/${editingWorkflow.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(values)
+                });
                 message.success('Workflow updated');
             } else {
-                await api.post('/workflows', { ...values, project_id: projectId });
+                await apiFetch('/workflows', {
+                    method: 'POST',
+                    body: JSON.stringify({ ...values, project_id: projectId })
+                });
                 message.success('Workflow created');
             }
             setModalVisible(false);
@@ -104,7 +114,10 @@ const WorkflowsPage = () => {
 
     const handleToggleActive = async (workflow) => {
         try {
-            await api.put(`/workflows/${workflow.id}`, { is_active: !workflow.is_active });
+            await apiFetch(`/workflows/${workflow.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ is_active: !workflow.is_active })
+            });
             fetchWorkflows();
         } catch (error) {
             message.error('Error updating workflow');
@@ -113,11 +126,12 @@ const WorkflowsPage = () => {
 
     const handleTestWorkflow = async (workflow) => {
         try {
-            const response = await api.post(`/workflows/${workflow.id}/test`, {});
-            if (response.data.status === 'completed') {
+            const response = await apiFetch(`/workflows/${workflow.id}/test`, { method: 'POST' });
+            const data = await response.json();
+            if (data.status === 'completed') {
                 message.success('Workflow test completed successfully');
             } else {
-                message.error(`Workflow test failed: ${response.data.error}`);
+                message.error(`Workflow test failed: ${data.error}`);
             }
             fetchExecutions(workflow.id);
             setSelectedWorkflow(workflow);
@@ -129,8 +143,9 @@ const WorkflowsPage = () => {
 
     const handleViewWorkflow = async (workflow) => {
         try {
-            const response = await api.get(`/workflows/${workflow.id}`);
-            setSelectedWorkflow(response.data);
+            const response = await apiFetch(`/workflows/${workflow.id}`);
+            const data = await response.json();
+            setSelectedWorkflow(data);
             fetchExecutions(workflow.id);
             setActiveTab('detail');
         } catch (error) {

@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Form, Input, Button, message, Spin, Alert, Card, Modal, Divider } from 'antd';
+import { Form, Input, Button, message, Spin, Alert, Card, Modal, Divider, ColorPicker, InputNumber, Radio } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import { useAuth } from '@/context';
+import { useAuth, useTheme } from '@/context';
 
 const ProjectSettingsPage = () => {
     const { projectId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { updateTheme } = useTheme();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -29,7 +30,10 @@ const ProjectSettingsPage = () => {
             form.setFieldsValue({
                 title: data.title,
                 description: data.description,
-                version: data.version
+                version: data.version,
+                primary_color: data.primary_color || '#1677ff',
+                border_radius: data.border_radius || 6,
+                theme_mode: data.theme_mode || 'light'
             });
         } catch (err) {
             setError(err.message);
@@ -44,15 +48,30 @@ const ProjectSettingsPage = () => {
 
     const onFinish = async (values) => {
         setSaving(true);
+
+        // Convert color object to hex if it's from ColorPicker
+        const payload = {
+            ...values,
+            primary_color: typeof values.primary_color === 'string' ? values.primary_color : values.primary_color.toHexString()
+        };
+
         try {
             const response = await apiFetch(`/projects/${projectId}`, {
                 method: 'PUT',
-                body: JSON.stringify(values),
+                body: JSON.stringify(payload),
             });
             if (!response.ok) {
                 const err = await response.json();
                 throw new Error(err.message || "Error during save.");
             }
+
+            // Update live theme
+            updateTheme({
+                primaryColor: payload.primary_color,
+                borderRadius: payload.border_radius,
+                mode: payload.theme_mode
+            });
+
             message.success("Project settings saved successfully!");
         } catch (err) {
             message.error(err.message);
@@ -120,7 +139,31 @@ const ProjectSettingsPage = () => {
                     <Form.Item name="version" label="Version" rules={[{ required: true, message: 'The version is required.' }]}>
                         <Input placeholder="e.g., 1.0.1" />
                     </Form.Item>
-                    <Form.Item>
+
+                    <Divider orientation="left">Appearance & Theme</Divider>
+
+                    <div className="row">
+                        <div className="col-md-4">
+                            <Form.Item name="theme_mode" label="Theme Mode">
+                                <Radio.Group buttonStyle="solid">
+                                    <Radio.Button value="light">Light</Radio.Button>
+                                    <Radio.Button value="dark">Dark</Radio.Button>
+                                </Radio.Group>
+                            </Form.Item>
+                        </div>
+                        <div className="col-md-4">
+                            <Form.Item name="primary_color" label="Primary Color">
+                                <ColorPicker showText />
+                            </Form.Item>
+                        </div>
+                        <div className="col-md-4">
+                            <Form.Item name="border_radius" label="Border Radius (px)">
+                                <InputNumber min={0} max={20} />
+                            </Form.Item>
+                        </div>
+                    </div>
+
+                    <Form.Item className="mt-4">
                         <Button type="primary" htmlType="submit" loading={saving}>Save Settings</Button>
                     </Form.Item>
                 </Form>

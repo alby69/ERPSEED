@@ -133,6 +133,25 @@ aggregation: count
 
 ---
 
+## Sistema di Testing
+
+MakeERP include un sistema di testing integrato per verificare la correttezza dei moduli.
+
+### 1. Test Unitari (Core)
+Per gli sviluppatori che modificano il codice sorgente:
+1. Entra nella cartella `frontend/`
+2. Esegui `npm run test` per avviare Vitest in modalità watch.
+3. Esegui `npm run test:run` per un'esecuzione singola.
+
+### 2. Test Moduli (User-defined)
+Per gli amministratori che creano nuovi moduli:
+1. Vai su **Admin → Test Runner**
+2. Clicca su **Genera Suite** per creare automaticamente test CRUD per un modulo.
+3. Clicca su **Esegui** per avviare i test.
+4. Per test complessi dell'interfaccia, seleziona il tipo di test **UI (Playwright)**. Questi test caricheranno fisicamente la pagina e verificheranno la presenza degli elementi grafici.
+
+---
+
 ## Risoluzione Problemi
 
 ### Tabella non visibile?
