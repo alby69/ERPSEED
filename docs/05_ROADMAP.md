@@ -148,13 +148,14 @@ tests/
 
 ## Prossime Attività
 
-| Task | Priorità |
-|------|----------|
-| Frontend UI - Integrazione API | Alta |
-| PDF Fatture | Alta |
-| Test E2E | Media |
-| Integrazione SDI | Bassa |
-| Scadenzario pagamenti | Bassa |
+| Task | Priorità | Stato |
+|------|----------|-------|
+| Frontend UI - Integrazione API | Alta | Completato |
+| PDF Fatture | Alta | In corso |
+| Test Unitari & E2E (Vitest/Playwright) | Alta | Completato |
+| Gestione Temi Grafici | Media | Pianificato |
+| Integrazione SDI | Bassa | Bassa |
+| Scadenzario pagamenti | Bassa | Bassa |
 
 ---
 
