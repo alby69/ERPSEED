@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { message } from 'antd';
 import { Layout, FormLines } from '../components';
-import { apiFetch } from '../utils';
+import { apiFetch, formatCurrency } from '../utils';
 
 function SalesOrderDetail() {
     const { orderId } = useParams();
@@ -12,13 +13,11 @@ function SalesOrderDetail() {
     const [error, setError] = useState(null);
     const [dynamicOptions, setDynamicOptions] = useState({});
 
-    const currencyFormatter = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
-
     const lineColumns = [
         { accessor: 'product.name', header: 'Product' },
         { accessor: 'quantity', header: 'Quantity' },
-        { accessor: 'unit_price', header: 'Unit Price', render: (row) => currencyFormatter.format(row.unit_price) },
-        { accessor: 'line_total', header: 'Total', render: (row) => currencyFormatter.format(row.line_total) },
+        { accessor: 'unit_price', header: 'Unit Price', render: (row) => formatCurrency(row.unit_price) },
+        { accessor: 'line_total', header: 'Total', render: (row) => formatCurrency(row.line_total) },
     ];
 
     const lineFields = [
@@ -98,10 +97,10 @@ function SalesOrderDetail() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            alert('Order saved successfully!');
+            message.success('Order saved successfully!');
             navigate('/sales');
         } catch (err) {
-            alert(`Error saving: ${err.message}`);
+            message.error(`Error saving: ${err.message}`);
         }
     };
 
@@ -170,7 +169,7 @@ function SalesOrderDetail() {
                     <hr />
                     <h5>Order Lines</h5>
                     <FormLines name="lines" value={order.lines} onChange={handleLinesChange} columns={lineColumns} fields={lineFields} />
-                    <div className="text-end mt-3"><h4>Totale: {currencyFormatter.format(order.total_amount)}</h4></div>
+                    <div className="text-end mt-3"><h4>Totale: {formatCurrency(order.total_amount)}</h4></div>
                 </div>
             </div>
         </Layout>

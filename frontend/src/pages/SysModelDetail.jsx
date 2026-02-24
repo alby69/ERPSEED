@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { apiFetch } from '../utils';
 import { Layout } from '../components';
 import SysFieldModal from '../components/SysFieldModal';
+import ResetTableButton from '../components/ResetTableButton';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -254,9 +255,12 @@ function SysModelDetail() {
             <button className="btn btn-outline-primary" onClick={openEditModelModal}>Edit Model</button>
           </div>
           <hr />
-          <button className="btn btn-primary" onClick={handleGenerateTable}>
-            Generate/Update DB Table
-          </button>
+          <div className="d-flex gap-2">
+            <button className="btn btn-primary" onClick={handleGenerateTable}>
+              Generate/Update DB Table
+            </button>
+            <ResetTableButton modelId={modelId} onSuccess={fetchModel} />
+          </div>
         </div>
       </div>
 

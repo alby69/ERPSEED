@@ -1,10 +1,6 @@
-function DataTable({ columns, data, onEdit, onDelete, actions, sortConfig, onSort, selectable, selectedIds, onSelectAll, onSelectRow }) {
-  // Funzione helper per accedere a proprietà annidate (es. "supplier.name")
-  const getNestedValue = (obj, path) => {
-    if (!path) return '';
-    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
-  };
+import { getNestedValue } from '@/utils';
 
+function DataTable({ columns, data, onEdit, onDelete, actions, sortConfig, onSort, selectable, selectedIds, onSelectAll, onSelectRow }) {
   return (
     <div className="card shadow-sm">
       <div className="card-body p-0">

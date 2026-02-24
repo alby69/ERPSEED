@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { message } from 'antd';
 import Layout from './Layout';
 import SearchBar from './SearchBar';
 import Pagination from './Pagination';
 import DataTable from './DataTable';
 import FormLines from './FormLines';
 import KanbanView from './KanbanView';
-import { apiFetch } from '../utils';
+import { apiFetch, getNestedValue } from '../utils';
 import { useCrudData } from '../hooks/useCrudData.js';
 
 const evaluateFormula = (formula, data) => {
@@ -18,12 +19,6 @@ const evaluateFormula = (formula, data) => {
   } catch (e) {
     return '';
   }
-};
-
-// Helper per accedere a proprietà annidate (es. "supplier.name")
-const getNestedValue = (obj, path) => {
-  if (!path) return '';
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
 };
 
 const TagInput = ({ value = [], onChange, disabled }) => {
@@ -290,9 +285,9 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
 
     try {
       await deleteItem(id);
+      message.success("Item deleted successfully");
     } catch (err) {
-      // L'errore è gestito dal hook o possiamo mostrarlo qui
-      alert(err.message || "Error during deletion");
+      message.error(err.message || "Error during deletion");
     }
   };
 
@@ -304,30 +299,24 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
         method: 'POST'
       });
       if (res.ok) {
+        message.success("Item duplicated successfully");
         refresh();
       } else {
-        alert("Error during duplication");
+        message.error("Error during duplication");
       }
     } catch (err) {
       console.error(err);
-      alert("Connection error");
+      message.error("Connection error");
     }
   };
 
   const handleKanbanStatusChange = async (itemId, newStatus) => {
-    // Optimistic UI update
-    const originalData = [...data];
-    const updatedData = data.map(item => 
-      item.id === itemId ? { ...item, [kanbanConfig.statusField]: newStatus } : item
-    );
-    // This is tricky, useCrudData hook manages the state.
-    // For now, let's just call the API and refresh. A more advanced implementation would update the hook's state.
-    
     try {
       await updateItem(itemId, { [kanbanConfig.statusField]: newStatus });
+      message.success("Status updated");
       refresh(); // Refresh data from server
     } catch (err) {
-      alert("Failed to update status.");
+      message.error("Failed to update status.");
     }
   };
 
@@ -351,9 +340,10 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
 
     try {
       await bulkDeleteItem(selectedIds);
+      message.success(`${selectedIds.length} items deleted`);
       setSelectedIds([]); // Clear selection after deletion
     } catch (err) {
-      alert(err.message || "Error during bulk deletion");
+      message.error(err.message || "Error during bulk deletion");
     }
   };
 
@@ -433,12 +423,9 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
         await createItem(payload);
       }
       setShowModal(false);
+      message.success("Saved successfully");
     } catch (err) {
-      // Nota: Il hook useCrudData lancia un errore con il messaggio.
-      // Se il backend restituisce errori di validazione specifici (422), 
-      // idealmente il hook dovrebbe restituirli in un formato gestibile.
-      // Per ora mostriamo l'errore generico.
-      alert(err.message || "Error during save");
+      message.error(err.message || "Error during save");
     }
   };
 
@@ -465,11 +452,13 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
         document.body.appendChild(a);
         a.click();
         a.remove();
+        message.success("Export successful");
       } else {
-        alert("Error during export");
+        message.error("Error during export");
       }
     } catch (err) {
       console.error(err);
+      message.error("Connection error during export");
     }
   };
 
@@ -497,14 +486,14 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
             msg += "\n\nErrors:\n" + result.errors.slice(0, 10).join("\n");
             if (result.errors.length > 10) msg += `\n...and ${result.errors.length - 10} more.`;
         }
-        alert(msg);
+        message.info(msg);
         refresh();
       } else {
-        alert(result.message || "Import failed");
+        message.error(result.message || "Import failed");
       }
     } catch (err) {
       console.error(err);
-      alert("Import error");
+      message.error("Import error");
     } finally {
       e.target.value = null;
     }

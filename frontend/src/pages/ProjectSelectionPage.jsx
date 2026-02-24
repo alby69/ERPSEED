@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { List, Avatar, Button, Typography, Spin, Alert, Modal, Input, Select, Radio, Row, Col, Card } from 'antd';
-import { PlusOutlined, ProjectOutlined, AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { List, Avatar, Button, Typography, Spin, Alert, Modal, Input, Select, Radio, Row, Col, Card, message } from 'antd';
+import { PlusOutlined, ProjectOutlined, AppstoreOutlined, UnorderedListOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { useAuth } from '@/context';
 import ProjectForm from '@/components/ProjectForm';
+import ImportProjectButton from '@/components/ImportProjectButton';
 
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
@@ -15,6 +16,7 @@ const ProjectSelectionPage = () => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [editingProject, setEditingProject] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState('title_asc');
@@ -49,17 +51,42 @@ const ProjectSelectionPage = () => {
         navigate(`/projects/${projectId}`);
     };
 
-    const handleShowModal = () => {
+    const handleShowModal = (project = null) => {
+        setEditingProject(project);
         setIsModalVisible(true);
     };
 
     const handleModalClose = () => {
         setIsModalVisible(false);
+        setEditingProject(null);
     };
 
     const handleFormSuccess = () => {
         handleModalClose();
         fetchProjects();
+    };
+
+    const handleExport = async (project) => {
+        try {
+            const response = await apiFetch(`/projects/${project.id}/export`);
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `${project.name}_template.json`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+                message.success(`Template for '${project.title}' exported.`);
+            } else {
+                message.error('Error exporting the template.');
+            }
+        } catch (error) {
+            message.error('An error occurred while exporting the template.');
+        }
     };
 
     const filteredAndSortedProjects = projects
@@ -119,9 +146,12 @@ const ProjectSelectionPage = () => {
                         style={{ width: 250 }}
                     />
                     {user?.role === 'admin' && (
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleShowModal}>
-                            Create Project
-                        </Button>
+                        <>
+                            <ImportProjectButton onSuccess={fetchProjects} />
+                            <Button type="primary" icon={<PlusOutlined />} onClick={handleShowModal}>
+                                Create Project
+                            </Button>
+                        </>
                     )}
                 </div>
             </div>
@@ -144,10 +174,20 @@ const ProjectSelectionPage = () => {
                     renderItem={(project) => (
                         <List.Item
                             actions={[
+                                user?.role === 'admin' && (
+                                    <>
+                                        <Button icon={<EditOutlined />} onClick={() => handleShowModal(project)}>
+                                            Edit
+                                        </Button>
+                                        <Button icon={<DownloadOutlined />} onClick={() => handleExport(project)}>
+                                            Export
+                                        </Button>
+                                    </>
+                                ),
                                 <Button type="primary" onClick={() => handleSelectProject(project.id)}>
                                     Open
                                 </Button>,
-                            ]}
+                            ].filter(Boolean)}
                         >
                             <List.Item.Meta
                                 avatar={<Avatar shape="square" size="large" icon={<ProjectOutlined />} />}
@@ -172,10 +212,20 @@ const ProjectSelectionPage = () => {
                                     style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
                                     styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column' } }}
                                     actions={[
+                                        user?.role === 'admin' && (
+                                            <>
+                                                <Button icon={<EditOutlined />} onClick={() => handleShowModal(project)}>
+                                                    Edit
+                                                </Button>
+                                                <Button icon={<DownloadOutlined />} onClick={() => handleExport(project)}>
+                                                    Export
+                                                </Button>
+                                            </>
+                                        ),
                                         <Button type="primary" block onClick={() => handleSelectProject(project.id)}>
                                             Open Project
                                         </Button>
-                                    ]}
+                                    ].filter(Boolean)}
                                 >
                                     <Paragraph ellipsis={{ rows: 3, expandable: false }}>
                                         {project.description || "No description available."}
@@ -200,12 +250,12 @@ const ProjectSelectionPage = () => {
             )}
 
             <Modal
-                title="Create New Project"
+                title={editingProject ? "Edit Project" : "Create New Project"}
                 open={isModalVisible}
                 onCancel={handleModalClose}
                 footer={null}
             >
-                <ProjectForm onSuccess={handleFormSuccess} onCancel={handleModalClose} />
+                <ProjectForm project={editingProject} onSuccess={handleFormSuccess} onCancel={handleModalClose} />
             </Modal>
         </div>
     );

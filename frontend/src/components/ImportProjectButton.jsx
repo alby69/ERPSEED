@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Upload, Button, message } from 'antd';
-import { apiFetch } from '../utils/api';
+import { apiFetch } from '@/utils';
 
 const ImportProjectButton = ({ onSuccess }) => {
     const [loading, setLoading] = useState(false);
