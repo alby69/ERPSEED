@@ -13,7 +13,25 @@
 | Auth | Flask-JWT-Extended | 4.x |
 | Cache | Flask-Caching + Redis | - |
 | Task Queue | Celery + Redis | 5.x |
-| Frontend | React + Ant Design | 18.x |
+| Frontend | React + Ant Design | 19.x |
+
+---
+
+## Qualità e Testing
+
+L'applicazione adotta una strategia di testing ibrida per garantire sia la robustezza del codice core che la correttezza dei moduli dinamici.
+
+### 1. Frontend Unit Testing (Vitest)
+Utilizzato per testare componenti React comuni, utility e hook in isolamento.
+- **Tool**: Vitest, React Testing Library, jsdom.
+- **Posizione**: `frontend/src/__tests__/`
+- **Comando**: `npm run test`
+
+### 2. Module & UI Testing (Playwright)
+Utilizzato per testare i flussi end-to-end e la logica di business dei moduli creati dinamicamente.
+- **Tool**: Playwright (integrato nel backend Test Engine).
+- **Funzionalità**: Simulazione browser, cattura screenshot, verifica elementi DOM.
+- **Integrazione**: Gestito tramite la `TestRunnerPage` e l'endpoint `/api/v1/tests/run`.
 
 ---
 
