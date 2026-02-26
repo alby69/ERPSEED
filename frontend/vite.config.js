@@ -10,6 +10,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+  optimizeDeps: {
+    include: ['react-grid-layout']
+  },
   test: {
     globals: true,
     environment: 'jsdom',

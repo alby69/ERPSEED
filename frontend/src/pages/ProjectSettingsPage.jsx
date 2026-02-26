@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Form, Input, Button, message, Spin, Alert, Card, Modal, Divider, ColorPicker, InputNumber, Radio } from 'antd';
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { apiFetch } from '@/utils';
+import { Form, Input, Button, message, Spin, Alert, Card, Modal, Divider, ColorPicker, InputNumber, Radio, Table, Switch, Tag } from 'antd';
+import { ExclamationCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import { apiFetch } from '../utils';
 import { useAuth, useTheme } from '@/context';
+import { CHART_LIBRARIES, CHART_LIBRARY_LABELS } from '../components/charts';
 
 const ProjectSettingsPage = () => {
     const { projectId } = useParams();
@@ -171,6 +172,15 @@ const ProjectSettingsPage = () => {
 
             <Divider />
 
+            <Card title="Chart Libraries">
+                <div className="mb-3">
+                    <p className="text-muted">Configura le librerie grafiche disponibili per i dashboard.</p>
+                </div>
+                <ChartLibrarySettings />
+            </Card>
+
+            <Divider />
+
             <Card title="Danger Zone" styles={{ header: { color: '#cf1322', backgroundColor: '#fff1f0' } }} style={{ borderColor: '#ffccc7' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
@@ -185,5 +195,141 @@ const ProjectSettingsPage = () => {
         </>
     );
 };
+
+function ChartLibrarySettings() {
+    const [libraries, setLibraries] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    const defaultLibraries = [
+        { id: 1, library_name: 'chartjs', is_default: true, is_active: true },
+        { id: 2, library_name: 'apexcharts', is_default: false, is_active: true },
+        { id: 3, library_name: 'echarts', is_default: false, is_active: true },
+    ];
+
+    const fetchLibraries = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await apiFetch('/chart-libraries');
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    setLibraries(data);
+                } else {
+                    const resPost = await apiFetch('/chart-libraries', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(defaultLibraries[0])
+                    });
+                    if (resPost.ok) {
+                        setLibraries([await resPost.json(), ...defaultLibraries.slice(1)]);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Error loading libraries:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchLibraries();
+    }, [fetchLibraries]);
+
+    const handleToggleActive = async (record) => {
+        setSaving(true);
+        try {
+            const res = await apiFetch(`/chart-libraries/${record.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_active: !record.is_active }),
+            });
+            if (res.ok) {
+                setLibraries(prev => prev.map(lib => 
+                    lib.id === record.id ? { ...lib, is_active: !lib.is_active } : lib
+                ));
+                message.success('Libreria aggiornata');
+            }
+        } catch (err) {
+            message.error('Errore nell\'aggiornamento');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleSetDefault = async (record) => {
+        setSaving(true);
+        try {
+            const updatedLibs = libraries.map(lib => ({
+                ...lib,
+                is_default: lib.id === record.id
+            }));
+
+            for (const lib of updatedLibs) {
+                await apiFetch(`/chart-libraries/${lib.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_default: lib.is_default }),
+                });
+            }
+
+            setLibraries(updatedLibs);
+            message.success('Libreria predefinita aggiornata');
+        } catch (err) {
+            message.error('Errore nell\'aggiornamento');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const columns = [
+        {
+            title: 'Libreria',
+            dataIndex: 'library_name',
+            key: 'library_name',
+            render: (name) => (
+                <Tag color="blue">{CHART_LIBRARY_LABELS[name] || name}</Tag>
+            ),
+        },
+        {
+            title: 'Stato',
+            dataIndex: 'is_active',
+            key: 'is_active',
+            render: (active, record) => (
+                <Switch
+                    checked={active}
+                    loading={saving}
+                    onChange={() => handleToggleActive(record)}
+                    checkedChildren="Attiva"
+                    unCheckedChildren="Disattiva"
+                />
+            ),
+        },
+        {
+            title: 'Predefinita',
+            dataIndex: 'is_default',
+            key: 'is_default',
+            render: (isDefault, record) => (
+                <Radio
+                    checked={isDefault}
+                    onChange={() => handleSetDefault(record)}
+                    disabled={saving || !record.is_active}
+                />
+            ),
+        },
+    ];
+
+    return (
+        <Table
+            dataSource={libraries}
+            columns={columns}
+            rowKey="id"
+            loading={loading}
+            pagination={false}
+            size="small"
+        />
+    );
+}
 
 export default ProjectSettingsPage;

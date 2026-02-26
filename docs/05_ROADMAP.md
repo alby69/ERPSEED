@@ -151,11 +151,14 @@ tests/
 | Task | Priorità | Stato |
 |------|----------|-------|
 | Frontend UI - Integrazione API | Alta | Completato |
+| Navigazione Unificata (Header, Breadcrumb, Back) | Alta | Completato |
+| Ricerca e Ordinamento Tabelle | Alta | Completato |
 | PDF Fatture | Alta | In corso |
 | Test Unitari & E2E (Vitest/Playwright) | Alta | Completato |
 | Gestione Temi Grafici | Media | Completato |
-| Integrazione SDI | Bassa | Bassa |
-| Scadenzario pagamenti | Bassa | Bassa |
+| Cambio Tema Real-time | Media | Completato |
+| Integrazione SDI | Bassa | - |
+| Scadenzario pagamenti | Bassa | - |
 
 ---
 

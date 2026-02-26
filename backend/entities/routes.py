@@ -1,12 +1,22 @@
 from flask.views import MethodView
+from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
-from backend.entities import Soggetto, SoggettoRuolo, Indirizzo, SoggettoIndirizzo, Contatto, SoggettoContatto, Ruolo
+from backend.entities import (
+    Soggetto,
+    SoggettoRuolo,
+    Indirizzo,
+    SoggettoIndirizzo,
+    Contatto,
+    SoggettoContatto,
+    Ruolo,
+)
 from backend.entities.schemas import (
-    SoggettoSchema, SoggettoCreateSchema,
+    SoggettoSchema,
+    SoggettoCreateSchema,
     RuoloSchema,
     IndirizzoSchema,
-    ContattoSchema
+    ContattoSchema,
 )
 from backend.extensions import db
 from backend.core.services.tenant_context import TenantContext
@@ -27,16 +37,55 @@ def get_tenant_query(model):
 
 # ==================== SOGGETTO ====================
 
+
 @soggetto_blp.route("/soggetti")
 class SoggettoList(MethodView):
     @soggetto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @soggetto_blp.response(200, SoggettoSchema(many=True))
     def get(self):
-        """Lista soggetti"""
+        """Lista soggetti con ordinamento, ricerca e paginazione"""
         query = get_tenant_query(Soggetto)
-        return query.all()
-    
+
+        # Sorting
+        sort_by = request.args.get("sort_by", "nome")
+        sort_order = request.args.get("sort_order", "asc")
+        if hasattr(Soggetto, sort_by):
+            col = getattr(Soggetto, sort_by)
+            if sort_order == "desc":
+                query = query.order_by(col.desc())
+            else:
+                query = query.order_by(col.asc())
+
+        # Search by field
+        search_field = request.args.get("search_field")
+        search_value = request.args.get("search_value")
+        if search_field and search_value and hasattr(Soggetto, search_field):
+            col = getattr(Soggetto, search_field)
+            query = query.filter(col.ilike(f"%{search_value}%"))
+
+        # Global search
+        q = request.args.get("q")
+        if q:
+            query = query.filter(
+                (Soggetto.nome.ilike(f"%{q}%"))
+                | (Soggetto.codice.ilike(f"%{q}%"))
+                | (Soggetto.email.ilike(f"%{q}%"))
+            )
+
+        # Pagination
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        schema = SoggettoSchema(many=True)
+        return {
+            "items": schema.dump(pagination.items),
+            "page": pagination.page,
+            "pages": pagination.pages,
+            "total": pagination.total,
+        }
+
     @soggetto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @soggetto_blp.arguments(SoggettoCreateSchema)
@@ -46,80 +95,84 @@ class SoggettoList(MethodView):
         tenant_id = TenantContext.get_tenant_id()
         if tenant_id is None:
             abort(403, message="Tenant context not found")
-        
+
         # Estrai ruoli, indirizzi, contatti dalla richiesta
-        ruoli_data = data.pop('ruoli', [])
-        indirizzi_data = data.pop('indirizzi', [])
-        contatti_data = data.pop('contatti', [])
-        
-        data['tenant_id'] = tenant_id
-        
+        ruoli_data = data.pop("ruoli", [])
+        indirizzi_data = data.pop("indirizzi", [])
+        contatti_data = data.pop("contatti", [])
+
+        data["tenant_id"] = tenant_id
+
         # Genera codice automatico se non fornito
-        if not data.get('codice'):
-            last = Soggetto.query.filter_by(tenant_id=tenant_id).order_by(Soggetto.id.desc()).first()
+        if not data.get("codice"):
+            last = (
+                Soggetto.query.filter_by(tenant_id=tenant_id)
+                .order_by(Soggetto.id.desc())
+                .first()
+            )
             next_num = (last.id + 1) if last else 1
-            data['codice'] = f"SOG{next_num:05d}"
-        
+            data["codice"] = f"SOG{next_num:05d}"
+
         soggetto = Soggetto(**data)
         db.session.add(soggetto)
         db.session.flush()  # Per ottenere l'ID
-        
+
         # Aggiungi ruoli
         for ruolo_data in ruoli_data:
             sr = SoggettoRuolo(
                 soggetto_id=soggetto.id,
-                ruolo_id=ruolo_data.get('ruolo_id'),
-                stato=ruolo_data.get('stato', 'attivo'),
-                data_inizio=ruolo_data.get('data_inizio')
+                ruolo_id=ruolo_data.get("ruolo_id"),
+                stato=ruolo_data.get("stato", "attivo"),
+                data_inizio=ruolo_data.get("data_inizio"),
             )
             db.session.add(sr)
-        
+
         # Aggiungi indirizzi
         for ind_data in indirizzi_data:
             # Crea o riutilizza indirizzo
             indirizzo = Indirizzo(
                 tenant_id=tenant_id,
-                denominazione=ind_data.get('denominazione'),
-                numero_civico=ind_data.get('numero_civico'),
-                CAP=ind_data.get('CAP'),
-                città=ind_data.get('città'),
-                provincia=ind_data.get('provincia'),
-                nazione=ind_data.get('nazione', 'IT'),
-                latitudine=ind_data.get('latitudine'),
-                longitudine=ind_data.get('longitudine'),
-                tipo=ind_data.get('tipo')
+                denominazione=ind_data.get("denominazione"),
+                numero_civico=ind_data.get("numero_civico"),
+                CAP=ind_data.get("CAP"),
+                città=ind_data.get("città"),
+                provincia=ind_data.get("provincia"),
+                nazione=ind_data.get("nazione", "IT"),
+                latitudine=ind_data.get("latitudine"),
+                longitudine=ind_data.get("longitudine"),
+                tipo=ind_data.get("tipo"),
             )
             db.session.add(indirizzo)
             db.session.flush()
-            
+
             si = SoggettoIndirizzo(
                 soggetto_id=soggetto.id,
                 indirizzo_id=indirizzo.id,
-                tipo_riferimento=ind_data.get('tipo_riferimento'),
-                is_preferred=ind_data.get('is_preferred', False)
+                tipo_riferimento=ind_data.get("tipo_riferimento"),
+                is_preferred=ind_data.get("is_preferred", False),
             )
             db.session.add(si)
-        
+
         # Aggiungi contatti
         for cont_data in contatti_data:
             contatto = Contatto(
                 tenant_id=tenant_id,
-                canale=cont_data.get('canale'),
-                valore=cont_data.get('valore'),
-                tipo_utilizzo=cont_data.get('tipo_utilizzo'),
-                is_preferred=cont_data.get('is_preferred', False)
+                canale=cont_data.get("canale"),
+                valore=cont_data.get("valore"),
+                tipo_utilizzo=cont_data.get("tipo_utilizzo"),
+                is_preferred=cont_data.get("is_preferred", False),
             )
             db.session.add(contatto)
             db.session.flush()
-            
+
             sc = SoggettoContatto(
                 soggetto_id=soggetto.id,
                 contatto_id=contatto.id,
-                tipo_riferimento=cont_data.get('tipo_riferimento'),
-                is_primary=cont_data.get('is_primary', False)
+                tipo_riferimento=cont_data.get("tipo_riferimento"),
+                is_primary=cont_data.get("is_primary", False),
             )
             db.session.add(sc)
-        
+
         db.session.commit()
         return soggetto
 
@@ -135,7 +188,7 @@ class SoggettoResource(MethodView):
         if not soggetto:
             abort(404, message="Soggetto not found")
         return soggetto
-    
+
     @soggetto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @soggetto_blp.arguments(SoggettoCreateSchema)
@@ -145,14 +198,14 @@ class SoggettoResource(MethodView):
         soggetto = get_tenant_query(Soggetto).filter_by(id=soggetto_id).first()
         if not soggetto:
             abort(404, message="Soggetto not found")
-        
+
         for key, value in data.items():
-            if key not in ['ruoli', 'indirizzi', 'contatti'] and hasattr(soggetto, key):
+            if key not in ["ruoli", "indirizzi", "contatti"] and hasattr(soggetto, key):
                 setattr(soggetto, key, value)
-        
+
         db.session.commit()
         return soggetto
-    
+
     @soggetto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @soggetto_blp.response(204)
@@ -161,23 +214,64 @@ class SoggettoResource(MethodView):
         soggetto = get_tenant_query(Soggetto).filter_by(id=soggetto_id).first()
         if not soggetto:
             abort(404, message="Soggetto not found")
-        
+
         db.session.delete(soggetto)
         db.session.commit()
-        return '', 204
+        return "", 204
 
 
 # ==================== RUOLO ====================
+
 
 @ruolo_blp.route("/ruoli")
 class RuoloList(MethodView):
     @ruolo_blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @ruolo_blp.response(200, RuoloSchema(many=True))
     def get(self):
-        """Lista ruoli"""
-        return get_tenant_query(Ruolo).all()
-    
+        """Lista ruoli con ordinamento, ricerca e paginazione"""
+        query = get_tenant_query(Ruolo)
+
+        # Sorting
+        sort_by = request.args.get("sort_by", "nome")
+        sort_order = request.args.get("sort_order", "asc")
+        if hasattr(Ruolo, sort_by):
+            col = getattr(Ruolo, sort_by)
+            if sort_order == "desc":
+                query = query.order_by(col.desc())
+            else:
+                query = query.order_by(col.asc())
+
+        # Search by field
+        search_field = request.args.get("search_field")
+        search_value = request.args.get("search_value")
+        if search_field and search_value and hasattr(Ruolo, search_field):
+            col = getattr(Ruolo, search_field)
+            query = query.filter(col.ilike(f"%{search_value}%"))
+
+        # Global search
+        q = request.args.get("q")
+        if q:
+            query = query.filter(
+                (Ruolo.nome.ilike(f"%{q}%"))
+                | (Ruolo.codice.ilike(f"%{q}%"))
+                | (Ruolo.descrizione.ilike(f"%{q}%"))
+            )
+
+        # Pagination
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        # Serialize items manually
+        schema = RuoloSchema(many=True)
+        return {
+            "items": schema.dump(pagination.items),
+            "page": pagination.page,
+            "pages": pagination.pages,
+            "total": pagination.total,
+        }
+
     @ruolo_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @ruolo_blp.arguments(RuoloSchema)
@@ -187,10 +281,10 @@ class RuoloList(MethodView):
         tenant_id = TenantContext.get_tenant_id()
         if tenant_id is None:
             abort(403, message="Tenant context not found")
-        
-        data['tenant_id'] = tenant_id
+
+        data["tenant_id"] = tenant_id
         ruolo = Ruolo(**data)
-        
+
         db.session.add(ruolo)
         db.session.commit()
         return ruolo
@@ -207,7 +301,7 @@ class RuoloResource(MethodView):
         if not ruolo:
             abort(404, message="Ruolo not found")
         return ruolo
-    
+
     @ruolo_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @ruolo_blp.arguments(RuoloSchema)
@@ -217,14 +311,14 @@ class RuoloResource(MethodView):
         ruolo = get_tenant_query(Ruolo).filter_by(id=ruolo_id).first()
         if not ruolo:
             abort(404, message="Ruolo not found")
-        
+
         for key, value in data.items():
             if hasattr(ruolo, key):
                 setattr(ruolo, key, value)
-        
+
         db.session.commit()
         return ruolo
-    
+
     @ruolo_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @ruolo_blp.response(204)
@@ -233,23 +327,73 @@ class RuoloResource(MethodView):
         ruolo = get_tenant_query(Ruolo).filter_by(id=ruolo_id).first()
         if not ruolo:
             abort(404, message="Ruolo not found")
-        
+
         db.session.delete(ruolo)
         db.session.commit()
-        return '', 204
+        return "", 204
 
 
 # ==================== INDIRIZZO ====================
+
 
 @indirizzo_blp.route("/indirizzi")
 class IndirizzoList(MethodView):
     @indirizzo_blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @indirizzo_blp.response(200, IndirizzoSchema(many=True))
     def get(self):
-        """Lista indirizzi"""
-        return get_tenant_query(Indirizzo).all()
-    
+        """Lista indirizzi con ordinamento, ricerca e paginazione"""
+        query = get_tenant_query(Indirizzo)
+
+        # Sorting
+        sort_by = request.args.get("sort_by", "città")
+        sort_order = request.args.get("sort_order", "asc")
+        if hasattr(Indirizzo, sort_by):
+            col = getattr(Indirizzo, sort_by)
+            if sort_order == "desc":
+                query = query.order_by(col.desc())
+            else:
+                query = query.order_by(col.asc())
+
+        # Search by field
+        search_field = request.args.get("search_field")
+        search_value = request.args.get("search_value")
+        if search_field and search_value and hasattr(Indirizzo, search_field):
+            col = getattr(Indirizzo, search_field)
+            query = query.filter(col.ilike(f"%{search_value}%"))
+
+        # Global search
+        q = request.args.get("q")
+        if q:
+            query = query.filter(
+                (Indirizzo.città.ilike(f"%{q}%"))
+                | (Indirizzo.denominazione.ilike(f"%{q}%"))
+                | (Indirizzo.provincia.ilike(f"%{q}%"))
+            )
+
+        # Pagination
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        schema = IndirizzoSchema(many=True)
+        return {
+            "items": schema.dump(pagination.items),
+            "page": pagination.page,
+            "pages": pagination.pages,
+            "total": pagination.total,
+        }
+
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        schema = IndirizzoSchema(many=True)
+        return {
+            "items": schema.dump(pagination.items),
+            "page": pagination.page,
+            "pages": pagination.pages,
+            "total": pagination.total,
+        }
+
     @indirizzo_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @indirizzo_blp.arguments(IndirizzoSchema)
@@ -259,10 +403,10 @@ class IndirizzoList(MethodView):
         tenant_id = TenantContext.get_tenant_id()
         if tenant_id is None:
             abort(403, message="Tenant context not found")
-        
-        data['tenant_id'] = tenant_id
+
+        data["tenant_id"] = tenant_id
         indirizzo = Indirizzo(**data)
-        
+
         db.session.add(indirizzo)
         db.session.commit()
         return indirizzo
@@ -279,7 +423,7 @@ class IndirizzoResource(MethodView):
         if not indirizzo:
             abort(404, message="Indirizzo not found")
         return indirizzo
-    
+
     @indirizzo_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @indirizzo_blp.arguments(IndirizzoSchema)
@@ -289,14 +433,14 @@ class IndirizzoResource(MethodView):
         indirizzo = get_tenant_query(Indirizzo).filter_by(id=indirizzo_id).first()
         if not indirizzo:
             abort(404, message="Indirizzo not found")
-        
+
         for key, value in data.items():
             if hasattr(indirizzo, key):
                 setattr(indirizzo, key, value)
-        
+
         db.session.commit()
         return indirizzo
-    
+
     @indirizzo_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @indirizzo_blp.response(204)
@@ -305,23 +449,63 @@ class IndirizzoResource(MethodView):
         indirizzo = get_tenant_query(Indirizzo).filter_by(id=indirizzo_id).first()
         if not indirizzo:
             abort(404, message="Indirizzo not found")
-        
+
         db.session.delete(indirizzo)
         db.session.commit()
-        return '', 204
+        return "", 204
 
 
 # ==================== CONTATTO ====================
+
 
 @contatto_blp.route("/contatti")
 class ContattoList(MethodView):
     @contatto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @contatto_blp.response(200, ContattoSchema(many=True))
     def get(self):
-        """Lista contatti"""
-        return get_tenant_query(Contatto).all()
-    
+        """Lista contatti con ordinamento, ricerca e paginazione"""
+        query = get_tenant_query(Contatto)
+
+        # Sorting
+        sort_by = request.args.get("sort_by", "valore")
+        sort_order = request.args.get("sort_order", "asc")
+        if hasattr(Contatto, sort_by):
+            col = getattr(Contatto, sort_by)
+            if sort_order == "desc":
+                query = query.order_by(col.desc())
+            else:
+                query = query.order_by(col.asc())
+
+        # Search by field
+        search_field = request.args.get("search_field")
+        search_value = request.args.get("search_value")
+        if search_field and search_value and hasattr(Contatto, search_field):
+            col = getattr(Contatto, search_field)
+            query = query.filter(col.ilike(f"%{search_value}%"))
+
+        # Global search
+        q = request.args.get("q")
+        if q:
+            query = query.filter(
+                (Contatto.valore.ilike(f"%{q}%"))
+                | (Contatto.canale.ilike(f"%{q}%"))
+                | (Contatto.note.ilike(f"%{q}%"))
+            )
+
+        # Pagination
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        schema = ContattoSchema(many=True)
+        return {
+            "items": schema.dump(pagination.items),
+            "page": pagination.page,
+            "pages": pagination.pages,
+            "total": pagination.total,
+        }
+
     @contatto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @contatto_blp.arguments(ContattoSchema)
@@ -331,10 +515,10 @@ class ContattoList(MethodView):
         tenant_id = TenantContext.get_tenant_id()
         if tenant_id is None:
             abort(403, message="Tenant context not found")
-        
-        data['tenant_id'] = tenant_id
+
+        data["tenant_id"] = tenant_id
         contatto = Contatto(**data)
-        
+
         db.session.add(contatto)
         db.session.commit()
         return contatto
@@ -351,7 +535,7 @@ class ContattoResource(MethodView):
         if not contatto:
             abort(404, message="Contatto not found")
         return contatto
-    
+
     @contatto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @contatto_blp.arguments(ContattoSchema)
@@ -361,14 +545,14 @@ class ContattoResource(MethodView):
         contatto = get_tenant_query(Contatto).filter_by(id=contatto_id).first()
         if not contatto:
             abort(404, message="Contatto not found")
-        
+
         for key, value in data.items():
             if hasattr(contatto, key):
                 setattr(contatto, key, value)
-        
+
         db.session.commit()
         return contatto
-    
+
     @contatto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @contatto_blp.response(204)
@@ -377,7 +561,7 @@ class ContattoResource(MethodView):
         contatto = get_tenant_query(Contatto).filter_by(id=contatto_id).first()
         if not contatto:
             abort(404, message="Contatto not found")
-        
+
         db.session.delete(contatto)
         db.session.commit()
-        return '', 204
+        return "", 204

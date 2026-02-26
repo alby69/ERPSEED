@@ -204,8 +204,13 @@ If you encounter problems with the APIs or the Frontend, follow this guide to is
 ### 2. Database Issues (SQLAlchemy)
 - If you modify a Python model (`app/models/`), you must generate a migration:
   ```bash
+  # Without Docker:
   flask db migrate -m "description"
   flask db upgrade
+  
+  # With Docker:
+  docker compose exec backend flask db migrate -m "description"
+  docker compose exec backend flask db upgrade
   ```
 - If you modify a Dynamic model (from the Builder), you must click **"Generate/Update DB Table"** on the model detail page.
 
@@ -222,15 +227,20 @@ If the database gets corrupted, the schema is no longer synchronized, or you sim
     docker compose up -d
     ```
 
-2.  **Run the reset script inside the `web` container**:
+2.  **Run the reset script inside the `backend` container**:
     ```bash
-    docker compose exec web python -m backend.reset_db
+    docker compose exec backend python -m backend.reset_db
     ```
     This command will execute the `reset_db.py` script, which handles deleting the database, recreating all tables according to the SQLAlchemy models, and inserting seed data (administrator, KPIs, etc.).
 
-3.  **Restart the web service to apply the changes**:
+3.  **Or use the seed_initial script**:
     ```bash
-    docker compose restart web
+    docker compose exec backend python -c "from backend.seed_initial import init_db; init_db()"
+    ```
+
+4.  **Restart the backend service to apply the changes**:
+    ```bash
+    docker compose restart backend
     ```
 
 ### 🏗️ Code Architecture (Refactoring in progress)
@@ -324,9 +334,21 @@ The project is configured to work with **Docker**, which manages both the applic
     This will download the images, build the app container, and start PostgreSQL.
 
 3.  **Run the database migrations (in another terminal)**
-    Since the DB is new and lives inside Docker, we need to run the migrations *inside* the `web` container:
+    Since the DB is new and lives inside Docker, we need to run the migrations *inside* the `backend` container:
     ```bash
-    docker compose exec web flask db upgrade
+    docker compose exec backend flask db upgrade
+    ```
+
+    > **Note**: If you modify a Python model, generate a new migration:
+    > ```bash
+    > docker compose exec backend flask db migrate -m "description"
+    > docker compose exec backend flask db upgrade
+    > ```
+
+    **Alternative: Reset database completely**
+    If you need a fresh start (deletes all data):
+    ```bash
+    docker compose exec backend python -c "from backend.seed_initial import init_db; init_db()"
     ```
 
 4.  **Access the application**
@@ -514,9 +536,11 @@ Automation engine to create event-based workflows.
 
 **Database Migration:**
 ```bash
+# Without Docker:
 flask db upgrade
-# or if you use Docker:
-docker compose exec web flask db upgrade
+
+# With Docker:
+docker compose exec backend flask db upgrade
 ```
 
 ---
@@ -525,3 +549,46 @@ docker compose exec web flask db upgrade
 
 - **Redis Caching**: Caching system to improve performance
 - **Scheduled Tasks**: Periodic tasks for automations (cron-like)
+
+---
+
+## 🧩 Component Builder & Marketplace (NEW!)
+
+FlaskERP now includes a powerful **Component Builder** and **Marketplace** system for creating, sharing, and installing reusable UI components.
+
+### Core Concepts
+
+| Term | Definition |
+|------|------------|
+| **Archetype** | Component template (Table, Form, Chart, Kanban, Metric) |
+| **Component** | Atomic reusable piece instance in a project |
+| **Block** | Aggregated collection of Components with business logic |
+| **Marketplace** | Store for publishing and installing Blocks |
+
+### Features
+
+- **Drag & Drop**: Build layouts with react-grid-layout
+- **Component Registry**: Dynamic component rendering system
+- **Block Publishing**: Submit blocks for marketplace review
+- **Payment Processing**: Built-in payment system for paid blocks
+- **Reviews & Ratings**: Community feedback system
+
+### API Endpoints
+
+```
+# Builder API
+GET/POST   /api/archetypes                    # List/Create archetypes
+GET/POST   /api/projects/:id/components       # Manage components
+GET/POST   /api/projects/:id/blocks           # Manage blocks
+
+# Marketplace API
+GET        /api/marketplace/categories        # Browse categories
+GET        /api/marketplace/blocks            # Search marketplace
+POST       /api/marketplace/blocks/:id/reviews  # Add review
+POST       /api/marketplace/payments/process  # Process payment
+```
+
+### Frontend Routes
+
+- `/builder/blocks` - Block Builder page
+- `/marketplace` - Browse Marketplace

@@ -1,0 +1,57 @@
+.app-sidebar,
+.sidebar {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.app-sidebar .ant-menu,
+.sidebar .ant-menu {
+  padding: 8px 0;
+}
+
+.app-sidebar .ant-menu-item,
+.sidebar .ant-menu-item {
+  margin: 4px 8px;
+  border-radius: 4px;
+}
+
+.app-sidebar .ant-menu-item:hover,
+.sidebar .ant-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.app-sidebar .ant-menu-item-selected,
+.sidebar .ant-menu-item-selected {
+  background-color: rgba(24, 144, 255, 0.1);
+}
+
+.app-sidebar .ant-menu-submenu-title,
+.sidebar .ant-menu-submenu-title {
+  margin: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Dark mode adjustments */
+.ant-menu-dark .ant-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.ant-menu-dark .ant-menu-item-selected {
+  background-color: rgba(24, 144, 255, 0.2);
+}
+
+/* Smooth transitions */
+.ant-menu-item,
+.ant-menu-submenu-title {
+  transition: all 0.3s ease;
+}
+
+/* Navigation section titles */
+.ant-menu-item-group-title {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+  padding: 8px 24px 4px !important;
+}

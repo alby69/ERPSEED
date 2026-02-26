@@ -43,6 +43,31 @@ from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_bl
 from .entities.indirizzo_geografico import geografico_blp
 from .entities.comuni_routes import comuni_blp
 
+# Import Builder Models (Archetype, Component, Block)
+from .builder.models import (
+    Archetype,
+    Component,
+    Block,
+    BlockRelationship,
+    create_system_archetypes,
+)
+
+# Import Marketplace Models
+from .marketplace.models import (
+    Category,
+    BlockListing,
+    Review,
+    PaymentTransaction,
+    Author,
+    create_default_categories,
+)
+
+# Import Builder API
+from .builder.api import blp as builder_api_blp
+
+# Import Marketplace API
+from .marketplace.api import blp as marketplace_api_blp
+
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -53,11 +78,17 @@ def create_app(db_url=None):
     app.config["OPENAPI_VERSION"] = "3.0.3"
     app.config["OPENAPI_URL_PREFIX"] = "/"
     app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
-    app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
+    app.config["OPENAPI_SWAGGER_UI_URL"] = (
+        "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
+    )
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv(
+        "DATABASE_URL", "sqlite:///data.db"
+    )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["PROPAGATE_EXCEPTIONS"] = True
-    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "a-silly-default-secret-key-for-dev")
+    app.config["JWT_SECRET_KEY"] = os.getenv(
+        "JWT_SECRET_KEY", "a-silly-default-secret-key-for-dev"
+    )
     app.config["JWT_TOKEN_LOCATION"] = ["headers"]
 
     # --- Initialize Extensions ---
@@ -66,107 +97,155 @@ def create_app(db_url=None):
     api.init_app(app)
     jwt.init_app(app)
     ma.init_app(app)
-    
+
     # Create test tables if they don't exist
     with app.app_context():
-        from backend.core.models.test_models import TestSuite, TestCase, TestExecution, ModuleStatusHistory
+        from backend.core.models.test_models import (
+            TestSuite,
+            TestCase,
+            TestExecution,
+            ModuleStatusHistory,
+        )
+
         db.create_all()
-        
+
         # Add missing columns to existing tables
         from sqlalchemy import text
+
         try:
             # sys_dashboards.updated_at
-            result = db.session.execute(text("""
+            result = db.session.execute(
+                text("""
                 SELECT column_name FROM information_schema.columns 
                 WHERE table_name = 'sys_dashboards' AND column_name = 'updated_at'
-            """))
+            """)
+            )
             if not result.fetchone():
-                db.session.execute(text("ALTER TABLE sys_dashboards ADD COLUMN updated_at TIMESTAMP"))
+                db.session.execute(
+                    text("ALTER TABLE sys_dashboards ADD COLUMN updated_at TIMESTAMP")
+                )
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
             print(f"Error adding sys_dashboards.updated_at: {e}")
-        
+
         try:
             # sys_models.updated_at
-            result = db.session.execute(text("""
+            result = db.session.execute(
+                text("""
                 SELECT column_name FROM information_schema.columns 
                 WHERE table_name = 'sys_models' AND column_name = 'updated_at'
-            """))
+            """)
+            )
             if not result.fetchone():
-                db.session.execute(text("ALTER TABLE sys_models ADD COLUMN updated_at TIMESTAMP"))
+                db.session.execute(
+                    text("ALTER TABLE sys_models ADD COLUMN updated_at TIMESTAMP")
+                )
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
             print(f"Error adding sys_models.updated_at: {e}")
-        
+
         try:
             # sys_fields.created_at and sys_fields.updated_at
-            result = db.session.execute(text("""
+            result = db.session.execute(
+                text("""
                 SELECT column_name FROM information_schema.columns 
                 WHERE table_name = 'sys_fields' AND column_name = 'created_at'
-            """))
+            """)
+            )
             if not result.fetchone():
-                db.session.execute(text("ALTER TABLE sys_fields ADD COLUMN created_at TIMESTAMP"))
+                db.session.execute(
+                    text("ALTER TABLE sys_fields ADD COLUMN created_at TIMESTAMP")
+                )
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
             print(f"Error adding sys_fields.created_at: {e}")
-        
+
         try:
-            result = db.session.execute(text("""
+            result = db.session.execute(
+                text("""
                 SELECT column_name FROM information_schema.columns 
                 WHERE table_name = 'sys_fields' AND column_name = 'updated_at'
-            """))
+            """)
+            )
             if not result.fetchone():
-                db.session.execute(text("ALTER TABLE sys_fields ADD COLUMN updated_at TIMESTAMP"))
+                db.session.execute(
+                    text("ALTER TABLE sys_fields ADD COLUMN updated_at TIMESTAMP")
+                )
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
             print(f"Error adding sys_fields.updated_at: {e}")
-    
+
     # --- Initialize Multi-tenant Filters ---
     TenantQueryFilter.init_app(app)
     SoftDeleteFilter.init_app(app)
-    
+
     # --- Initialize Tenant Middleware ---
     TenantMiddleware.init_app(app)
-    
+
     # --- Initialize Babel ---
-    app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
-    
+    app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
+
     def get_locale():
         # Get language from header Accept-Language
-        return request.accept_languages.best_match(['en', 'it']) if request.accept_languages else 'en'
-    
+        return (
+            request.accept_languages.best_match(["en", "it"])
+            if request.accept_languages
+            else "en"
+        )
+
     babel = Babel(app, locale_selector=get_locale)
 
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_payload):
-        return jsonify({"message": "The token has expired.", "error": "token_expired"}), 401
+        return jsonify(
+            {"message": "The token has expired.", "error": "token_expired"}
+        ), 401
 
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
-        return jsonify({"message": "Signature verification failed.", "error": "invalid_token"}), 401
+        return jsonify(
+            {"message": "Signature verification failed.", "error": "invalid_token"}
+        ), 401
 
     @jwt.unauthorized_loader
     def missing_token_callback(error):
-        return jsonify({
-            "description": "Request does not contain an access token.",
-            "error": "authorization_required"
-        }), 401
+        return jsonify(
+            {
+                "description": "Request does not contain an access token.",
+                "error": "authorization_required",
+            }
+        ), 401
 
     socketio.init_app(app, cors_allowed_origins="*")
-    
+
     # --- CORS Configuration ---
-    CORS(app, resources={r"/*": {
-        "origins": ["http://localhost:5173", "http://127.0.0.1:5173", "http://0.0.0.0:5173"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
-        "expose_headers": ["X-Total-Count", "X-Pages", "X-Current-Page", "X-Per-Page", "Content-Range"],
-        "supports_credentials": True
-    }})
-    
+    CORS(
+        app,
+        resources={
+            r"/*": {
+                "origins": [
+                    "http://localhost:5173",
+                    "http://127.0.0.1:5173",
+                    "http://0.0.0.0:5173",
+                ],
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+                "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+                "expose_headers": [
+                    "X-Total-Count",
+                    "X-Pages",
+                    "X-Current-Page",
+                    "X-Per-Page",
+                    "Content-Range",
+                ],
+                "supports_credentials": True,
+            }
+        },
+    )
+
     # Register CORS for test_runner blueprint
     CORS(test_runner_bp)
 
@@ -178,20 +257,21 @@ def create_app(db_url=None):
             return e
         # Log and return JSON for 500 errors
         import traceback
+
         print(traceback.format_exc())
         return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
 
     # --- Register Blueprints ---
     # Core API con Marshmallow (nuovo)
-    api.register_blueprint(core_auth_bp, url_prefix='/api/v1/auth')
-    api.register_blueprint(tenant_bp, url_prefix='/api/v1/tenant')
+    api.register_blueprint(core_auth_bp, url_prefix="/api/v1/auth")
+    api.register_blueprint(tenant_bp, url_prefix="/api/v1/tenant")
     api.register_blueprint(modules_bp)
     api.register_blueprint(system_bp)
     api.register_blueprint(pdf_bp)
     api.register_blueprint(test_runner_bp)
-    
+
     # Vecchi blueprint per retrocompatibilità frontend - rinominati per evitare conflitti
-    api.register_blueprint(auth_bp, name='legacy_auth')  # /login, /me, etc.
+    api.register_blueprint(auth_bp, name="legacy_auth")  # /login, /me, etc.
     api.register_blueprint(users_bp)
     api.register_blueprint(products_bp)
     api.register_blueprint(projects_bp)
@@ -203,12 +283,14 @@ def create_app(db_url=None):
     api.register_blueprint(dynamic_api_bp)
     api.register_blueprint(webhooks_bp)
     api.register_blueprint(workflows_bp)
-    
+    api.register_blueprint(builder_api_blp)
+    api.register_blueprint(marketplace_api_blp)
+
     # Vision Entities (Archetypes)
-    api.register_blueprint(soggetto_blp, url_prefix='/api/v1')
-    api.register_blueprint(ruolo_blp, url_prefix='/api/v1')
-    api.register_blueprint(indirizzo_blp, url_prefix='/api/v1')
-    api.register_blueprint(contatto_blp, url_prefix='/api/v1')
+    api.register_blueprint(soggetto_blp, url_prefix="/api/v1")
+    api.register_blueprint(ruolo_blp, url_prefix="/api/v1")
+    api.register_blueprint(indirizzo_blp, url_prefix="/api/v1")
+    api.register_blueprint(contatto_blp, url_prefix="/api/v1")
     api.register_blueprint(geografico_blp)
     api.register_blueprint(comuni_blp)
 
@@ -224,11 +306,11 @@ def _init_plugins(app, api, db):
     PluginRegistry.register(get_accounting_plugin())
     PluginRegistry.register(get_hr_plugin())
     PluginRegistry.register(get_inventory_plugin())
-    
+
     # Enable plugins
     try:
-        PluginRegistry.enable('accounting', app=app, db=db, api=api)
-        PluginRegistry.enable('hr', app=app, db=db, api=api)
-        PluginRegistry.enable('inventory', app=app, db=db, api=api)
+        PluginRegistry.enable("accounting", app=app, db=db, api=api)
+        PluginRegistry.enable("hr", app=app, db=db, api=api)
+        PluginRegistry.enable("inventory", app=app, db=db, api=api)
     except Exception as e:
         print(f"Warning: Could not enable some plugins: {e}")

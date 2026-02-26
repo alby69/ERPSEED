@@ -8,6 +8,7 @@ import {
   GlobalOutlined, EnvironmentOutlined, UploadOutlined
 } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import Layout from '@/components/Layout';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -262,8 +263,9 @@ const ComuniPage = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Row gutter={[16, 16]}>
+    <Layout>
+      <div style={{ padding: '0' }}>
+        <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic title="Totale Comuni" value={stats.total} prefix={<GlobalOutlined />} />
@@ -419,7 +421,8 @@ const ComuniPage = () => {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiFetch } from '../utils';
-import GenericCrudPage from '../components/GenericCrudPage'; // Assicurati che il percorso sia corretto
-import { Layout } from '../components';
+import GenericCrudPage from '../components/GenericCrudPage';
 
 function DynamicModelPage() {
   const { projectId, modelName } = useParams();
@@ -61,9 +60,9 @@ function DynamicModelPage() {
     if (projectId && modelName) fetchMeta();
   }, [projectId, modelName]);
 
-  if (loading) return <Layout><div className="p-5 text-center">Loading configuration...</div></Layout>;
-  if (error) return <Layout><div className="alert alert-danger m-4">{error}</div></Layout>;
-  if (!modelMeta) return <Layout><div className="alert alert-warning m-4">Model not found</div></Layout>;
+  if (loading) return <div className="p-5 text-center">Loading configuration...</div>;
+  if (error) return <div className="alert alert-danger m-4">{error}</div>;
+  if (!modelMeta) return <div className="alert alert-warning m-4">Model not found</div>;
 
   // Mappatura dei campi SysField -> GenericCrudPage fields
   const columns = modelMeta.fields

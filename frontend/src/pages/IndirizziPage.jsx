@@ -2,18 +2,37 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card, Table, Button, Modal, Form, Input, Select, Tag, Space, message, Popconfirm, Row, Col, InputNumber, Divider, AutoComplete
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, SearchOutlined, AimOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, SearchOutlined, AimOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import { useTableSort } from '@/hooks/useTableSort';
+import TableSearch from '@/components/TableSearch';
+import Layout from '@/components/Layout';
 
 const { Option } = Select;
 
 const IndirizziPage = () => {
-  const [indirizzi, setIndirizzi] = useState([]);
   const [soggetti, setSoggetti] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingIndirizzo, setEditingIndirizzo] = useState(null);
   const [form] = Form.useForm();
+
+  const { 
+    data: indirizzi, 
+    loading, 
+    pagination, 
+    sortField, 
+    sortOrder,
+    searchField,
+    searchValue,
+    searchTerm,
+    fetchData,
+    handleSort,
+    handlePageChange,
+    handleSearchField,
+    handleSearchSubmit,
+    handleClearSearch,
+    handleSearch
+  } = useTableSort('/api/v1/indirizzi', { initialSortField: 'città', initialSortOrder: 'asc' });
 
   // Stati per selezione gerarchica
   const [regioni, setRegioni] = useState([]);
@@ -22,27 +41,12 @@ const IndirizziPage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  const fetchIndirizzi = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await apiFetch('/api/v1/indirizzi');
-      if (response.ok) {
-        const data = await response.json();
-        setIndirizzi(data);
-      }
-    } catch (error) {
-      message.error('Errore nel caricamento degli indirizzi');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const fetchSoggetti = useCallback(async () => {
     try {
-      const response = await apiFetch('/api/v1/soggetti');
+      const response = await apiFetch('/api/v1/soggetti?per_page=1000');
       if (response.ok) {
         const data = await response.json();
-        setSoggetti(data);
+        setSoggetti(Array.isArray(data) ? data : (data.items || []));
       }
     } catch (error) {
       console.error('Errore nel caricamento dei soggetti:', error);
@@ -148,10 +152,10 @@ const IndirizziPage = () => {
   };
 
   useEffect(() => {
-    fetchIndirizzi();
+    fetchData();
     fetchSoggetti();
     fetchRegioni();
-  }, [fetchIndirizzi, fetchSoggetti, fetchRegioni]);
+  }, [fetchData, fetchSoggetti, fetchRegioni]);
 
   const handleCreate = () => {
     setEditingIndirizzo(null);
@@ -178,7 +182,7 @@ const IndirizziPage = () => {
       const response = await apiFetch(`/indirizzi/${id}`, { method: 'DELETE' });
       if (response.ok) {
         message.success('Indirizzo eliminato');
-        fetchIndirizzi();
+        fetchData();
       } else {
         message.error('Errore nell\'eliminazione');
       }
@@ -200,7 +204,7 @@ const IndirizziPage = () => {
       if (response.ok) {
         message.success(editingIndirizzo ? 'Indirizzo aggiornato' : 'Indirizzo creato');
         setModalVisible(false);
-        fetchIndirizzi();
+        fetchData();
       } else {
         const err = await response.json();
         message.error(err.message || 'Errore nel salvataggio');
@@ -253,20 +257,31 @@ const IndirizziPage = () => {
     return <Tag color={colors[tipo] || 'default'}>{tipo}</Tag>;
   };
 
+  const sortableHeader = (title, field) => (
+    <span style={{ cursor: 'pointer' }} onClick={() => handleSort(field)}>
+      {title}
+      {sortField === field ? (
+        sortOrder === 'asc' ? <CaretUpOutlined style={{ marginLeft: 4, fontSize: 10 }} /> : <CaretDownOutlined style={{ marginLeft: 4, fontSize: 10 }} />
+      ) : (
+        <CaretUpOutlined style={{ marginLeft: 4, fontSize: 10, opacity: 0.3 }} />
+      )}
+    </span>
+  );
+
   const columns = [
     {
-      title: 'Soggetto',
+      title: sortableHeader('Soggetto', 'soggetto_id'),
       dataIndex: ['soggetto', 'nome'],
       key: 'soggetto',
     },
     {
-      title: 'Tipo',
+      title: sortableHeader('Tipo', 'tipo'),
       dataIndex: 'tipo',
       key: 'tipo',
       render: (tipo) => getTipoTag(tipo),
     },
     {
-      title: 'Indirizzo',
+      title: sortableHeader('Città', 'città'),
       key: 'indirizzo',
       render: (_, record) => (
         <span>
@@ -276,7 +291,7 @@ const IndirizziPage = () => {
       ),
     },
     {
-      title: 'Nazione',
+      title: sortableHeader('Nazione', 'nazione'),
       dataIndex: 'nazione',
       key: 'nazione',
     },
@@ -309,26 +324,47 @@ const IndirizziPage = () => {
   ));
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card
-        title={
-          <Space>
-            <EnvironmentOutlined />
-            <span>Gestione Indirizzi</span>
-          </Space>
-        }
-        extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Nuovo Indirizzo
-          </Button>
-        }
-      >
+    <Layout>
+      <div style={{ padding: '0' }}>
+        <Card
+          title={
+            <Space>
+              <EnvironmentOutlined />
+              <span>Gestione Indirizzi</span>
+            </Space>
+          }
+          extra={
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              Nuovo Indirizzo
+            </Button>
+          }
+        >
+        <div className="mb-3">
+          <TableSearch
+            columns={columns}
+            searchField={searchField}
+            searchValue={searchValue}
+            searchTerm={searchTerm}
+            globalSearchValue={searchTerm}
+            onSearchFieldChange={handleSearchField}
+            onSearchValueChange={(val) => handleSearchField(searchField, val)}
+            onSearchSubmit={handleSearchSubmit}
+            onClearSearch={handleClearSearch}
+            onGlobalSearch={handleSearch}
+          />
+        </div>
         <Table
           columns={columns}
           dataSource={indirizzi}
           rowKey="id"
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{ 
+            current: pagination.page, 
+            pageSize: pagination.perPage, 
+            total: pagination.totalItems,
+            onChange: handlePageChange,
+            showSizeChanger: false
+          }}
         />
       </Card>
 
@@ -499,7 +535,8 @@ const IndirizziPage = () => {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

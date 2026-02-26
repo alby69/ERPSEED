@@ -5,9 +5,9 @@ from flask_jwt_extended import jwt_required
 from sqlalchemy import select, func, desc
 import json
 
-from .models import SysChart, SysDashboard, SysModel
+from .models import SysChart, SysDashboard, SysModel, ChartLibraryConfig
 from .extensions import db
-from .schemas import SysChartSchema, SysDashboardSchema
+from .schemas import SysChartSchema, SysDashboardSchema, ChartLibraryConfigSchema
 from .utils import get_table_object
 from .services import DynamicApiService
 from .utils import paginate, serialize_value
@@ -15,6 +15,79 @@ from .utils import paginate, serialize_value
 dynamic_service = DynamicApiService()
 
 blp = Blueprint("analytics", __name__, description="BI & Analytics Operations")
+
+
+# --- CRUD per Chart Libraries ---
+@blp.route("/chart-libraries")
+class ChartLibraryList(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, ChartLibraryConfigSchema(many=True))
+    def get(self):
+        """Lista tutte le librerie grafiche configurate."""
+        return ChartLibraryConfig.query.all()
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.arguments(ChartLibraryConfigSchema)
+    @blp.response(201, ChartLibraryConfigSchema)
+    def post(self, library_data):
+        """Crea o aggiorna configurazione libreria."""
+        existing = ChartLibraryConfig.query.filter_by(
+            library_name=library_data["library_name"]
+        ).first()
+        if existing:
+            for key, value in library_data.items():
+                setattr(existing, key, value)
+            db.session.commit()
+            return existing
+        library = ChartLibraryConfig(**library_data)
+        db.session.add(library)
+        db.session.commit()
+        return library
+
+
+@blp.route("/chart-libraries/<int:library_id>")
+class ChartLibraryResource(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, ChartLibraryConfigSchema)
+    def get(self, library_id):
+        return ChartLibraryConfig.query.get_or_404(library_id)
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.arguments(ChartLibraryConfigSchema)
+    @blp.response(200, ChartLibraryConfigSchema)
+    def put(self, library_data, library_id):
+        library = ChartLibraryConfig.query.get_or_404(library_id)
+        for key, value in library_data.items():
+            setattr(library, key, value)
+        db.session.commit()
+        return library
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(204)
+    def delete(self, library_id):
+        library = ChartLibraryConfig.query.get_or_404(library_id)
+        db.session.delete(library)
+        db.session.commit()
+        return ""
+
+
+@blp.route("/chart-libraries/default")
+class ChartLibraryDefault(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, ChartLibraryConfigSchema)
+    def get(self):
+        """Restituisce la libreria grafica predefinita."""
+        default_lib = ChartLibraryConfig.query.filter_by(is_default=True).first()
+        if not default_lib:
+            return {"library_name": "chartjs", "is_default": True, "is_active": True}
+        return default_lib
+
 
 # --- CRUD per Grafici ---
 @blp.route("/sys-charts")
@@ -37,6 +110,7 @@ class SysChartList(MethodView):
         db.session.commit()
         return chart
 
+
 @blp.route("/sys-charts/<int:chart_id>")
 class SysChartResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
@@ -47,12 +121,24 @@ class SysChartResource(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(SysChartSchema)
+    @blp.response(200, SysChartSchema)
+    def put(self, chart_data, chart_id):
+        chart = SysChart.query.get_or_404(chart_id)
+        for key, value in chart_data.items():
+            setattr(chart, key, value)
+        db.session.commit()
+        return chart
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
     @blp.response(204)
     def delete(self, chart_id):
         chart = SysChart.query.get_or_404(chart_id)
         db.session.delete(chart)
         db.session.commit()
         return ""
+
 
 # --- CRUD per Dashboard ---
 @blp.route("/sys-dashboards")
@@ -75,6 +161,7 @@ class SysDashboardList(MethodView):
         db.session.commit()
         return dashboard
 
+
 @blp.route("/sys-dashboards/<int:dashboard_id>")
 class SysDashboardResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
@@ -94,6 +181,7 @@ class SysDashboardResource(MethodView):
         db.session.commit()
         return dashboard
 
+
 # --- Motore di Query Analytics ---
 @blp.route("/analytics/chart-data/<int:chart_id>")
 class ChartData(MethodView):
@@ -102,29 +190,29 @@ class ChartData(MethodView):
     def get(self, chart_id):
         """Esegue la query di aggregazione per un grafico specifico."""
         chart = SysChart.query.get_or_404(chart_id)
-        
+
         # Recupera il modello sorgente
         sys_model = SysModel.query.get(chart.model_id)
         if not sys_model:
             abort(404, message="Source model not found")
-            
+
         # Verifica permessi di lettura sul modello dati
-        dynamic_service.check_permissions(sys_model, 'read')
-        
+        dynamic_service.check_permissions(sys_model, "read")
+
         schema_name = f"project_{sys_model.project_id}"
         table = get_table_object(sys_model.name, schema=schema_name)
 
         # --- Helper per filtri data ---
         def apply_date_filter(q):
-            date_from = request.args.get('date_from')
-            date_to = request.args.get('date_to')
-            
+            date_from = request.args.get("date_from")
+            date_to = request.args.get("date_to")
+
             date_col = None
-            if 'date' in table.c:
+            if "date" in table.c:
                 date_col = table.c.date
-            elif 'created_at' in table.c:
+            elif "created_at" in table.c:
                 date_col = table.c.created_at
-            
+
             if date_col is not None:
                 if date_from:
                     q = q.where(date_col >= date_from)
@@ -132,33 +220,45 @@ class ChartData(MethodView):
                     q = q.where(func.date(date_col) <= date_to)
             return q
 
+        # --- Helper per filtri dinamici ---
+        def apply_dynamic_filters(q):
+            for key, value in request.args.items():
+                if key.startswith("filter_"):
+                    field_name = key[7:]
+                    if field_name in table.c and value:
+                        q = q.where(table.c[field_name] == value)
+            return q
+
         # Gestione Widget Tabella (Ultimi N record)
-        if chart.type == 'table':
+        if chart.type == "table":
             query = select(table)
-            
+
             # Filtri e Limite
             limit = 5
             if chart.filters:
                 try:
                     filters = json.loads(chart.filters)
-                    limit = int(filters.get('limit', 5))
+                    limit = int(filters.get("limit", 5))
                     for k, v in filters.items():
                         if k in table.c:
                             query = query.where(table.c[k] == v)
                 except:
                     pass
-            
+
             # Applica filtro data globale
             query = apply_date_filter(query)
-            
+
+            # Applica filtri dinamici
+            query = apply_dynamic_filters(query)
+
             # Ordinamento (Usa x_axis come campo di ordinamento, default id desc)
             sort_col = table.c.id
             if chart.x_axis and chart.x_axis in table.c:
                 sort_col = table.c[chart.x_axis]
-            
+
             query = query.order_by(desc(sort_col)).limit(limit)
             results = db.session.execute(query).mappings().all()
-            
+
             # Serializza i risultati (gestione date, ecc. è automatica con flask jsonify solitamente, ma per sicurezza convertiamo in dict)
             data = []
             for row in results:
@@ -167,28 +267,30 @@ class ChartData(MethodView):
 
             # Restituisce struttura specifica per tabella
             return {"type": "table", "data": data, "columns": [c.name for c in table.c]}
-        
+
         # Determina la funzione di aggregazione
         agg_func = None
-        if chart.aggregation == 'sum':
+        if chart.aggregation == "sum":
             agg_func = func.sum
-        elif chart.aggregation == 'avg':
+        elif chart.aggregation == "avg":
             agg_func = func.avg
-        elif chart.aggregation == 'min':
+        elif chart.aggregation == "min":
             agg_func = func.min
-        elif chart.aggregation == 'max':
+        elif chart.aggregation == "max":
             agg_func = func.max
-        elif chart.aggregation == 'count':
+        elif chart.aggregation == "count":
             agg_func = func.count
         else:
-            agg_func = func.count # Default
+            agg_func = func.count  # Default
 
         # Costruisci la query: SELECT x_axis, AGG(y_axis) FROM table GROUP BY x_axis
         x_col = table.c[chart.x_axis]
-        y_col = table.c[chart.y_axis] if chart.y_axis != '*' else table.c.id # Count * fallback
-        
-        query = select(x_col.label('label'), agg_func(y_col).label('value'))
-        
+        y_col = (
+            table.c[chart.y_axis] if chart.y_axis != "*" else table.c.id
+        )  # Count * fallback
+
+        query = select(x_col.label("label"), agg_func(y_col).label("value"))
+
         # Applica filtri salvati (se presenti)
         if chart.filters:
             try:
@@ -202,15 +304,23 @@ class ChartData(MethodView):
         # Applica filtro data globale
         query = apply_date_filter(query)
 
-        query = query.group_by(x_col).order_by(desc('value'))
-        
+        # Applica filtri dinamici
+        query = apply_dynamic_filters(query)
+
+        query = query.group_by(x_col).order_by(desc("value"))
+
         results = db.session.execute(query).mappings().all()
-        
+
         # Formatta per il frontend (es. Chart.js)
         return {
-            "labels": [str(r['label']) for r in results],
-            "datasets": [{
-                "label": f"{chart.aggregation.upper()} of {chart.y_axis}",
-                "data": [float(r['value']) if r['value'] is not None else 0 for r in results]
-            }]
+            "labels": [str(r["label"]) for r in results],
+            "datasets": [
+                {
+                    "label": f"{chart.aggregation.upper()} of {chart.y_axis}",
+                    "data": [
+                        float(r["value"]) if r["value"] is not None else 0
+                        for r in results
+                    ],
+                }
+            ],
         }

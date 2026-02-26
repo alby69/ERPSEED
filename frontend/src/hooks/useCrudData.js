@@ -8,6 +8,8 @@ export function useCrudData(apiPath, { initialPerPage = 10 } = {}) {
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, totalItems: 0, perPage: initialPerPage });
   const [sort, setSort] = useState({ field: '', order: 'asc' });
   const [filters, setFilters] = useState({});
+  const [searchField, setSearchField] = useState('');
+  const [searchValue, setSearchValue] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const fetchData = useCallback(async () => {
@@ -21,8 +23,12 @@ export function useCrudData(apiPath, { initialPerPage = 10 } = {}) {
         params.append('sort_by', sort.field);
         params.append('sort_order', sort.order);
       }
+      if (searchField && searchValue) {
+        params.append('search_field', searchField);
+        params.append('search_value', searchValue);
+      }
       Object.keys(filters).forEach(key => {
-        if (filters[key] !== undefined && filters[key] !== '') {
+        if (key !== 'search_field' && key !== 'search_value' && filters[key] !== undefined && filters[key] !== '') {
           params.append(key, filters[key]);
         }
       });
@@ -50,13 +56,25 @@ export function useCrudData(apiPath, { initialPerPage = 10 } = {}) {
     } finally {
       setLoading(false);
     }
-  }, [apiPath, pagination.page, pagination.perPage, sort, filters, refreshTrigger]);
+  }, [apiPath, pagination.page, pagination.perPage, sort, filters, searchField, searchValue, refreshTrigger]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const setPage = (page) => setPagination(prev => ({ ...prev, page }));
+
+  const setSearch = (field, value) => {
+    setSearchField(field);
+    setSearchValue(value);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const clearSearch = () => {
+    setSearchField('');
+    setSearchValue('');
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
 
   const createItem = async (payload) => {
     const headers = {};
@@ -121,7 +139,6 @@ export function useCrudData(apiPath, { initialPerPage = 10 } = {}) {
       const errData = await response.json();
       throw new Error(errData.message || 'Failed to delete items');
     }
-    // Refresh data after bulk delete
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -132,9 +149,13 @@ export function useCrudData(apiPath, { initialPerPage = 10 } = {}) {
     pagination,
     sort,
     filters,
+    searchField,
+    searchValue,
     setPage,
     setSort,
     setFilters,
+    setSearch,
+    clearSearch,
     createItem,
     updateItem,
     deleteItem,

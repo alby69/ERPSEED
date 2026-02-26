@@ -3,6 +3,7 @@ import { useParams, Outlet } from 'react-router-dom';
 import { Layout as AntLayout, Spin, theme } from 'antd';
 import { apiFetch } from '@/utils';
 import Sidebar from '@/components/Sidebar';
+import AppHeader from '@/components/AppHeader';
 import { useTheme } from '@/context';
 
 const { Sider, Content } = AntLayout;
@@ -12,29 +13,40 @@ const ProjectLayout = () => {
     const { themeConfig } = useTheme();
     const [projectMenuItems, setProjectMenuItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [projectTitle, setProjectTitle] = useState('');
 
     useEffect(() => {
         if (projectId) {
             setLoading(true);
-            apiFetch(`/projects/${projectId}/models`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Failed to fetch project models');
-                    return response.json();
+            Promise.all([
+                apiFetch(`/projects/${projectId}/models`),
+                apiFetch(`/projects/${projectId}`)
+            ])
+                .then(([modelsRes, projectRes]) => {
+                    if (!modelsRes.ok) throw new Error('Failed to fetch project models');
+                    if (!projectRes.ok) throw new Error('Failed to fetch project');
+                    return Promise.all([modelsRes.json(), projectRes.json()]);
                 })
-                .then(data => {
-                    const menuItems = data.map(model => ({
+                .then(([models, project]) => {
+                    const menuItems = models.map(model => ({
                         key: model.name,
                         label: model.title,
                         path: `/projects/${projectId}/data/${model.name}`
                     }));
                     setProjectMenuItems(menuItems);
+                    setProjectTitle(project.title);
                 })
-                .catch(error => console.error("Error fetching project models:", error))
+                .catch(error => console.error("Error fetching project:", error))
                 .finally(() => setLoading(false));
         }
     }, [projectId]);
 
     const { token } = theme.useToken();
+
+    const breadcrumbs = [
+        { title: <a onClick={() => window.location.href = '/projects'}>Progetti</a> },
+        { title: projectTitle || '...' }
+    ];
 
     return (
         <AntLayout style={{ minHeight: '100vh' }}>
@@ -52,13 +64,15 @@ const ProjectLayout = () => {
             </Sider>
             <AntLayout>
                 <Content style={{
-                    margin: '24px 16px',
-                    padding: 24,
+                    margin: 0,
+                    padding: 0,
                     background: themeConfig.mode === 'dark' ? token.colorBgContainer : '#fff',
                     minHeight: 280,
-                    borderRadius: themeConfig.borderRadius
                 }}>
-                    {loading ? <div style={{textAlign: 'center', paddingTop: 50}}><Spin size="large" /></div> : <Outlet />}
+                    <AppHeader breadcrumbs={breadcrumbs} />
+                    <div style={{ padding: 24 }}>
+                        {loading ? <div style={{textAlign: 'center', paddingTop: 50}}><Spin size="large" /></div> : <Outlet context={{ projectTitle, projectId }} />}
+                    </div>
                 </Content>
             </AntLayout>
         </AntLayout>

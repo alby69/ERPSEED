@@ -5,6 +5,12 @@ import DashboardWidgets from '../components/DashboardWidgets';
 import ChartWidget from '../components/ChartWidget';
 import { apiFetch } from '../utils';
 import { useAuth } from '../context';
+import GridLayout from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+
+const GRID_COLS = 12;
+const ROW_HEIGHT = 80;
 
 function Dashboard() {
   const { projectId } = useParams();
@@ -13,6 +19,7 @@ function Dashboard() {
   const [dashboards, setDashboards] = useState([]);
   const [selectedDashboard, setSelectedDashboard] = useState(null);
   const [dashboardCharts, setDashboardCharts] = useState([]);
+  const [dashboardLayout, setDashboardLayout] = useState([]);
   const [dateFilters, setDateFilters] = useState({ from: '', to: '' });
 
   useEffect(() => {
@@ -25,7 +32,6 @@ function Dashboard() {
   const loadDashboards = () => {
     apiFetch('/sys-dashboards').then(res => res.json()).then(data => {
       setDashboards(data);
-      // Seleziona la prima dashboard di default
       if (data.length > 0) {
         handleDashboardChange(data[0].id);
       }
@@ -36,18 +42,33 @@ function Dashboard() {
     if (!dashboardId) {
       setSelectedDashboard(null);
       setDashboardCharts([]);
+      setDashboardLayout([]);
       return;
     }
-    // Carica il layout della dashboard specifica
     apiFetch(`/sys-dashboards/${dashboardId}`).then(res => res.json()).then(dashboard => {
       setSelectedDashboard(dashboard);
       try {
-        const layout = JSON.parse(dashboard.layout || '{}');
-        setDashboardCharts(layout.charts || []);
+        const layoutData = JSON.parse(dashboard.layout || '{}');
+        setDashboardCharts(layoutData.charts || []);
+        setDashboardLayout(layoutData.layout || generateDefaultLayout(layoutData.charts || []));
       } catch (e) {
         setDashboardCharts([]);
+        setDashboardLayout([]);
       }
     }).catch(console.error);
+  };
+
+  const generateDefaultLayout = (chartIds) => {
+    if (!chartIds) return [];
+    return chartIds.map((id, index) => ({
+      i: String(id),
+      x: (index % 2) * 6,
+      y: Math.floor(index / 2),
+      w: 6,
+      h: 4,
+      minW: 3,
+      minH: 3
+    }));
   };
 
   const loadUsersList = () => {
@@ -96,13 +117,22 @@ function Dashboard() {
 
       {/* Grafici Dinamici dal BI Builder */}
       {dashboardCharts.length > 0 && (
-        <div className="row mb-4">
+        <GridLayout
+          className="layout"
+          layout={dashboardLayout}
+          cols={GRID_COLS}
+          rowHeight={ROW_HEIGHT}
+          width={1100}
+          margin={[16, 16]}
+          isDraggable={false}
+          isResizable={false}
+        >
           {dashboardCharts.map(chartId => (
-            <div key={chartId} className="col-md-6 mb-4">
+            <div key={String(chartId)} style={{ overflow: 'hidden' }}>
               <ChartWidget chartId={chartId} dateFilters={dateFilters} />
             </div>
           ))}
-        </div>
+        </GridLayout>
       )}
       {selectedDashboard && dashboardCharts.length === 0 && (
         <div className="text-center text-muted p-4 border rounded bg-light">Questa dashboard non ha ancora grafici.</div>

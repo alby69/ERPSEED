@@ -11,6 +11,9 @@ import DynamicModelPage from './pages/DynamicModelPage';
 import AuditLogs from './pages/AuditLogs';
 import WorkflowsPage from './pages/WorkflowsPage';
 import TestRunnerPage from './pages/TestRunnerPage';
+import DashboardBuilder from './pages/DashboardBuilder';
+import BlockBuilder from './pages/BlockBuilder';
+import MarketplaceBrowse from './pages/MarketplaceBrowse';
 
 
 // Helper component to load project theme
@@ -102,6 +105,46 @@ return (
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/builder" 
+          element={
+            <ProtectedRoute>
+              <DashboardBuilder />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/builder/:dashboardId" 
+          element={
+            <ProtectedRoute>
+              <DashboardBuilder />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/builder/blocks" 
+          element={
+            <ProtectedRoute>
+              <BlockBuilder />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/builder/blocks/:blockId" 
+          element={
+            <ProtectedRoute>
+              <BlockBuilder />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/marketplace" 
+          element={
+            <ProtectedRoute>
+              <MarketplaceBrowse />
             </ProtectedRoute>
           } 
         />

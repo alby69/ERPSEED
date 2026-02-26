@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { message } from 'antd';
 import Layout from './Layout';
 import SearchBar from './SearchBar';
@@ -7,6 +7,7 @@ import Pagination from './Pagination';
 import DataTable from './DataTable';
 import FormLines from './FormLines';
 import KanbanView from './KanbanView';
+import TableSearch from './TableSearch';
 import { apiFetch, getNestedValue } from '../utils';
 import { useCrudData } from '../hooks/useCrudData.js';
 
@@ -53,9 +54,24 @@ const TagInput = ({ value = [], onChange, disabled }) => {
   );
 };
 
-function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, defaultView = 'table', defaultSort, enableDateFilter = false, kanbanConfig }) {
+function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, defaultView = 'table', defaultSort, enableDateFilter = false, kanbanConfig, embedded = false }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const outletContext = useOutletContext() || {};
+  const { projectTitle, projectId } = outletContext;
   const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+
+  // Build breadcrumbs
+  const breadcrumbs = [
+    { title: <a onClick={() => navigate('/projects')}>Progetti</a> },
+  ];
+  if (projectTitle) {
+    breadcrumbs.push({ title: <a onClick={() => navigate(`/projects/${projectId}`)}>{projectTitle}</a> });
+  }
+  breadcrumbs.push({ title: pageTitle });
+
+  // Check if we should render without internal layout (when embedded in ProjectLayout)
+  const renderWithoutLayout = embedded || (projectId && location.pathname.startsWith('/projects/'));
 
   // Integrazione Custom Hook useCrudData
   const {
@@ -65,12 +81,17 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
     pagination,
     sort,
     filters,
+    searchField,
+    searchValue,
     setPage,
     setSort,
     setFilters,
+    setSearch,
+    clearSearch,
     createItem,
     updateItem,
     deleteItem,
+    bulkDeleteItem,
     refresh
   } = useCrudData(apiPath, { initialPerPage: 10, initialSort: defaultSort });
 
@@ -155,18 +176,35 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
   };
 
   const handleSort = (key) => {
-    setSort(key);
+    const currentField = sort.field;
+    const currentOrder = sort.order;
+    if (currentField === key) {
+      setSort({ field: key, order: currentOrder === 'asc' ? 'desc' : 'asc' });
+    } else {
+      setSort({ field: key, order: 'asc' });
+    }
+  };
+
+  const handleSearchField = (field, value) => {
+    setSearch(field, value);
+  };
+
+  const handleSearchClear = () => {
+    clearSearch();
+  };
+
+  const handleGlobalSearch = (term) => {
+    setFilters(prev => ({ ...prev, q: term }));
   };
 
   const handleDateFilterChange = (key, value) => {
     const newDates = { ...dateFilters, [key]: value };
     setDateFilters(newDates);
-    
-    setFilters({ 
-      ...filters, 
-      date_from: newDates.from, 
-      date_to: newDates.to 
-    });
+    setFilters(prev => ({
+      ...prev,
+      date_from: newDates.from,
+      date_to: newDates.to
+    }));
   };
 
   const handleInputChange = (e) => {
@@ -596,9 +634,9 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
     return <input type={field.type || 'text'} {...commonProps} />;
   };
 
-  return (
-    <Layout>
-      <div className="d-flex justify-content-between align-items-center mb-4">
+  const renderContent = () => (
+    <>
+    <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>{pageTitle}</h2>
         {selectedIds.length > 0 ? (
           <div className="d-flex gap-2">
@@ -691,7 +729,22 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
       {hookError && <div className="alert alert-danger">{hookError}</div>}
 
       {viewMode === 'table' ? (
-        <DataTable 
+        <div>
+          <div className="mb-3">
+            <TableSearch
+              columns={columns}
+              searchField={searchField}
+              searchValue={searchValue}
+              searchTerm={filters.q || ''}
+              globalSearchValue={filters.q || ''}
+              onSearchFieldChange={handleSearchField}
+              onSearchValueChange={(val) => handleSearchField(searchField, val)}
+              onSearchSubmit={() => {}}
+              onClearSearch={handleSearchClear}
+              onGlobalSearch={handleGlobalSearch}
+            />
+          </div>
+          <DataTable 
           columns={columns} 
           data={data} 
           onEdit={handleEdit} 
@@ -712,6 +765,7 @@ title="Duplicate"
           onSelectAll={handleSelectAll}
           onSelectRow={handleSelectRow}
         />
+        </div>
       ) : (
         <div className="row g-3">
           {data.map(row => (
@@ -804,6 +858,16 @@ title="Duplicate"
           </div>
         </div>
       )}
+    </>
+  );
+
+  if (renderWithoutLayout) {
+    return renderContent();
+  }
+
+  return (
+    <Layout breadcrumbs={breadcrumbs}>
+      {renderContent()}
     </Layout>
   );
 }

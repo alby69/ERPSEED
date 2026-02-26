@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiFetch } from '../utils';
 import GenericCrudPage from '../components/GenericCrudPage';
-import Layout from '../components/Layout';
 
 // Funzione helper per valutare formule frontend
 const evaluateFrontendFormula = (formula, row) => {
@@ -244,9 +243,9 @@ function DynamicPageWrapper() {
     fetchMetadata();
   }, [modelName]);
 
-  if (loading) return <Layout><div>Loading dynamic model...</div></Layout>;
-  if (error) return <Layout><div className="alert alert-danger">Error: {error}</div></Layout>;
-  if (!config) return <Layout><div>Model configuration not found.</div></Layout>;
+  if (loading) return <div>Loading dynamic model...</div>;
+  if (error) return <div className="alert alert-danger">Error: {error}</div>;
+  if (!config) return <div>Model configuration not found.</div>;
 
   return (
     <GenericCrudPage 

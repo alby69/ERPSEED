@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { ConfigProvider, theme as antTheme } from 'antd';
 import { useParams } from 'react-router-dom';
 import { apiFetch } from '@/utils';
@@ -13,7 +13,7 @@ export const ThemeProvider = ({ children }) => {
     });
     const [loading, setLoading] = useState(false);
 
-    const fetchTheme = async (id) => {
+    const fetchTheme = useCallback(async (id) => {
         if (!id) return;
         setLoading(true);
         try {
@@ -31,19 +31,19 @@ export const ThemeProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const updateTheme = (newConfig) => {
+    const updateTheme = useCallback((newConfig) => {
         setThemeConfig(prev => ({ ...prev, ...newConfig }));
-    };
+    }, []);
 
-    const resetTheme = () => {
+    const resetTheme = useCallback(() => {
         setThemeConfig({
             primaryColor: '#1677ff',
             borderRadius: 6,
             mode: 'light',
         });
-    };
+    }, []);
 
     const antdThemeConfig = useMemo(() => ({
         algorithm: themeConfig.mode === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,

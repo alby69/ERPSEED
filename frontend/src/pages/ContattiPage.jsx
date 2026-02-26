@@ -2,40 +2,44 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card, Table, Button, Modal, Form, Input, Select, Tag, Space, message, Popconfirm, Typography, Row, Col
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, PhoneOutlined, MailOutlined, GlobalOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, PhoneOutlined, MailOutlined, GlobalOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import { useTableSort } from '@/hooks/useTableSort';
+import TableSearch from '@/components/TableSearch';
+import Layout from '@/components/Layout';
 
 const { Option } = Select;
 
 const ContattiPage = () => {
-  const [contatti, setContatti] = useState([]);
   const [soggetti, setSoggetti] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingContatto, setEditingContatto] = useState(null);
   const [form] = Form.useForm();
 
-  const fetchContatti = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await apiFetch('/api/v1/contatti');
-      if (response.ok) {
-        const data = await response.json();
-        setContatti(data);
-      }
-    } catch (error) {
-      message.error('Errore nel caricamento dei contatti');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { 
+    data: contatti, 
+    loading, 
+    pagination, 
+    sortField, 
+    sortOrder,
+    searchField,
+    searchValue,
+    searchTerm,
+    fetchData,
+    handleSort,
+    handlePageChange,
+    handleSearchField,
+    handleSearchSubmit,
+    handleClearSearch,
+    handleSearch
+  } = useTableSort('/api/v1/contatti', { initialSortField: 'nome', initialSortOrder: 'asc' });
 
   const fetchSoggetti = useCallback(async () => {
     try {
-      const response = await apiFetch('/api/v1/soggetti');
+      const response = await apiFetch('/api/v1/soggetti?per_page=1000');
       if (response.ok) {
         const data = await response.json();
-        setSoggetti(data);
+        setSoggetti(Array.isArray(data) ? data : (data.items || []));
       }
     } catch (error) {
       console.error('Errore nel caricamento dei soggetti:', error);
@@ -43,9 +47,9 @@ const ContattiPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchContatti();
+    fetchData();
     fetchSoggetti();
-  }, [fetchContatti, fetchSoggetti]);
+  }, [fetchData, fetchSoggetti]);
 
   const handleCreate = () => {
     setEditingContatto(null);
@@ -64,7 +68,7 @@ const ContattiPage = () => {
       const response = await apiFetch(`/contatti/${id}`, { method: 'DELETE' });
       if (response.ok) {
         message.success('Contatto eliminato');
-        fetchContatti();
+        fetchData();
       } else {
         message.error('Errore nell\'eliminazione');
       }
@@ -86,7 +90,7 @@ const ContattiPage = () => {
       if (response.ok) {
         message.success(editingContatto ? 'Contatto aggiornato' : 'Contatto creato');
         setModalVisible(false);
-        fetchContatti();
+        fetchData();
       } else {
         const err = await response.json();
         message.error(err.message || 'Errore nel salvataggio');
@@ -122,14 +126,25 @@ const ContattiPage = () => {
     return <Tag color={colors[canale] || 'default'}>{canale}</Tag>;
   };
 
+  const sortableHeader = (title, field) => (
+    <span style={{ cursor: 'pointer' }} onClick={() => handleSort(field)}>
+      {title}
+      {sortField === field ? (
+        sortOrder === 'asc' ? <CaretUpOutlined style={{ marginLeft: 4, fontSize: 10 }} /> : <CaretDownOutlined style={{ marginLeft: 4, fontSize: 10 }} />
+      ) : (
+        <CaretUpOutlined style={{ marginLeft: 4, fontSize: 10, opacity: 0.3 }} />
+      )}
+    </span>
+  );
+
   const columns = [
     {
-      title: 'Soggetto',
+      title: sortableHeader('Soggetto', 'soggetto_id'),
       dataIndex: ['soggetto', 'nome'],
       key: 'soggetto',
     },
     {
-      title: 'Canale',
+      title: sortableHeader('Canale', 'canale'),
       dataIndex: 'canale',
       key: 'canale',
       render: (canale) => (
@@ -140,7 +155,7 @@ const ContattiPage = () => {
       ),
     },
     {
-      title: 'Valore',
+      title: sortableHeader('Valore', 'valore'),
       dataIndex: 'valore',
       key: 'valore',
     },
@@ -151,7 +166,7 @@ const ContattiPage = () => {
       ellipsis: true,
     },
     {
-      title: 'Preferito',
+      title: sortableHeader('Preferito', 'is_preferred'),
       dataIndex: 'is_preferred',
       key: 'is_preferred',
       render: (val) => val ? <Tag color="gold">Preferito</Tag> : null,
@@ -176,26 +191,47 @@ const ContattiPage = () => {
   ));
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card
-        title={
-          <Space>
-            <PhoneOutlined />
-            <span>Gestione Contatti</span>
-          </Space>
-        }
-        extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Nuovo Contatto
-          </Button>
-        }
-      >
+    <Layout>
+      <div style={{ padding: '0' }}>
+        <Card
+          title={
+            <Space>
+              <PhoneOutlined />
+              <span>Gestione Contatti</span>
+            </Space>
+          }
+          extra={
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              Nuovo Contatto
+            </Button>
+          }
+        >
+        <div className="mb-3">
+          <TableSearch
+            columns={columns}
+            searchField={searchField}
+            searchValue={searchValue}
+            searchTerm={searchTerm}
+            globalSearchValue={searchTerm}
+            onSearchFieldChange={handleSearchField}
+            onSearchValueChange={(val) => handleSearchField(searchField, val)}
+            onSearchSubmit={handleSearchSubmit}
+            onClearSearch={handleClearSearch}
+            onGlobalSearch={handleSearch}
+          />
+        </div>
         <Table
           columns={columns}
           dataSource={contatti}
           rowKey="id"
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{ 
+            current: pagination.page, 
+            pageSize: pagination.perPage, 
+            total: pagination.totalItems,
+            onChange: handlePageChange,
+            showSizeChanger: false
+          }}
         />
       </Card>
 
@@ -259,7 +295,8 @@ const ContattiPage = () => {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

@@ -6,16 +6,17 @@ import {
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined,
-  UserOutlined, HomeOutlined, PhoneOutlined, MailOutlined
+  UserOutlined, HomeOutlined, PhoneOutlined, MailOutlined, CaretUpOutlined, CaretDownOutlined
 } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import { useTableSort } from '@/hooks/useTableSort';
+import TableSearch from '@/components/TableSearch';
+import Layout from '@/components/Layout';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const SoggettiPage = () => {
-  const [soggetti, setSoggetti] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSoggetto, setEditingSoggetto] = useState(null);
   const [selectedSoggetto, setSelectedSoggetto] = useState(null);
@@ -24,27 +25,30 @@ const SoggettiPage = () => {
   const [form] = Form.useForm();
   const [activeTab, setActiveTab] = useState('1');
 
-  const fetchSoggetti = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await apiFetch('/api/v1/soggetti');
-      if (response.ok) {
-        const data = await response.json();
-        setSoggetti(data);
-      }
-    } catch (error) {
-      message.error('Errore nel caricamento dei soggetti');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { 
+    data: soggetti, 
+    loading, 
+    pagination, 
+    sortField, 
+    sortOrder, 
+    searchField,
+    searchValue,
+    searchTerm,
+    fetchData,
+    handleSort,
+    handlePageChange,
+    handleSearchField,
+    handleSearchSubmit,
+    handleClearSearch,
+    handleSearch
+  } = useTableSort('/api/v1/soggetti', { initialSortField: 'nome', initialSortOrder: 'asc' });
 
   const fetchRuoli = useCallback(async () => {
     try {
-      const response = await apiFetch('/api/v1/ruoli');
+      const response = await apiFetch('/api/v1/ruoli?per_page=100');
       if (response.ok) {
         const data = await response.json();
-        setRuoli(data);
+        setRuoli(Array.isArray(data) ? data : (data.items || []));
       }
     } catch (error) {
       console.error('Errore nel caricamento dei ruoli:', error);
@@ -52,9 +56,9 @@ const SoggettiPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchSoggetti();
+    fetchData();
     fetchRuoli();
-  }, [fetchSoggetti, fetchRuoli]);
+  }, [fetchData, fetchRuoli]);
 
   const handleCreate = () => {
     setEditingSoggetto(null);
@@ -82,7 +86,7 @@ const SoggettiPage = () => {
       const response = await apiFetch(`/soggetti/${id}`, { method: 'DELETE' });
       if (response.ok) {
         message.success('Soggetto eliminato');
-        fetchSoggetti();
+        fetchData();
       } else {
         message.error('Errore nell\'eliminazione');
       }
@@ -104,7 +108,7 @@ const SoggettiPage = () => {
       if (response.ok) {
         message.success(editingSoggetto ? 'Soggetto aggiornato' : 'Soggetto creato');
         setModalVisible(false);
-        fetchSoggetti();
+        fetchData();
       } else {
         const err = await response.json();
         message.error(err.message || 'Errore nel salvataggio');
@@ -128,31 +132,42 @@ const SoggettiPage = () => {
     return <Tag color={colors[tipo] || 'default'}>{labels[tipo] || tipo}</Tag>;
   };
 
+  const sortableHeader = (title, field) => (
+    <span style={{ cursor: 'pointer' }} onClick={() => handleSort(field)}>
+      {title}
+      {sortField === field ? (
+        sortOrder === 'asc' ? <CaretUpOutlined style={{ marginLeft: 4, fontSize: 10 }} /> : <CaretDownOutlined style={{ marginLeft: 4, fontSize: 10 }} />
+      ) : (
+        <CaretUpOutlined style={{ marginLeft: 4, fontSize: 10, opacity: 0.3 }} />
+      )}
+    </span>
+  );
+
   const columns = [
     {
-      title: 'Codice',
+      title: sortableHeader('Codice', 'codice'),
       dataIndex: 'codice',
       key: 'codice',
       width: 100,
     },
     {
-      title: 'Nome',
+      title: sortableHeader('Nome', 'nome'),
       dataIndex: 'nome',
       key: 'nome',
     },
     {
-      title: 'Tipo',
+      title: sortableHeader('Tipo', 'tipo'),
       dataIndex: 'tipo',
       key: 'tipo',
       render: (tipo) => getTipoTag(tipo),
     },
     {
-      title: 'Email',
+      title: sortableHeader('Email', 'email'),
       dataIndex: 'email',
       key: 'email',
     },
     {
-      title: 'Telefono',
+      title: sortableHeader('Telefono', 'telefono'),
       dataIndex: 'telefono',
       key: 'telefono',
     },
@@ -337,26 +352,47 @@ const SoggettiPage = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card
-        title={
-          <Space>
-            <UserOutlined />
-            <span>Anagrafiche (Soggetti)</span>
-          </Space>
-        }
-        extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Nuovo Soggetto
-          </Button>
-        }
-      >
+    <Layout>
+      <div style={{ padding: '0' }}>
+        <Card
+          title={
+            <Space>
+              <UserOutlined />
+              <span>Anagrafiche (Soggetti)</span>
+            </Space>
+          }
+          extra={
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              Nuovo Soggetto
+            </Button>
+          }
+        >
+        <div className="mb-3">
+          <TableSearch
+            columns={columns}
+            searchField={searchField}
+            searchValue={searchValue}
+            searchTerm={searchTerm}
+            globalSearchValue={searchTerm}
+            onSearchFieldChange={handleSearchField}
+            onSearchValueChange={(val) => handleSearchField(searchField, val)}
+            onSearchSubmit={handleSearchSubmit}
+            onClearSearch={handleClearSearch}
+            onGlobalSearch={handleSearch}
+          />
+        </div>
         <Table
           columns={columns}
           dataSource={soggetti}
           rowKey="id"
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{ 
+            current: pagination.page, 
+            pageSize: pagination.perPage, 
+            total: pagination.totalItems,
+            onChange: handlePageChange,
+            showSizeChanger: false
+          }}
         />
       </Card>
 
@@ -401,7 +437,8 @@ const SoggettiPage = () => {
       >
         <Tabs activeKey={activeTab} items={detailTabItems} onChange={setActiveTab} />
       </Modal>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

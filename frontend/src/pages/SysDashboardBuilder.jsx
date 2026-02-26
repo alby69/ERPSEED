@@ -1,41 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../utils';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import GridLayout from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+import ChartWidget from '../components/ChartWidget';
 
-function SortableChartItem({ id, title, onRemove }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="list-group-item d-flex justify-content-between align-items-center bg-white mb-1 border rounded shadow-sm">
-      <div className="d-flex align-items-center text-truncate">
-        <span className="me-2 text-muted" style={{cursor: 'grab'}}>☰</span>
-        {title}
-      </div>
-      <button 
-        type="button" 
-        className="btn-close btn-sm" 
-        aria-label="Remove"
-        onClick={(e) => {
-          e.stopPropagation(); // Evita che il click inizi il drag
-          onRemove(id);
-        }}
-      ></button>
-    </div>
-  );
-}
+const GRID_COLS = 12;
+const ROW_HEIGHT = 80;
 
 function SysDashboardBuilder() {
   const [dashboards, setDashboards] = useState([]);
@@ -43,18 +14,14 @@ function SysDashboardBuilder() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingDashboard, setEditingDashboard] = useState(null);
+  const [viewMode, setViewMode] = useState('list');
   
   const [formData, setFormData] = useState({
     title: '',
     selectedCharts: []
   });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const [layout, setLayout] = useState([]);
 
   const fetchData = async () => {
     try {
@@ -81,48 +48,58 @@ function SysDashboardBuilder() {
     if (dashboard) {
       setEditingDashboard(dashboard);
       let selectedCharts = [];
+      let savedLayout = [];
       try {
-        selectedCharts = JSON.parse(dashboard.layout || '{}').charts || [];
+        const parsed = JSON.parse(dashboard.layout || '{}');
+        selectedCharts = parsed.charts || [];
+        savedLayout = parsed.layout || [];
       } catch (e) {}
       setFormData({ title: dashboard.title, selectedCharts });
+      setLayout(savedLayout.length > 0 ? savedLayout : generateDefaultLayout(selectedCharts));
     } else {
       setEditingDashboard(null);
       setFormData({ title: '', selectedCharts: [] });
+      setLayout([]);
     }
     setShowModal(true);
   };
 
+  const generateDefaultLayout = (chartIds) => {
+    return chartIds.map((id, index) => ({
+      i: String(id),
+      x: (index % 2) * 6,
+      y: Math.floor(index / 2),
+      w: 6,
+      h: 4,
+      minW: 3,
+      minH: 3
+    }));
+  };
+
   const handleChartSelection = (chartId) => {
     setFormData(prev => {
+      let newSelected;
       if (prev.selectedCharts.includes(chartId)) {
-        // Rimozione: filtra l'array esistente
-        return { ...prev, selectedCharts: prev.selectedCharts.filter(id => id !== chartId) };
+        newSelected = prev.selectedCharts.filter(id => id !== chartId);
       } else {
-        // Aggiunta: appendi alla fine
-        return { ...prev, selectedCharts: [...prev.selectedCharts, chartId] };
+        newSelected = [...prev.selectedCharts, chartId];
       }
+      setLayout(generateDefaultLayout(newSelected));
+      return { ...prev, selectedCharts: newSelected };
     });
   };
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-
-    if (active.id !== over.id) {
-      setFormData((prev) => {
-        const oldIndex = prev.selectedCharts.indexOf(active.id);
-        const newIndex = prev.selectedCharts.indexOf(over.id);
-        return {
-          ...prev,
-          selectedCharts: arrayMove(prev.selectedCharts, oldIndex, newIndex),
-        };
-      });
-    }
+  const handleLayoutChange = (newLayout) => {
+    setLayout(newLayout);
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
-    const layout = JSON.stringify({ charts: formData.selectedCharts });
-    const payload = { title: formData.title, layout };
+    const layoutData = JSON.stringify({ 
+      charts: formData.selectedCharts, 
+      layout: layout 
+    });
+    const payload = { title: formData.title, layout: layoutData };
     
     const url = editingDashboard ? `/sys-dashboards/${editingDashboard.id}` : '/sys-dashboards';
     const method = editingDashboard ? 'PUT' : 'POST';
@@ -151,6 +128,55 @@ function SysDashboardBuilder() {
     fetchData();
   };
 
+  const renderDashboardPreview = (dashboard) => {
+    let chartIds = [];
+    let dashboardLayout = [];
+    try {
+      const parsed = JSON.parse(dashboard.layout || '{}');
+      chartIds = parsed.charts || [];
+      dashboardLayout = parsed.layout || generateDefaultLayout(chartIds);
+    } catch (e) {
+      chartIds = [];
+      dashboardLayout = [];
+    }
+
+    return (
+      <div key={dashboard.id} className="col-md-6 mb-4">
+        <div className="card h-100 shadow-sm">
+          <div className="card-header d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">{dashboard.title}</h5>
+            <div>
+              <button className="btn btn-sm btn-outline-primary me-2" onClick={() => openModal(dashboard)}>Edit</button>
+              <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(dashboard.id)}>Delete</button>
+            </div>
+          </div>
+          <div className="card-body" style={{ minHeight: '300px' }}>
+            {chartIds.length > 0 ? (
+              <GridLayout
+                className="layout"
+                layout={dashboardLayout}
+                cols={GRID_COLS}
+                rowHeight={ROW_HEIGHT}
+                width={500}
+                isDraggable={false}
+                isResizable={false}
+                margin={[10, 10]}
+              >
+                {chartIds.map(chartId => (
+                  <div key={String(chartId)}>
+                    <ChartWidget chartId={chartId} />
+                  </div>
+                ))}
+              </GridLayout>
+            ) : (
+              <div className="text-center text-muted p-4">No charts in this dashboard</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) return <div className="p-4">Loading...</div>;
 
   return (
@@ -160,21 +186,17 @@ function SysDashboardBuilder() {
         <button className="btn btn-primary" onClick={() => openModal()}>+ New Dashboard</button>
       </div>
 
-      <ul className="list-group">
-        {dashboards.map(d => (
-          <li key={d.id} className="list-group-item d-flex justify-content-between align-items-center">
-            {d.title}
-            <div>
-              <button className="btn btn-sm btn-outline-primary me-2" onClick={() => openModal(d)}>Edit</button>
-              <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(d.id)}>Delete</button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {dashboards.length > 0 ? (
+        <div className="row">
+          {dashboards.map(d => renderDashboardPreview(d))}
+        </div>
+      ) : (
+        <div className="text-center text-muted p-4 border rounded">No dashboards created yet.</div>
+      )}
 
       {showModal && (
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-xl">
+          <div className="modal-dialog modal-xl" style={{ maxWidth: '90vw' }}>
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">{editingDashboard ? 'Edit' : 'Create'} Dashboard</h5>
@@ -188,8 +210,7 @@ function SysDashboardBuilder() {
                   </div>
                   
                   <div className="row">
-                    {/* Colonna Sinistra: Selezione Grafici */}
-                    <div className="col-md-6">
+                    <div className="col-md-4">
                       <label className="form-label">Available Charts</label>
                       <div className="border rounded p-2 bg-light" style={{maxHeight: '400px', overflowY: 'auto'}}>
                         {charts.map(chart => (
@@ -206,24 +227,53 @@ function SysDashboardBuilder() {
                             </label>
                           </div>
                         ))}
-                        {charts.length === 0 && <div className="text-muted small">No charts available. Create one first.</div>}
+                        {charts.length === 0 && <div className="text-muted small">No charts available</div>}
                       </div>
                     </div>
 
-                    {/* Colonna Destra: Ordinamento */}
-                    <div className="col-md-6">
-                      <label className="form-label">Selected Charts (Drag to Reorder)</label>
-                      <div className="border rounded p-2 bg-light" style={{maxHeight: '400px', overflowY: 'auto', minHeight: '100px'}}>
-                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                          <SortableContext items={formData.selectedCharts} strategy={verticalListSortingStrategy}>
+                    <div className="col-md-8">
+                      <label className="form-label">
+                        Dashboard Layout (Drag to Position & Resize)
+                        <span className="ms-2 badge bg-secondary">Preview</span>
+                      </label>
+                      <div className="border rounded p-2 bg-light" style={{minHeight: '400px'}}>
+                        {formData.selectedCharts.length > 0 ? (
+                          <GridLayout
+                            className="layout"
+                            layout={layout}
+                            cols={GRID_COLS}
+                            rowHeight={ROW_HEIGHT}
+                            width={700}
+                            onLayoutChange={handleLayoutChange}
+                            margin={[10, 10]}
+                            draggableHandle=".drag-handle"
+                          >
                             {formData.selectedCharts.map(chartId => {
                               const chart = charts.find(c => c.id === chartId);
                               if (!chart) return null;
-                              return <SortableChartItem key={chart.id} id={chart.id} title={chart.title} onRemove={handleChartSelection} />;
+                              return (
+                                <div key={String(chartId)} className="bg-white border rounded shadow-sm" style={{ overflow: 'hidden' }}>
+                                  <div className="drag-handle p-1 bg-light border-bottom d-flex justify-content-between align-items-center" style={{ cursor: 'move', fontSize: '11px' }}>
+                                    <span className="text-truncate">{chart.title}</span>
+                                    <button 
+                                      type="button" 
+                                      className="btn-close btn-sm" 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleChartSelection(chartId);
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="p-1" style={{ height: 'calc(100% - 28px)' }}>
+                                    <ChartWidget chartId={chartId} />
+                                  </div>
+                                </div>
+                              );
                             })}
-                          </SortableContext>
-                        </DndContext>
-                        {formData.selectedCharts.length === 0 && <div className="text-center text-muted mt-4">Select charts from the left to add them here.</div>}
+                          </GridLayout>
+                        ) : (
+                          <div className="text-center text-muted mt-4">Select charts to build your dashboard</div>
+                        )}
                       </div>
                     </div>
                   </div>

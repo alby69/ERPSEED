@@ -3,7 +3,6 @@ import { apiFetch } from '@/utils';
 
 function DashboardWidgets({ modelName, projectId }) {
   const [widgets, setWidgets] = useState([]);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadWidgets = async () => {
@@ -12,9 +11,10 @@ function DashboardWidgets({ modelName, projectId }) {
       try {
         // 1. Recupera i metadati
         const metaRes = await apiFetch(`/projects/${projectId}/data/${modelName}/meta`);
-        if (metaRes.status === 404) return;
-        if (!metaRes.ok) throw new Error("Failed to load widget metadata");
-        
+        if (!metaRes.ok) {
+          if (metaRes.status === 404) return; // Model doesn't exist
+          throw new Error("Failed to load metadata");
+        }
         const meta = await metaRes.json();
         
         // 2. Determina la modalità: "Righe" (KPI definiti come record) o "Colonne" (KPI come campi di un record)
@@ -53,15 +53,18 @@ function DashboardWidgets({ modelName, projectId }) {
             }
         }
       } catch (e) {
+        // Silently handle missing model (404) - this is expected when no dashboard_kpi model exists
+        if (e.response?.status === 404) {
+          return;
+        }
         console.error("Dashboard widget error:", e);
-        setError(e.message);
       }
     };
 
     loadWidgets();
   }, [modelName, projectId]);
 
-  if (error || widgets.length === 0) return null;
+  if (widgets.length === 0) return null;
 
   return (
     <div className="row mb-4">

@@ -52,13 +52,10 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         { key: '/sales', label: 'Vendite', icon: <ProjectOutlined /> },
     ];
 
-    // Dynamically build menu items
-    const items = [
-        { key: '/projects', label: 'Select Project', icon: <HomeOutlined /> },
-    ];
-
+    // Dynamically build menu items - no need for "Select Project" since it's in the header now
+    
     // Add main application menu
-    items.push({ type: 'divider' });
+    const items = [];
     
     // Combine static app items with dynamic project menu items
     const allAppItems = [...appMenuItems];
@@ -107,14 +104,12 @@ const Sidebar = ({ projectMenuItems = [] }) => {
 
     return (
         <div className="sidebar" style={{ background: themeConfig.mode === 'dark' ? token.colorBgContainer : '#fff' }}>
-            <div className="sidebar-logo" style={{ color: themeConfig.mode === 'dark' ? token.colorText : token.colorPrimary }}>
-                <Link to="/projects">FlaskERP</Link>
-            </div>
             <Menu
                 theme={themeConfig.mode === 'dark' ? 'dark' : 'light'}
                 mode="inline"
                 onClick={handleMenuClick}
                 selectedKeys={[location.pathname]}
+                defaultOpenKeys={['app-section']}
                 items={items}
                 style={{ borderRight: 0 }}
             />

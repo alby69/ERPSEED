@@ -2,86 +2,37 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card, Table, Button, Modal, Form, Input, Select, Tag, Space, message, Popconfirm, Typography, Row, Col
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import { useTableSort } from '@/hooks/useTableSort';
+import TableSearch from '@/components/TableSearch';
+import Layout from '@/components/Layout';
 
 const { Title } = Typography;
 const { Option } = Select;
 
 const RuoliPage = () => {
-  const [ruoli, setRuoli] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRuolo, setEditingRuolo] = useState(null);
   const [form] = Form.useForm();
 
-  const fetchRuoli = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await apiFetch('/api/v1/ruoli');
-      if (response.ok) {
-        const data = await response.json();
-        setRuoli(data);
-      }
-    } catch (error) {
-      message.error('Errore nel caricamento dei ruoli');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchRuoli();
-  }, [fetchRuoli]);
-
-  const handleCreate = () => {
-    setEditingRuolo(null);
-    form.resetFields();
-    setModalVisible(true);
-  };
-
-  const handleEdit = (record) => {
-    setEditingRuolo(record);
-    form.setFieldsValue(record);
-    setModalVisible(true);
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      const response = await apiFetch(`/ruoli/${id}`, { method: 'DELETE' });
-      if (response.ok) {
-        message.success('Ruolo eliminato');
-        fetchRuoli();
-      } else {
-        message.error('Errore nell\'eliminazione');
-      }
-    } catch (error) {
-      message.error('Errore nell\'eliminazione');
-    }
-  };
-
-  const handleSubmit = async (values) => {
-    try {
-      const url = editingRuolo ? `/ruoli/${editingRuolo.id}` : '/ruoli';
-      const method = editingRuolo ? 'PUT' : 'POST';
-
-      const response = await apiFetch(url, {
-        method,
-        body: JSON.stringify(values)
-      });
-
-      if (response.ok) {
-        message.success(editingRuolo ? 'Ruolo aggiornato' : 'Ruolo creato');
-        setModalVisible(false);
-        fetchRuoli();
-      } else {
-        const err = await response.json();
-        message.error(err.message || 'Errore nel salvataggio');
-      }
-    } catch (error) {
-      message.error('Errore nel salvataggio');
-    }
-  };
+  const { 
+    data: ruoli, 
+    loading, 
+    pagination, 
+    sortField, 
+    sortOrder,
+    searchField,
+    searchValue,
+    searchTerm,
+    fetchData,
+    handleSort,
+    handlePageChange,
+    handleSearchField,
+    handleSearchSubmit,
+    handleClearSearch,
+    handleSearch
+  } = useTableSort('/api/v1/ruoli', { initialSortField: 'nome', initialSortOrder: 'asc' });
 
   const getStatoTag = (stato) => {
     const colors = {
@@ -92,31 +43,42 @@ const RuoliPage = () => {
     return <Tag color={colors[stato] || 'default'}>{stato}</Tag>;
   };
 
+  const sortableHeader = (title, field) => (
+    <span style={{ cursor: 'pointer' }} onClick={() => handleSort(field)}>
+      {title}
+      {sortField === field ? (
+        sortOrder === 'asc' ? <CaretUpOutlined style={{ marginLeft: 4, fontSize: 10 }} /> : <CaretDownOutlined style={{ marginLeft: 4, fontSize: 10 }} />
+      ) : (
+        <CaretUpOutlined style={{ marginLeft: 4, fontSize: 10, opacity: 0.3 }} />
+      )}
+    </span>
+  );
+
   const columns = [
     {
-      title: 'Codice',
+      title: sortableHeader('Codice', 'codice'),
       dataIndex: 'codice',
       key: 'codice',
       width: 100,
     },
     {
-      title: 'Nome',
+      title: sortableHeader('Nome', 'nome'),
       dataIndex: 'nome',
       key: 'nome',
     },
     {
-      title: 'Descrizione',
+      title: sortableHeader('Descrizione', 'descrizione'),
       dataIndex: 'descrizione',
       key: 'descrizione',
     },
     {
-      title: 'Stato',
+      title: sortableHeader('Stato', 'stato'),
       dataIndex: 'stato',
       key: 'stato',
       render: (stato) => getStatoTag(stato),
     },
     {
-      title: 'Predefinito',
+      title: sortableHeader('Predefinito', 'predefinito'),
       dataIndex: 'predefinito',
       key: 'predefinito',
       render: (val) => val ? <Tag color="blue">Sì</Tag> : <Tag>No</Tag>,
@@ -138,26 +100,98 @@ const RuoliPage = () => {
     },
   ];
 
+  const handleCreate = () => {
+    setEditingRuolo(null);
+    form.resetFields();
+    setModalVisible(true);
+  };
+
+  const handleEdit = (record) => {
+    setEditingRuolo(record);
+    form.setFieldsValue(record);
+    setModalVisible(true);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const response = await apiFetch(`/ruoli/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        message.success('Ruolo eliminato');
+        fetchData();
+      } else {
+        message.error('Errore nell\'eliminazione');
+      }
+    } catch (error) {
+      message.error('Errore nell\'eliminazione');
+    }
+  };
+
+  const handleSubmit = async (values) => {
+    try {
+      const url = editingRuolo ? `/ruoli/${editingRuolo.id}` : '/ruoli';
+      const method = editingRuolo ? 'PUT' : 'POST';
+
+      const response = await apiFetch(url, {
+        method,
+        body: JSON.stringify(values)
+      });
+
+      if (response.ok) {
+        message.success(editingRuolo ? 'Ruolo aggiornato' : 'Ruolo creato');
+        setModalVisible(false);
+        fetchData();
+      } else {
+        const err = await response.json();
+        message.error(err.message || 'Errore nel salvataggio');
+      }
+    } catch (error) {
+      message.error('Errore nel salvataggio');
+    }
+  };
+
   return (
-    <div style={{ padding: '24px' }}>
-      <Card
-        title={
-          <Space>
-            <span>Gestione Ruoli</span>
+    <Layout>
+      <div style={{ padding: '0' }}>
+        <Card
+          title={
+            <Space>
+              <span>Gestione Ruoli</span>
+            </Space>
+          }
+          extra={
+            <Space>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                Nuovo Ruolo
+              </Button>
           </Space>
         }
-        extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Nuovo Ruolo
-          </Button>
-        }
       >
+        <div className="mb-3">
+          <TableSearch
+            columns={columns}
+            searchField={searchField}
+            searchValue={searchValue}
+            searchTerm={searchTerm}
+            globalSearchValue={searchTerm}
+            onSearchFieldChange={handleSearchField}
+            onSearchValueChange={(val) => handleSearchField(searchField, val)}
+            onSearchSubmit={handleSearchSubmit}
+            onClearSearch={handleClearSearch}
+            onGlobalSearch={handleSearch}
+          />
+        </div>
         <Table
           columns={columns}
           dataSource={ruoli}
           rowKey="id"
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{ 
+            current: pagination.page, 
+            pageSize: pagination.perPage, 
+            total: pagination.totalItems,
+            onChange: handlePageChange,
+            showSizeChanger: false
+          }}
         />
       </Card>
 
@@ -219,7 +253,8 @@ const RuoliPage = () => {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+      </div>
+    </Layout>
   );
 };
 
