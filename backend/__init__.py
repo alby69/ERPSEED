@@ -68,6 +68,9 @@ from .builder.api import blp as builder_api_blp
 # Import Marketplace API
 from .marketplace.api import blp as marketplace_api_blp
 
+# Import AI Assistant API
+from .ai.api import blp as ai_bp
+
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -285,6 +288,7 @@ def create_app(db_url=None):
     api.register_blueprint(workflows_bp)
     api.register_blueprint(builder_api_blp)
     api.register_blueprint(marketplace_api_blp)
+    api.register_blueprint(ai_bp)
 
     # Vision Entities (Archetypes)
     api.register_blueprint(soggetto_blp, url_prefix="/api/v1")

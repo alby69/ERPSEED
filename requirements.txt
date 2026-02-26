@@ -22,6 +22,7 @@ werkzeug
 pytz
 marshmallow
 requests
+aiohttp
 
 # PDF Generation
 xhtml2pdf>=0.2.11

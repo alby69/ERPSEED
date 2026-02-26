@@ -34,6 +34,7 @@ export const DEFAULT_ICONS = {
   schema: 'DatabaseOutlined',
   publish: 'UploadOutlined',
   browse: 'SearchOutlined',
+  ai: 'RobotOutlined',
 };
 
 // Permission levels

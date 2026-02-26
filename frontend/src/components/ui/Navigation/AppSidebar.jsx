@@ -1,10 +1,12 @@
 import React from 'react';
-import { Menu, theme } from 'antd';
+import { Menu, theme, Button, Tooltip } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, useTheme } from '@/context';
 import { useNavigation } from './NavigationProvider';
+import AIAssistant from '../AIAssistant';
 import * as Icons from '@ant-design/icons';
 import './Navigation.css';
+import { useState } from 'react';
 
 const ICON_MAP = {
   DashboardOutlined: Icons.DashboardOutlined,
@@ -178,6 +180,12 @@ const AppSidebar = ({
 
   const menuItems = buildMenuItems();
 
+  const menuItems = buildMenuItems();
+  
+  // AI Assistant state
+  const [aiVisible, setAiVisible] = useState(false);
+  const currentProjectId = localStorage.getItem('currentProjectId') || 1;
+
   return (
     <div 
       className="app-sidebar" 
@@ -192,6 +200,40 @@ const AppSidebar = ({
         selectedKeys={[location.pathname]}
         items={menuItems}
         style={{ borderRight: 0 }}
+      />
+      
+      {/* AI Assistant Floating Button */}
+      <div style={{ 
+        position: 'absolute', 
+        bottom: 60, 
+        left: 0, 
+        right: 0, 
+        padding: '8px 16px',
+        borderTop: `1px solid ${token.colorBorder}`,
+      }}>
+        <Tooltip title="AI Assistant - Descrivi quello che vuoi creare" placement="right">
+          <Button 
+            type="primary"
+            icon={<Icons.RobotOutlined />}
+            onClick={() => setAiVisible(true)}
+            block
+            size="large"
+            style={{ 
+              background: 'linear-gradient(135deg, #1890ff 0%, #722ed1 100%)',
+              border: 'none',
+              fontWeight: 600,
+            }}
+          >
+            AI Assistant
+          </Button>
+        </Tooltip>
+      </div>
+      
+      {/* AI Assistant Modal */}
+      <AIAssistant 
+        visible={aiVisible} 
+        onClose={() => setAiVisible(false)}
+        projectId={currentProjectId}
       />
     </div>
   );

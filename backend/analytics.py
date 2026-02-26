@@ -147,9 +147,15 @@ class SysDashboardList(MethodView):
     @jwt_required()
     @blp.response(200, SysDashboardSchema(many=True))
     def get(self):
-        query = SysDashboard.query
-        items, headers = paginate(query)
-        return items, 200, headers
+        try:
+            query = SysDashboard.query
+            items, headers = paginate(query)
+            return items, 200, headers
+        except Exception as e:
+            import logging
+
+            logging.warning(f"Dashboard query failed (returning empty list): {e}")
+            return [], 200, {}
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()

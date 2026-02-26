@@ -1,14 +1,14 @@
-import React from 'react';
-import { Menu, theme } from 'antd';
+import React, { useState } from 'react';
+import { Menu, theme, Button, Tooltip } from 'antd';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth, useTheme } from '@/context';
+import AIAssistant from './ui/AIAssistant';
 import {
     AppstoreOutlined,
     TeamOutlined,
     ProjectOutlined,
     BuildOutlined,
     BarChartOutlined,
-    AuditOutlined,
     LogoutOutlined,
     HomeOutlined,
     DashboardOutlined,
@@ -18,7 +18,9 @@ import {
     PhoneOutlined,
     UserOutlined,
     GlobalOutlined,
-    ExperimentOutlined
+    ExperimentOutlined,
+    RobotOutlined,
+    AuditOutlined
 } from '@ant-design/icons';
 import './Sidebar.css';
 
@@ -29,6 +31,10 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { projectId } = useParams();
+    
+    // AI Assistant state
+    const [aiVisible, setAiVisible] = useState(false);
+    const currentProjectId = localStorage.getItem('currentProjectId') || projectId || 1;
 
     // Static menu items for the administration section
     const adminItems = [
@@ -112,6 +118,36 @@ const Sidebar = ({ projectMenuItems = [] }) => {
                 defaultOpenKeys={['app-section']}
                 items={items}
                 style={{ borderRight: 0 }}
+            />
+            
+            {/* AI Assistant Button */}
+            <div style={{ 
+                padding: '12px 16px', 
+                borderTop: `1px solid ${token.colorBorder}`,
+                marginTop: 'auto'
+            }}>
+                <Tooltip title="AI Assistant - Descrivi quello che vuoi creare" placement="right">
+                    <Button 
+                        type="primary"
+                        icon={<RobotOutlined />}
+                        onClick={() => setAiVisible(true)}
+                        block
+                        style={{ 
+                            background: 'linear-gradient(135deg, #1890ff 0%, #722ed1 100%)',
+                            border: 'none',
+                            fontWeight: 600,
+                        }}
+                    >
+                        AI Assistant
+                    </Button>
+                </Tooltip>
+            </div>
+            
+            {/* AI Assistant Modal */}
+            <AIAssistant 
+                visible={aiVisible} 
+                onClose={() => setAiVisible(false)}
+                projectId={currentProjectId}
             />
         </div>
     );

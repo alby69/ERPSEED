@@ -24,6 +24,8 @@ import {
   Spin,
   Tabs,
   Dropdown,
+  Statistic,
+  Alert,
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -34,6 +36,10 @@ import {
   BlockOutlined,
   SaveOutlined,
   ExportOutlined,
+  PlayCircleOutlined,
+  CheckCircleOutlined,
+  SafetyCertificateOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { ComponentRenderer } from '@/components/core';
@@ -53,6 +59,94 @@ function BlockBuilder() {
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [form] = Form.useForm();
   const [componentForm] = Form.useForm();
+  
+  // Testing state
+  const [testSuite, setTestSuite] = useState(null);
+  const [runningTests, setRunningTests] = useState(false);
+  const [testResults, setTestResults] = useState(null);
+
+  // Load test suite for current block
+  const loadTestSuite = async (blockId) => {
+    try {
+      const res = await apiFetch(`/api/blocks/${blockId}/test-suite`);
+      if (res.ok) {
+        const data = await res.json();
+        setTestSuite(data);
+      }
+    } catch (err) {
+      console.error('Error loading test suite:', err);
+    }
+  };
+
+  // Run tests for block
+  const runBlockTests = async () => {
+    if (!editingBlock?.id) return;
+    setRunningTests(true);
+    setTestResults(null);
+    try {
+      const res = await apiFetch(`/api/blocks/${editingBlock.id}/run-tests`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setTestResults(data);
+        setEditingBlock({...editingBlock, quality_score: data.quality_score, status: data.status});
+        message.success(`Tests completed! Quality score: ${data.quality_score}%`);
+      } else {
+        const err = await res.json();
+        message.error(err.error || 'Tests failed');
+      }
+    } catch (err) {
+      message.error('Error running tests');
+    } finally {
+      setRunningTests(false);
+    }
+  };
+
+  // Create test suite for block
+  const createTestSuite = async () => {
+    if (!editingBlock?.id) return;
+    try {
+      const res = await apiFetch(`/api/blocks/${editingBlock.id}/test-suite`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        await loadTestSuite(editingBlock.id);
+        message.success('Test suite created');
+      }
+    } catch (err) {
+      message.error('Error creating test suite');
+    }
+  };
+
+  // Certify block
+  const certifyBlock = async () => {
+    if (!editingBlock?.id) return;
+    try {
+      const res = await apiFetch(`/api/blocks/${editingBlock.id}/certify`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setEditingBlock({...editingBlock, is_certified: true, status: 'published'});
+        message.success('Block certified and published!');
+      } else {
+        const err = await res.json();
+        message.error(err.error || 'Certification failed');
+      }
+    } catch (err) {
+      message.error('Error certifying block');
+    }
+  };
+
+  // Revoke certification
+  const revokeCertification = async () => {
+    if (!editingBlock?.id) return;
+    try {
+      const res = await apiFetch(`/api/blocks/${editingBlock.id}/certify`, { method: 'DELETE' });
+      if (res.ok) {
+        setEditingBlock({...editingBlock, is_certified: false, status: 'draft'});
+        message.success('Certification revoked');
+      }
+    } catch (err) {
+      message.error('Error revoking certification');
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -364,6 +458,131 @@ function BlockBuilder() {
                       </div>
                     ) : (
                       <Empty description="Add components to see preview" />
+                    )}
+                  </div>
+                ),
+              },
+              {
+                key: 'testing',
+                label: 'Testing & Certification',
+                children: (
+                  <div>
+                    <Card size="small" style={{ marginBottom: 16 }}>
+                      <Row gutter={16}>
+                        <Col span={8}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 24, fontWeight: 'bold', color: editingBlock?.quality_score >= 80 ? '#52c41a' : '#faad14' }}>
+                              {editingBlock?.quality_score || 0}%
+                            </div>
+                            <div style={{ color: '#666' }}>Quality Score</div>
+                          </div>
+                        </Col>
+                        <Col span={8}>
+                          <div style={{ textAlign: 'center' }}>
+                            {editingBlock?.is_certified ? (
+                              <CheckCircleOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+                            ) : (
+                              <WarningOutlined style={{ fontSize: 24, color: '#faad14' }} />
+                            )}
+                            <div style={{ color: '#666', marginTop: 4 }}>
+                              {editingBlock?.is_certified ? 'Certified' : 'Not Certified'}
+                            </div>
+                          </div>
+                        </Col>
+                        <Col span={8}>
+                          <div style={{ textAlign: 'center' }}>
+                            <Tag color={editingBlock?.status === 'published' ? 'green' : editingBlock?.status === 'testing' ? 'blue' : 'default'}>
+                              {editingBlock?.status || 'draft'}
+                            </Tag>
+                            <div style={{ color: '#666', marginTop: 4 }}>Status</div>
+                          </div>
+                        </Col>
+                      </Row>
+                    </Card>
+
+                    <Space style={{ marginBottom: 16 }}>
+                      {!testSuite?.id ? (
+                        <Button icon={<PlayCircleOutlined />} onClick={createTestSuite}>
+                          Create Test Suite
+                        </Button>
+                      ) : (
+                        <>
+                          <Button 
+                            type="primary" 
+                            icon={<PlayCircleOutlined />} 
+                            onClick={runBlockTests}
+                            loading={runningTests}
+                          >
+                            Run Tests
+                          </Button>
+                          {editingBlock?.quality_score >= 80 && !editingBlock?.is_certified && (
+                            <Button 
+                              type="primary" 
+                              icon={<SafetyCertificateOutlined />} 
+                              onClick={certifyBlock}
+                              style={{ background: '#52c41a', borderColor: '#52c41a' }}
+                            >
+                              Certify Block
+                            </Button>
+                          )}
+                          {editingBlock?.is_certified && (
+                            <Button 
+                              danger 
+                              icon={<WarningOutlined />} 
+                              onClick={revokeCertification}
+                            >
+                              Revoke
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </Space>
+
+                    {testResults && (
+                      <Card size="small" title="Test Results">
+                        <Row gutter={16}>
+                          <Col span={8}>
+                            <Statistic 
+                              title="Passed" 
+                              value={testResults.passed} 
+                              valueStyle={{ color: '#52c41a' }}
+                            />
+                          </Col>
+                          <Col span={8}>
+                            <Statistic 
+                              title="Failed" 
+                              value={testResults.failed} 
+                              valueStyle={{ color: testResults.failed > 0 ? '#ff4d4f' : '#52c41a' }}
+                            />
+                          </Col>
+                          <Col span={8}>
+                            <Statistic 
+                              title="Success Rate" 
+                              value={testResults.success_rate} 
+                              suffix="%"
+                              valueStyle={{ color: testResults.success_rate >= 80 ? '#52c41a' : '#faad14' }}
+                            />
+                          </Col>
+                        </Row>
+                        {testResults.failed > 0 && (
+                          <Alert 
+                            message="Quality score below 80% - Block cannot be certified" 
+                            type="warning" 
+                            showIcon 
+                            style={{ marginTop: 16 }}
+                          />
+                        )}
+                      </Card>
+                    )}
+
+                    {editingBlock?.is_certified && (
+                      <Alert 
+                        message="This block is certified and can be published to the Marketplace" 
+                        type="success" 
+                        showIcon 
+                        icon={<CheckCircleOutlined />}
+                        style={{ marginTop: 16 }}
+                      />
                     )}
                   </div>
                 ),

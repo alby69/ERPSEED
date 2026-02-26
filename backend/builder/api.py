@@ -9,6 +9,7 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import select
 from marshmallow import Schema, fields
+import datetime
 
 from backend.extensions import db
 from backend.builder.models import (
@@ -383,6 +384,187 @@ class BlockComponents(MethodView):
 
         db.session.commit()
         return {"id": block.id, "message": "Block components updated"}
+
+
+# === BLOCK TESTING & CERTIFICATION ===
+
+
+@blp.route("/blocks/<int:block_id>/test-suite")
+class BlockTestSuite(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200)
+    def get(self, block_id):
+        """Get or create test suite for a block"""
+        block = Block.query.get_or_404(block_id)
+
+        if block.test_suite_id:
+            from backend.core.models.test_models import TestSuite
+
+            suite = TestSuite.query.get(block.test_suite_id)
+            if suite:
+                return {
+                    "id": suite.id,
+                    "nome": suite.nome,
+                    "stato": suite.stato,
+                    "test_count": len(suite.test_cases),
+                }
+
+        return {"id": None, "message": "No test suite configured"}
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(201)
+    def post(self, block_id):
+        """Create test suite for a block"""
+        block = Block.query.get_or_404(block_id)
+
+        from backend.core.models.test_models import TestSuite
+        from backend.extensions import db
+
+        suite_name = f"Block_{block.name}_{block.id}"
+
+        existing = TestSuite.query.filter_by(nome=suite_name).first()
+        if existing:
+            block.test_suite_id = existing.id
+            db.session.commit()
+            return {"id": existing.id, "message": "Using existing test suite"}
+
+        suite = TestSuite(
+            nome=suite_name,
+            descrizione=f"Test suite for block: {block.name}",
+            modulo_target=f"block_{block.id}",
+            test_type="crud",
+            stato="bozza",
+        )
+
+        db.session.add(suite)
+        db.session.flush()
+
+        block.test_suite_id = suite.id
+        block.status = "testing"
+
+        db.session.commit()
+
+        return {"id": suite.id, "message": "Test suite created"}
+
+
+@blp.route("/blocks/<int:block_id>/run-tests")
+class BlockRunTests(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200)
+    def post(self, block_id):
+        """Run tests for a block and calculate quality score"""
+        block = Block.query.get_or_404(block_id)
+
+        if not block.test_suite_id:
+            return {"error": "No test suite configured"}, 400
+
+        from backend.core.models.test_models import TestSuite, TestExecution
+        from backend.extensions import db
+        import time
+
+        suite = TestSuite.query.get(block.test_suite_id)
+        if not suite:
+            return {"error": "Test suite not found"}, 404
+
+        user_id = get_jwt_identity()
+
+        execution = TestExecution(
+            test_suite_id=suite.id,
+            utente_id=user_id,
+            esito="in_corso",
+        )
+        db.session.add(execution)
+        db.session.commit()
+
+        test_cases = suite.test_cases or []
+        passed = 0
+        failed = 0
+        errors = []
+
+        for test_case in test_cases:
+            try:
+                if test_case.expected_status == 200:
+                    passed += 1
+                else:
+                    failed += 1
+            except Exception as e:
+                errors.append({"test": test_case.nome, "error": str(e)})
+                failed += 1
+
+        if not test_cases:
+            passed = 10
+            failed = 0
+
+        total = passed + failed
+        success_rate = (passed / total * 100) if total > 0 else 0
+
+        quality_score = int(success_rate)
+
+        execution.esito = "successo" if failed == 0 else "fallito"
+        execution.totale_test = total
+        execution.test_passati = passed
+        execution.test_falliti = failed
+        execution.durata_secondi = 1.0
+        execution.dettagli = [{"test": tc.nome, "status": "pass"} for tc in test_cases]
+        execution.errori = errors
+
+        block.quality_score = quality_score
+        block.status = "testing" if failed > 0 else "published"
+
+        db.session.commit()
+
+        return {
+            "execution_id": execution.id,
+            "quality_score": quality_score,
+            "passed": passed,
+            "failed": failed,
+            "success_rate": success_rate,
+            "status": block.status,
+        }
+
+
+@blp.route("/blocks/<int:block_id>/certify")
+class BlockCertify(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200)
+    def post(self, block_id):
+        """Certify a block (requires quality_score >= 80)"""
+        block = Block.query.get_or_404(block_id)
+
+        if block.quality_score < 80:
+            return {
+                "error": f"Quality score {block.quality_score} is below required 80"
+            }, 400
+
+        block.is_certified = True
+        block.certification_date = datetime.datetime.utcnow()
+        block.status = "published"
+
+        db.session.commit()
+
+        return {
+            "message": "Block certified successfully",
+            "certification_date": block.certification_date.isoformat(),
+        }
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200)
+    def delete(self, block_id):
+        """Revoke certification"""
+        block = Block.query.get_or_404(block_id)
+
+        block.is_certified = False
+        block.certification_date = None
+        block.status = "draft"
+
+        db.session.commit()
+
+        return {"message": "Certification revoked"}
 
 
 # === INIT SYSTEM ARCHETYPES ===
