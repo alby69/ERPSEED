@@ -7,6 +7,7 @@ Benvenuto nella documentazione di FlaskERP. Qui trovi tutto quello che ti serve 
 | File | Titolo | Descrizione |
 |------|--------|-------------|
 | [01_CONCETTI.md](01_CONCETTI.md) | Concetti Fondamentali | Architettura, 4 pilastri, composizione |
+| [01B_AUTOMAZIONE.md](01B_AUTOMAZIONE.md) | Automazione e Contratti | Hook, Eventi, Workflow |
 | [02_BUILDER.md](02_BUILDER.md) | Guida al Builder | Creare moduli, campi, relazioni |
 | [03_MODULI.md](03_MODULI.md) | Moduli ERP | Vendite, Magazzino, Contabilità, HR |
 | [04_AMMINISTRAZIONE.md](04_AMMINISTRAZIONE.md) | Amministrazione | Progetti, utenti, permessi |
@@ -15,7 +16,8 @@ Benvenuto nella documentazione di FlaskERP. Qui trovi tutto quello che ti serve 
 | [07_TESTING.md](07_TESTING.md) | Testing | Test Runner, qualità |
 | [08_DEPLOYMENT.md](08_DEPLOYMENT.md) | Deployment | Docker, produzione |
 | [09_AI_ASSISTANT.md](09_AI_ASSISTANT.md) | AI Assistant | Guida all'agente AI |
-| [10_TODO.md](10_TODO.md) | Roadmap | Stato e sviluppi futuri |
+| [10_TODO.md](10_TODO.md) | Roadmap Breve | Stato e prossime attività |
+| [11_ROADMAP.md](11_ROADMAP.md) | Roadmap Completa | Tutte le implementazioni per componente |
 
 ## Ordine di Lettura Consigliato
 

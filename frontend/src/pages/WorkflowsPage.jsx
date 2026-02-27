@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Select, Switch, Tag, Space, message, Tabs, Alert } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, ApiOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, ApiOutlined, BuildOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch } from '@/utils';
 
@@ -188,6 +188,9 @@ const WorkflowsPage = () => {
             key: 'actions',
             render: (_, record) => (
                 <Space>
+                    <Button type="link" icon={<BuildOutlined />} onClick={() => navigate(`/projects/${projectId}/workflow-builder/${record.id}`)}>
+                        Builder
+                    </Button>
                     <Button type="link" icon={<PlayCircleOutlined />} onClick={() => handleTestWorkflow(record)}>
                         Test
                     </Button>
@@ -265,14 +268,21 @@ const WorkflowsPage = () => {
                         label: 'Workflows',
                         children: (
                             <Card>
-                                <Button
-                                    type="primary"
-                                    icon={<PlusOutlined />}
-                                    onClick={handleCreate}
-                                    style={{ marginBottom: '16px' }}
-                                >
-New Workflow
-                                </Button>
+                                <Space style={{ marginBottom: 16 }}>
+                                    <Button
+                                        type="primary"
+                                        icon={<PlusOutlined />}
+                                        onClick={handleCreate}
+                                    >
+                                        Nuovo Workflow
+                                    </Button>
+                                    <Button
+                                        icon={<BuildOutlined />}
+                                        onClick={() => navigate(`/projects/${projectId}/workflow-builder`)}
+                                    >
+                                        Builder Visivo
+                                    </Button>
+                                </Space>
                                 <Table
                                     columns={columns}
                                     dataSource={workflows}

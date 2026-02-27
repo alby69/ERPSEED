@@ -43,7 +43,7 @@ const MODEL_OPTIONS = [
   { value: 'kimi-k2.5-free', label: 'Kimi K2.5', description: 'Fast responses' },
 ];
 
-function AIAssistant({ projectId, visible, onClose }) {
+function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -314,9 +314,36 @@ function AIAssistant({ projectId, visible, onClose }) {
           <Button 
             key="apply" 
             type="primary"
-            onClick={() => {
-              message.success('Configurazione applicata al progetto!');
-              setShowConfig(false);
+            onClick={async () => {
+              try {
+                const response = await apiFetch('/api/ai/apply', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    config: generatedConfig,
+                    project_id: parseInt(projectId) || 1,
+                  }),
+                });
+
+                if (!response.ok) {
+                  const error = await response.json();
+                  throw new Error(error.message || 'Errore nell\'applicazione');
+                }
+
+                const result = await response.json();
+                message.success(result.message || 'Configurazione applicata al progetto!');
+                
+                // Notify parent to refresh
+                if (onConfigApplied) {
+                  onConfigApplied(result);
+                }
+                
+                setShowConfig(false);
+              } catch (error) {
+                message.error(error.message || 'Errore nell\'applicazione della configurazione');
+              }
             }}
           >
             Applica al Progetto

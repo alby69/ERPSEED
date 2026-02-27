@@ -148,6 +148,10 @@ const Sidebar = ({ projectMenuItems = [] }) => {
                 visible={aiVisible} 
                 onClose={() => setAiVisible(false)}
                 projectId={currentProjectId}
+                onConfigApplied={() => {
+                    // Trigger a custom event to refresh the app after model creation
+                    window.dispatchEvent(new CustomEvent('models-updated'));
+                }}
             />
         </div>
     );

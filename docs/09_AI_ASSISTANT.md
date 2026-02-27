@@ -24,7 +24,7 @@ Tu descrivi → AI comprende → AI genera config → Sistema applica → Risult
 
 ### Esempi Pratici
 
-**Esempio 1: Modulo Semplice**
+**Esempio 1: Modello Semplice**
 
 > "Voglio un modulo per gestire i miei fornitori con nome, indirizzo, telefono e email."
 
@@ -55,32 +55,21 @@ L'AI genera:
 
 ---
 
-## Implementazione
+## Stato di Implementazione
 
-### Architettura
+| Componente | Stato | Note |
+|------------|-------|------|
+| Architettura base | ✅ Completo | Service + API |
+| Integrazione LLM (OpenRouter) | ✅ Completo | NVIDIA Nemotron, Qwen3 |
+| Generazione modelli da linguaggio naturale | ✅ Completo | Genera JSON config |
+| Interfaccia chat frontend | ✅ Completo | Modal con chat |
+| Preview JSON modificabile | ✅ Completo | Modale con TextArea |
+| Applicazione configurazione al DB | ✅ Completo | Crea modelli, campi, tabelle |
+| Autenticazione JWT | ⚠️ Disabilitata | Disabilitata per testing |
 
-L'AI Assistant è composto da:
+---
 
-- **Backend**: `backend/ai/service.py` e `backend/ai/api.py`
-- **Frontend**: `frontend/src/components/ui/AIAssistant.jsx`
-- **Integrazione**: Pulsante nella sidebar
-
-### Stack Tecnologico
-
-- **LLM**: OpenRouter con modello `nvidia/nemotron-nano-9b-v2:free`
-- **Frontend**: React con компонент chat
-- **API**: Flask REST endpoints
-
-### Endpoint API
-
-| Endpoint | Metodo | Descrizione |
-|----------|--------|-------------|
-| `/api/ai/chat` | POST | Chat generale |
-| `/api/ai/generate` | POST | Genera config ERP da linguaggio naturale |
-| `/api/ai/suggestions` | POST | Suggerimenti miglioramento |
-| `/api/ai/models` | GET | Lista modelli disponibili |
-
-### Utilizzo
+## Utilizzo
 
 1. Clicca il pulsante **AI Assistant** nella sidebar
 2. Descrivi il modulo che vuoi creare
@@ -92,8 +81,8 @@ L'AI Assistant è composto da:
 
 L'AI Assistant è accessibile dall'interfaccia principale attraverso:
 
-- Un pulsante di chat
-- Un pannello dedicato
+- Un pulsante di chat nella sidebar
+- Un pannello dedicato (Modal)
 - Un endpoint API per integrazioni
 
 ### Come Comunicare
@@ -112,22 +101,49 @@ L'AI Assistant è accessibile dall'interfaccia principale attraverso:
 
 ---
 
+## Implementazione
+
+### Architettura
+
+L'AI Assistant è composto da:
+
+- **Backend Service**: `backend/ai/service.py`
+- **Backend API**: `backend/ai/api.py`
+- **Frontend**: `frontend/src/components/ui/AIAssistant.jsx`
+
+### Stack Tecnologico
+
+- **LLM**: OpenRouter con modelli `nvidia/nemotron-nano-9b-v2:free` e `qwen/qwen3-coder:free`
+- **Frontend**: React con Ant Design (Modal, List, Input)
+- **API**: Flask REST endpoints con Flask-Smorest
+
+### Endpoint API
+
+| Endpoint | Metodo | Autenticazione | Descrizione |
+|----------|--------|----------------|-------------|
+| `/api/ai/chat` | POST | JWT | Chat generale |
+| `/api/ai/generate` | POST | ❌ Disabilitata | Genera config ERP |
+| `/api/ai/suggestions` | POST | JWT | Suggerimenti miglioramento |
+| `/api/ai/models` | GET | JWT | Lista modelli disponibili |
+
+---
+
 ## Funzionalità Supportate
 
 ### Creazione Modelli
 
 L'AI può creare:
-- Modelli con tutti i tipi di campo
+- Modelli con tutti i tipi di campo (string, text, integer, decimal, boolean, date, select, relation)
 - Relazioni tra modelli
-- Validazioni
-- Viste alternative (Kanban)
+- Validazioni (required, unique)
+- Descrizioni
 
 ### Configurazione
 
 L'AI può configurare:
-- Permessi
-- Menu di navigazione
-- Template
+- Nomi tabella (automatici dal modello)
+- Label dei campi
+- Descrizioni
 
 ### Suggerimenti
 
@@ -142,7 +158,7 @@ L'AI può suggerire:
 
 L'AI è uno strumento potente ma ha limitazioni:
 
-- Non può creare logica di business complessa
+- Non può creare logica di business complessa (hook, workflow)
 - Non può sostituire la conoscenza domain-specific
 - Le configurazioni generate vanno sempre verificate
 
@@ -155,9 +171,9 @@ L'AI è uno strumento potente ma ha limitazioni:
 Puoi usare l'AI Assistant via API per integrazioni:
 
 ```
-POST /api/v1/ai/assistant
+POST /api/ai/generate
 {
-  "message": "Crea modulo per gestire fornitori",
+  "request": "Crea modulo per gestire fornitori",
   "project_id": 1
 }
 ```
@@ -165,11 +181,55 @@ POST /api/v1/ai/assistant
 Risposta:
 ```json
 {
-  "status": "success",
-  "created": ["Fornitore"],
-  "message": "Ho creato il modulo Fornitori con i campi richiesti."
+  "success": true,
+  "config": {
+    "models": [
+      {
+        "name": "Fornitore",
+        "table": "fornitori",
+        "fields": [...]
+      }
+    ]
+  },
+  "created_models": ["Fornitore"],
+  "message": "Ho creato il modello Fornitori con i campi richiesti."
 }
 ```
+
+---
+
+## TODO - Completamento
+
+Le seguenti funzionalità sono in corso o da completare:
+
+### 1. ✅ Collegare "Applica al Progetto" al backend [COMPLETATO]
+
+**Implementato**:
+- Endpoint `POST /api/ai/apply` in `backend/ai/api.py`
+- Frontend collegato in `frontend/src/components/ui/AIAssistant.jsx`
+- Crea modelli, campi e tabelle nel database
+
+### 2. Ripristinare autenticazione JWT
+
+**Problema**: L'endpoint `/api/ai/generate` ha `@jwt_required()` disabilitato per testing.
+
+**Soluzione**: Ripristinare l'autenticazione prima del rilascio in produzione.
+
+```python
+@blp.route("/generate")
+class AIGenerate(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()  # <-- Ripristinare
+    def post(self):
+        ...
+```
+
+### 3. Testare flow completo
+
+Testare l'intero flusso:
+1. Generazione → edit JSON → applica → modello creato
+2. Verificare che i modelli appaiano nel Builder
+3. Verificare che le tabelle siano create nel DB
 
 ---
 
@@ -204,9 +264,10 @@ L'AI Assistant è in fase di sviluppo. Prossime funzionalità:
 - [x] Generazione modelli da linguaggio naturale
 - [x] Interfaccia chat
 - [x] Preview JSON modificabile
-- [ ] Applicazione configurazione al database
+- [x] Applicazione configurazione al database
+- [ ] Ripristino autenticazione JWT
 - [ ] Generazione automatica test
-- [ ] Creazione workflow
+- [ ] Creazione workflow (integrazione con Workflow Builder)
 - [ ] Suggerimenti intelligenti
 - [ ] Integrazione Marketplace
 
@@ -219,5 +280,9 @@ L'AI Assistant rende FlaskERP ancora più accessibile. Anche senza conoscenze te
 Prova e vedrai: descrivere in linguaggio naturale quello che vuoi è spesso più veloce che cliccare tra mille opzioni.
 
 ---
+
+*Riferimenti*:
+- TODO: [10_TODO.md](../10_TODO.md)
+- Automazione: [01B_AUTOMAZIONE.md](01B_AUTOMAZIONE.md)
 
 *Documento aggiornato: Febbraio 2026*

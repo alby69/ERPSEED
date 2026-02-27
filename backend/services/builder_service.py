@@ -100,8 +100,11 @@ class BuilderService(BaseService):
         self.db.session.add(model)
         self.db.session.commit()
         
-        from ..utils import log_audit
-        log_audit(None, 'sys_models', model.id, 'CREATE', {'name': name, 'project_id': project_id})
+        try:
+            from ..utils import log_audit
+            log_audit(None, 'sys_models', model.id, 'CREATE', {'name': name, 'project_id': project_id})
+        except Exception:
+            pass
         
         try:
             from ..webhook_triggers import on_model_created
@@ -226,8 +229,11 @@ class BuilderService(BaseService):
         self.db.session.add(field)
         self.db.session.commit()
         
-        from ..utils import log_audit
-        log_audit(None, 'sys_fields', field.id, 'CREATE', {'name': name, 'model_id': model_id})
+        try:
+            from ..utils import log_audit
+            log_audit(None, 'sys_fields', field.id, 'CREATE', {'name': name, 'model_id': model_id})
+        except Exception:
+            pass
         
         return field
     

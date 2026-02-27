@@ -46,15 +46,15 @@ class AIService:
 
     def _build_system_prompt(self) -> str:
         """Build the system prompt that defines AI behavior"""
-        return """You are an ERP configuration assistant for FlaskERP. Generate valid JSON only.
+        return """You are an ERP configuration assistant for FlaskERP.
 
-Field types: string, text, integer, decimal, boolean, date, datetime, select, relation, calculated, summary, lookup.
+You MUST respond with ONLY valid JSON. No explanations, no markdown, no text before or after.
 
-Example:
-User: "Create a module for suppliers with name, email"
-Response: {"models": [{"name": "Fornitore", "table": "fornitori", "description": "Elenco fornitori", "fields": [{"name": "nome", "type": "string", "label": "Nome", "required": true}, {"name": "email", "type": "string", "label": "Email"}]}]}
+Response format:
+{"models": [{"name": "ModelName", "table": "table_name", "description": "...", "fields": [{"name": "field_name", "type": "string", "label": "Label", "required": false}]}]}
 
-Always respond with JSON only, no additional text."""
+Field types allowed: string, text, integer, decimal, boolean, date, datetime, select, relation.
+Only respond with JSON, nothing else."""
 
     def _build_user_prompt(self, user_request: str, project_id: int) -> str:
         """Build the user prompt with the specific request"""
@@ -85,14 +85,18 @@ Generate the FlaskERP configuration in JSON format:"""
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt},
                     ],
-                    "temperature": 0.7,
-                    "max_tokens": 2000,
+                    "temperature": 0.3,
+                    "max_tokens": 1500,
                 },
-                timeout=60,
+                timeout=30,
             )
 
             logging.info(f"AI API response status: {response.status_code}")
-            logging.info(f"AI API response text: {response.text[:1000]}")
+            logging.info(f"AI API response text: {response.text[:1000] if response.text else 'EMPTY'}")
+            
+            if not response.text:
+                logging.error("AI API returned empty response")
+                return json.dumps({"error": "Empty response from AI API"})
 
             if response.status_code != 200:
                 return json.dumps(
@@ -121,6 +125,12 @@ Generate the FlaskERP configuration in JSON format:"""
 
     def _parse_response(self, response: str, user_request: str) -> Dict[str, Any]:
         """Parse the LLM response into a structured format"""
+        import re
+        import logging
+        
+        # Debug: log the raw response
+        logging.info(f"AI raw response: {response[:300]}...")
+        
         # Check for error in response
         try:
             error_check = json.loads(response)
@@ -137,9 +147,11 @@ Generate the FlaskERP configuration in JSON format:"""
             # Try to extract JSON from response
             json_str = response.strip()
 
-            # Fix common JSON issues from LLM
-            import re
+            # Debug: log the raw response
+            import logging
+            logging.info(f"AI raw response: {json_str[:500]}")
 
+            # Fix common JSON issues from LLM
             # Remove trailing commas before closing braces/brackets (multiple passes)
             for _ in range(3):
                 json_str = re.sub(r",(\s*[}\]])", r"\1", json_str)
@@ -149,45 +161,96 @@ Generate the FlaskERP configuration in JSON format:"""
             json_str = re.sub(r"\bfalse\b", "false", json_str)
             json_str = re.sub(r"\bnull\b", "null", json_str)
 
-            # If response starts with text before JSON, try to extract JSON
-            if not json_str.startswith("{") and not json_str.startswith("["):
-                # Try to find JSON in the response
-                match = re.search(r"[\[{]", json_str)
-                if match:
-                    json_str = json_str[match.start() :]
-                    # Also try to find where JSON ends
-                    end_match = re.search(r"}[\] ]*$", json_str)
-                    if end_match:
-                        json_str = json_str[: end_match.end()]
+            # Find JSON block - take from first { to last }
+            brace_start = json_str.find('{')
+            brace_end = json_str.rfind('}')
+            
+            if brace_start != -1 and brace_end != -1 and brace_end >= brace_start:
+                json_str = json_str[brace_start:brace_end+1]
+            elif brace_start != -1:
+                json_str = json_str[brace_start:]
 
-            if json_str.startswith("```"):
-                parts = json_str.split("```")
-                for part in parts:
-                    if part.strip() and not part.strip().startswith("json"):
-                        try:
-                            config = json.loads(part.strip())
-                            return {
-                                "success": True,
-                                "config": config,
-                                "user_request": user_request,
-                                "message": "Configurazione generata con successo",
-                            }
-                        except:
-                            continue
-
-            config = json.loads(json_str)
-
-            return {
-                "success": True,
-                "config": config,
-                "user_request": user_request,
-                "message": "Configurazione generata con successo",
-            }
+            # Clean up the JSON string before parsing
+            json_str = json_str.strip()
+            
+            # Handle case where JSON is valid but has extra content
+            # Try parsing, if it fails try to find valid JSON prefix
+            try:
+                config = json.loads(json_str)
+                return {
+                    "success": True,
+                    "config": config,
+                    "user_request": user_request,
+                    "message": "Configurazione generata con successo",
+                }
+            except json.JSONDecodeError as first_error:
+                # Try to fix common issues first
+                import re
+                
+                for _ in range(3):
+                    json_str = re.sub(r",(\s*[}\]])", r"\1", json_str)
+                
+                try:
+                    config = json.loads(json_str)
+                    return {
+                        "success": True,
+                        "config": config,
+                        "user_request": user_request,
+                        "message": "Configurazione generata (con alcune correzioni)",
+                    }
+                except:
+                    # Last resort: Find valid JSON by counting braces
+                    depth = 0
+                    valid_end = len(json_str)
+                    for i, c in enumerate(json_str):
+                        if c == '{':
+                            depth += 1
+                        elif c == '}':
+                            depth -= 1
+                            if depth == 0:
+                                valid_end = i + 1
+                                break
+                    json_str = json_str[:valid_end]
+                    
+                    config = json.loads(json_str)
+                    return {
+                        "success": True,
+                        "config": config,
+                        "user_request": user_request,
+                        "message": "Configurazione generata",
+                    }
         except json.JSONDecodeError as e:
+            # As last resort, return raw response as error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"[AI_SERVICE] JSON parse error: {e}")
+            logger.error(f"[AI_SERVICE] Raw response: {response[:2000]}")
+            
+            # Try to extract partial JSON from the response
+            try:
+                import re
+                # Try to find JSON block
+                brace_start = response.find('{')
+                brace_end = response.rfind('}')
+                if brace_start != -1 and brace_end != -1 and brace_end >= brace_start:
+                    json_str = response[brace_start:brace_end+1]
+                    # Try to fix common issues
+                    for _ in range(3):
+                        json_str = re.sub(r",(\s*[}\]])", r"\1", json_str)
+                    config = json.loads(json_str)
+                    return {
+                        "success": True,
+                        "config": config,
+                        "user_request": user_request,
+                        "message": "Configurazione generata (con alcune correzioni)",
+                    }
+            except Exception as parse_attempt:
+                logger.error(f"[AI_SERVICE] Partial parse failed: {parse_attempt}")
+            
             return {
                 "success": False,
                 "error": f"Errore nel parsing della risposta: {str(e)}",
-                "raw_response": response[:500],
+                "raw_response": response[:1000],
                 "user_request": user_request,
             }
 

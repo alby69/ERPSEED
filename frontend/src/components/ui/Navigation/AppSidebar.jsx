@@ -234,6 +234,9 @@ const AppSidebar = ({
         visible={aiVisible} 
         onClose={() => setAiVisible(false)}
         projectId={currentProjectId}
+        onConfigApplied={() => {
+          window.dispatchEvent(new CustomEvent('models-updated'));
+        }}
       />
     </div>
   );

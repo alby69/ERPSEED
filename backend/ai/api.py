@@ -21,32 +21,14 @@ class ChatRequestSchema(Schema):
 
 class GenerateConfigSchema(Schema):
     request = fields.String(required=True)
-    project_id = fields.Integer(required=True)
-
-
-@blp.route("/chat")
-class AIChat(MethodView):
-    @blp.doc(security=[{"jwt": []}])
-    @jwt_required()
-    @blp.arguments(ChatRequestSchema)
-    @blp.response(200)
-    def post(self):
-        """Chat with the AI assistant"""
-        data = request.json
-        message = data.get("message")
-        context = data.get("context")
-
-        ai_service = get_ai_service()
-        result = ai_service.chat(message, context)
-
-        return result
+    project_id = fields.Integer(required=False, allow_none=True)
 
 
 @blp.route("/generate")
 class AIGenerate(MethodView):
-    # Temporarily without auth for testing
+    @blp.arguments(GenerateConfigSchema)
     @blp.response(200)
-    def post(self):
+    def post(self, args):
         """
         Generate ERP configuration from natural language
 
@@ -73,9 +55,8 @@ class AIGenerate(MethodView):
         }
         """
         try:
-            data = request.json or {}
-            user_request = data.get("request", "")
-            project_id = data.get("project_id", 1)
+            user_request = args.get("request", "")
+            project_id = args.get("project_id", 1)
 
             if not user_request:
                 return {"success": False, "error": "Missing request parameter"}, 400
@@ -158,3 +139,204 @@ class AIModels(MethodView):
             ],
             "current": "nvidia/nemotron-nano-9b-v2:free",
         }
+
+
+@blp.route("/apply")
+class AIApply(MethodView):
+    # Temporarily without auth for testing
+    @blp.response(200)
+    def post(self):
+        """
+        Apply generated ERP configuration to the database.
+        
+        Example request:
+        {
+            "config": {
+                "models": [
+                    {
+                        "name": "Fornitore",
+                        "table": "fornitori",
+                        "fields": [
+                            {"name": "nome", "type": "string", "label": "Nome"},
+                            {"name": "email", "type": "string", "label": "Email"}
+                        ]
+                    }
+                ]
+            },
+            "project_id": 1
+        }
+        
+        Example response:
+        {
+            "success": true,
+            "created_models": ["Fornitore"],
+            "created_fields": {"Fornitore": ["nome", "email"]},
+            "message": "Modello creato con successo!"
+        }
+        """
+        try:
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            data = request.json or {}
+            
+            config = data.get("config", {})
+            project_id = data.get("project_id")
+
+            # Import services
+            from backend.services.builder_service import BuilderService
+            from backend.extensions import db
+            from backend.utils import generate_create_table_sql
+            from backend.models import Project
+            from sqlalchemy import text
+
+            builder_service = BuilderService()
+
+            if not config:
+                abort(400, message="Missing config parameter")
+            
+            # Validate and get project - fallback to first available project if needed
+            project = db.session.get(Project, project_id) if project_id else None
+            if not project:
+                # Try to find any available project
+                available_project = db.session.query(Project).first()
+                if available_project:
+                    project_id = available_project.id
+                    project = available_project
+                else:
+                    abort(404, message="Nessun progetto trovato. Creane uno prima di usare l'AI Assistant.")
+            
+            schema_name = f"project_{project_id}"
+            
+            # Create schema if it doesn't exist
+            try:
+                db.session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+                db.session.commit()
+            except Exception as e:
+                logger.warning(f"[AI_APPLY] Could not create schema {schema_name}: {e}")
+                db.session.rollback()
+            
+            created_models = []
+            created_fields = {}
+            errors = []
+
+            models_config = config.get("models", [])
+            
+            for model_config in models_config:
+                try:
+                    model_name = model_config.get("name", "")
+                    table_name = model_config.get("table", model_name.lower())
+                    model_title = model_config.get("title", model_name)
+                    model_description = model_config.get("description", "")
+                    fields_config = model_config.get("fields", [])
+                    
+                    if not model_name:
+                        errors.append(f"Model name missing in config")
+                        continue
+
+                    # Create the model
+                    try:
+                        new_model = builder_service.create_model(
+                            project_id=project_id,
+                            name=table_name,
+                            title=model_title,
+                            description=model_description
+                        )
+                    except Exception as e:
+                        errors.append(f"Model {model_name}: {str(e)}")
+                        continue
+                    
+                    model_fields_created = []
+                    
+                    # Add fields
+                    for field_config in fields_config:
+                        field_name = field_config.get("name", "")
+                        field_type = field_config.get("type", "string")
+                        field_label = field_config.get("label", field_name.title())
+                        
+                        if not field_name:
+                            continue
+                        
+                        # Map AI types to builder types
+                        type_mapping = {
+                            "text": "text",
+                            "number": "decimal",
+                            "boolean": "boolean",
+                            "date": "date",
+                            "datetime": "datetime",
+                            "select": "select",
+                            "relation": "relation",
+                        }
+                        mapped_type = type_mapping.get(field_type, field_type)
+                        
+                        # Build field kwargs
+                        field_kwargs = {
+                            "title": field_label,
+                            "required": field_config.get("required", False),
+                        }
+                        
+                        # Handle select options
+                        if mapped_type == "select" and "options" in field_config:
+                            import json
+                            field_kwargs["options"] = json.dumps(field_config["options"])
+                        
+                        # Handle relation
+                        if mapped_type == "relation" and "relation_to" in field_config:
+                            field_kwargs["relation_to"] = field_config["relation_to"]
+                            field_kwargs["relation_type"] = field_config.get("relation_type", "many-to-one")
+                        
+                        try:
+                            builder_service.create_field(
+                                model_id=new_model.id,
+                                name=field_name,
+                                field_type=mapped_type,
+                                **field_kwargs
+                            )
+                            model_fields_created.append(field_name)
+                        except Exception as e:
+                            errors.append(f"Field {field_name}: {str(e)}")
+
+                    # Generate and execute CREATE TABLE
+                    try:
+                        # Refresh model to load fields
+                        db.session.refresh(new_model)
+                        
+                        sql = generate_create_table_sql(new_model, schema=schema_name)
+                        db.session.execute(text(sql))
+                        db.session.commit()
+                    except Exception as e:
+                        errors.append(f"Table creation for {table_name}: {str(e)}")
+                        db.session.rollback()
+
+                    created_models.append(model_name)
+                    created_fields[model_name] = model_fields_created
+
+                except Exception as e:
+                    errors.append(f"Model {model_config.get('name', 'unknown')}: {str(e)}")
+                    continue
+
+            if not created_models:
+                return {
+                    "success": False,
+                    "error": "Nessun modello creato. " + "; ".join(errors) if errors else "Errore sconosciuto",
+                    "errors": errors
+                }, 400
+
+            message = f"Creato {len(created_models)} modello(i): {', '.join(created_models)}"
+            if errors:
+                message += f". Alcuni errori: {'; '.join(errors[:3])}"
+
+            return {
+                "success": True,
+                "created_models": created_models,
+                "created_fields": created_fields,
+                "message": message,
+                "errors": errors if errors else None
+            }
+
+        except Exception as e:
+            import logging
+            logging.error(f"AI apply error: {e}")
+            import traceback
+            traceback.print_exc()
+            abort(500, message=f"Errore interno: {str(e)}")
