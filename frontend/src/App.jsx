@@ -15,6 +15,8 @@ import TestRunnerPage from './pages/TestRunnerPage';
 import DashboardBuilder from './pages/DashboardBuilder';
 import BlockBuilder from './pages/BlockBuilder';
 import MarketplaceBrowse from './pages/MarketplaceBrowse';
+import CustomModulesPage from './pages/CustomModulesPage';
+import AIAssistantPage from './pages/AIAssistantPage';
 
 
 // Helper component to load project theme
@@ -270,6 +272,14 @@ return (
           } 
         />
         <Route 
+          path="/admin/custom-modules" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <CustomModulesPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/admin/bi-builder" 
           element={
             <ProtectedRoute roles={['admin']}>
@@ -282,6 +292,14 @@ return (
           element={
             <ProtectedRoute roles={['admin']}>
               <AuditLogs />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/ai-assistant" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <AIAssistantPage />
             </ProtectedRoute>
           } 
         />

@@ -25,7 +25,7 @@ from .webhook_routes import blp as webhooks_bp
 from .workflow_routes import blp as workflows_bp
 
 # Import plugins
-from .plugins import PluginRegistry
+from .plugins import ModuleRegistry, PluginRegistry
 from .plugins.accounting.plugin import get_plugin as get_accounting_plugin
 from .plugins.hr.plugin import get_plugin as get_hr_plugin
 from .plugins.inventory.plugin import get_plugin as get_inventory_plugin
@@ -37,6 +37,7 @@ from .core.api.modules import blp as modules_bp
 from .core.api.system import blp as system_bp
 from .core.api.pdf import pdf_bp
 from .core.api.test_runner import blp as test_runner_bp
+from .core.api.custom_modules import blp as custom_modules_bp
 
 # Import Entities (Vision Archetypes)
 from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
@@ -289,6 +290,7 @@ def create_app(db_url=None):
     api.register_blueprint(builder_api_blp)
     api.register_blueprint(marketplace_api_blp)
     api.register_blueprint(ai_bp)
+    api.register_blueprint(custom_modules_bp)
 
     # Vision Entities (Archetypes)
     api.register_blueprint(soggetto_blp, url_prefix="/api/v1")
@@ -307,14 +309,14 @@ def create_app(db_url=None):
 def _init_plugins(app, api, db):
     """Initialize and register plugins."""
     # Register plugins
-    PluginRegistry.register(get_accounting_plugin())
-    PluginRegistry.register(get_hr_plugin())
-    PluginRegistry.register(get_inventory_plugin())
+    ModuleRegistry.register(get_accounting_plugin())
+    ModuleRegistry.register(get_hr_plugin())
+    ModuleRegistry.register(get_inventory_plugin())
 
     # Enable plugins
     try:
-        PluginRegistry.enable("accounting", app=app, db=db, api=api)
-        PluginRegistry.enable("hr", app=app, db=db, api=api)
-        PluginRegistry.enable("inventory", app=app, db=db, api=api)
+        ModuleRegistry.enable("accounting", app=app, db=db, api=api)
+        ModuleRegistry.enable("hr", app=app, db=db, api=api)
+        ModuleRegistry.enable("inventory", app=app, db=db, api=api)
     except Exception as e:
         print(f"Warning: Could not enable some plugins: {e}")

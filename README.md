@@ -109,20 +109,20 @@ Se sviluppi soluzioni per i tuoi clienti, FlaskERP accelera enormemente i tempi 
 
 ## Il Prossimo Passo
 
-La documentazione tecnica in `docs/` ti guida attraverso ogni aspetto dell'implementazione. Qui trovi:
+La documentazione tecnica in `docs/` ti guida attraverso ogni aspetto dell'implementazione:
 
 | Guida | Descrizione |
 |-------|-------------|
-| 01_INTRODUZIONE | Cos'è FlaskERP e come funziona |
-| 02_ARCHITETTura | La struttura del sistema |
-| 03_TECNICO | Stack tecnologico e configurazioni |
-| 04_MODULI | Moduli disponibili |
-| 05_ROADMAP | Sviluppi futuri |
-| 06_DEPLOYMENT | Come mettere in produzione |
-| 07_COMMUNITY | Contribuire al progetto |
-| 08_GUIDE | Guide pratiche all'uso |
-| 10_TESTING | Guida al Test Runner |
-| TODO_FUTURE | Cosa stiamo costruendo |
+| [01_ARCHITETTURA](docs/01_ARCHITETTURA.md) | Concetti base, SysModel, Block, Module |
+| [02_BUILDER](docs/02_BUILDER.md) | Creare entità, campi, Block |
+| [03_MODULI](docs/03_MODULI.md) | Module = SysModel + Block + Hook + API |
+| [04_AMMINISTRAZIONE](docs/04_AMMINISTRAZIONE.md) | Utenti, permessi, backup |
+| [05_MARKETPLACE](docs/05_MARKETPLACE.md) | Pubblicare Block e Module |
+| [06_AUTOMAZIONE](docs/06_AUTOMAZIONE.md) | Hook, Eventi, Workflow |
+| [07_INTEGRAZIONI](docs/07_INTEGRAZIONI.md) | API, Webhooks, ModuleRegistry |
+| [08_TESTING](docs/08_TESTING.md) | Test Runner |
+| [09_DEPLOYMENT](docs/09_DEPLOYMENT.md) | Docker, produzione |
+| [10_AI_ASSISTANT](docs/10_AI_ASSISTANT.md) | AI Assistant |
 
 ---
 

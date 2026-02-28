@@ -150,6 +150,13 @@ export const DEFAULT_NAVIGATIONS = {
       icon: DEFAULT_ICONS.audit,
       permission: PERMISSION_LEVELS.ADMIN,
     },
+    {
+      id: 'ai-assistant',
+      label: 'AI Assistant',
+      path: '/ai-assistant',
+      icon: DEFAULT_ICONS.ai,
+      permission: PERMISSION_LEVELS.ADMIN,
+    },
   ],
 
   // Marketplace

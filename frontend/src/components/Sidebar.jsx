@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { Menu, theme, Button, Tooltip } from 'antd';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import React from 'react';
+import { Menu, theme } from 'antd';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth, useTheme } from '@/context';
-import AIAssistant from './ui/AIAssistant';
 import {
     AppstoreOutlined,
     TeamOutlined,
@@ -19,7 +18,6 @@ import {
     UserOutlined,
     GlobalOutlined,
     ExperimentOutlined,
-    RobotOutlined,
     AuditOutlined
 } from '@ant-design/icons';
 import './Sidebar.css';
@@ -31,20 +29,25 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { projectId } = useParams();
-    
-    // AI Assistant state
-    const [aiVisible, setAiVisible] = useState(false);
-    const currentProjectId = localStorage.getItem('currentProjectId') || projectId || 1;
 
     // Static menu items for the administration section
     const adminItems = [
         { key: '/admin/builder', label: 'Builder', icon: <BuildOutlined /> },
+        { 
+            key: 'modules-section', 
+            label: 'Moduli', 
+            icon: <AppstoreOutlined />,
+            children: [
+                { key: '/admin/custom-modules', label: 'Tutti i Moduli' },
+                { key: '/modules', label: 'System Modules' },
+            ]
+        },
         { key: '/admin/workflows', label: 'Workflows', icon: <ApiOutlined /> },
         { key: '/users', label: 'Users', icon: <TeamOutlined /> },
-        { key: '/modules', label: 'Modules', icon: <AppstoreOutlined /> },
         { key: '/test-runner', label: 'Test Runner', icon: <ExperimentOutlined /> },
         { key: '/admin/projects', label: 'Projects Admin', icon: <ProjectOutlined /> },
         { key: '/admin/audit-logs', label: 'Audit Logs', icon: <AuditOutlined /> },
+        { key: '/ai-assistant', label: 'AI Assistant', icon: <SettingOutlined /> },
     ];
 
     // Main application menu items (from enabled modules) - VISION SYSTEM
@@ -118,40 +121,6 @@ const Sidebar = ({ projectMenuItems = [] }) => {
                 defaultOpenKeys={['app-section']}
                 items={items}
                 style={{ borderRight: 0 }}
-            />
-            
-            {/* AI Assistant Button */}
-            <div style={{ 
-                padding: '12px 16px', 
-                borderTop: `1px solid ${token.colorBorder}`,
-                marginTop: 'auto'
-            }}>
-                <Tooltip title="AI Assistant - Descrivi quello che vuoi creare" placement="right">
-                    <Button 
-                        type="primary"
-                        icon={<RobotOutlined />}
-                        onClick={() => setAiVisible(true)}
-                        block
-                        style={{ 
-                            background: 'linear-gradient(135deg, #1890ff 0%, #722ed1 100%)',
-                            border: 'none',
-                            fontWeight: 600,
-                        }}
-                    >
-                        AI Assistant
-                    </Button>
-                </Tooltip>
-            </div>
-            
-            {/* AI Assistant Modal */}
-            <AIAssistant 
-                visible={aiVisible} 
-                onClose={() => setAiVisible(false)}
-                projectId={currentProjectId}
-                onConfigApplied={() => {
-                    // Trigger a custom event to refresh the app after model creation
-                    window.dispatchEvent(new CustomEvent('models-updated'));
-                }}
             />
         </div>
     );

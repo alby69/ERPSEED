@@ -71,7 +71,7 @@ L'AI genera:
 
 ## Utilizzo
 
-1. Clicca il pulsante **AI Assistant** nella sidebar
+1. Vai su **Administration → AI Assistant** nel menu
 2. Descrivi il modulo che vuoi creare
 3. Visualizza l'anteprima JSON
 4. Modifica se necessario
@@ -81,8 +81,7 @@ L'AI genera:
 
 L'AI Assistant è accessibile dall'interfaccia principale attraverso:
 
-- Un pulsante di chat nella sidebar
-- Un pannello dedicato (Modal)
+- Menu **Administration → AI Assistant** (path: `/ai-assistant`)
 - Un endpoint API per integrazioni
 
 ### Come Comunicare

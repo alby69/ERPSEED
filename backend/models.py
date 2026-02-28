@@ -174,6 +174,9 @@ class SysModel(BaseModel):
     name = db.Column(db.String(80), nullable=False)
     title = db.Column(db.String(120))
     description = db.Column(db.Text)
+    status = db.Column(
+        db.String(20), default="draft", nullable=False
+    )  # draft, published
     permissions = db.Column(
         db.Text, comment="JSON string for Access Control List (ACL)"
     )

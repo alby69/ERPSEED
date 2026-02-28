@@ -1,23 +1,45 @@
-# Marketplace - Pubblicare e Installare Blocchi
+# Marketplace
 
 ## Cos'è il Marketplace
 
-Il Marketplace di FlaskERP è uno spazio dove puoi condividere e installare blocchi funzionali creati dalla comunità. È il punto di incontro tra chi crea soluzioni e chi ne ha bisogno.
+Il Marketplace è lo spazio dove puoi condividere e installare **Block** e **Module** creati dalla comunità.
 
-Puoi usare il Marketplace per:
+Può essere configurato per girare:
+- **Integrato**: Come parte di FlaskERP
+- **Separato**: Come server autonomo (futuro)
 
-- **Trovare blocchi** già pronti per le tue esigenze
-- **Installare** blocchi nel tuo progetto con un click
-- **Pubblicare** i tuoi blocchi per la comunità
-- ** Guadagnare** se crei blocchi di valore
+---
+
+## Block vs Module
+
+È importante capire la differenza:
+
+| Elemento | Cosa include | Uso |
+|----------|-------------|-----|
+| **Block** | Solo interfaccia UI (Component + relazioni) | Widget, dashboard, viste |
+| **Module** | Dati + UI + Logica (SysModel + Block + Hook + API) | Funzionalità complete |
+
+### Quando pubblicare un Block
+
+- Un widget UI specifico (es: "Card Cliente con statistiche")
+- Una dashboard completa
+- Una vista kanban preconfigurata
+- Un componente riutilizzabile
+
+### Quando pubblicare un Module
+
+- Una funzionalità completa (es: "Gestione Preventivi")
+- Un modulo con entità dati proprie
+- Qualcosa con logica di business (Hook)
+- API esposte
 
 ---
 
 ## Navigare il Marketplace
 
-### Browse dei Blocchi
+### Browse
 
-1. Accedi al Marketplace dal menu principale
+1. Accedi al Marketplace dal menu
 2. Esplora le categorie:
    - Anagrafica
    - Vendite
@@ -27,89 +49,80 @@ Puoi usare il Marketplace per:
    - Produzione
    - UI Components
    - Altro
-
-3. Usa i filtri:
+3. Usa filtri:
    - Categoria
-   - Prezzo (gratis / a pagamento)
+   - Prezzo (gratis/pagamento)
    - Rating
    - Autore
+4. Leggi schede con screenshot, descrizione, recensioni
 
-4. Leggi le schede dei blocchi con screenshot, descrizione e recensioni
+### Installare
 
-### Installare un Blocco
-
-1. Trova il blocco che ti interessa
-2. Leggi la descrizione e verifica le recensioni
-3. Se a pagamento, effettua il pagamento
+1. Trova ciò che ti serve
+2. Leggi descrizione e recensioni
+3. Se a pagamento, effettua pagamento
 4. Clicca **Installa**
-5. Il blocco viene aggiunto automaticamente al tuo progetto
+5. Il Block/Module viene aggiunto al progetto
 
-Dopo l'installazione, trovi il nuovo modulo nel menu.
+Dopo installazione trovi il nuovo contenuto nel menu.
 
 ---
 
-## Pubblicare un Blocco
-
-Se hai creato qualcosa di utile, puoi condividerlo nel Marketplace.
+## Pubblicare
 
 ### Prerequisiti
 
-Per pubblicare un blocco, devi avere:
+Per pubblicare devi avere:
+- Account verificato
+- Block o Module completo nel tuo progetto
+- Documentazione
+- Test passati (minimo 80% quality score)
 
-- Un account verificato
-- Un blocco completo nel tuo progetto
-- Documentazione di utilizzo
-- Test eseguiti con successo (minimo 80%)
+### Processo
 
-### Processo di Pubblicazione
+1. **Prepara**
+   - Assicurati che sia funzionante
+   - Scrivi descrizione chiara
+   - Prepara screenshot
 
-1. **Prepara il Blocco**
-   - Assicurati che sia completo e funzionante
-   - Scrivi una descrizione chiara
-   - Prepara screenshot esplicativi
-
-2. **Esegui i Test**
-   - Usa il Test Runner per verificare il blocco
-   - Ottieni un quality score di almeno 80%
-   - Più test passano, più il blocco è attendibile
+2. **Testa**
+   - Usa Test Runner
+   - Ottieni quality score ≥ 80%
 
 3. **Invia per Revisione**
-   - Clicca **Pubblica** dal tuo blocco
-   - Compila le informazioni per il Marketplace
-   - Scegli se renderlo gratis o a pagamento
+   - Clicca **Pubblica**
+   - Compila informazioni (nome, descrizione, prezzo)
+   - Scegli tipo: Block o Module
 
 4. **Revisione**
-   - Il team verifica il blocco
-   - Potrebbero essere richieste modifiche
-   - Una volta approvato, sarà disponibile
+   - Il team verifica
+   - Potrebbero richiedere modifiche
+   - Una volta approvato, disponibile
 
 ### Certificazione
 
-I blocchi con quality score >= 80% possono essere **certificati**. I blocchi certificati mostrano un badge di qualità e hanno maggiore visibilità.
+Blocchi con quality score ≥ 80% possono essere **certificati** con badge di qualità.
 
 ---
 
-## Gestire i Tuoi Blocchi
+## Gestione Contenuti Pubblicati
 
 ### Dashboard Autore
 
-Nella sezione "I Tuoi Blocchi" trovi:
-
-- Blocchi pubblicati
+In "I Tuoi Contenuti" trovi:
+- Contenuti pubblicati
 - Download e statistiche
-- Recensioni ricevute
+- Recensioni
 - Guadagni
 
-### Aggiornare un Blocco
+### Aggiornare
 
-Se rilasci una nuova versione:
+1. Apri nel tuo progetto
+2. Fai modifiche
+3. Esegui test
+4. Pubblica nuova versione
 
-1. Apri il blocco nel tuo progetto
-2. Fai le modifiche
-3. Esegui i test
-4. Pubblica la nuova versione
-
-Gli utenti che hanno già installato il blocco riceveranno la notifica dell'aggiornamento.
+Gli utenti ricevono notifica.
 
 ---
 
@@ -117,46 +130,37 @@ Gli utenti che hanno già installato il blocco riceveranno la notifica dell'aggi
 
 ### Prezzi
 
-Puoi impostare il prezzo che preferisci, anche zero per blocchi gratuiti.
+Puoi impostare qualsiasi prezzo, anche zero.
 
-### Ricevere Pagamenti
+### Guadagni
 
-Se pubblichi blocchi a pagamento:
+- Ricevi 70% del prezzo
+- 30% sostiene FlaskERP
+- Pagamenti tramite Stripe/PayPal
 
-- Ricevi il 70% del prezzo di vendita
-- Il 30% sostiene lo sviluppo di FlaskERP
-- Pagamenti gestiti tramite Stripe/PayPal
-
-### Acquistare
-
-Gli acquisti sono sicuri:
+### Acquisti
 
 - Garanzia rimborso 30 giorni
-- Transazioni gestite da provider esterni
+- Transazioni sicure
 - Ricevuta per ogni acquisto
 
 ---
 
-## Recensioni e Feedback
+## Recensioni
 
 ### Lasciare una Recensione
 
-Dopo aver installato un blocco, puoi lasciare una recensione:
+1. Scheda contenuto
+2. **Lascia Recensione**
+3. Assegna rating (1-5 stelle)
+4. Scrivi commento
 
-1. Vai sulla scheda del blocco
-2. Clicca **Lascia Recensione**
-3. Assegna un rating (1-5 stelle)
-4. Scrivi un commento
+### Rispondere
 
-Le recensioni aiutano la comunità e gli autori a migliorare.
-
-### Rispondere alle Recensioni
-
-Se sei un autore, puoi rispondere alle recensioni per:
-
+Autori possono rispondere per:
 - Chiarire dubbi
-- Ringraziare per il feedback
-- Indicare come risolvere problemi
+- Ringraziare
+- Indicare soluzioni
 
 ---
 
@@ -164,16 +168,37 @@ Se sei un autore, puoi rispondere alle recensioni per:
 
 ### Per Utenti
 
-- Leggi sempre le recensioni prima di installare
-- Verifica la compatibilità con la tua versione
-- Testa il blocco in ambiente di test prima di produzione
+- Leggi recensioni prima di installare
+- Verifica compatibilità versione
+- Testa in ambiente di test
 
 ### Per Autori
 
-- Documenta bene il tuo blocco
-- Rispondi alle domande degli utenti
+- Documenta bene
+- Rispondi alle domande
 - Aggiorna regolarmente
-- Ascolta il feedback
+- Ascolta feedback
+
+---
+
+## Architettura Futura
+
+Il Marketplace può essere separato:
+
+```
+┌─────────────────┐     ┌─────────────────┐
+│  FlaskERP      │────►│  Marketplace    │
+│  (Progetto)    │     │  (Server)       │
+└─────────────────┘     └─────────────────┘
+       │                        │
+       │    Installazione       │
+       └────────────────────────┘
+```
+
+Questo permette:
+- Marketplace condiviso tra più installazioni FlaskERP
+- Gestione indipendente
+- Scalabilità
 
 ---
 

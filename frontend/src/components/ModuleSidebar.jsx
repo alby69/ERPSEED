@@ -55,6 +55,15 @@ const ModuleSidebar = ({ projectMenuItems = [] }) => {
     // Static menu items for the administration section
     const adminItems = [
         { key: '/admin/builder', label: 'Builder', icon: <BuildOutlined /> },
+        { 
+            key: 'modules-section', 
+            label: 'Moduli', 
+            icon: <AppstoreOutlined />,
+            children: [
+                { key: '/admin/custom-modules', label: 'Tutti i Moduli' },
+                { key: '/modules', label: 'System Modules' },
+            ]
+        },
         { key: '/admin/workflows', label: 'Workflows', icon: <ApiOutlined /> },
         { key: '/users', label: 'Users', icon: <TeamOutlined /> },
         { key: '/admin/projects', label: 'Projects Admin', icon: <ProjectOutlined /> },

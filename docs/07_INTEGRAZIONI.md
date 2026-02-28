@@ -125,48 +125,32 @@ Ogni webhook include un header `X-Webhook-Signature` che puoi verificare per ass
 
 ---
 
-## Sistema Plugin
+## Sistema Plugin (ModuleRegistry)
 
-I plugin permettono di estendere FlaskERP con funzionalità custom.
+Il sistema plugin di FlaskERP permette di estendere le funzionalità con moduli custom. Il cuore del sistema è il **ModuleRegistry** (precedentemente chiamato PluginRegistry).
 
-### Struttura di un Plugin
+Vedi [03_MODULI.md](03_MODULI.md) per una descrizione completa di come funzionano i moduli.
 
-Un plugin è una directory con una struttura specifica:
+### ModuleRegistry
 
-```
-mio_plugin/
-├── __init__.py
-├── plugin.py
-├── models.py
-├── api.py
-└── static/
-    └── frontend.js
-```
-
-### Creare un Plugin
-
-1. Crea la directory in `backend/plugins/`
-2. Definisci la classe del plugin
-3. Registrala nel sistema
-
-### Esempio Semplice
+Il ModuleRegistry gestisce il ciclo di vita dei moduli:
 
 ```python
-from backend.plugins import BasePlugin
+from backend.plugins import ModuleRegistry
 
-class MioPlugin(BasePlugin):
-    name = "mio_plugin"
-    version = "1.0.0"
-    description = "Un plugin di esempio"
-    
-    def install(self):
-        # Logica di installazione
-        pass
-    
-    def uninstall(self):
-        # Logica di disinstallazione
-        pass
+# Registra un modulo
+ModuleRegistry.register(MioModulo)
+
+# Attiva un modulo
+ModuleRegistry.enable("mio_modulo", app=app, db=db, api=api)
+
+# Disattiva un modulo
+ModuleRegistry.disable("mio_modulo")
 ```
+
+### Creare un Modulo Custom
+
+Vedi [03_MODULI.md](03_MODULI.md) per le istruzioni dettagliate sulla creazione di moduli custom.
 
 ---
 

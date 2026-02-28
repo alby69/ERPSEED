@@ -26,6 +26,8 @@ class GenerateConfigSchema(Schema):
 
 @blp.route("/generate")
 class AIGenerate(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
     @blp.arguments(GenerateConfigSchema)
     @blp.response(200)
     def post(self, args):
@@ -143,12 +145,13 @@ class AIModels(MethodView):
 
 @blp.route("/apply")
 class AIApply(MethodView):
-    # Temporarily without auth for testing
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
     @blp.response(200)
     def post(self):
         """
         Apply generated ERP configuration to the database.
-        
+
         Example request:
         {
             "config": {
@@ -165,7 +168,7 @@ class AIApply(MethodView):
             },
             "project_id": 1
         }
-        
+
         Example response:
         {
             "success": true,
@@ -176,10 +179,15 @@ class AIApply(MethodView):
         """
         try:
             import logging
+
             logger = logging.getLogger(__name__)
-            
+
+            # Get current user
+            current_user_id = get_jwt_identity()
+            logger.info(f"AI Apply requested by user {current_user_id}")
+
             data = request.json or {}
-            
+
             config = data.get("config", {})
             project_id = data.get("project_id")
 
@@ -194,7 +202,7 @@ class AIApply(MethodView):
 
             if not config:
                 abort(400, message="Missing config parameter")
-            
+
             # Validate and get project - fallback to first available project if needed
             project = db.session.get(Project, project_id) if project_id else None
             if not project:
@@ -204,10 +212,13 @@ class AIApply(MethodView):
                     project_id = available_project.id
                     project = available_project
                 else:
-                    abort(404, message="Nessun progetto trovato. Creane uno prima di usare l'AI Assistant.")
-            
+                    abort(
+                        404,
+                        message="Nessun progetto trovato. Creane uno prima di usare l'AI Assistant.",
+                    )
+
             schema_name = f"project_{project_id}"
-            
+
             # Create schema if it doesn't exist
             try:
                 db.session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
@@ -215,13 +226,13 @@ class AIApply(MethodView):
             except Exception as e:
                 logger.warning(f"[AI_APPLY] Could not create schema {schema_name}: {e}")
                 db.session.rollback()
-            
+
             created_models = []
             created_fields = {}
             errors = []
 
             models_config = config.get("models", [])
-            
+
             for model_config in models_config:
                 try:
                     model_name = model_config.get("name", "")
@@ -229,7 +240,7 @@ class AIApply(MethodView):
                     model_title = model_config.get("title", model_name)
                     model_description = model_config.get("description", "")
                     fields_config = model_config.get("fields", [])
-                    
+
                     if not model_name:
                         errors.append(f"Model name missing in config")
                         continue
@@ -240,23 +251,23 @@ class AIApply(MethodView):
                             project_id=project_id,
                             name=table_name,
                             title=model_title,
-                            description=model_description
+                            description=model_description,
                         )
                     except Exception as e:
                         errors.append(f"Model {model_name}: {str(e)}")
                         continue
-                    
+
                     model_fields_created = []
-                    
+
                     # Add fields
                     for field_config in fields_config:
                         field_name = field_config.get("name", "")
                         field_type = field_config.get("type", "string")
                         field_label = field_config.get("label", field_name.title())
-                        
+
                         if not field_name:
                             continue
-                        
+
                         # Map AI types to builder types
                         type_mapping = {
                             "text": "text",
@@ -268,29 +279,34 @@ class AIApply(MethodView):
                             "relation": "relation",
                         }
                         mapped_type = type_mapping.get(field_type, field_type)
-                        
+
                         # Build field kwargs
                         field_kwargs = {
                             "title": field_label,
                             "required": field_config.get("required", False),
                         }
-                        
+
                         # Handle select options
                         if mapped_type == "select" and "options" in field_config:
                             import json
-                            field_kwargs["options"] = json.dumps(field_config["options"])
-                        
+
+                            field_kwargs["options"] = json.dumps(
+                                field_config["options"]
+                            )
+
                         # Handle relation
                         if mapped_type == "relation" and "relation_to" in field_config:
                             field_kwargs["relation_to"] = field_config["relation_to"]
-                            field_kwargs["relation_type"] = field_config.get("relation_type", "many-to-one")
-                        
+                            field_kwargs["relation_type"] = field_config.get(
+                                "relation_type", "many-to-one"
+                            )
+
                         try:
                             builder_service.create_field(
                                 model_id=new_model.id,
                                 name=field_name,
                                 field_type=mapped_type,
-                                **field_kwargs
+                                **field_kwargs,
                             )
                             model_fields_created.append(field_name)
                         except Exception as e:
@@ -300,7 +316,7 @@ class AIApply(MethodView):
                     try:
                         # Refresh model to load fields
                         db.session.refresh(new_model)
-                        
+
                         sql = generate_create_table_sql(new_model, schema=schema_name)
                         db.session.execute(text(sql))
                         db.session.commit()
@@ -312,17 +328,23 @@ class AIApply(MethodView):
                     created_fields[model_name] = model_fields_created
 
                 except Exception as e:
-                    errors.append(f"Model {model_config.get('name', 'unknown')}: {str(e)}")
+                    errors.append(
+                        f"Model {model_config.get('name', 'unknown')}: {str(e)}"
+                    )
                     continue
 
             if not created_models:
                 return {
                     "success": False,
-                    "error": "Nessun modello creato. " + "; ".join(errors) if errors else "Errore sconosciuto",
-                    "errors": errors
+                    "error": "Nessun modello creato. " + "; ".join(errors)
+                    if errors
+                    else "Errore sconosciuto",
+                    "errors": errors,
                 }, 400
 
-            message = f"Creato {len(created_models)} modello(i): {', '.join(created_models)}"
+            message = (
+                f"Creato {len(created_models)} modello(i): {', '.join(created_models)}"
+            )
             if errors:
                 message += f". Alcuni errori: {'; '.join(errors[:3])}"
 
@@ -331,12 +353,14 @@ class AIApply(MethodView):
                 "created_models": created_models,
                 "created_fields": created_fields,
                 "message": message,
-                "errors": errors if errors else None
+                "errors": errors if errors else None,
             }
 
         except Exception as e:
             import logging
+
             logging.error(f"AI apply error: {e}")
             import traceback
+
             traceback.print_exc()
             abort(500, message=f"Errore interno: {str(e)}")

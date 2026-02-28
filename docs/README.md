@@ -6,24 +6,24 @@ Benvenuto nella documentazione di FlaskERP. Qui trovi tutto quello che ti serve 
 
 | File | Titolo | Descrizione |
 |------|--------|-------------|
-| [01_CONCETTI.md](01_CONCETTI.md) | Concetti Fondamentali | Architettura, 4 pilastri, composizione |
-| [01B_AUTOMAZIONE.md](01B_AUTOMAZIONE.md) | Automazione e Contratti | Hook, Eventi, Workflow |
-| [02_BUILDER.md](02_BUILDER.md) | Guida al Builder | Creare moduli, campi, relazioni |
-| [03_MODULI.md](03_MODULI.md) | Moduli ERP | Vendite, Magazzino, Contabilità, HR |
-| [04_AMMINISTRAZIONE.md](04_AMMINISTRAZIONE.md) | Amministrazione | Progetti, utenti, permessi |
-| [05_MARKETPLACE.md](05_MARKETPLACE.md) | Marketplace | Pubblicare e installare blocchi |
-| [06_INTEGRAZIONI.md](06_INTEGRAZIONI.md) | Integrazioni | API, Webhooks, Plugin |
-| [07_TESTING.md](07_TESTING.md) | Testing | Test Runner, qualità |
-| [08_DEPLOYMENT.md](08_DEPLOYMENT.md) | Deployment | Docker, produzione |
-| [09_AI_ASSISTANT.md](09_AI_ASSISTANT.md) | AI Assistant | Guida all'agente AI |
-| [10_TODO.md](10_TODO.md) | Roadmap Breve | Stato e prossime attività |
-| [11_ROADMAP.md](11_ROADMAP.md) | Roadmap Completa | Tutte le implementazioni per componente |
+| [01_ARCHITETTURA.md](01_ARCHITETTURA.md) | Architettura | Concetti base, SysModel, Block, Module |
+| [02_BUILDER.md](02_BUILDER.md) | Builder | Creare entità, campi, Block |
+| [03_MODULI.md](03_MODULI.md) | Moduli | Module = SysModel + Block + Hook + API |
+| [04_AMMINISTRAZIONE.md](04_AMMINISTRAZIONE.md) | Amministrazione | Progetti, utenti, permessi, backup |
+| [05_MARKETPLACE.md](05_MARKETPLACE.md) | Marketplace | Pubblicare Block e Module |
+| [06_AUTOMAZIONE.md](06_AUTOMAZIONE.md) | Automazione | Hook, Eventi, Workflow |
+| [07_INTEGRAZIONI.md](07_INTEGRAZIONI.md) | Integrazioni | API, Webhooks, ModuleRegistry |
+| [08_TESTING.md](08_TESTING.md) | Testing | Test Runner, qualità |
+| [09_DEPLOYMENT.md](09_DEPLOYMENT.md) | Deployment | Docker, produzione |
+| [10_AI_ASSISTANT.md](10_AI_ASSISTANT.md) | AI Assistant | Guida all'agente AI |
+| [11_TODO.md](11_TODO.md) | Roadmap Breve | Stato e prossime attività |
+| [12_ROADMAP.md](12_ROADMAP.md) | Roadmap Completa | Implementazioni per componente |
 
 ## Ordine di Lettura Consigliato
 
 ### Per nuovi utenti
 
-1. **01_CONCETTI** - Capire come funziona FlaskERP
+1. **01_ARCHITETTURA** - Capire come funziona FlaskERP
 2. **02_BUILDER** - Creare le prime entità
 3. **04_AMMINISTRAZIONE** - Gestire utenti e progetti
 
@@ -31,24 +31,32 @@ Benvenuto nella documentazione di FlaskERP. Qui trovi tutto quello che ti serve 
 
 1. **04_AMMINISTRAZIONE** - Configurazione sistema
 2. **03_MODULI** - Moduli disponibili
-3. **07_TESTING** - Verificare il funzionamento
 
 ### Per sviluppatori
 
-1. **01_CONCETTI** - Architettura
-2. **08_DEPLOYMENT** - Setup ambiente
-3. **06_INTEGRAZIONI** - API e plugin
+1. **01_ARCHITETTURA** - Architettura
+2. **02_BUILDER** - Creare entità custom
+3. **06_AUTOMAZIONE** - Hook, Eventi, Workflow
 
 ### Per chi vuole l'AI
 
-1. **09_AI_ASSISTANT** - Guida all'AI
+1. **10_AI_ASSISTANT** - Guida all'AI
 2. **02_BUILDER** - Come l'AI genera configurazioni
+
+## Concetti Chiave
+
+```
+SysModel → Block → Module
+   │          │         │
+   v          v         v
+  Dati    Interfaccia  Funzionalità
+                    (Hook + API)
+```
 
 ## Link Rapidi
 
 - [README Principale](../README.md) - Panoramica del progetto
-- [Roadmap](10_TODO.md) - Cosa stiamo costruendo
-- [GitHub](https://github.com/tuo-repo/flaskERP) - Codice sorgente
+- [11_TODO.md](11_TODO.md) - Cosa stiamo costruendo
 
 ---
 
