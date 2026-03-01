@@ -6,12 +6,21 @@ from flask import make_response, request
 
 from .models import Project, SysModel
 from .extensions import db
-from .schemas import ProjectSchema, ProjectUpdateSchema, SysModelSchema, SysModelCreateSchema, ProjectMemberSchema, UserDisplaySchema
+from .schemas import (
+    ProjectSchema,
+    ProjectUpdateSchema,
+    SysModelSchema,
+    SysModelCreateSchema,
+    ProjectMemberSchema,
+    UserDisplaySchema,
+)
 from .decorators import admin_required
 from .utils import paginate
 from .services import ProjectService
 
-blp = Blueprint("projects", "projects", url_prefix="/projects", description="Operations on projects")
+blp = Blueprint(
+    "projects", "projects", url_prefix="/projects", description="Operations on projects"
+)
 
 project_service = ProjectService()
 
@@ -35,14 +44,16 @@ class ProjectList(MethodView):
     def post(self, project_data):
         """Create a new project (Admin only)"""
         owner_id = get_jwt_identity()
-        
-        data = project_data.__dict__ if hasattr(project_data, '__dict__') else project_data
-        
+
+        data = (
+            project_data.__dict__ if hasattr(project_data, "__dict__") else project_data
+        )
+
         return project_service.create(
-            name=data['name'],
-            title=data['title'],
-            description=data.get('description'),
-            owner_id=owner_id
+            name=data["name"],
+            title=data["title"],
+            description=data.get("description"),
+            owner_id=owner_id,
         ), 201
 
 
@@ -81,9 +92,22 @@ class ProjectModels(MethodView):
     @jwt_required()
     @blp.response(200, SysModelSchema(many=True))
     def get(self, project_id):
-        """List all models for a project"""
-        project = project_service.get_by_id(project_id, get_jwt_identity())
-        return project.models
+        """List models for a project.
+
+        - Admins see all models (including draft) for Builder access
+        - Regular users only see published models
+        """
+        from backend.models import User
+
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
+
+        project = project_service.get_by_id(project_id, user_id)
+
+        if user.role == "admin":
+            return project.models
+        else:
+            return [m for m in project.models if m.status == "published"]
 
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
@@ -92,13 +116,18 @@ class ProjectModels(MethodView):
     def post(self, model_data, project_id):
         """Create a new model in a project (Admin only)"""
         project_service.get_by_id(project_id, get_jwt_identity())
-        
-        data = model_data.__dict__ if hasattr(model_data, '__dict__') else model_data
-        
-        existing = SysModel.query.filter_by(project_id=project_id, name=data['name']).first()
+
+        data = model_data.__dict__ if hasattr(model_data, "__dict__") else model_data
+
+        existing = SysModel.query.filter_by(
+            project_id=project_id, name=data["name"]
+        ).first()
         if existing:
-            abort(409, message=f"A model with name '{data['name']}' already exists in this project.")
-        
+            abort(
+                409,
+                message=f"A model with name '{data['name']}' already exists in this project.",
+            )
+
         model = SysModel(project_id=project_id, **data)
         db.session.add(model)
         db.session.commit()
@@ -122,8 +151,8 @@ class ProjectMemberList(MethodView):
     def post(self, member_data, project_id):
         """Add a member to a project (Admin or Owner)"""
         user_id = get_jwt_identity()
-        member_user_id = member_data['user_id']
-        
+        member_user_id = member_data["user_id"]
+
         return project_service.add_member(project_id, user_id, member_user_id)
 
 
@@ -146,13 +175,15 @@ class ProjectExport(MethodView):
     def get(self, project_id):
         """Export project as JSON template"""
         project_service.get_by_id(project_id, get_jwt_identity())
-        
+
         export_data = project_service.export_template(project_id)
-        
+
         response = make_response(json.dumps(export_data, indent=2))
-        
+
         project = Project.query.get(project_id)
-        response.headers["Content-Disposition"] = f"attachment; filename={project.name}_template.json"
+        response.headers["Content-Disposition"] = (
+            f"attachment; filename={project.name}_template.json"
+        )
         response.headers["Content-Type"] = "application/json"
         return response
 
@@ -163,19 +194,19 @@ class ProjectImport(MethodView):
     @admin_required()
     def post(self):
         """Import project from JSON template (Create or Update)"""
-        if 'file' not in request.files:
+        if "file" not in request.files:
             abort(400, message="No file part")
-        
-        file = request.files['file']
-        if file.filename == '':
+
+        file = request.files["file"]
+        if file.filename == "":
             abort(400, message="No selected file")
-            
+
         try:
             data = json.load(file)
         except Exception as e:
             abort(400, message=f"Invalid JSON: {str(e)}")
-        
+
         user_id = get_jwt_identity()
         message, project_id = project_service.import_template(data, user_id)
-        
+
         return {"message": message, "project_id": project_id}, 200

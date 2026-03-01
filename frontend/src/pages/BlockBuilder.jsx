@@ -43,6 +43,8 @@ import {
 } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { ComponentRenderer } from '@/components/core';
+import ImportExportToolbar from '@/components/ui/ImportExportToolbar';
+import ImportExportContextMenu from '@/components/ui/ImportExportContextMenu';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -317,9 +319,18 @@ function BlockBuilder() {
           </Title>
           <Text type="secondary">Create and manage Blocks with Components</Text>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowModal(true)}>
-          New Block
-        </Button>
+        <Space>
+          <ImportExportToolbar 
+            type="block" 
+            projectId={projectId || localStorage.getItem('currentProjectId') || 1}
+            showExport={false}
+            showImport={true}
+            importConfigLabel="Importa Block"
+          />
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowModal(true)}>
+            New Block
+          </Button>
+        </Space>
       </div>
 
       {loading ? (
@@ -330,31 +341,40 @@ function BlockBuilder() {
         <Row gutter={[16, 16]}>
           {blocks.map(block => (
             <Col xs={24} sm={12} lg={8} key={block.id}>
-              <Card
-                hoverable
-                actions={[
-                  <Button type="text" icon={<EditOutlined />} onClick={() => handleEditBlock(block)}>
-                    Edit
-                  </Button>,
-                  <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDeleteBlock(block.id)}>
-                    Delete
-                  </Button>,
-                ]}
+              <ImportExportContextMenu 
+                type="block"
+                entityId={block.id}
+                entityName={block.name}
+                projectId={projectId || localStorage.getItem('currentProjectId') || 1}
+                showExportConfig={true}
+                showExportData={false}
               >
-                <Card.Meta
-                  title={block.name}
-                  description={
-                    <Space direction="vertical" size={0}>
-                      <Text type="secondary">{block.description || 'No description'}</Text>
-                      <Space>
-                        <Tag color={getStatusColor(block.status)}>{block.status}</Tag>
-                        <Text type="secondary">{block.component_count || 0} components</Text>
+                <Card
+                  hoverable
+                  actions={[
+                    <Button type="text" icon={<EditOutlined />} onClick={() => handleEditBlock(block)}>
+                      Edit
+                    </Button>,
+                    <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDeleteBlock(block.id)}>
+                      Delete
+                    </Button>,
+                  ]}
+                >
+                  <Card.Meta
+                    title={block.name}
+                    description={
+                      <Space direction="vertical" size={0}>
+                        <Text type="secondary">{block.description || 'No description'}</Text>
+                        <Space>
+                          <Tag color={getStatusColor(block.status)}>{block.status}</Tag>
+                          <Text type="secondary">{block.component_count || 0} components</Text>
+                        </Space>
+                        {block.is_certified && <Tag color="gold">Certified</Tag>}
                       </Space>
-                      {block.is_certified && <Tag color="gold">Certified</Tag>}
-                    </Space>
-                  }
-                />
-              </Card>
+                    }
+                  />
+                </Card>
+              </ImportExportContextMenu>
             </Col>
           ))}
         </Row>

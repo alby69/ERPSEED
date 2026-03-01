@@ -17,6 +17,8 @@ import BlockBuilder from './pages/BlockBuilder';
 import MarketplaceBrowse from './pages/MarketplaceBrowse';
 import CustomModulesPage from './pages/CustomModulesPage';
 import AIAssistantPage from './pages/AIAssistantPage';
+import ModuleAppPage from './pages/ModuleAppPage';
+import ProjectImportExportPage from './pages/ProjectImportExportPage';
 
 
 // Helper component to load project theme
@@ -98,6 +100,8 @@ return (
             <Route path="settings" element={<ProjectSettingsPage />} />
             {/* The route for dynamic models, now nested */}
             <Route path="data/:modelName" element={<DynamicModelPage />} /> 
+            {/* Module App Dashboard - App-like experience */}
+            <Route path="app/:moduleName" element={<ModuleAppPage />} />
             {/* You can add more project-specific routes here */}
         </Route>
 
@@ -276,6 +280,14 @@ return (
           element={
             <ProtectedRoute roles={['admin']}>
               <CustomModulesPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/project-import-export" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <ProjectImportExportPage />
             </ProtectedRoute>
           } 
         />

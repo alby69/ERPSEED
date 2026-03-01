@@ -30,7 +30,10 @@ import {
   SettingOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  BulbOutlined
+  BulbOutlined,
+  HistoryOutlined,
+  LikeOutlined,
+  DislikeOutlined
 } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 
@@ -38,9 +41,9 @@ const { Text, Title } = Typography;
 const { TextArea } = Input;
 
 const MODEL_OPTIONS = [
-  { value: 'qwen3-coder', label: 'Qwen3-Coder', description: 'Best for code generation' },
-  { value: 'big_pickle', label: 'Big Pickle', description: 'General purpose' },
-  { value: 'kimi-k2.5-free', label: 'Kimi K2.5', description: 'Fast responses' },
+  { value: 'deepseek/deepseek-chat-v3-0324', label: 'DeepSeek V3', description: 'Modello principale - gratuito' },
+  { value: 'deepseek/deepseek-chat-v3.1', label: 'DeepSeek V3.1', description: 'Versione aggiornata' },
+  { value: 'nex-agi/deepseek-v3.1-nex-n1', label: 'Nex AGI V3.1', description: 'Ottimo per codice' },
 ];
 
 function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
@@ -57,7 +60,10 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
   const [selectedModel, setSelectedModel] = useState('qwen3-coder');
   const [showConfig, setShowConfig] = useState(false);
   const [generatedConfig, setGeneratedConfig] = useState(null);
-  const messagesEndRef = useRef(null);
+  const [conversationId, setConversationId] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState([]);
+  messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -66,6 +72,42 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    loadConversationHistory();
+  }, [projectId]);
+
+  const loadConversationHistory = async () => {
+    try {
+      const response = await apiFetch(`/api/ai/conversations?project_id=${projectId || 1}`, {
+        method: 'GET',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setHistory(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading history:', error);
+    }
+  };
+
+  const handleFeedback = async (messageId, wasSuccessful, correction = null) => {
+    try {
+      await apiFetch('/api/ai/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversation_id: messageId,
+          was_successful: wasSuccessful,
+          user_correction: correction,
+          rating: wasSuccessful ? 5 : 1,
+        }),
+      });
+      message.success('Feedback salvato! Grazie per il tuo contributo.');
+    } catch (error) {
+      message.error('Errore nel salvataggio del feedback');
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
@@ -184,6 +226,29 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
             <div style={{ marginTop: 4, opacity: 0.6, fontSize: 12 }}>
               {msg.timestamp.toLocaleTimeString()}
             </div>
+            {!isUser && !isError && (
+              <div style={{ marginTop: 8 }}>
+                <Text type="secondary" style={{ fontSize: 11 }}>Questa risposta era utile?</Text>
+                <Space style={{ marginTop: 4 }}>
+                  <Button 
+                    type="text" 
+                    size="small" 
+                    icon={<LikeOutlined />}
+                    onClick={() => handleFeedback(msg.id, true)}
+                  >
+                    Sì
+                  </Button>
+                  <Button 
+                    type="text" 
+                    size="small" 
+                    icon={<DislikeOutlined />}
+                    onClick={() => handleFeedback(msg.id, false)}
+                  >
+                    No
+                  </Button>
+                </Space>
+              </div>
+            )}
           </div>
           {isUser && (
             <Avatar 
@@ -216,6 +281,13 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
             options={MODEL_OPTIONS}
             size="small"
           />
+          <Button
+            type="text"
+            icon={<HistoryOutlined />}
+            onClick={() => setShowHistory(!showHistory)}
+            size="small"
+            title="Cronologia conversazioni"
+          />
         </Space>
       }
       open={visible}
@@ -242,6 +314,44 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
           )}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* History Panel */}
+        {showHistory && (
+          <div style={{ 
+            borderLeft: '1px solid #f0f0f0', 
+            padding: 16, 
+            background: '#fafafa',
+            maxHeight: 200,
+            overflow: 'auto'
+          }}>
+            <Text strong style={{ marginBottom: 8, display: 'block' }}>Cronologia Conversazioni</Text>
+            {history.length === 0 ? (
+              <Text type="secondary">Nessuna conversazione precedente</Text>
+            ) : (
+              <List
+                size="small"
+                dataSource={history.slice(0, 5)}
+                renderItem={(item) => (
+                  <List.Item 
+                    style={{ cursor: 'pointer', padding: '4px 8px' }}
+                    onClick={() => {
+                      setInput(item.user_message);
+                      setShowHistory(false);
+                    }}
+                  >
+                    <Text ellipsis style={{ maxWidth: 200 }}>
+                      {item.user_message?.substring(0, 40)}...
+                    </Text>
+                    {item.was_successful ? 
+                      <CheckCircleOutlined style={{ color: '#52c41a', marginLeft: 8 }} /> : 
+                      <CloseCircleOutlined style={{ color: '#ff4d4f', marginLeft: 8 }} />
+                    }
+                  </List.Item>
+                )}
+              />
+            )}
+          </div>
+        )}
 
         <Divider style={{ margin: 0 }} />
 

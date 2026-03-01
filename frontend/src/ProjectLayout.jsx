@@ -20,19 +20,37 @@ const ProjectLayout = () => {
             setLoading(true);
             Promise.all([
                 apiFetch(`/projects/${projectId}/models`),
-                apiFetch(`/projects/${projectId}`)
+                apiFetch(`/projects/${projectId}`),
+                apiFetch(`/api/v1/modules?project_id=${projectId}&status=published`)
             ])
-                .then(([modelsRes, projectRes]) => {
+                .then(([modelsRes, projectRes, modulesRes]) => {
                     if (!modelsRes.ok) throw new Error('Failed to fetch project models');
                     if (!projectRes.ok) throw new Error('Failed to fetch project');
-                    return Promise.all([modelsRes.json(), projectRes.json()]);
+                    return Promise.all([modelsRes.json(), projectRes.json(), modulesRes.json()]);
                 })
-                .then(([models, project]) => {
-                    const menuItems = models.map(model => ({
-                        key: model.name,
-                        label: model.title,
-                        path: `/projects/${projectId}/data/${model.name}`
-                    }));
+                .then(([models, project, modulesData]) => {
+                    const menuItems = [];
+                    
+                    // Add published modules (App-like entries)
+                    const modules = modulesData.modules || [];
+                    modules.forEach(module => {
+                        menuItems.push({
+                            key: `module-${module.name}`,
+                            label: module.title || module.name,
+                            path: `/projects/${projectId}/app/${module.name}`,
+                            isModule: true
+                        });
+                    });
+                    
+                    // Add individual models (for direct access)
+                    models.forEach(model => {
+                        menuItems.push({
+                            key: model.name,
+                            label: model.title || model.name,
+                            path: `/projects/${projectId}/data/${model.name}`
+                        });
+                    });
+                    
                     setProjectMenuItems(menuItems);
                     setProjectTitle(project.title);
                 })

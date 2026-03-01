@@ -111,8 +111,26 @@ class AISuggestions(MethodView):
         data = request.json
         model_config = data.get("config", {})
 
-        ai_service = get_ai_service()
-        suggestions = ai_service.suggest_improvements(model_config)
+        # Return basic suggestions without calling the AI for now
+        suggestions = []
+
+        # Check for missing common fields
+        if model_config:
+            fields = model_config.get("fields", [])
+            field_names = [f.get("name", "").lower() for f in fields]
+
+            if "name" not in field_names and "title" not in field_names:
+                suggestions.append(
+                    "Aggiungi un campo 'name' o 'title' per l'identificazione"
+                )
+            if "created_at" not in field_names:
+                suggestions.append(
+                    "Considera aggiungere 'created_at' per tracciare la creazione"
+                )
+            if "updated_at" not in field_names:
+                suggestions.append(
+                    "Considera aggiungere 'updated_at' per tracciare le modifiche"
+                )
 
         return {"success": True, "suggestions": suggestions}
 
@@ -364,3 +382,89 @@ class AIApply(MethodView):
 
             traceback.print_exc()
             abort(500, message=f"Errore interno: {str(e)}")
+
+
+class ConversationSchema(Schema):
+    project_id = fields.Integer(required=True)
+    limit = fields.Integer(required=False, load_default=20)
+
+
+class FeedbackSchema(Schema):
+    conversation_id = fields.Integer(required=True)
+    was_successful = fields.Boolean(required=True)
+    user_correction = fields.String(required=False, allow_none=True)
+    rating = fields.Integer(required=False, allow_none=True)
+
+
+@blp.route("/conversations")
+class AIConversations(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.arguments(ConversationSchema)
+    @blp.response(200)
+    def get(self, args):
+        """Get conversation history for a project"""
+        from backend.models import AIConversation
+
+        project_id = args.get("project_id")
+        limit = args.get("limit", 20)
+
+        if not project_id:
+            return {"success": False, "error": "project_id required"}, 400
+
+        conversations = (
+            AIConversation.query.filter_by(project_id=project_id)
+            .order_by(AIConversation.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        return {
+            "success": True,
+            "conversations": [
+                {
+                    "id": c.id,
+                    "user_message": c.user_message,
+                    "ai_response": c.ai_response[:200] if c.ai_response else None,
+                    "was_successful": c.was_successful,
+                    "rating": c.rating,
+                    "action_taken": c.action_taken,
+                    "created_at": c.created_at.isoformat() if c.created_at else None,
+                }
+                for c in conversations
+            ],
+        }
+
+
+@blp.route("/feedback")
+class AIFeedback(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.arguments(FeedbackSchema)
+    @blp.response(200)
+    def post(self, args):
+        """Save feedback for a conversation (for learning)"""
+        from backend.models import AIConversation
+
+        conversation_id = args.get("conversation_id")
+        was_successful = args.get("was_successful", False)
+        user_correction = args.get("user_correction")
+        rating = args.get("rating")
+
+        conversation = AIConversation.query.get(conversation_id)
+        if not conversation:
+            return {"success": False, "error": "Conversation not found"}, 404
+
+        conversation.was_successful = was_successful
+        if user_correction:
+            conversation.user_correction = user_correction
+        if rating:
+            conversation.rating = rating
+
+        try:
+            from backend.extensions import db
+
+            db.session.commit()
+            return {"success": True, "message": "Feedback salvato"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}, 500

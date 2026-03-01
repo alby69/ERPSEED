@@ -48,6 +48,31 @@ La risposta contiene:
 | Dati | GET | /api/projects/{id}/data/{model} |
 | Utenti | GET/POST | /api/v1/users |
 
+### API dei Moduli
+
+Ogni modulo pubblicato espone API per i suoi modelli:
+
+| Risorsa | Metodo | Endpoint |
+|---------|--------|----------|
+| Info Modulo | GET | /api/modules/{module_name} |
+| Lista | GET | /api/modules/{module_name}/{model_name} |
+| Crea | POST | /api/modules/{module_name}/{model_name} |
+| Leggi | GET | /api/modules/{module_name}/{model_name}/{id} |
+| Aggiorna | PUT | /api/modules/{module_name}/{model_name}/{id} |
+| Elimina | DELETE | /api/modules/{module_name}/{model_name}/{id} |
+
+**Esempio**:
+
+```bash
+# Info sul modulo vendite
+curl -X GET "http://localhost:5000/api/modules/vendite" \
+  -H "Authorization: Bearer <token>"
+
+# Lista ordini
+curl -X GET "http://localhost:5000/api/modules/vendite/ordini" \
+  -H "Authorization: Bearer <token>"
+```
+
 ### Esempio: Leggere Dati
 
 Per leggere i clienti dal tuo progetto:

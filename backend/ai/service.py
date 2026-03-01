@@ -1,75 +1,335 @@
 """
 AI Assistant Service for FlaskERP
 Uses LLM to generate ERP configurations from natural language
+With RAG Context Injection and Tool Calling support
 """
 
 import json
 import os
 import requests
-from typing import Optional, Dict, Any, List
+import logging
+from typing import Optional, Dict, Any, List, Callable
+
+from backend.ai.context import get_project_context, get_conversation_context
+from backend.models import AIConversation, db
+
+logger = logging.getLogger(__name__)
 
 
 class AIService:
-    """Service for interacting with AI models via OpenRouter"""
+    """Service for interacting with AI models via OpenRouter with RAG and Tool Calling"""
 
-    def __init__(self, model: str = "nvidia/nemotron-nano-9b-v2:free"):
+    def __init__(self, model: str = "deepseek/deepseek-chat-v3-0324"):
         self.model = model
         self.api_key = os.environ.get(
             "OPENROUTER_API_KEY",
             "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",
         )
         self.base_url = "https://openrouter.ai/api/v1"
+        self.tools = self._get_tool_definitions()
 
-    def generate_erp_config(self, user_request: str, project_id: int) -> Dict[str, Any]:
+    def _get_tool_definitions(self) -> List[Dict]:
+        """Define available tools for the AI to use"""
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": "generate_json",
+                    "description": "Generate FlaskERP configuration as JSON without applying it. Use this when user wants to review or edit the config before applying.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "user_request": {
+                                "type": "string",
+                                "description": "The user's natural language request",
+                            }
+                        },
+                        "required": ["user_request"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "apply_config",
+                    "description": "Apply a generated configuration to create actual models, fields, and tables in FlaskERP. Use after generating JSON to create the entities.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "config": {
+                                "type": "object",
+                                "description": "The JSON configuration to apply",
+                            }
+                        },
+                        "required": ["config"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "create_workflow",
+                    "description": "Create a workflow automation in FlaskERP",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "workflow_config": {
+                                "type": "object",
+                                "description": "Workflow configuration including name, trigger, and steps",
+                            }
+                        },
+                        "required": ["workflow_config"],
+                    },
+                },
+            },
+        ]
+
+    def generate_erp_config(
+        self,
+        user_request: str,
+        project_id: int,
+        user_id: Optional[int] = None,
+        apply_directly: bool = False,
+    ) -> Dict[str, Any]:
         """
         Generate ERP configuration from natural language request
 
         Args:
             user_request: Natural language description of what the user wants
             project_id: Target project ID
+            user_id: ID of the user making the request
+            apply_directly: If True, apply the config immediately
 
         Returns:
             Dictionary containing generated configuration and metadata
         """
-        import logging
+        logger.info(f"AI: Generating config for request: {user_request[:50]}...")
 
-        logging.info(f"AI: Generating config for request: {user_request[:50]}...")
-
-        system_prompt = self._build_system_prompt()
+        system_prompt = self._build_system_prompt(project_id)
         user_prompt = self._build_user_prompt(user_request, project_id)
 
-        response = self._call_llm(system_prompt, user_prompt)
+        response = self._call_llm_with_tools(system_prompt, user_prompt)
 
-        logging.info(f"AI: Raw response length: {len(response)}")
+        # Parse response and handle tools
+        result = self._handle_response(
+            response, user_request, project_id, user_id, apply_directly
+        )
 
-        return self._parse_response(response, user_request)
+        return result
 
-    def _build_system_prompt(self) -> str:
-        """Build the system prompt that defines AI behavior"""
-        return """You are an ERP configuration assistant for FlaskERP.
+    def _build_system_prompt(self, project_id: int) -> str:
+        """Build system prompt with project context (RAG)"""
 
-You MUST respond with ONLY valid JSON. No explanations, no markdown, no text before or after.
+        # Get project context via RAG
+        project_context = get_project_context(project_id)
+        conversation_context = get_conversation_context(project_id, limit=3)
 
-Response format:
-{"models": [{"name": "ModelName", "table": "table_name", "description": "...", "fields": [{"name": "field_name", "type": "string", "label": "Label", "required": false}]}]}
+        return f"""You are FlaskERP AI Assistant, an expert in configuring FlaskERP - a no-code ERP platform.
 
-Field types allowed: string, text, integer, decimal, boolean, date, datetime, select, relation.
-Only respond with JSON, nothing else."""
+## YOUR ROLE
+You help users create and manage ERP components (models, fields, workflows, modules) through natural language.
+
+## PROJECT CONTEXT
+{project_context}
+
+{conversation_context}
+
+## AVAILABLE FIELD TYPES
+- string: Short text (max 255 chars)
+- text: Long text
+- integer: Whole numbers
+- decimal: Numbers with decimals
+- boolean: True/False
+- date: Calendar date
+- datetime: Date and time
+- select: Dropdown with options
+- relation: Foreign key to another model (use 'target_table' in options)
+- calculated: Computed field with formula
+- summary: Aggregate from related records
+- file: File upload
+- image: Image upload
+- json: JSON data
+
+## RELATION CONFIGURATION
+For relations (1:N), use type: "relation" and set options:
+{{"target_table": "model_name", "field_label": "Display Name"}}
+
+## VALIDATION OPTIONS
+- required: Boolean
+- is_unique: Boolean
+- regex_pattern: String (validation regex)
+- min_value, max_value: For numbers
+- min_length, max_length: For strings
+
+## IMPORTANT RULES
+1. Always use the existing models in the project when creating relations
+2. Don't duplicate existing fields - check the project context first
+3. Generate clean, valid JSON
+4. Use tool calls appropriately:
+   - Use 'generate_json' to create config for review
+   - Use 'apply_config' to create actual database entities
+
+## RESPONSE FORMAT
+When NOT using tools, respond with valid JSON in this format:
+{{
+  "models": [{{
+    "name": "ModelName",
+    "table": "table_name", 
+    "description": "...",
+    "fields": [{{
+      "name": "field_name",
+      "type": "string",
+      "label": "Field Label",
+      "required": false,
+      "options": {{}}  // For select, relation, etc.
+    }}]
+  }}]
+}}
+
+Start by understanding the user's request, then use the appropriate tool or generate JSON."""
 
     def _build_user_prompt(self, user_request: str, project_id: int) -> str:
-        """Build the user prompt with the specific request"""
+        """Build user prompt"""
         return f"""Project ID: {project_id}
 
 User Request: {user_request}
 
-Generate the FlaskERP configuration in JSON format:"""
+What would you like me to create or modify? I'll analyze the project context and help you build the best solution."""
 
-    def _call_llm(self, system_prompt: str, user_prompt: str) -> str:
-        """
-        Call the OpenRouter API (synchronous)
-        """
-        import logging
+    def _call_llm_with_tools(
+        self, system_prompt: str, user_prompt: str
+    ) -> Dict[str, Any]:
+        """Call OpenRouter API with tool calling support"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://flaskerp.local",
+                    "X-Title": "FlaskERP AI Assistant",
+                },
+                json={
+                    "model": self.model,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    "tools": self.tools,
+                    "tool_choice": "auto",
+                    "temperature": 0.3,
+                    "max_tokens": 2000,
+                },
+                timeout=60,
+            )
 
+            logger.info(f"AI API response status: {response.status_code}")
+
+            if response.status_code != 200:
+                logger.error(f"AI API error: {response.text}")
+                return {
+                    "error": f"API Error: {response.status_code}",
+                    "text": response.text,
+                }
+
+            result = response.json()
+            logger.info(f"AI response: {json.dumps(result)[:500]}")
+
+            return result
+
+        except Exception as e:
+            logger.error(f"AI call error: {e}")
+            return {"error": str(e)}
+
+    def _handle_response(
+        self,
+        response: Dict,
+        user_request: str,
+        project_id: int,
+        user_id: Optional[int],
+        apply_directly: bool,
+    ) -> Dict[str, Any]:
+        """Handle the AI response, including tool calls"""
+
+        try:
+            if "error" in response:
+                return {"success": False, "error": response["error"]}
+
+            # Check for tool calls in response
+            if "choices" in response and len(response["choices"]) > 0:
+                message = response["choices"][0].get("message", {})
+
+                # Check if AI used a tool
+                if "tool_calls" in message:
+                    tool_calls = message["tool_calls"]
+                    results = []
+
+                    for tool_call in tool_calls:
+                        tool_name = tool_call["function"]["name"]
+                        tool_args = json.loads(tool_call["function"]["arguments"])
+
+                        logger.info(f"AI used tool: {tool_name}")
+
+                        if tool_name == "generate_json":
+                            # Generate JSON config
+                            result = self._generate_config_internal(
+                                tool_args.get("user_request", user_request), project_id
+                            )
+                            results.append({"tool": "generate_json", "result": result})
+
+                        elif tool_name == "apply_config":
+                            # Apply config directly
+                            result = self._apply_config_internal(
+                                tool_args.get("config", {}), project_id, user_id
+                            )
+                            results.append({"tool": "apply_config", "result": result})
+
+                    if results:
+                        return {
+                            "success": True,
+                            "tool_calls": results,
+                            "message": f"Executed {len(results)} tool(s)",
+                        }
+
+                # No tool call - parse JSON from content
+                content = message.get("content", "")
+                return self._parse_response(content, user_request)
+
+            return {"success": False, "error": "No response from AI"}
+
+        except Exception as e:
+            logger.error(f"Error handling response: {e}")
+            return {"success": False, "error": str(e)}
+
+    def _generate_config_internal(self, user_request: str, project_id: int) -> Dict:
+        """Internal method to generate config"""
+        # Simple generation without tools
+        system_prompt = self._build_system_prompt(project_id)
+        user_prompt = f"Generate FlaskERP configuration: {user_request}"
+
+        response = self._call_llm_simple(system_prompt, user_prompt)
+        return self._parse_response(response, user_request)
+
+    def _apply_config_internal(
+        self, config: Dict, project_id: int, user_id: Optional[int]
+    ) -> Dict[str, Any]:
+        """Apply configuration to create actual entities - returns config for UI"""
+        try:
+            # For now, return the config so user can review and apply via UI
+            # This is safer and gives user control
+            return {
+                "success": True,
+                "config": config,
+                "message": "Configurazione generata. Puoi applicarla tramite il Builder.",
+                "action_required": "review_and_apply",
+            }
+
+        except Exception as e:
+            logger.error(f"Error preparing config: {e}")
+            return {"success": False, "error": str(e)}
+
+    def _call_llm_simple(self, system_prompt: str, user_prompt: str) -> str:
+        """Simple LLM call without tools"""
         try:
             response = requests.post(
                 f"{self.base_url}/chat/completions",
@@ -91,46 +351,21 @@ Generate the FlaskERP configuration in JSON format:"""
                 timeout=30,
             )
 
-            logging.info(f"AI API response status: {response.status_code}")
-            logging.info(f"AI API response text: {response.text[:1000] if response.text else 'EMPTY'}")
-            
-            if not response.text:
-                logging.error("AI API returned empty response")
-                return json.dumps({"error": "Empty response from AI API"})
-
             if response.status_code != 200:
-                return json.dumps(
-                    {"error": f"API Error {response.status_code}: {response.text}"}
-                )
+                return json.dumps({"error": f"API Error: {response.status_code}"})
 
             result = response.json()
-
-            logging.info(f"AI full response: {result}")
-
             if "choices" in result and len(result["choices"]) > 0:
-                content = result["choices"][0]["message"]["content"]
-                logging.info(f"AI content: {content[:500]}")
-                return content
-            elif "error" in result:
-                return json.dumps({"error": result["error"]})
-            else:
-                return json.dumps({"error": "Unexpected response format"})
+                return result["choices"][0]["message"]["content"]
 
-        except requests.exceptions.RequestException as e:
-            logging.error(f"AI connection error: {e}")
-            return json.dumps({"error": f"Connection error: {str(e)}"})
+            return json.dumps({"error": "No response"})
+
         except Exception as e:
-            logging.error(f"AI error: {e}")
-            return json.dumps({"error": f"Error: {str(e)}"})
+            return json.dumps({"error": str(e)})
 
     def _parse_response(self, response: str, user_request: str) -> Dict[str, Any]:
         """Parse the LLM response into a structured format"""
-        import re
-        import logging
-        
-        # Debug: log the raw response
-        logging.info(f"AI raw response: {response[:300]}...")
-        
+
         # Check for error in response
         try:
             error_check = json.loads(response)
@@ -144,165 +379,89 @@ Generate the FlaskERP configuration in JSON format:"""
             pass
 
         try:
-            # Try to extract JSON from response
+            import re
+
+            # Clean up the response
             json_str = response.strip()
 
-            # Debug: log the raw response
-            import logging
-            logging.info(f"AI raw response: {json_str[:500]}")
+            # Remove markdown code blocks
+            json_str = re.sub(r"^```json\s*", "", json_str)
+            json_str = re.sub(r"^```\s*", "", json_str)
+            json_str = re.sub(r"\s*```$", "", json_str)
 
-            # Fix common JSON issues from LLM
-            # Remove trailing commas before closing braces/brackets (multiple passes)
-            for _ in range(3):
-                json_str = re.sub(r",(\s*[}\]])", r"\1", json_str)
+            # Find JSON block
+            brace_start = json_str.find("{")
+            if brace_start > 0:
+                json_str = json_str[brace_start:]
 
-            # Also fix unquoted booleans/null
+            # Find closing brace
+            brace_end = json_str.rfind("}")
+            if brace_end >= 0:
+                json_str = json_str[: brace_end + 1]
+
+            # Fix common JSON issues
+            json_str = re.sub(r",(\s*[}\]])", r"\1", json_str)
             json_str = re.sub(r"\btrue\b", "true", json_str)
             json_str = re.sub(r"\bfalse\b", "false", json_str)
             json_str = re.sub(r"\bnull\b", "null", json_str)
 
-            # Find JSON block - take from first { to last }
-            brace_start = json_str.find('{')
-            brace_end = json_str.rfind('}')
-            
-            if brace_start != -1 and brace_end != -1 and brace_end >= brace_start:
-                json_str = json_str[brace_start:brace_end+1]
-            elif brace_start != -1:
-                json_str = json_str[brace_start:]
+            # Remove extra fields that AI sometimes adds
+            json_str = re.sub(r',?\s*"relations"\s*:\s*\[[^\]]*\]', "", json_str)
+            json_str = re.sub(r',?\s*"foreign_keys"\s*:\s*\[[^\]]*\]', "", json_str)
 
-            # Clean up the JSON string before parsing
-            json_str = json_str.strip()
-            
-            # Handle case where JSON is valid but has extra content
-            # Try parsing, if it fails try to find valid JSON prefix
-            try:
-                config = json.loads(json_str)
-                return {
-                    "success": True,
-                    "config": config,
-                    "user_request": user_request,
-                    "message": "Configurazione generata con successo",
-                }
-            except json.JSONDecodeError as first_error:
-                # Try to fix common issues first
-                import re
-                
-                for _ in range(3):
-                    json_str = re.sub(r",(\s*[}\]])", r"\1", json_str)
-                
-                try:
-                    config = json.loads(json_str)
-                    return {
-                        "success": True,
-                        "config": config,
-                        "user_request": user_request,
-                        "message": "Configurazione generata (con alcune correzioni)",
-                    }
-                except:
-                    # Last resort: Find valid JSON by counting braces
-                    depth = 0
-                    valid_end = len(json_str)
-                    for i, c in enumerate(json_str):
-                        if c == '{':
-                            depth += 1
-                        elif c == '}':
-                            depth -= 1
-                            if depth == 0:
-                                valid_end = i + 1
-                                break
-                    json_str = json_str[:valid_end]
-                    
-                    config = json.loads(json_str)
-                    return {
-                        "success": True,
-                        "config": config,
-                        "user_request": user_request,
-                        "message": "Configurazione generata",
-                    }
+            config = json.loads(json_str)
+
+            return {
+                "success": True,
+                "config": config,
+                "user_request": user_request,
+                "message": "Configurazione generata con successo",
+            }
+
         except json.JSONDecodeError as e:
-            # As last resort, return raw response as error for debugging
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"[AI_SERVICE] JSON parse error: {e}")
-            logger.error(f"[AI_SERVICE] Raw response: {response[:2000]}")
-            
-            # Try to extract partial JSON from the response
-            try:
-                import re
-                # Try to find JSON block
-                brace_start = response.find('{')
-                brace_end = response.rfind('}')
-                if brace_start != -1 and brace_end != -1 and brace_end >= brace_start:
-                    json_str = response[brace_start:brace_end+1]
-                    # Try to fix common issues
-                    for _ in range(3):
-                        json_str = re.sub(r",(\s*[}\]])", r"\1", json_str)
-                    config = json.loads(json_str)
-                    return {
-                        "success": True,
-                        "config": config,
-                        "user_request": user_request,
-                        "message": "Configurazione generata (con alcune correzioni)",
-                    }
-            except Exception as parse_attempt:
-                logger.error(f"[AI_SERVICE] Partial parse failed: {parse_attempt}")
-            
+            logger.error(f"JSON parse error: {e}")
+            logger.error(f"Raw response: {response[:500]}")
             return {
                 "success": False,
-                "error": f"Errore nel parsing della risposta: {str(e)}",
-                "raw_response": response[:1000],
+                "error": f"Parse error: {str(e)}",
+                "raw_response": response[:500],
                 "user_request": user_request,
             }
 
-    def chat(self, message: str, context: Optional[Dict] = None) -> Dict[str, Any]:
-        """
-        General chat with the AI assistant
-        Can answer questions about FlaskERP or help with configurations
-        """
-        system_prompt = """You are a helpful ERP assistant for FlaskERP. 
-
-You can help users with:
-- Understanding FlaskERP concepts and architecture
-- Designing data models for their business
-- Configuring the system
-- Troubleshooting issues
-
-Be concise, friendly, and practical. Use Italian if the user writes in Italian."""
-
-        if context:
-            system_prompt += f"\n\nCurrent context: {json.dumps(context)}"
-
-        response = self._call_llm(system_prompt, message)
-
-        return {"success": True, "message": response, "user_message": message}
-
-    def suggest_improvements(self, model_config: Dict[str, Any]) -> List[str]:
-        """
-        Analyze an existing model configuration and suggest improvements
-        """
-        system_prompt = """You are an ERP design expert. Analyze the following model configuration 
-and suggest improvements. Consider:
-- Missing fields that would be useful
-- Better field types
-- Additional relationships
-- Validations that should be added
-- Performance considerations
-
-Respond with a JSON array of suggestions."""
-
-        response = self._call_llm(system_prompt, json.dumps(model_config, indent=2))
-
+    def save_conversation(
+        self,
+        project_id: int,
+        user_id: int,
+        user_message: str,
+        ai_response: str,
+        was_successful: bool = False,
+        user_correction: Optional[str] = None,
+        action_taken: Optional[str] = None,
+    ) -> bool:
+        """Save conversation to database for learning"""
         try:
-            suggestions = json.loads(response)
-            return suggestions if isinstance(suggestions, list) else []
-        except:
-            return ["Analisi non disponibile"]
+            conversation = AIConversation(
+                project_id=project_id,
+                user_id=user_id,
+                user_message=user_message,
+                ai_response=ai_response[:5000] if ai_response else None,
+                was_successful=was_successful,
+                user_correction=user_correction,
+                action_taken=action_taken,
+                context_snapshot=get_project_context(project_id),
+            )
+            db.session.add(conversation)
+            db.session.commit()
+            return True
+        except Exception as e:
+            logger.error(f"Error saving conversation: {e}")
+            return False
 
 
-# Singleton instance
-ai_service = AIService()
-
-
-def get_ai_service() -> AIService:
+# Legacy compatibility - keep old method name
+def get_ai_service():
     """Get the AI service singleton"""
-    return ai_service
+    return AIService()
+
+
+ai_service = AIService()

@@ -420,3 +420,38 @@ class SysDashboard(BaseModel):
     refresh_interval = db.Column(db.Integer, default=0)  # 0 = no auto-refresh
     default_library = db.Column(db.String(20))  # override globale
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"))
+
+
+class AIConversation(BaseModel):
+    """
+    Stores AI conversations for learning and context.
+    Enables the AI to learn from previous interactions.
+    """
+
+    __tablename__ = "ai_conversations"
+
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    user_message = db.Column(db.Text, nullable=False)
+    ai_response = db.Column(db.Text)
+
+    # Feedback for learning
+    was_successful = db.Column(db.Boolean, default=False)
+    user_correction = db.Column(db.Text, nullable=True)
+    rating = db.Column(db.Integer, nullable=True)  # 1-5
+
+    # Action taken
+    action_taken = db.Column(
+        db.String(50)
+    )  # 'generate_json', 'create_model', 'apply_config', etc.
+    entities_created = db.Column(db.JSON)  # List of created entity IDs
+
+    # Context snapshot (project state at time of conversation)
+    context_snapshot = db.Column(db.Text)
+
+    project = db.relationship("Project")
+    user = db.relationship("User")
+
+    def __repr__(self):
+        return f"<AIConversation project={self.project_id} user={self.user_id}>"

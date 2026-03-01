@@ -15,6 +15,8 @@ import { apiFetch } from '../utils';
 import { useWorkflowBuilderStore } from '../stores/workflowBuilderStore';
 import { nodeTypes } from '../components/workflow/WorkflowNodes';
 import WorkflowPropertiesPanel from '../components/workflow/WorkflowPropertiesPanel';
+import ImportExportToolbar from '../components/ui/ImportExportToolbar';
+import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
 
 const { Option } = Select;
 
@@ -282,6 +284,14 @@ const WorkflowBuilder = () => {
           >
             Test
           </Button>
+          <Divider type="vertical" />
+          <ImportExportToolbar 
+            type="workflow" 
+            projectId={projectId || localStorage.getItem('currentProjectId') || 1}
+            showExport={false}
+            showImport={true}
+            importConfigLabel="Importa Workflow"
+          />
         </Space>
       </Card>
 
@@ -357,15 +367,26 @@ const WorkflowBuilder = () => {
                 </Button>
               ]}
             >
-              <List.Item.Meta
-                title={item.name}
-                description={
-                  <Space>
-                    <Tag color="blue">{item.trigger_event}</Tag>
-                    <span>{item.steps_count} step</span>
-                  </Space>
-                }
-              />
+              <ImportExportContextMenu 
+                type="workflow"
+                entityId={item.id}
+                entityName={item.name}
+                projectId={projectId || localStorage.getItem('currentProjectId') || 1}
+                showExportConfig={true}
+                showExportData={false}
+              >
+                <div style={{ cursor: 'context-menu', width: '100%' }}>
+                  <List.Item.Meta
+                    title={item.name}
+                    description={
+                      <Space>
+                        <Tag color="blue">{item.trigger_event}</Tag>
+                        <span>{item.steps_count} step</span>
+                      </Space>
+                    }
+                  />
+                </div>
+              </ImportExportContextMenu>
             </List.Item>
           )}
         />

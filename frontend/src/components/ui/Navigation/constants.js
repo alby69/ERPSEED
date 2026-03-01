@@ -35,6 +35,7 @@ export const DEFAULT_ICONS = {
   publish: 'UploadOutlined',
   browse: 'SearchOutlined',
   ai: 'RobotOutlined',
+  importExport: 'SwapOutlined',
 };
 
 // Permission levels
@@ -125,8 +126,15 @@ export const DEFAULT_NAVIGATIONS = {
     {
       id: 'modules',
       label: 'Modules',
-      path: '/modules',
+      path: '/admin/custom-modules',
       icon: DEFAULT_ICONS.modules,
+      permission: PERMISSION_LEVELS.ADMIN,
+    },
+    {
+      id: 'project-import-export',
+      label: 'Import/Export',
+      path: '/admin/project-import-export',
+      icon: DEFAULT_ICONS.importExport,
       permission: PERMISSION_LEVELS.ADMIN,
     },
     {

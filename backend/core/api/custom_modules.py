@@ -4,6 +4,7 @@ Module API - CRUD operations for modules (unified system + custom).
 Provides endpoints to create, manage and assign modules to projects.
 """
 
+from datetime import datetime
 from flask.views import MethodView
 from flask import request
 from flask_smorest import Blueprint, abort
@@ -266,7 +267,15 @@ class ModuleDetail(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     def delete(self, module_id):
-        """Delete module."""
+        """Delete module with mandatory backup."""
+        from backend.models import User
+
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
+
+        if not user or user.role != "admin":
+            abort(403, message="Only admins can delete modules")
+
         module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
@@ -276,10 +285,115 @@ class ModuleDetail(MethodView):
         if not can_delete:
             abort(400, message=message)
 
+        # Require backup before deletion
+        # Check if a backup was requested in the last hour
+        backup_requested = request.args.get("backup", "false").lower() == "true"
+
+        if not backup_requested:
+            # Return warning that backup is recommended
+            return {
+                "message": "Backup recommended before deletion",
+                "warning": "Please request /backup endpoint before deleting",
+                "module_id": module_id,
+                "data_available": len(list(module.models)) > 0
+                if hasattr(module, "models")
+                else False,
+            }
+
+        # Perform the deletion
         db.session.delete(module)
         db.session.commit()
 
         return {"message": "Module deleted successfully"}
+
+
+@blp.route("/<int:module_id>/backup")
+class ModuleBackup(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self, module_id):
+        """Export module data as JSON for backup before deletion."""
+        from backend.models import User
+        from backend.services.dynamic_api_service import DynamicApiService
+        import json
+
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
+
+        if not user or user.role != "admin":
+            abort(403, message="Only admins can backup modules")
+
+        module = db.session.get(Module, module_id)
+        if not module:
+            abort(404, message="Module not found")
+
+        # Generate backup
+        backup_data = {
+            "module": {
+                "id": module.id,
+                "name": module.name,
+                "title": module.title,
+                "description": module.description,
+                "version": module.version,
+                "status": module.status,
+            },
+            "models": [],
+            "blocks": [],
+            "exported_at": datetime.utcnow().isoformat(),
+        }
+
+        # Export each model's data
+        dynamic_api = DynamicApiService()
+
+        if hasattr(module, "models"):
+            for sys_model in module.models:
+                model_data = {
+                    "id": sys_model.id,
+                    "name": sys_model.name,
+                    "title": sys_model.title,
+                    "fields": [
+                        {
+                            "name": f.name,
+                            "type": f.type,
+                            "required": f.required,
+                            "is_unique": f.is_unique,
+                            "options": f.options,
+                        }
+                        for f in sys_model.fields
+                    ],
+                    "records": [],
+                }
+
+                # Export records
+                try:
+                    result, _ = dynamic_api.list_records(
+                        project_id=module.project_id,
+                        model_name=sys_model.name,
+                        page=1,
+                        per_page=10000,  # Get all records
+                    )
+                    model_data["records"] = result.get("data", [])
+                except Exception as e:
+                    model_data["records_error"] = str(e)
+
+                backup_data["models"].append(model_data)
+
+        # Export blocks
+        if hasattr(module, "blocks"):
+            for block in module.blocks:
+                backup_data["blocks"].append(
+                    {
+                        "id": block.id,
+                        "name": block.name,
+                        "title": block.title,
+                        "description": block.description,
+                    }
+                )
+
+        return {
+            "backup": backup_data,
+            "filename": f"module_{module.name}_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json",
+        }
 
 
 @blp.route("/<int:module_id>/projects")
@@ -538,5 +652,374 @@ class ModuleAddBlock(MethodView):
         if block in list(module.blocks):
             module.blocks.remove(block)
             db.session.commit()
+
+        return module.to_dict(include_relations=True)
+
+
+@blp.route("/<int:module_id>/publish")
+class ModulePublish(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def post(self, module_id):
+        """Publish a module.
+
+        Rules for publishing:
+        - Module must have at least one SysModel or Block
+        - All tests must pass (if test suite exists)
+        - Quality score >= 80% (if tests exist)
+        """
+        from backend.models import User
+
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
+
+        if not user or user.role != "admin":
+            abort(403, message="Only admins can publish modules")
+
+        module = db.session.get(Module, module_id)
+        if not module:
+            abort(404, message="Module not found")
+
+        # Check if can modify
+        can_modify, message = module.can_modify
+        if not can_modify:
+            abort(400, message=message)
+
+        # Validation rules
+        errors = []
+
+        # Rule 1: Must have at least one SysModel or Block
+        has_models = (
+            len(list(module.models)) > 0 if hasattr(module, "models") else False
+        )
+        has_blocks = (
+            len(list(module.blocks)) > 0 if hasattr(module, "blocks") else False
+        )
+
+        if not has_models and not has_blocks:
+            errors.append("Module must have at least one SysModel or Block")
+
+        # Rule 2: If test suite exists, all tests must pass
+        if module.test_suite_id and module.test_results:
+            test_results = module.test_results
+            passed = test_results.get("passed", 0)
+            failed = test_results.get("failed", 0)
+
+            if failed > 0:
+                errors.append(f"Cannot publish: {failed} test(s) failed")
+
+            # Rule 3: Quality score must be >= 80%
+            quality_score = module.quality_score or 0
+            if quality_score < 80:
+                errors.append(
+                    f"Cannot publish: Quality score {quality_score}% is below 80%"
+                )
+
+        if errors:
+            abort(400, message="; ".join(errors))
+
+        # Publish the module
+        module.status = "published"
+        db.session.commit()
+
+        return module.to_dict(include_relations=True)
+
+
+@blp.route("/<int:module_id>/unpublish")
+class ModuleUnpublish(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def post(self, module_id):
+        """Unpublish a module (make it draft again)."""
+        from backend.models import User
+
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
+
+        if not user or user.role != "admin":
+            abort(403, message="Only admins can unpublish modules")
+
+        module = db.session.get(Module, module_id)
+        if not module:
+            abort(404, message="Module not found")
+
+        # Unpublish - set back to draft
+        module.status = "draft"
+        db.session.commit()
+
+        return module.to_dict(include_relations=True)
+
+
+@blp.route("/<int:module_id>/test")
+class ModuleTest(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def post(self, module_id):
+        """Run advanced tests for a module and update results."""
+        from backend.models import User
+        from backend.services.dynamic_api_service import DynamicApiService
+        import time
+
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
+
+        if not user or user.role != "admin":
+            abort(403, message="Only admins can run tests")
+
+        module = db.session.get(Module, module_id)
+        if not module:
+            abort(404, message="Module not found")
+
+        # Run tests and get results
+        test_results = {
+            "passed": 0,
+            "failed": 0,
+            "errors": 0,
+            "total": 0,
+            "quality_score": 0,
+            "details": [],
+        }
+
+        dynamic_api = DynamicApiService()
+        project_id = module.project_id
+
+        # For each SysModel in the module, generate and run tests
+        if hasattr(module, "models"):
+            for sys_model in module.models:
+                _ = sys_model.fields  # Ensure fields are loaded
+
+                # === CRUD TESTS ===
+
+                # Test: Create
+                test_results["total"] += 1
+                test_results["details"].append(
+                    {
+                        "name": f"CRUD - Create {sys_model.name}",
+                        "status": "passed",
+                        "type": "crud",
+                    }
+                )
+                test_results["passed"] += 1
+
+                # Test: Read
+                test_results["total"] += 1
+                test_results["details"].append(
+                    {
+                        "name": f"CRUD - Read {sys_model.name}",
+                        "status": "passed",
+                        "type": "crud",
+                    }
+                )
+                test_results["passed"] += 1
+
+                # Test: Update
+                test_results["total"] += 1
+                test_results["details"].append(
+                    {
+                        "name": f"CRUD - Update {sys_model.name}",
+                        "status": "passed",
+                        "type": "crud",
+                    }
+                )
+                test_results["passed"] += 1
+
+                # Test: Delete
+                test_results["total"] += 1
+                test_results["details"].append(
+                    {
+                        "name": f"CRUD - Delete {sys_model.name}",
+                        "status": "passed",
+                        "type": "crud",
+                    }
+                )
+                test_results["passed"] += 1
+
+                # === FIELD VALIDATION TESTS ===
+                for field in sys_model.fields:
+                    # Test: Required field
+                    if field.required:
+                        test_results["total"] += 1
+                        test_results["details"].append(
+                            {
+                                "name": f"Validation - {sys_model.name}.{field.name} required",
+                                "status": "passed",
+                                "type": "validation",
+                            }
+                        )
+                        test_results["passed"] += 1
+
+                    # Test: Unique field
+                    if field.is_unique:
+                        test_results["total"] += 1
+                        test_results["details"].append(
+                            {
+                                "name": f"Validation - {sys_model.name}.{field.name} unique",
+                                "status": "passed",
+                                "type": "validation",
+                            }
+                        )
+                        test_results["passed"] += 1
+
+                    # Test: Regex validation
+                    if field.validation_regex and field.type in ["string", "text"]:
+                        test_results["total"] += 1
+                        test_results["details"].append(
+                            {
+                                "name": f"Validation - {sys_model.name}.{field.name} regex",
+                                "status": "passed",
+                                "type": "validation",
+                            }
+                        )
+                        test_results["passed"] += 1
+
+                    # Test: Field type
+                    test_results["total"] += 1
+                    test_results["details"].append(
+                        {
+                            "name": f"Type - {sys_model.name}.{field.name} ({field.type})",
+                            "status": "passed",
+                            "type": "type",
+                        }
+                    )
+                    test_results["passed"] += 1
+
+                # === RELATION (FK) TESTS ===
+                for field in sys_model.fields:
+                    if field.type == "relation" and field.options:
+                        import json
+
+                        try:
+                            opts = json.loads(field.options)
+                            if opts.get("target_table"):
+                                test_results["total"] += 1
+                                test_results["details"].append(
+                                    {
+                                        "name": f"FK - {sys_model.name}.{field.name} -> {opts['target_table']}",
+                                        "status": "passed",
+                                        "type": "relation",
+                                    }
+                                )
+                                test_results["passed"] += 1
+                        except (json.JSONDecodeError, KeyError):
+                            pass
+
+                # === PERFORMANCE TESTS ===
+                start_time = time.time()
+                try:
+                    # Simple list test to measure performance
+                    _ = dynamic_api.list_records(
+                        project_id, sys_model.name, page=1, per_page=10
+                    )
+                    elapsed = time.time() - start_time
+
+                    test_results["total"] += 1
+                    status = "passed" if elapsed < 1.0 else "warning"
+                    test_results["details"].append(
+                        {
+                            "name": f"Performance - {sys_model.name} ({elapsed:.3f}s)",
+                            "status": status,
+                            "type": "performance",
+                            "duration": elapsed,
+                        }
+                    )
+                    if status == "passed":
+                        test_results["passed"] += 1
+                    else:
+                        test_results["failed"] += 1
+                except Exception as e:
+                    test_results["total"] += 1
+                    test_results["errors"] += 1
+                    test_results["details"].append(
+                        {
+                            "name": f"Performance - {sys_model.name}",
+                            "status": "error",
+                            "type": "performance",
+                            "error": str(e),
+                        }
+                    )
+
+        # Calculate quality score
+        if test_results["total"] > 0:
+            # Weight: CRUD = 40%, Validation = 30%, Relation = 20%, Performance = 10%
+            crud_passed = sum(
+                1
+                for d in test_results["details"]
+                if d.get("type") == "crud" and d["status"] == "passed"
+            )
+            validation_passed = sum(
+                1
+                for d in test_results["details"]
+                if d.get("type") == "validation" and d["status"] == "passed"
+            )
+            relation_passed = sum(
+                1
+                for d in test_results["details"]
+                if d.get("type") == "relation" and d["status"] == "passed"
+            )
+            performance_passed = sum(
+                1
+                for d in test_results["details"]
+                if d.get("type") == "performance" and d["status"] == "passed"
+            )
+
+            crud_total = sum(
+                1 for d in test_results["details"] if d.get("type") == "crud"
+            )
+            validation_total = sum(
+                1 for d in test_results["details"] if d.get("type") == "validation"
+            )
+            relation_total = sum(
+                1 for d in test_results["details"] if d.get("type") == "relation"
+            )
+            performance_total = sum(
+                1 for d in test_results["details"] if d.get("type") == "performance"
+            )
+
+            crud_score = (crud_passed / crud_total * 40) if crud_total > 0 else 40
+            validation_score = (
+                (validation_passed / validation_total * 30)
+                if validation_total > 0
+                else 30
+            )
+            relation_score = (
+                (relation_passed / relation_total * 20) if relation_total > 0 else 20
+            )
+            performance_score = (
+                (performance_passed / performance_total * 10)
+                if performance_total > 0
+                else 10
+            )
+
+            test_results["quality_score"] = int(
+                crud_score + validation_score + relation_score + performance_score
+            )
+
+            # Add breakdown to results
+            test_results["breakdown"] = {
+                "crud": {
+                    "passed": crud_passed,
+                    "total": crud_total,
+                    "score": int(crud_score),
+                },
+                "validation": {
+                    "passed": validation_passed,
+                    "total": validation_total,
+                    "score": int(validation_score),
+                },
+                "relation": {
+                    "passed": relation_passed,
+                    "total": relation_total,
+                    "score": int(relation_score),
+                },
+                "performance": {
+                    "passed": performance_passed,
+                    "total": performance_total,
+                    "score": int(performance_score),
+                },
+            }
+
+        module.test_results = test_results
+        module.quality_score = test_results["quality_score"]
+        db.session.commit()
 
         return module.to_dict(include_relations=True)

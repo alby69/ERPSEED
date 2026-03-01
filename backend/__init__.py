@@ -38,6 +38,8 @@ from .core.api.system import blp as system_bp
 from .core.api.pdf import pdf_bp
 from .core.api.test_runner import blp as test_runner_bp
 from .core.api.custom_modules import blp as custom_modules_bp
+from .core.api.module_api import blp as module_api_bp
+from .core.api.import_export import blp as import_export_bp
 
 # Import Entities (Vision Archetypes)
 from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
@@ -291,6 +293,8 @@ def create_app(db_url=None):
     api.register_blueprint(marketplace_api_blp)
     api.register_blueprint(ai_bp)
     api.register_blueprint(custom_modules_bp)
+    api.register_blueprint(module_api_bp)
+    api.register_blueprint(import_export_bp)
 
     # Vision Entities (Archetypes)
     api.register_blueprint(soggetto_blp, url_prefix="/api/v1")

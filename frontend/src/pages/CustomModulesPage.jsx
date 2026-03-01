@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Tag, Modal, Form, Input, Select, message, Spin, Alert, Space, Badge } from 'antd';
+import { Card, Table, Button, Tag, Modal, Form, Input, Select, message, Spin, Alert, Space, Badge, Dropdown } from 'antd';
 import { apiFetch } from '@/utils';
 import { Layout } from '../components';
 import { useParams } from 'react-router-dom';
+import ImportExportToolbar from '../components/ui/ImportExportToolbar';
+import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
 
 const { TextArea } = Input;
 
@@ -131,11 +133,21 @@ function CustomModulesPage() {
             dataIndex: 'name',
             key: 'name',
             render: (text, record) => (
-                <div>
-                    <strong>{text}</strong>
-                    <br />
-                    <small style={{ color: '#888' }}>{record.title}</small>
-                </div>
+                <ImportExportContextMenu 
+                    type="module"
+                    entityId={record.id}
+                    entityName={text}
+                    projectId={projectId || localStorage.getItem('currentProjectId') || 1}
+                    onImportComplete={fetchModules}
+                    showExportConfig={true}
+                    showExportData={true}
+                >
+                    <div style={{ cursor: 'context-menu' }}>
+                        <strong>{text}</strong>
+                        <br />
+                        <small style={{ color: '#888' }}>{record.title}</small>
+                    </div>
+                </ImportExportContextMenu>
             )
         },
         {
@@ -228,6 +240,13 @@ function CustomModulesPage() {
                     title="Moduli Personalizzati"
                     extra={
                         <Space>
+                            <ImportExportToolbar 
+                                type="module" 
+                                projectId={projectId || localStorage.getItem('currentProjectId') || 1}
+                                showExport={false}
+                                showImport={true}
+                                importConfigLabel="Importa Modulo"
+                            />
                             <Button onClick={fetchModules}>
                                 Aggiorna
                             </Button>

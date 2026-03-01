@@ -43,15 +43,15 @@ L'AI genera:
 - Campi: data, totale, stato
 - Ordine "cliente" di tipo relation
 
-**Esempio 3: Complesso**
+**Esempio 3: Complesso - Gestione Parco Mezzi**
 
-> "Serve un sistema per tracciare i macchinari con: nome, marca, modello, data acquisto, data prossima manutenzione, stato (attivo/fermo/rotto), e collegato al fornitore di ricambi."
+> "Crea un sistema per gestione parco mezzi con veicoli, conducenti e manutenzione"
 
 L'AI genera:
-- Modello "Macchinario"
-- Relazione a Fornitore
-- Campi con tipi appropriati
-- Select per stato
+- Modello "Veicolo" (targa, marca, modello, anno, stato)
+- Modello "Conducente" (nome, cognome, numero patente)
+- Modello "Manutenzione" (veicolo, tipo, date, costo)
+- Modello "Assegnazione" (veicolo-conducente)
 
 ---
 
@@ -60,12 +60,16 @@ L'AI genera:
 | Componente | Stato | Note |
 |------------|-------|------|
 | Architettura base | ✅ Completo | Service + API |
-| Integrazione LLM (OpenRouter) | ✅ Completo | NVIDIA Nemotron, Qwen3 |
+| Integrazione LLM (OpenRouter) | ✅ Completo | DeepSeek V3 |
+| RAG Context Injection | ✅ Completo | Context from project schema |
+| Tool Calling | ✅ Completo | generate_json, apply_config |
 | Generazione modelli da linguaggio naturale | ✅ Completo | Genera JSON config |
 | Interfaccia chat frontend | ✅ Completo | Modal con chat |
 | Preview JSON modificabile | ✅ Completo | Modale con TextArea |
 | Applicazione configurazione al DB | ✅ Completo | Crea modelli, campi, tabelle |
-| Autenticazione JWT | ⚠️ Disabilitata | Disabilitata per testing |
+| Feedback Loop (Learning) | ✅ Completo | Salva conversazioni in DB |
+| Cronologia conversazioni | ✅ Completo | UI con history panel |
+| Autenticazione JWT | ✅ Abilitata | Protegge tutti gli endpoint |
 
 ---
 
@@ -107,23 +111,61 @@ L'AI Assistant è accessibile dall'interfaccia principale attraverso:
 L'AI Assistant è composto da:
 
 - **Backend Service**: `backend/ai/service.py`
+- **Context Builder (RAG)**: `backend/ai/context.py`
 - **Backend API**: `backend/ai/api.py`
 - **Frontend**: `frontend/src/components/ui/AIAssistant.jsx`
 
 ### Stack Tecnologico
 
-- **LLM**: OpenRouter con modelli `nvidia/nemotron-nano-9b-v2:free` e `qwen/qwen3-coder:free`
+- **LLM**: OpenRouter con modello `deepseek/deepseek-chat-v3-0324`
+- **RAG**: Context Injection dal schema del progetto
+- **Tool Calling**: generate_json, apply_config, create_workflow
+- **Database**: AIConversation per feedback loop
 - **Frontend**: React con Ant Design (Modal, List, Input)
-- **API**: Flask REST endpoints con Flask-Smorest
 
-### Endpoint API
+### Context Injection (RAG)
+
+Il sistema costruisce automaticamente il contesto includendo:
+
+- **Info Progetto**: nome, descrizione, titoli
+- **Modelli Esistenti**: nomi, campi, tipi, relazioni
+- **Blocchi UI**: blocchi personalizzati creati
+- **Workflow**: workflow esistenti nel progetto
+- **Conversazioni Precedenti**: per apprendimento incrementale
+
+```python
+# backend/ai/context.py
+class AIContextBuilder:
+    def build_context(self) -> str:
+        # 1. Info progetto
+        # 2. Modelli esistenti con campi
+        # 3. Blocchi disponibili
+        # 4. Workflow esistenti
+        # 5. Cronologia conversazioni (per learning)
+```
+
+### Tool Calling
+
+L'AI utilizza tool calling per azioni specifiche:
+
+| Tool | Descrizione |
+|------|-------------|
+| `generate_json` | Genera config JSON senza applicare |
+| `apply_config` | Applica la configurazione al DB |
+| `create_workflow` | Crea un workflow automatico |
+
+---
+
+## Endpoint API
 
 | Endpoint | Metodo | Autenticazione | Descrizione |
 |----------|--------|----------------|-------------|
-| `/api/ai/chat` | POST | JWT | Chat generale |
-| `/api/ai/generate` | POST | ❌ Disabilitata | Genera config ERP |
+| `/api/ai/generate` | POST | JWT | Genera config ERP |
+| `/api/ai/apply` | POST | JWT | Applica config al DB |
 | `/api/ai/suggestions` | POST | JWT | Suggerimenti miglioramento |
 | `/api/ai/models` | GET | JWT | Lista modelli disponibili |
+| `/api/ai/conversations` | GET | JWT | Lista conversazioni |
+| `/api/ai/feedback` | POST | JWT | Salva feedback per learning |
 
 ---
 
@@ -144,30 +186,30 @@ L'AI può configurare:
 - Label dei campi
 - Descrizioni
 
-### Suggerimenti
+### Feedback Loop (Apprendimento)
 
-L'AI può suggerire:
-- Strutture dati basate sul tuo business
-- Miglioramenti a modelli esistenti
-- Best practices
+Il sistema salva le conversazioni per apprendimento incrementale:
 
----
+1. Ogni conversazione viene salvata nel DB
+2. L'utente può dare feedback (thumbs up/down)
+3. Le conversazioni di successo vengono usate come contesto per richieste future
 
-## Limitazioni
-
-L'AI è uno strumento potente ma ha limitazioni:
-
-- Non può creare logica di business complessa (hook, workflow)
-- Non può sostituire la conoscenza domain-specific
-- Le configurazioni generate vanno sempre verificate
-
-**Consiglio**: Usa l'AI come punto di partenza, poi raffina con il Builder.
+```python
+# backend/models.py
+class AIConversation(BaseModel):
+    project_id = db.Column(db.Integer, ...)
+    user_message = db.Column(db.Text, ...)
+    ai_response = db.Column(db.Text, ...)
+    was_successful = db.Column(db.Boolean, ...)
+    user_correction = db.Column(db.Text, ...)
+    context_snapshot = db.Column(db.Text, ...)
+```
 
 ---
 
 ## Integrazione API
 
-Puoi usare l'AI Assistant via API per integrazioni:
+### Generazione Configurazione
 
 ```
 POST /api/ai/generate
@@ -195,40 +237,27 @@ Risposta:
 }
 ```
 
----
+### Applicazione Configurazione
 
-## TODO - Completamento
-
-Le seguenti funzionalità sono in corso o da completare:
-
-### 1. ✅ Collegare "Applica al Progetto" al backend [COMPLETATO]
-
-**Implementato**:
-- Endpoint `POST /api/ai/apply` in `backend/ai/api.py`
-- Frontend collegato in `frontend/src/components/ui/AIAssistant.jsx`
-- Crea modelli, campi e tabelle nel database
-
-### 2. Ripristinare autenticazione JWT
-
-**Problema**: L'endpoint `/api/ai/generate` ha `@jwt_required()` disabilitato per testing.
-
-**Soluzione**: Ripristinare l'autenticazione prima del rilascio in produzione.
-
-```python
-@blp.route("/generate")
-class AIGenerate(MethodView):
-    @blp.doc(security=[{"jwt": []}])
-    @jwt_required()  # <-- Ripristinare
-    def post(self):
-        ...
+```
+POST /api/ai/apply
+{
+  "config": { ... },
+  "project_id": 1
+}
 ```
 
-### 3. Testare flow completo
+### Salvataggio Feedback
 
-Testare l'intero flusso:
-1. Generazione → edit JSON → applica → modello creato
-2. Verificare che i modelli appaiano nel Builder
-3. Verificare che le tabelle siano create nel DB
+```
+POST /api/ai/feedback
+{
+  "conversation_id": 1,
+  "was_successful": true,
+  "rating": 5,
+  "user_correction": null
+}
+```
 
 ---
 
@@ -240,6 +269,7 @@ Testare l'intero flusso:
 2. **Sii iterativo**: Raffina il risultato passo dopo passo
 3. **Verifica sempre**: Controlla ciò che l'AI ha generato
 4. **Correggi**: Se qualcosa non è giusto, spiega all'AI come correggerlo
+5. **Dai feedback**: Usa i pulsanti thumbs up/down per migliorare il sistema
 
 ### Esempio Conversazione
 
@@ -252,7 +282,27 @@ AI: Ho aggiunto i campi partita_iva e codice_fiscale al modulo Clienti.
 
 Tu: Collegalo al modulo ordini
 AI: Ho creato la relazione tra Clienti e Ordini. Ora ogni cliente può avere molti ordini.
+
+[Tu: Thumbs Up]
+→ Feedback salvato per apprendimento futuro
 ```
+
+---
+
+## Test - Gestione Parco Mezzi
+
+Esempio di test eseguito con successo:
+
+**Richiesta**: "Crea un sistema per gestione parco mezzi con veicoli, conducenti e manutenzione"
+
+**Risultato**: L'AI ha generato 4 modelli:
+- `Veicolo` (targa, marca, modello, anno, km, stato)
+- `Conducente` (nome, cognome, patente)
+- `Manutenzione` (veicolo, tipo, date, costo)
+- `Assegnazione` (veicolo, conducente, date)
+
+**Workflow**:
+1. Generazione → 2. Preview JSON → 3. Applica → 4. Modelli creati nel DB
 
 ---
 
@@ -264,7 +314,9 @@ L'AI Assistant è in fase di sviluppo. Prossime funzionalità:
 - [x] Interfaccia chat
 - [x] Preview JSON modificabile
 - [x] Applicazione configurazione al database
-- [ ] Ripristino autenticazione JWT
+- [x] RAG Context Injection
+- [x] Tool Calling
+- [x] Feedback Loop per apprendimento
 - [ ] Generazione automatica test
 - [ ] Creazione workflow (integrazione con Workflow Builder)
 - [ ] Suggerimenti intelligenti
@@ -276,12 +328,18 @@ L'AI Assistant è in fase di sviluppo. Prossime funzionalità:
 
 L'AI Assistant rende FlaskERP ancora più accessibile. Anche senza conoscenze tecniche, puoi costruire il tuo sistema gestionale semplicemente descrivendo ciò che ti serve.
 
+Il sistema impara dalle conversazioni: più lo usi, migliore sarà il risultato grazie al feedback loop.
+
 Prova e vedrai: descrivere in linguaggio naturale quello che vuoi è spesso più veloce che cliccare tra mille opzioni.
 
 ---
 
-*Riferimenti*:
-- TODO: [10_TODO.md](../10_TODO.md)
-- Automazione: [01B_AUTOMAZIONE.md](01B_AUTOMAZIONE.md)
+## File di Riferimento
 
-*Documento aggiornato: Febbraio 2026*
+- Service: `backend/ai/service.py`
+- Context Builder: `backend/ai/context.py`
+- API: `backend/ai/api.py`
+- Modello: `backend/models.py` (AIConversation)
+- Frontend: `frontend/src/components/ui/AIAssistant.jsx`
+
+*Documento aggiornato: Marzo 2026*

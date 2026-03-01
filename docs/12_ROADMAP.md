@@ -136,14 +136,39 @@ Questo documento raccoglie tutte le funzionalità implementate e quelle da imple
 | Viste Kanban | 2024 | Drag & drop |
 | Relazioni | 2024 | 1:N, N:N |
 | Validazioni | 2024 | required, unique, regex |
+| Import/Export | Feb 2026 | Toolbar, context menu, backup completo |
+
+---
+
+## Moduli Personalizzati
+
+### ✅ Implementazioni Completate
+
+| Funzionalità | Data | Note |
+|--------------|------|------|
+| Status su SysModel | Feb 2026 | draft/published |
+| Tabella Module | Feb 2026 | Già esistente |
+| API CRUD per Module | Feb 2026 | Già esistente |
+| Filtro DynamicApiService per status | Feb 2026 | Solo published |
+| Filtro /projects/{id}/models per ruolo | Feb 2026 | Admin vs utenti |
+| UI Lista Moduli nel Builder | Feb 2026 | CustomModulesPage |
+| Sistema test auto-generati | Feb 2026 | CRUD, validation, FK, performance |
+| Pubblicazione con regole | Feb 2026 | Test + quality score >= 80% |
+| Dashboard App-Like | Feb 2026 | ModuleAppPage |
+| Sistema API Ibrido | Feb 2026 | /api/modules/{module_name}/* |
+| FK tra moduli | Feb 2026 | Campo relation con target_table |
+| Menu Builder > Moduli | Feb 2026 | Administration > Modules |
+| Migrazione/Backup dati | Feb 2026 | /backup endpoint |
 
 ### 📋 Da Implementare
 
 | Funzionalità | Priorità | Note |
 |--------------|----------|------|
-| Builder UI avanzato | Alta | Più interattivo |
-| Template modelli | Media | Modelli predefiniti |
-| Import/export schema | Media | JSON/YAML |
+| Validazione in tempo reale | Bassa | Nel builder workflow |
+| Output passo-passo test | Bassa | Debug esecuzione |
+
+### File Riferimento
+- Codice: `backend/core/api/custom_modules.py`, `frontend/src/pages/CustomModulesPage.jsx`, `frontend/src/pages/ModuleAppPage.jsx`
 
 ---
 
@@ -197,8 +222,8 @@ docs/
 ├── 07_TESTING.md         # Testing
 ├── 08_DEPLOYMENT.md      # Deploy
 ├── 09_AI_ASSISTANT.md    # AI Assistant
-├── 10_TODO.md            # Roadmap breve
-└── 11_ROADMAP.md         # Questo documento
+├── 11_TODO.md            # Stato attuale + task attivi
+└── 12_ROADMAP.md         # Roadmap completa dettagliata
 ```
 
 ---
@@ -214,4 +239,4 @@ Quando implementi una nuova funzionalità:
 
 ---
 
-*Ultimo aggiornamento: Febbraio 2026*
+*Ultimo aggiornamento: 1 Marzo 2026*

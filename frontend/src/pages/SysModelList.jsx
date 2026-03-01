@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../utils';
-import { Layout } from '../components';
+import { Layout, message } from 'antd';
+import ImportExportToolbar from '../components/ui/ImportExportToolbar';
+import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
 
 function SysModelList() {
   const [models, setModels] = useState([]);
@@ -107,6 +109,17 @@ alert('Model cloned successfully! Remember to generate the table in the DB.');
                 title="Data Fine"
               />
             </div>
+            
+            {/* Import/Export Toolbar */}
+            <ImportExportToolbar 
+              type="sysmodels_project" 
+              projectId={localStorage.getItem('currentProjectId') || 1}
+              onImportComplete={() => fetchModels()}
+              exportConfigLabel="Esporta Tutti i Modelli"
+              showExport={true}
+              showImport={true}
+            />
+            
             <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>Create New Model</button>
           </div>
         </div>
@@ -116,17 +129,27 @@ alert('Model cloned successfully! Remember to generate the table in the DB.');
         <div className="row">
           {models.map(model => (
             <div key={model.id} className="col-md-4 mb-3">
-              <div className="card h-100 shadow-sm">
-                <div className="card-body">
-                  <h5 className="card-title">{model.title}</h5>
-                  <h6 className="card-subtitle mb-2 text-muted"><code>{model.name}</code></h6>
-                  <p className="card-text">{model.description || 'No description provided.'}</p>
-                  <div className="d-flex gap-2 mt-3">
-                    <Link to={`/admin/builder/${model.id}`} className="btn btn-outline-primary flex-grow-1">Manage</Link>
-                    <button className="btn btn-outline-secondary" onClick={() => handleClone(model)}>Clone</button>
+              <ImportExportContextMenu 
+                type="sysmodel"
+                entityId={model.id}
+                entityName={model.name}
+                projectId={localStorage.getItem('currentProjectId') || 1}
+                onImportComplete={() => fetchModels()}
+                showExportConfig={true}
+                showExportData={true}
+              >
+                <div className="card h-100 shadow-sm">
+                  <div className="card-body">
+                    <h5 className="card-title">{model.title}</h5>
+                    <h6 className="card-subtitle mb-2 text-muted"><code>{model.name}</code></h6>
+                    <p className="card-text">{model.description || 'No description provided.'}</p>
+                    <div className="d-flex gap-2 mt-3">
+                      <Link to={`/admin/builder/${model.id}`} className="btn btn-outline-primary flex-grow-1">Manage</Link>
+                      <button className="btn btn-outline-secondary" onClick={() => handleClone(model)}>Clone</button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ImportExportContextMenu>
             </div>
           ))}
         </div>

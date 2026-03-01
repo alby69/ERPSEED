@@ -182,6 +182,134 @@ Per pubblicare nel Marketplace:
 3. Clicca **Pubblica**
 4. Compila le informazioni (nome, descrizione, prezzo)
 
+### Test e Qualità
+
+FlaskERP include un sistema di test avanzato per garantire la qualità dei moduli.
+
+**Tipi di test eseguiti**:
+
+| Tipo | Descrizione | Peso |
+|------|-------------|------|
+| **CRUD** | Create, Read, Update, Delete | 40% |
+| **Validation** | Campi required, unique, regex | 30% |
+| **Relation** | Verifica foreign key | 20% |
+| **Performance** | Tempo query < 1 secondo | 10% |
+
+**Quality Score**: Il punteggio finale è una media ponderata. Per pubblicare serve ≥ 80%.
+
+**Esegui test**:
+```bash
+curl -X POST "/api/v1/modules/{id}/test" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Backup e Migrazione
+
+Prima di eliminare un modulo, puoi esportare tutti i dati in JSON.
+
+**Esporta backup**:
+```bash
+curl -X GET "/api/v1/modules/{id}/backup" \
+  -H "Authorization: Bearer <token>"
+```
+
+Il backup include:
+- Informazioni modulo (nome, versione, stato)
+- Schema campi per ogni modello
+- Tutti i record dei modelli
+- Configurazione block
+
+**Elimina modulo**:
+```bash
+# Prima richiede conferma backup
+curl -X DELETE "/api/v1/modules/{id}" \
+  -H "Authorization: Bearer <token>"
+
+# Con backup effettuato
+curl -X DELETE "/api/v1/modules/{id}?backup=true" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Dashboard App-Like
+
+Quando un modulo viene pubblicato, diventa accessibile come **applicazione standalone** con un'esperienza utente migliorata.
+
+**Accesso**:
+- Menu **Applicazioni** → Nome modulo → apre la dashboard
+- URL diretto: `/projects/{id}/app/{module_name}`
+
+**Caratteristiche**:
+```
+┌─────────────────────────────────────────────────────────────┐
+│  [←] 📦 NOME MODULO                      v1.0             │
+├─────────────────────────────────────────────────────────────┤
+│ ┌─────────────┬──────────────────────────────────────────┐│
+│ │ Panoramica │  Statistiche, descrizione, componenti   ││
+│ │ ├─ Block 1 │                                           ││
+│ │ ├─ Block 2 │  [Contenuto Block selezionato]           ││
+│ │ └─ Block 3 │                                           ││
+│ └─────────────┴──────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+```
+
+- **Header App-like**: Titolo, versione, breadcrumb
+- **Sidebar interna**: Navigazione tra Panoramica e Block
+- **Panoramica**: Statistiche, descrizione, lista Block
+- **Blocco coordinati**: Accesso rapido ai componenti del modulo
+
+### Sistema API Ibrido
+
+Ogni modulo pubblicato espone automaticamente API CRUD per i suoi modelli, con la possibilità di aggiungere endpoint personalizzati.
+
+**Endpoint disponibili**:
+
+| Metodo | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/modules/{module_name}` | Info modulo e modelli |
+| GET | `/api/modules/{module_name}/{model_name}` | Lista record |
+| POST | `/api/modules/{module_name}/{model_name}` | Crea record |
+| GET | `/api/modules/{module_name}/{model_name}/{id}` | Leggi record |
+| PUT | `/api/modules/{module_name}/{model_name}/{id}` | Aggiorna record |
+| DELETE | `/api/modules/{module_name}/{model_name}/{id}` | Elimina record |
+
+**Esempio di utilizzo**:
+
+```bash
+# Lista clienti dal modulo "vendite"
+curl -X GET "/api/modules/vendite/clienti" \
+  -H "Authorization: Bearer <token>"
+
+# Crea nuovo ordine
+curl -X POST "/api/modules/vendite/ordini" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"cliente_id": 1, "totale": 1500}'
+```
+
+### Relazioni tra Moduli
+
+I moduli possono comunicare tra loro tramite **Foreign Key esplicite**. Usa il tipo di campo "relation" specificando il modello di destinazione.
+
+**Configurazione**:
+1. Crea un campo di tipo "relation"
+2. Nelle opzioni specifica `target_table`: nome del modello di destinazione
+
+```json
+{
+  "target_table": "clienti",
+  "target_model_id": 5
+}
+```
+
+Il sistema automaticamente解析 le relazioni e permette di:
+- Visualizzare i dati correlati nelle tabelle
+- Filtrare per campo correlato
+- Navigare tra entità collegate
+
+**Vantaggi**:
+- Esperienza "Applicazione" dedicata
+- Navigazione interna al modulo
+- I moduli pubblicati appaiono nel menu Applicazioni prima dei singoli modelli
+
 ---
 
 ## Integrazione tra Moduli
