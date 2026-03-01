@@ -63,7 +63,7 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
   const [conversationId, setConversationId] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
-  messagesEndRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
