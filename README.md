@@ -26,11 +26,14 @@ This makes it ideal for consulting firms serving multiple clients, or enterprise
 
 A community-driven marketplace allows sharing and installing blocks (UI components) and modules (full-featured packages). Users can publish their creations for free or at a price, with a revenue-sharing model (70/30).
 
-### AI Assistant
+### AI Assistant with Embedded Tool Calling
 
 An AI-powered assistant that generates ERP configurations from natural language. Simply describe what you need, and the AI creates entities, fields, relationships, and applies them directly to the database. Features:
 - Natural language → JSON configuration
 - RAG-based context injection (knows your project schema)
+- **Embedded Tool Calling** - AI can operate directly on your data
+- **Multi-LLM Support** - OpenRouter (DeepSeek) or Anthropic Claude
+- Tool Registry automatically generates CRUD tools from your dynamic models
 - Preview and edit before applying
 - Feedback loop for continuous learning
 
@@ -71,7 +74,7 @@ An AI-powered assistant that generates ERP configurations from natural language.
 - **API**: Flask-smorest with OpenAPI/Swagger
 - **Frontend**: React 19 + Ant Design
 - **Auth**: JWT with refresh tokens
-- **AI**: OpenRouter (DeepSeek V3) with RAG
+- **AI**: OpenRouter (DeepSeek) or Anthropic Claude + Tool Registry
 - **Container**: Docker
 
 ---

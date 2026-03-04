@@ -124,6 +124,13 @@ export const DEFAULT_NAVIGATIONS = {
       permission: PERMISSION_LEVELS.ADMIN,
     },
     {
+      id: 'business-rules',
+      label: 'Business Rules',
+      path: '/admin/business-rules',
+      icon: DEFAULT_ICONS.workflow,
+      permission: PERMISSION_LEVELS.ADMIN,
+    },
+    {
       id: 'modules',
       label: 'Modules',
       path: '/admin/custom-modules',

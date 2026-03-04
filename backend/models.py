@@ -180,6 +180,10 @@ class SysModel(BaseModel):
     permissions = db.Column(
         db.Text, comment="JSON string for Access Control List (ACL)"
     )
+    tool_options = db.Column(
+        db.Text,
+        comment="JSON for tool configuration (enabled operations, custom descriptions, etc.)",
+    )
 
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
 

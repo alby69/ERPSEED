@@ -43,6 +43,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
             ]
         },
         { key: '/admin/workflows', label: 'Workflows', icon: <ApiOutlined /> },
+        { key: '/admin/business-rules', label: 'Business Rules', icon: <SettingOutlined /> },
         { key: '/users', label: 'Users', icon: <TeamOutlined /> },
         { key: '/test-runner', label: 'Test Runner', icon: <ExperimentOutlined /> },
         { key: '/admin/projects', label: 'Projects Admin', icon: <ProjectOutlined /> },

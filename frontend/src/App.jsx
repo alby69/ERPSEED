@@ -11,6 +11,7 @@ import DynamicModelPage from './pages/DynamicModelPage';
 import AuditLogs from './pages/AuditLogs';
 import WorkflowsPage from './pages/WorkflowsPage';
 import WorkflowBuilder from './pages/WorkflowBuilder';
+import BusinessRulesPage from './pages/BusinessRulesPage';
 import TestRunnerPage from './pages/TestRunnerPage';
 import DashboardBuilder from './pages/DashboardBuilder';
 import BlockBuilder from './pages/BlockBuilder';
@@ -320,6 +321,14 @@ return (
           element={
             <ProtectedRoute roles={['admin']}>
               <WorkflowsPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/business-rules" 
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <BusinessRulesPage />
             </ProtectedRoute>
           } 
         />

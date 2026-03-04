@@ -62,7 +62,12 @@ L'AI genera:
 | Architettura base | ✅ Completo | Service + API |
 | Integrazione LLM (OpenRouter) | ✅ Completo | DeepSeek V3 |
 | RAG Context Injection | ✅ Completo | Context from project schema |
-| Tool Calling | ✅ Completo | generate_json, apply_config |
+| Tool Calling (CRUD) | ✅ Completo | list/create/get/update/delete su modelli |
+| Tool Calling (Business Logic) | ✅ Completo | Workflow, Hooks, Scheduled Tasks |
+| Tool Calling (Test Generator) | ✅ Completo | Generazione test automatici |
+| Workflow update_record | ✅ Completo | DynamicApiService integration |
+| Workflow create_record | ✅ Completo | DynamicApiService integration |
+| Business Rules UI | ✅ Completo | Pagina frontend |
 | Generazione modelli da linguaggio naturale | ✅ Completo | Genera JSON config |
 | Interfaccia chat frontend | ✅ Completo | Modal con chat |
 | Preview JSON modificabile | ✅ Completo | Modale con TextArea |
@@ -111,17 +116,119 @@ L'AI Assistant è accessibile dall'interfaccia principale attraverso:
 L'AI Assistant è composto da:
 
 - **Backend Service**: `backend/ai/service.py`
+- **Tool Registry**: `backend/ai/tool_registry.py`
+- **LLM Adapters**: `backend/ai/adapters/`
 - **Context Builder (RAG)**: `backend/ai/context.py`
 - **Backend API**: `backend/ai/api.py`
 - **Frontend**: `frontend/src/components/ui/AIAssistant.jsx`
 
 ### Stack Tecnologico
 
-- **LLM**: OpenRouter con modello `deepseek/deepseek-chat-v3-0324`
+- **LLM**: OpenRouter (default) o Anthropic Claude
 - **RAG**: Context Injection dal schema del progetto
-- **Tool Calling**: generate_json, apply_config, create_workflow
+- **Tool Calling**: Sistema embedded con ToolRegistry
 - **Database**: AIConversation per feedback loop
 - **Frontend**: React con Ant Design (Modal, List, Input)
+
+### Tool Registry (Embedded Tool Calling)
+
+Il sistema implementa un **Tool Registry** che converte automaticamente i modelli dinamici (SysModel) in definizioni tool per LLM.
+
+#### Architettura del Tool Registry
+
+```
+backend/ai/
+├── tool_registry.py      # Core: mapping tipi, generazione tool
+├── service.py            # AIService principale
+├── context.py            # RAG Context Builder
+└── adapters/
+    ├── __init__.py       # Factory get_adapter()
+    ├── base.py           # Interfaccia LLMAdapter
+    ├── openrouter.py     # Adapter OpenRouter
+    └── anthropic.py     # Adapter Anthropic
+```
+
+#### Mapping Tipi SysField → JSON Schema
+
+| SysField.type | JSON Schema | Descrizione |
+|---------------|-------------|-------------|
+| `string` | `string` | Testo breve |
+| `text` | `string` | Testo lungo |
+| `integer` | `integer` | Numero intero |
+| `decimal` | `number` | Numero decimale |
+| `boolean` | `boolean` | Vero/Falso |
+| `date` | `string` (format: date) | Data ISO 8601 |
+| `datetime` | `string` (format: datetime) | Data e ora |
+| `select` | `string` (enum) | Valori predefiniti |
+| `relation` | `integer` | FK a altro modello |
+| `tags` | `array` | Lista tag |
+| `json` | `object` | Oggetto JSON |
+
+#### Tool Generati per Modello
+
+Per ogni modello pubblicato nel Builder, il sistema genera automaticamente 5 tool:
+
+| Tool | Descrizione |
+|------|-------------|
+| `list_<model>` | Lista record con paginazione, filtro, ordinamento |
+| `create_<model>` | Crea nuovo record |
+| `get_<model>` | Ottieni singolo record per ID |
+| `update_<model>` | Aggiorna record esistente |
+| `delete_<model>` | Elimina record |
+
+#### Esempio Tool Definition
+
+```json
+{
+  "name": "list_clienti",
+  "description": "List records from Clienti model. Supports filtering, pagination, sorting.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "page": {"type": "integer", "default": 1},
+      "per_page": {"type": "integer", "default": 10},
+      "q": {"type": "string", "description": "Search query"},
+      "sort_by": {"type": "string"},
+      "sort_order": {"type": "string", "enum": ["asc", "desc"]}
+    }
+  }
+}
+```
+
+#### Formati Supportati
+
+Il sistema supporta entrambi i formati tool:
+
+**Anthropic**:
+```json
+{
+  "name": "tool_name",
+  "description": "...",
+  "input_schema": {...}
+}
+```
+
+**OpenAI** (usato da OpenRouter):
+```json
+{
+  "type": "function",
+  "function": {
+    "name": "tool_name",
+    "description": "...",
+    "parameters": {...}
+  }
+}
+```
+
+#### Caching
+
+Le definizioni tool vengono cachate per 5 minuti (configurabile). La cache viene invalidata automaticamente quando un modello viene modificato.
+
+```python
+# Configurazione cache
+tool_registry.set_cache_ttl(300)  # 5 minuti
+tool_registry.invalidate_cache(project_id=1)  # Invalida cache progetto
+```
 
 ### Context Injection (RAG)
 
@@ -144,7 +251,7 @@ class AIContextBuilder:
         # 5. Cronologia conversazioni (per learning)
 ```
 
-### Tool Calling
+### Tool Calling (Base)
 
 L'AI utilizza tool calling per azioni specifiche:
 
@@ -153,6 +260,221 @@ L'AI utilizza tool calling per azioni specifiche:
 | `generate_json` | Genera config JSON senza applicare |
 | `apply_config` | Applica la configurazione al DB |
 | `create_workflow` | Crea un workflow automatico |
+
+### Tool Calling per Business Logic
+
+Il sistema implementa tool per creare automazioni e logica di business direttamente da linguaggio naturale.
+
+#### Workflow Automation Tools
+
+| Tool | Descrizione |
+|------|-------------|
+| `create_workflow_automation` | Crea un workflow completo con trigger, condizioni e azioni |
+| `update_workflow` | Aggiorna un workflow esistente |
+| `delete_workflow` | Elimina un workflow |
+
+#### Hooks e Regole di Business
+
+| Tool | Descrizione |
+|------|-------------|
+| `register_business_rule` | Registra una regola su un modello (before/after create/update/delete) |
+| `list_business_rules` | Lista tutte le regole di business |
+| `delete_business_rule` | Elimina una regola |
+
+#### Scheduled Tasks
+
+| Tool | Descrizione |
+|------|-------------|
+| `create_scheduled_task` | Crea un task programmato (cron-like) |
+| `delete_scheduled_task` | Elimina un task programmato |
+
+#### Notifications
+
+| Tool | Descrizione |
+|------|-------------|
+| `setup_notification` | Configura notifiche automatiche per eventi |
+
+### Validazione di Sicurezza
+
+Tutti i tool di business logic includono validazione prima dell'esecuzione:
+
+- **Workflow**: Validazione schema JSON, operatori consentiti
+- **Hooks**: Controllo pattern pericolosi (eval, exec, etc.)
+- **Scheduled Tasks**: Validazione formato cron
+
+### AI Test Generator
+
+L'AI può generare automaticamente test cases per validare i tuoi modelli.
+
+#### Tool Disponibili
+
+| Tool | Descrizione |
+|------|-------------|
+| `generate_test_suite` | Genera test suite completa per un modello |
+| `list_test_suites` | Lista test suite disponibili |
+| `run_test_suite` | Esegue una test suite |
+
+#### Tipi di Test Generati
+
+| Tipo | Descrizione |
+|------|-------------|
+| **CREATE** | Test creazione record |
+| **READ** | Test lettura lista e singolo |
+| **UPDATE** | Test aggiornamento |
+| **DELETE** | Test eliminazione |
+| **VALIDATION** | Test campi obbligatori e formati |
+
+#### Esempio
+
+**Input utente:**
+> "Crea test per il modello Clienti"
+
+**Risultato:**
+```
+Generated: Test Suite Clienti
+Total test cases: 9
+
+Test cases:
+  - Create Clienti - Success
+  - Create Clienti - Missing Required
+  - List Clienti
+  - Get Clienti by ID
+  - Get Clienti - Not Found
+  - Update Clienti - Success
+  - Update Clienti - Not Found
+  - Delete Clienti - Success
+  - Delete Clienti - Not Found
+```
+
+I test vengono salvati nel DB e possono essere eseguiti tramite il **Test Runner** (`/admin/test-runner`).
+
+### Esempi di Utilizzo
+
+#### Esempio 1: Workflow Automation
+
+**Input utente:**
+> "Quando viene creato un ordine con totale > 1000€, invia una notifica email al manager"
+
+**Tool generato:**
+```json
+{
+  "name": "create_workflow_automation",
+  "input": {
+    "name": "approvazione_ordini_alto_valore",
+    "trigger_model": "ordini",
+    "trigger_event": "record.created",
+    "steps": [
+      {
+        "step_type": "condition",
+        "name": "check_importo",
+        "config": {
+          "field": "totale",
+          "operator": "greater_than",
+          "value": "1000"
+        }
+      },
+      {
+        "step_type": "notification",
+        "name": "notifica_manager",
+        "config": {
+          "type": "email",
+          "to": "manager@example.com"
+        }
+      }
+    ]
+  }
+}
+```
+
+#### Esempio 2: Business Rule
+
+**Input utente:**
+> "Valida che il campo partita IVA sia sempre presente quando si crea un fornitore"
+
+**Tool generato:**
+```json
+{
+  "name": "register_business_rule",
+  "input": {
+    "model_name": "fornitori",
+    "hook_type": "before_create",
+    "rule_name": "partita_iva_obbligatoria",
+    "action": {
+      "type": "validate",
+      "config": {
+        "field": "partita_iva",
+        "required": true
+      }
+    }
+  }
+}
+```
+
+---
+
+### LLM Adapters
+
+Il sistema supporta molteplici provider LLM tramite adapter:
+
+#### Provider Supportati
+
+| Provider | Modello Default | Configurazione |
+|----------|-----------------|----------------|
+| **OpenRouter** (default) | `deepseek/deepseek-chat-v3-0324` | `OPENROUTER_API_KEY` |
+| **Anthropic Claude** | `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` |
+
+#### Configurazione
+
+```bash
+# Opzione 1: OpenRouter (default)
+export LLM_PROVIDER=openrouter
+export OPENROUTER_API_KEY=sk-or-...
+
+# Opzione 2: Anthropic Claude
+export LLM_PROVIDER=anthropic
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+#### Utilizzo Programmato
+
+```python
+from backend.ai.service import AIService
+from backend.ai.adapters import get_adapter
+
+# Con OpenRouter (default)
+ai = AIService()
+
+# Con Anthropic
+ai = AIService(provider="anthropic")
+
+# Direct adapter access
+adapter = get_adapter("anthropic")
+```
+
+#### Estendere con Nuovi Adapter
+
+Per aggiungere un nuovo provider:
+
+1. Crea una classe che estende `LLMAdapter` in `backend/ai/adapters/`
+2. Implementa i metodi `chat()` e `extract_tool_calls()`
+3. Registrala in `backend/ai/adapters/__init__.py`
+
+```python
+from backend.ai.adapters.base import LLMAdapter, LLMResponse, ToolCall
+
+class MyAdapter(LLMAdapter):
+    @property
+    def provider_name(self) -> str:
+        return "my_provider"
+    
+    def chat(self, messages, tools=None, **kwargs) -> LLMResponse:
+        # Implementa chiamata API
+        pass
+    
+    def extract_tool_calls(self, response_data) -> List[ToolCall]:
+        # Estrai tool call dalla risposta
+        pass
+```
 
 ---
 
@@ -336,10 +658,48 @@ Prova e vedrai: descrivere in linguaggio naturale quello che vuoi è spesso più
 
 ## File di Riferimento
 
+### Core AI
 - Service: `backend/ai/service.py`
+- Tool Registry: `backend/ai/tool_registry.py`
+- Tool Executors: `backend/ai/tool_executors.py`
+- Test Generator: `backend/ai/test_generator.py`
 - Context Builder: `backend/ai/context.py`
-- API: `backend/ai/api.py`
-- Modello: `backend/models.py` (AIConversation)
-- Frontend: `frontend/src/components/ui/AIAssistant.jsx`
+
+### LLM Adapters
+- Adapter Base: `backend/ai/adapters/base.py`
+- OpenRouter Adapter: `backend/ai/adapters/openrouter.py`
+- Anthropic Adapter: `backend/ai/adapters/anthropic.py`
+- Adapter Factory: `backend/ai/adapters/__init__.py`
+
+### Business Logic Components
+- Hooks System: `backend/composition/hooks.py`
+- Event Bus: `backend/composition/events.py`
+- Workflow Models: `backend/workflows.py`
+- Workflow Service: `backend/workflow_service.py`
+- Webhook Triggers: `backend/webhook_triggers.py`
+
+### Test Components
+- Test Models: `backend/core/models/test_models.py`
+- Test Engine: `backend/core/services/test_engine.py`
+- Test Runner API: `backend/core/api/test_runner.py`
+
+### UI
+- AI Assistant: `frontend/src/pages/AIAssistantPage.jsx`
+- Business Rules: `frontend/src/pages/BusinessRulesPage.jsx`
+- Test Runner: `frontend/src/pages/TestRunnerPage.jsx`
+
+### API
+- API Routes: `backend/ai/api.py`
+- Modello: `backend/models.py` (AIConversation, SysModel)
+
+### Frontend
+- Chat Component: `frontend/src/components/ui/AIAssistant.jsx`
+
+### Configurazione Environment
+```bash
+LLM_PROVIDER=openrouter  # o "anthropic"
+OPENROUTER_API_KEY=sk-or-...
+ANTHROPIC_API_KEY=sk-ant-...
+```
 
 *Documento aggiornato: Marzo 2026*
