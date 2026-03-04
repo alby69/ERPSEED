@@ -126,7 +126,7 @@ export const DEFAULT_NAVIGATIONS = {
     {
       id: 'business-rules',
       label: 'Business Rules',
-      path: '/admin/business-rules',
+      path: '/projects/{projectId}/business-rules',
       icon: DEFAULT_ICONS.workflow,
       permission: PERMISSION_LEVELS.ADMIN,
     },

@@ -325,7 +325,7 @@ return (
           } 
         />
         <Route 
-          path="/admin/business-rules" 
+          path="/projects/:projectId/business-rules" 
           element={
             <ProtectedRoute roles={['admin']}>
               <BusinessRulesPage />
