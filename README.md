@@ -33,6 +33,8 @@ An AI-powered assistant that generates ERP configurations from natural language.
 - RAG-based context injection (knows your project schema)
 - **Embedded Tool Calling** - AI can operate directly on your data
 - **Multi-LLM Support** - OpenRouter (DeepSeek) or Anthropic Claude
+- **Business Logic Automation** - Workflows, Hooks, Scheduled Tasks
+- **AI Test Generator** - Automatic test suite generation
 - Tool Registry automatically generates CRUD tools from your dynamic models
 - Preview and edit before applying
 - Feedback loop for continuous learning
