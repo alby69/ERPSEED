@@ -41,6 +41,9 @@ FlaskERP è organizzato in livelli crescenti di astrazione:
 
 ## I Concetti Fondamentali
 
+### 0. AI-First Construction
+A differenza dei sistemi tradizionali, FlaskERP nasce per essere costruito dall'**AI Assistant**. L'utente non configura solo tramite UI, ma descrive le proprie necessità in linguaggio naturale. L'AI interpreta i requisiti e genera automaticamente `SysModel`, `Fields` e `Blocks`, riducendo i tempi di setup del 90%.
+
 ### 1. SysModel (Entità)
 
 Un **SysModel** è un'entità dati creata con il Builder. Corrisponde a una tabella nel database e rappresenta un concetto del business.
@@ -83,6 +86,8 @@ Un **Module** è l'unità funzionale completa che combina:
 - **Block**: le interfacce utente
 - **Hook**: la logica di business (validazioni, calcoli)
 - **API**: gli endpoint esposti
+
+Quando un modulo viene pubblicato nel Marketplace, acquisisce una **Dashboard App-like**: un'interfaccia dedicata e ottimizzata (simile a una Single Page Application) che raggruppa tutti i suoi componenti in un unico ambiente di lavoro coerente.
 
 **Esempio**: Il modulo "Vendite" include:
 - SysModel: Ordine, RigaOrdine, Pagamento
@@ -236,4 +241,4 @@ Per aspetti tecnici approfonditi, consulta i manuali specifici.
 
 ---
 
-*Documento aggiornato: Febbraio 2026*
+*Documento aggiornato: Marzo 2026*

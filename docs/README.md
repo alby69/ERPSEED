@@ -2,7 +2,7 @@
 
 Benvenuto nella documentazione di FlaskERP. Qui trovi tutto quello che ti serve per capire, configurare e usare il sistema.
 
-## Struttura dei Manuali
+## Struttura dei Manuali Operativi
 
 | File | Titolo | Descrizione |
 |------|--------|-------------|
@@ -18,6 +18,19 @@ Benvenuto nella documentazione di FlaskERP. Qui trovi tutto quello che ti serve 
 | [10_AI_ASSISTANT.md](10_AI_ASSISTANT.md) | AI Assistant | Guida all'agente AI |
 | [11_TODO.md](11_TODO.md) | Roadmap Breve | Stato e prossime attività |
 | [12_ROADMAP.md](12_ROADMAP.md) | Roadmap Completa | Implementazioni per componente |
+| [13_ARCHITETTURA_DISTRIBUITA.md](13_ARCHITETTURA_DISTRIBUITA.md) | Futuro Distribuito | Analisi P2P e DAO |
+
+## 📚 Biblioteca del Progetto (Planner)
+
+Documenti strategici e manuali approfonditi per stakeholder e sviluppatori.
+
+| File | Titolo | Descrizione |
+|------|--------|-------------|
+| [01_PROGETTO_ISTITUZIONALE.md](planner/01_PROGETTO_ISTITUZIONALE.md) | Biglietto da Visita | Visione, Missione e Impatto Sociale |
+| [02_PITCH_INVESTITORI.md](planner/02_PITCH_INVESTITORI.md) | Pitch & Business | Business model, scalabilità e investimenti |
+| [03_MANUALE_UTENTE_DISCORSIVO.md](planner/03_MANUALE_UTENTE_DISCORSIVO.md) | Manuale Utente | Guida ai processi aziendali (non tecnica) |
+| [04_MANUALE_TECNICO_SVILUPPATORE.md](planner/04_MANUALE_TECNICO_SVILUPPATORE.md) | Manuale Tecnico | Guida per sviluppatori con esempi di codice |
+| [05_ECOSISTEMA_ERPSEED.md](planner/05_ECOSISTEMA_ERPSEED.md) | ERPSeed Ecosystem | Nodi locali, governance e impatto sociale |
 
 ## Ordine di Lettura Consigliato
 
@@ -60,4 +73,4 @@ SysModel → Block → Module
 
 ---
 
-*Documento aggiornato: Febbraio 2026*
+*Documento aggiornato: Marzo 2026*

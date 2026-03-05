@@ -124,9 +124,9 @@ Questa separazione logica è un buon punto di partenza per eventuali evoluzioni.
 
 ---
 
-### 5. Architettura DAO / P2P (Visionaria)
+### 5. Architettura DAO / P2P (Visionaria / ERPSeed)
 
-**Descrizione**: Una rete distribuita dove i moduli FlaskERP sono distribuiti via P2P, pubblicati su un registry decentralizzato, e la community vota quali sono "best practice".
+**Descrizione**: Una rete distribuita legata al progetto **ERPSeed**, dove i moduli FlaskERP sono distribuiti via P2P, pubblicati su un registry decentralizzato, e la community vota quali sono "best practice".
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -266,5 +266,5 @@ L'approccio P2P/DAO è affascinante ma richiede un ecosistema maturo e una commu
 
 ---
 
-*Documento generato: Marzo 2026*
+*Documento aggiornato: Marzo 2026*
 *Questa analisi è puramente esplorativa e non rappresenta un piano di sviluppo.*
