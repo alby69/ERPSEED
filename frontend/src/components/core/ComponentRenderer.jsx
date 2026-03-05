@@ -6,6 +6,7 @@
 
 import React, { useMemo } from 'react';
 import registry from './ArchetypeRegistry';
+import { resolveDataBinding } from '@/utils/binding';
 
 /**
  * ComponentRenderer - Renders a component based on its archetype
@@ -21,10 +22,16 @@ const ComponentRenderer = ({
   type, 
   config = {}, 
   data = null,
+  context = {},
   onChange,
   ...otherProps 
 }) => {
   const archetype = useMemo(() => registry.get(type), [type]);
+
+  // Resolve data bindings in config using provided context
+  const resolvedConfig = useMemo(() => {
+    return resolveDataBinding(config, context);
+  }, [config, context]);
 
   if (!archetype) {
     return (
@@ -46,7 +53,7 @@ const ComponentRenderer = ({
 
   return (
     <Component 
-      config={config}
+      config={resolvedConfig}
       data={data}
       onChange={onChange}
       {...otherProps}
@@ -93,6 +100,7 @@ const CollectionRenderer = ({
           type={comp.type}
           config={comp.config}
           data={comp.data}
+          context={props.context}
           onChange={(newConfig) => onComponentChange?.(comp.id, newConfig)}
           {...props}
         />
@@ -108,6 +116,7 @@ const CollectionRenderer = ({
           type={comp.type}
           config={comp.config}
           data={comp.data}
+          context={props.context}
           onChange={(newConfig) => onComponentChange?.(comp.id, newConfig)}
           {...props}
         />
@@ -123,6 +132,7 @@ const CollectionRenderer = ({
           type={comp.type}
           config={comp.config}
           data={comp.data}
+          context={props.context}
           onChange={(newConfig) => onComponentChange?.(comp.id, newConfig)}
           {...props}
         />

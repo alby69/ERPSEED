@@ -1,7 +1,7 @@
 /**
  * BlockBuilder Page
  * 
- * Page for creating and managing Blocks with Components
+ * Page for creating and managing Blocks with Components using the VisualBuilder
  */
 
 import React, { useState, useEffect } from 'react';
@@ -13,7 +13,6 @@ import {
   Modal, 
   Form, 
   Input, 
-  Select, 
   Space, 
   Tag, 
   Typography, 
@@ -22,27 +21,16 @@ import {
   Empty,
   message,
   Spin,
-  Tabs,
-  Dropdown,
-  Statistic,
-  Alert,
 } from 'antd';
 import { 
   PlusOutlined, 
   DeleteOutlined, 
   EditOutlined, 
-  SettingOutlined,
-  AppstoreOutlined,
   BlockOutlined,
-  SaveOutlined,
-  ExportOutlined,
-  PlayCircleOutlined,
-  CheckCircleOutlined,
-  SafetyCertificateOutlined,
-  WarningOutlined,
 } from '@ant-design/icons';
+
 import { apiFetch } from '@/utils';
-import { ComponentRenderer } from '@/components/core';
+import VisualBuilder from './VisualBuilder';
 import ImportExportToolbar from '@/components/ui/ImportExportToolbar';
 import ImportExportContextMenu from '@/components/ui/ImportExportContextMenu';
 
@@ -53,102 +41,11 @@ function BlockBuilder() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [blocks, setBlocks] = useState([]);
-  const [archetypes, setArchetypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [showComponentModal, setShowComponentModal] = useState(false);
-  const [editingBlock, setEditingBlock] = useState(null);
-  const [selectedComponent, setSelectedComponent] = useState(null);
+  const [editingBlockId, setEditingBlockId] = useState(null);
+  const [editingBlockData, setEditingBlockData] = useState(null);
   const [form] = Form.useForm();
-  const [componentForm] = Form.useForm();
-  
-  // Testing state
-  const [testSuite, setTestSuite] = useState(null);
-  const [runningTests, setRunningTests] = useState(false);
-  const [testResults, setTestResults] = useState(null);
-
-  // Load test suite for current block
-  const loadTestSuite = async (blockId) => {
-    try {
-      const res = await apiFetch(`/api/blocks/${blockId}/test-suite`);
-      if (res.ok) {
-        const data = await res.json();
-        setTestSuite(data);
-      }
-    } catch (err) {
-      console.error('Error loading test suite:', err);
-    }
-  };
-
-  // Run tests for block
-  const runBlockTests = async () => {
-    if (!editingBlock?.id) return;
-    setRunningTests(true);
-    setTestResults(null);
-    try {
-      const res = await apiFetch(`/api/blocks/${editingBlock.id}/run-tests`, { method: 'POST' });
-      if (res.ok) {
-        const data = await res.json();
-        setTestResults(data);
-        setEditingBlock({...editingBlock, quality_score: data.quality_score, status: data.status});
-        message.success(`Tests completed! Quality score: ${data.quality_score}%`);
-      } else {
-        const err = await res.json();
-        message.error(err.error || 'Tests failed');
-      }
-    } catch (err) {
-      message.error('Error running tests');
-    } finally {
-      setRunningTests(false);
-    }
-  };
-
-  // Create test suite for block
-  const createTestSuite = async () => {
-    if (!editingBlock?.id) return;
-    try {
-      const res = await apiFetch(`/api/blocks/${editingBlock.id}/test-suite`, { method: 'POST' });
-      if (res.ok) {
-        const data = await res.json();
-        await loadTestSuite(editingBlock.id);
-        message.success('Test suite created');
-      }
-    } catch (err) {
-      message.error('Error creating test suite');
-    }
-  };
-
-  // Certify block
-  const certifyBlock = async () => {
-    if (!editingBlock?.id) return;
-    try {
-      const res = await apiFetch(`/api/blocks/${editingBlock.id}/certify`, { method: 'POST' });
-      if (res.ok) {
-        const data = await res.json();
-        setEditingBlock({...editingBlock, is_certified: true, status: 'published'});
-        message.success('Block certified and published!');
-      } else {
-        const err = await res.json();
-        message.error(err.error || 'Certification failed');
-      }
-    } catch (err) {
-      message.error('Error certifying block');
-    }
-  };
-
-  // Revoke certification
-  const revokeCertification = async () => {
-    if (!editingBlock?.id) return;
-    try {
-      const res = await apiFetch(`/api/blocks/${editingBlock.id}/certify`, { method: 'DELETE' });
-      if (res.ok) {
-        setEditingBlock({...editingBlock, is_certified: false, status: 'draft'});
-        message.success('Certification revoked');
-      }
-    } catch (err) {
-      message.error('Error revoking certification');
-    }
-  };
 
   useEffect(() => {
     loadData();
@@ -157,15 +54,35 @@ function BlockBuilder() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [blocksRes, archetypesRes] = await Promise.all([
-        apiFetch(`/api/projects/${projectId}/blocks`),
-        apiFetch('/api/archetypes'),
-      ]);
-      
-      if (blocksRes.ok) setBlocks(await blocksRes.json());
-      if (archetypesRes.ok) setArchetypes(await archetypesRes.json());
+      const res = await apiFetch(`/api/projects/${projectId}/blocks`);
+      if (res.ok) {
+        setBlocks(await res.json());
+      }
     } catch (error) {
-      message.error('Error loading data');
+      message.error('Error loading blocks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadBlockForEdit = async (blockId) => {
+    setLoading(true);
+    try {
+      const res = await apiFetch(`/api/blocks/${blockId}`);
+      if (res.ok) {
+        const data = await res.json();
+        // Convert components from backend format to VisualBuilder format if needed
+        const components = data.components.map(c => ({
+          id: c.id,
+          name: c.name,
+          type: c.archetype_name,
+          config: c.config || {}
+        }));
+        setEditingBlockData({ ...data, components });
+        setEditingBlockId(blockId);
+      }
+    } catch (error) {
+      message.error('Error loading block details');
     } finally {
       setLoading(false);
     }
@@ -180,20 +97,77 @@ function BlockBuilder() {
       });
       
       if (res.ok) {
+        const newBlock = await res.json();
         message.success('Block created');
         setShowModal(false);
         form.resetFields();
-        loadData();
-      } else {
-        message.error('Error creating block');
+        loadBlockForEdit(newBlock.id);
       }
     } catch (error) {
       message.error('Error creating block');
     }
   };
 
+  const handleSaveBlock = async (components) => {
+    try {
+      // 1. Create/Update components in the backend
+      const componentPromises = components.map(async (comp, index) => {
+        const isNew = typeof comp.id === 'string' && comp.id.startsWith('comp_');
+        const method = isNew ? 'POST' : 'PUT';
+        const url = isNew
+          ? `/api/projects/${projectId}/components`
+          : `/api/components/${comp.id}`;
+
+        // Find archetype ID for new components
+        let archetype_id = comp.archetype_id;
+        if (isNew) {
+           const archRes = await apiFetch('/api/archetypes');
+           const archetypes = await archRes.json();
+           const arch = archetypes.find(a => a.component_type === comp.type);
+           archetype_id = arch?.id;
+        }
+
+        const res = await apiFetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: comp.name,
+            config: comp.config,
+            archetype_id: archetype_id,
+            order_index: index,
+            block_id: editingBlockId
+          }),
+        });
+
+        const data = await res.json();
+        return isNew ? data.id : comp.id;
+      });
+
+      const componentIds = await Promise.all(componentPromises);
+
+      // 2. Update block with the list of component IDs
+      const res = await apiFetch(`/api/blocks/${editingBlockId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          component_ids: componentIds
+        }),
+      });
+
+      if (res.ok) {
+        message.success('Block saved successfully');
+        setEditingBlockId(null);
+        setEditingBlockData(null);
+        loadData();
+      }
+    } catch (error) {
+      message.error('Error saving block');
+      console.error(error);
+    }
+  };
+
   const handleDeleteBlock = async (blockId) => {
-    if (!confirm('Delete this block?')) return;
+    if (!window.confirm('Delete this block?')) return;
     
     try {
       const res = await apiFetch(`/api/blocks/${blockId}`, { method: 'DELETE' });
@@ -206,97 +180,6 @@ function BlockBuilder() {
     }
   };
 
-  const handleAddComponent = async (values) => {
-    if (!editingBlock) return;
-    
-    try {
-      const res = await apiFetch(`/api/projects/${projectId}/components`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...values,
-          block_id: editingBlock.id,
-        }),
-      });
-      
-      if (res.ok) {
-        message.success('Component added');
-        setShowComponentModal(false);
-        componentForm.resetFields();
-        loadBlockDetail(editingBlock.id);
-      }
-    } catch (error) {
-      message.error('Error adding component');
-    }
-  };
-
-  const loadBlockDetail = async (blockId) => {
-    try {
-      const res = await apiFetch(`/api/blocks/${blockId}`);
-      if (res.ok) {
-        const block = await res.json();
-        setEditingBlock(block);
-      }
-    } catch (error) {
-      message.error('Error loading block');
-    }
-  };
-
-  const handleEditBlock = (block) => {
-    loadBlockDetail(block.id);
-  };
-
-  const handleSaveBlock = async () => {
-    if (!editingBlock) return;
-    
-    try {
-      const res = await apiFetch(`/api/blocks/${editingBlock.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editingBlock.name,
-          description: editingBlock.description,
-          component_ids: editingBlock.component_ids || [],
-          relationships: editingBlock.relationships || {},
-        }),
-      });
-      
-      if (res.ok) {
-        message.success('Block saved');
-        loadData();
-      }
-    } catch (error) {
-      message.error('Error saving block');
-    }
-  };
-
-  const handleUpdateComponentOrder = async (newOrder) => {
-    if (!editingBlock) return;
-    
-    const newBlock = { 
-      ...editingBlock, 
-      component_ids: newOrder 
-    };
-    setEditingBlock(newBlock);
-  };
-
-  const handlePublish = async (blockId) => {
-    try {
-      const res = await apiFetch(`/api/blocks/${blockId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'testing' }),
-      });
-      
-      if (res.ok) {
-        message.success('Block submitted for testing');
-        loadData();
-      }
-    } catch (error) {
-      message.error('Error publishing block');
-    }
-  };
-
   const getStatusColor = (status) => {
     const colors = {
       draft: 'default',
@@ -306,9 +189,96 @@ function BlockBuilder() {
     return colors[status] || 'default';
   };
 
-  const getArchetypeInfo = (archetypeId) => {
-    return archetypes.find(a => a.id === archetypeId) || {};
+  const [testSuite, setTestSuite] = useState(null);
+  const [runningTests, setRunningTests] = useState(false);
+  const [testResults, setTestResults] = useState(null);
+
+  const loadTestSuite = async (blockId) => {
+    try {
+      const res = await apiFetch(`/api/blocks/${blockId}/test-suite`);
+      if (res.ok) {
+        setTestSuite(await res.json());
+      }
+    } catch (err) {
+      console.error('Error loading test suite:', err);
+    }
   };
+
+  const runBlockTests = async () => {
+    if (!editingBlockId) return;
+    setRunningTests(true);
+    setTestResults(null);
+    try {
+      const res = await apiFetch(`/api/blocks/${editingBlockId}/run-tests`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setTestResults(data);
+        setEditingBlockData(prev => ({ ...prev, quality_score: data.quality_score, status: data.status }));
+        message.success(`Tests completed! Quality score: ${data.quality_score}%`);
+      }
+    } catch (err) {
+      message.error('Error running tests');
+    } finally {
+      setRunningTests(false);
+    }
+  };
+
+  const certifyBlock = async () => {
+    if (!editingBlockId) return;
+    try {
+      const res = await apiFetch(`/api/blocks/${editingBlockId}/certify`, { method: 'POST' });
+      if (res.ok) {
+        setEditingBlockData(prev => ({ ...prev, is_certified: true, status: 'published' }));
+        message.success('Block certified!');
+      }
+    } catch (err) {
+      message.error('Error certifying block');
+    }
+  };
+
+  useEffect(() => {
+    if (editingBlockId) {
+      loadTestSuite(editingBlockId);
+    }
+  }, [editingBlockId]);
+
+  if (editingBlockId && editingBlockData) {
+    return (
+      <VisualBuilder
+        title={`Editing Block: ${editingBlockData.name}`}
+        initialComponents={editingBlockData.components}
+        onSave={handleSaveBlock}
+        onBack={() => { setEditingBlockId(null); setEditingBlockData(null); }}
+        loading={loading}
+        extraHeader={
+          <Space>
+            {editingBlockData.quality_score !== undefined && (
+               <Tag color={editingBlockData.quality_score >= 80 ? 'success' : 'warning'}>
+                 Score: {editingBlockData.quality_score}%
+               </Tag>
+            )}
+            <Button
+              size="small"
+              onClick={runBlockTests}
+              loading={runningTests}
+            >
+              Run Tests
+            </Button>
+            {editingBlockData.quality_score >= 80 && !editingBlockData.is_certified && (
+              <Button
+                size="small"
+                type="primary"
+                onClick={certifyBlock}
+                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+              >
+                Certify
+              </Button>
+            )}
+          </Space>
+        }
+      />
+    );
+  }
 
   return (
     <div className="block-builder-page" style={{ padding: 24 }}>
@@ -352,7 +322,7 @@ function BlockBuilder() {
                 <Card
                   hoverable
                   actions={[
-                    <Button type="text" icon={<EditOutlined />} onClick={() => handleEditBlock(block)}>
+                    <Button type="text" icon={<EditOutlined />} onClick={() => loadBlockForEdit(block.id)}>
                       Edit
                     </Button>,
                     <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDeleteBlock(block.id)}>
@@ -380,238 +350,6 @@ function BlockBuilder() {
         </Row>
       )}
 
-      {/* Block Edit Modal */}
-      <Modal
-        title={editingBlock ? `Edit: ${editingBlock.name}` : 'Edit Block'}
-        open={!!editingBlock}
-        onCancel={() => setEditingBlock(null)}
-        width={900}
-        footer={[
-          <Button key="cancel" onClick={() => setEditingBlock(null)}>
-            Close
-          </Button>,
-          <Button key="save" type="primary" icon={<SaveOutlined />} onClick={handleSaveBlock}>
-            Save Changes
-          </Button>,
-        ]}
-      >
-        {editingBlock && (
-          <Tabs
-            items={[
-              {
-                key: 'details',
-                label: 'Details',
-                children: (
-                  <Form layout="vertical">
-                    <Form.Item label="Name">
-                      <Input 
-                        value={editingBlock.name} 
-                        onChange={(e) => setEditingBlock({...editingBlock, name: e.target.value})}
-                      />
-                    </Form.Item>
-                    <Form.Item label="Description">
-                      <TextArea 
-                        value={editingBlock.description} 
-                        onChange={(e) => setEditingBlock({...editingBlock, description: e.target.value})}
-                        rows={3}
-                      />
-                    </Form.Item>
-                  </Form>
-                ),
-              },
-              {
-                key: 'components',
-                label: 'Components',
-                children: (
-                  <div>
-                    <div className="mb-3">
-                      <Button 
-                        type="dashed" 
-                        icon={<PlusOutlined />} 
-                        onClick={() => setShowComponentModal(true)}
-                        block
-                      >
-                        Add Component
-                      </Button>
-                    </div>
-                    
-                    <List
-                      bordered
-                      dataSource={editingBlock.components || []}
-                      renderItem={(comp) => (
-                        <List.Item
-                          actions={[
-                            <Button type="text" size="small" icon={<SettingOutlined />} />,
-                            <Button type="text" size="small" danger icon={<DeleteOutlined />} />,
-                          ]}
-                        >
-                          <List.Item.Meta
-                            avatar={<AppstoreOutlined />}
-                            title={comp.name}
-                            description={comp.archetype_name || getArchetypeInfo(comp.archetype_id)?.name}
-                          />
-                        </List.Item>
-                      )}
-                    />
-                    
-                    {(!editingBlock.components || editingBlock.components.length === 0) && (
-                      <Empty description="No components yet" />
-                    )}
-                  </div>
-                ),
-              },
-              {
-                key: 'preview',
-                label: 'Preview',
-                children: (
-                  <div>
-                    {editingBlock.components?.length > 0 ? (
-                      <div style={{ background: '#f5f5f5', padding: 16, borderRadius: 8 }}>
-                        {editingBlock.components.map((comp, idx) => (
-                          <div key={idx} style={{ marginBottom: 16 }}>
-                            <ComponentRenderer
-                              type={comp.archetype_name || getArchetypeInfo(comp.archetype_id)?.component_type}
-                              config={comp.config}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <Empty description="Add components to see preview" />
-                    )}
-                  </div>
-                ),
-              },
-              {
-                key: 'testing',
-                label: 'Testing & Certification',
-                children: (
-                  <div>
-                    <Card size="small" style={{ marginBottom: 16 }}>
-                      <Row gutter={16}>
-                        <Col span={8}>
-                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 24, fontWeight: 'bold', color: editingBlock?.quality_score >= 80 ? '#52c41a' : '#faad14' }}>
-                              {editingBlock?.quality_score || 0}%
-                            </div>
-                            <div style={{ color: '#666' }}>Quality Score</div>
-                          </div>
-                        </Col>
-                        <Col span={8}>
-                          <div style={{ textAlign: 'center' }}>
-                            {editingBlock?.is_certified ? (
-                              <CheckCircleOutlined style={{ fontSize: 24, color: '#52c41a' }} />
-                            ) : (
-                              <WarningOutlined style={{ fontSize: 24, color: '#faad14' }} />
-                            )}
-                            <div style={{ color: '#666', marginTop: 4 }}>
-                              {editingBlock?.is_certified ? 'Certified' : 'Not Certified'}
-                            </div>
-                          </div>
-                        </Col>
-                        <Col span={8}>
-                          <div style={{ textAlign: 'center' }}>
-                            <Tag color={editingBlock?.status === 'published' ? 'green' : editingBlock?.status === 'testing' ? 'blue' : 'default'}>
-                              {editingBlock?.status || 'draft'}
-                            </Tag>
-                            <div style={{ color: '#666', marginTop: 4 }}>Status</div>
-                          </div>
-                        </Col>
-                      </Row>
-                    </Card>
-
-                    <Space style={{ marginBottom: 16 }}>
-                      {!testSuite?.id ? (
-                        <Button icon={<PlayCircleOutlined />} onClick={createTestSuite}>
-                          Create Test Suite
-                        </Button>
-                      ) : (
-                        <>
-                          <Button 
-                            type="primary" 
-                            icon={<PlayCircleOutlined />} 
-                            onClick={runBlockTests}
-                            loading={runningTests}
-                          >
-                            Run Tests
-                          </Button>
-                          {editingBlock?.quality_score >= 80 && !editingBlock?.is_certified && (
-                            <Button 
-                              type="primary" 
-                              icon={<SafetyCertificateOutlined />} 
-                              onClick={certifyBlock}
-                              style={{ background: '#52c41a', borderColor: '#52c41a' }}
-                            >
-                              Certify Block
-                            </Button>
-                          )}
-                          {editingBlock?.is_certified && (
-                            <Button 
-                              danger 
-                              icon={<WarningOutlined />} 
-                              onClick={revokeCertification}
-                            >
-                              Revoke
-                            </Button>
-                          )}
-                        </>
-                      )}
-                    </Space>
-
-                    {testResults && (
-                      <Card size="small" title="Test Results">
-                        <Row gutter={16}>
-                          <Col span={8}>
-                            <Statistic 
-                              title="Passed" 
-                              value={testResults.passed} 
-                              valueStyle={{ color: '#52c41a' }}
-                            />
-                          </Col>
-                          <Col span={8}>
-                            <Statistic 
-                              title="Failed" 
-                              value={testResults.failed} 
-                              valueStyle={{ color: testResults.failed > 0 ? '#ff4d4f' : '#52c41a' }}
-                            />
-                          </Col>
-                          <Col span={8}>
-                            <Statistic 
-                              title="Success Rate" 
-                              value={testResults.success_rate} 
-                              suffix="%"
-                              valueStyle={{ color: testResults.success_rate >= 80 ? '#52c41a' : '#faad14' }}
-                            />
-                          </Col>
-                        </Row>
-                        {testResults.failed > 0 && (
-                          <Alert 
-                            message="Quality score below 80% - Block cannot be certified" 
-                            type="warning" 
-                            showIcon 
-                            style={{ marginTop: 16 }}
-                          />
-                        )}
-                      </Card>
-                    )}
-
-                    {editingBlock?.is_certified && (
-                      <Alert 
-                        message="This block is certified and can be published to the Marketplace" 
-                        type="success" 
-                        showIcon 
-                        icon={<CheckCircleOutlined />}
-                        style={{ marginTop: 16 }}
-                      />
-                    )}
-                  </div>
-                ),
-              },
-            ]}
-          />
-        )}
-      </Modal>
-
       {/* Create Block Modal */}
       <Modal
         title="Create New Block"
@@ -629,34 +367,6 @@ function BlockBuilder() {
           <Form.Item>
             <Button type="primary" htmlType="submit" block>
               Create Block
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Add Component Modal */}
-      <Modal
-        title="Add Component to Block"
-        open={showComponentModal}
-        onCancel={() => { setShowComponentModal(false); componentForm.resetFields(); }}
-        footer={null}
-      >
-        <Form form={componentForm} layout="vertical" onFinish={handleAddComponent}>
-          <Form.Item name="name" label="Component Name" rules={[{ required: true }]}>
-            <Input placeholder="e.g., Orders Table" />
-          </Form.Item>
-          <Form.Item name="archetype_id" label="Component Type" rules={[{ required: true }]}>
-            <Select placeholder="Select archetype">
-              {archetypes.map(arch => (
-                <Select.Option key={arch.id} value={arch.id}>
-                  {arch.name} - {arch.description}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" block>
-              Add Component
             </Button>
           </Form.Item>
         </Form>
