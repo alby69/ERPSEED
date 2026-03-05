@@ -47,3 +47,5 @@ Error adding sys_fields.updated_at: (sqlite3.OperationalError) no such table: in
 127.0.0.1 - - [05/Mar/2026 12:12:37] "[31m[1mPOST /login HTTP/1.1[0m" 401 -
 127.0.0.1 - - [05/Mar/2026 12:14:46] "OPTIONS /login HTTP/1.1" 200 -
 127.0.0.1 - - [05/Mar/2026 12:14:46] "[31m[1mPOST /login HTTP/1.1[0m" 401 -
+127.0.0.1 - - [05/Mar/2026 12:53:44] "OPTIONS /login HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 12:53:44] "[31m[1mPOST /login HTTP/1.1[0m" 401 -

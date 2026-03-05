@@ -33,9 +33,11 @@ import {
   BulbOutlined,
   HistoryOutlined,
   LikeOutlined,
-  DislikeOutlined
+  DislikeOutlined,
+  AppstoreAddOutlined
 } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import AIPlanPreview from './AIPlanPreview';
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -60,6 +62,7 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
   const [selectedModel, setSelectedModel] = useState('qwen3-coder');
   const [showConfig, setShowConfig] = useState(false);
   const [generatedConfig, setGeneratedConfig] = useState(null);
+  const [executionPlan, setExecutionPlan] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
@@ -147,6 +150,7 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
         role: 'assistant',
         content: result.message || 'Configurazione generata!',
         config: result.config,
+        plan: result.plan,
         created_models: result.created_models,
         timestamp: new Date(),
       };
@@ -155,6 +159,7 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
       
       if (result.config) {
         setGeneratedConfig(result.config);
+        setExecutionPlan(result.plan || []);
         setShowConfig(true);
       }
 
@@ -404,7 +409,12 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
 
       {/* Config Preview Modal */}
       <Modal
-        title="Configurazione Generata - Modifica prima di applicare"
+        title={
+          <Space>
+            <AppstoreAddOutlined style={{ color: '#1890ff' }} />
+            <span>Anteprima Modifiche AI</span>
+          </Space>
+        }
         open={showConfig}
         onCancel={() => setShowConfig(false)}
         width={700}
@@ -460,25 +470,42 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
           </Button>
         ]}
       >
-        {generatedConfig && (
-          <div>
-            <Text type="secondary" style={{ marginBottom: 8, display: 'block' }}>
-              Puoi modificare il JSON prima di applicare:
-            </Text>
-            <TextArea
-              value={JSON.stringify(generatedConfig, null, 2)}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  setGeneratedConfig(parsed);
-                } catch (err) {
-                  // Invalid JSON, don't update
-                }
-              }}
-              rows={15}
-              style={{ fontFamily: 'monospace', fontSize: 12 }}
-            />
-          </div>
+        {executionPlan && executionPlan.length > 0 ? (
+          <AIPlanPreview plan={executionPlan} />
+        ) : (
+          generatedConfig && (
+            <div>
+              <Text type="secondary" style={{ marginBottom: 8, display: 'block' }}>
+                Puoi modificare il JSON prima di applicare:
+              </Text>
+              <TextArea
+                value={JSON.stringify(generatedConfig, null, 2)}
+                onChange={(e) => {
+                  try {
+                    const parsed = JSON.parse(e.target.value);
+                    setGeneratedConfig(parsed);
+                  } catch (err) {
+                    // Invalid JSON, don't update
+                  }
+                }}
+                rows={15}
+                style={{ fontFamily: 'monospace', fontSize: 12 }}
+              />
+            </div>
+          )
+        )}
+
+        {executionPlan && executionPlan.length > 0 && (
+          <Collapse ghost style={{ marginTop: 16 }}>
+            <Panel header="Visualizza JSON raw" key="json">
+              <TextArea
+                value={JSON.stringify(generatedConfig, null, 2)}
+                readOnly
+                rows={10}
+                style={{ fontFamily: 'monospace', fontSize: 11 }}
+              />
+            </Panel>
+          </Collapse>
         )}
       </Modal>
     </Modal>

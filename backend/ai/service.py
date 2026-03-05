@@ -195,14 +195,61 @@ class AIService:
         system_prompt = self._build_system_prompt(project_id)
         user_prompt = self._build_user_prompt(user_request, project_id)
 
-        response = self._call_llm_with_tools(system_prompt, user_prompt)
+        response = self._call_llm_with_tools(system_prompt, user_prompt, project_id=project_id)
 
         # Parse response and handle tools
         result = self._handle_response(
             response, user_request, project_id, user_id, apply_directly
         )
 
+        # Convert simple config to a structured execution plan
+        if result.get("success") and "config" in result:
+            result["plan"] = self._generate_execution_plan(result["config"])
+
         return result
+
+    def _generate_execution_plan(self, config: Dict) -> List[Dict]:
+        """Converts a configuration into a structured execution plan."""
+        plan = []
+
+        # Models
+        for model in config.get("models", []):
+            plan.append({
+                "action": "create_model",
+                "target": model.get("name"),
+                "description": f"Crea nuovo modello '{model.get('name')}'",
+                "details": {
+                    "table": model.get("table"),
+                    "fields_count": len(model.get("fields", []))
+                }
+            })
+            for field in model.get("fields", []):
+                plan.append({
+                    "action": "add_field",
+                    "target": f"{model.get('name')}.{field.get('name')}",
+                    "description": f"Aggiungi campo '{field.get('label')}' ({field.get('type')})",
+                    "details": field
+                })
+
+        # Views
+        for view in config.get("views", []):
+            plan.append({
+                "action": "create_view",
+                "target": view.get("name"),
+                "description": f"Crea vista {view.get('type')} per {view.get('model')}",
+                "details": view
+            })
+
+        # Workflows
+        for wf in config.get("workflows", []):
+            plan.append({
+                "action": "create_workflow",
+                "target": wf.get("name"),
+                "description": f"Crea automazione: {wf.get('name')}",
+                "details": wf
+            })
+
+        return plan
 
     def _build_system_prompt(self, project_id: int) -> str:
         """Build system prompt with project context (RAG)"""
@@ -215,6 +262,7 @@ class AIService:
 
 ## YOUR ROLE
 You help users create and manage ERP components (models, fields, workflows, modules) through natural language.
+You generate structured configurations that will be presented as an execution plan to the user.
 
 ## PROJECT CONTEXT
 {project_context}
