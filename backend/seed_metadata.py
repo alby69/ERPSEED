@@ -142,6 +142,108 @@ def seed_metadata():
                         },
                     },
                 },
+            },
+            {
+                "technical_name": "badge",
+                "name": "Badge",
+                "title": "Status Badge",
+                "component_type": "basic",
+                "icon": "tag",
+                "component_path": "@/components/Basic/Badge",
+                "description": "Status or count badge",
+                "default_config": {
+                    "count": 0,
+                    "color": "blue",
+                    "status": "default",
+                },
+                "props_schema": {
+                    "type": "object",
+                    "properties": {
+                        "count": {"type": "number", "title": "Count"},
+                        "color": {"type": "string", "title": "Color"},
+                        "status": {
+                            "type": "string",
+                            "enum": ["success", "processing", "default", "error", "warning"],
+                            "title": "Status",
+                        },
+                    },
+                },
+            },
+            {
+                "technical_name": "richtext",
+                "name": "RichText",
+                "title": "Rich Text Editor",
+                "component_type": "advanced",
+                "icon": "edit",
+                "component_path": "@/components/Advanced/RichText",
+                "description": "WYSIWYG editor for rich content",
+                "default_config": {
+                    "placeholder": "Enter content here...",
+                    "height": 300,
+                },
+                "props_schema": {
+                    "type": "object",
+                    "properties": {
+                        "placeholder": {"type": "string", "title": "Placeholder"},
+                        "height": {"type": "number", "title": "Height (px)"},
+                    },
+                },
+            },
+            {
+                "technical_name": "fileupload",
+                "name": "FileUpload",
+                "title": "File Upload",
+                "component_type": "advanced",
+                "icon": "upload",
+                "component_path": "@/components/Advanced/FileUpload",
+                "description": "Drag & drop file upload component",
+                "default_config": {
+                    "multiple": False,
+                    "maxSize": 10,
+                    "accept": "*",
+                },
+                "props_schema": {
+                    "type": "object",
+                    "properties": {
+                        "multiple": {"type": "boolean", "title": "Allow Multiple"},
+                        "maxSize": {"type": "number", "title": "Max Size (MB)"},
+                        "accept": {"type": "string", "title": "Accepted Formats"},
+                    },
+                },
+            },
+            {
+                "technical_name": "tabs",
+                "name": "Tabs",
+                "title": "Tab Container",
+                "component_type": "layout",
+                "icon": "folder",
+                "component_path": "@/components/Layout/Tabs",
+                "description": "Tabbed container for organizing components",
+                "default_config": {
+                    "items": [{"label": "Tab 1", "key": "1"}],
+                    "type": "line",
+                },
+                "props_schema": {
+                    "type": "object",
+                    "properties": {
+                        "items": {
+                            "type": "array",
+                            "title": "Tab Items",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "label": {"type": "string"},
+                                    "key": {"type": "string"},
+                                }
+                            }
+                        },
+                        "type": {
+                            "type": "string",
+                            "enum": ["line", "card", "editable-card"],
+                            "title": "Tab Style",
+                        },
+                    },
+                },
             }
         ]
 

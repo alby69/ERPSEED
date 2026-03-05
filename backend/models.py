@@ -717,3 +717,29 @@ class SysAction(BaseModel):
 
     def __repr__(self):
         return f"<SysAction {self.name}>"
+
+
+class SysModelVersion(BaseModel):
+    """Snapshot of a SysModel definition at a specific point in time."""
+
+    __tablename__ = "sys_model_versions"
+
+    model_id = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
+    version_number = db.Column(db.Integer, nullable=False)
+    description = db.Column(db.Text)
+
+    # JSON snapshot of model and its fields
+    data = db.Column(db.Text, nullable=False)
+
+    created_by = db.Column(db.Integer, db.ForeignKey("users.id"))
+
+    model = db.relationship(
+        "SysModel",
+        backref=db.backref(
+            "versions", lazy="dynamic", cascade="all, delete-orphan"
+        ),
+    )
+    creator = db.relationship("User")
+
+    def __repr__(self):
+        return f"<SysModelVersion {self.model_id} v{self.version_number}>"
