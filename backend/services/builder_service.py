@@ -61,7 +61,7 @@ class BuilderService(BaseService):
         from ..models import SysModel
         return self.db.session.get(SysModel, model_id)
     
-    def create_model(self, project_id, name, title, description=None, permissions=None):
+    def create_model(self, project_id, name, title, description=None, permissions=None, technical_name=None, table_name=None):
         """
         Create a new model definition.
         
@@ -71,6 +71,8 @@ class BuilderService(BaseService):
             title: Display title.
             description: Optional description.
             permissions: JSON string for ACL.
+            technical_name: Full technical name (optional).
+            table_name: Database table name (optional).
             
         Returns:
             Newly created SysModel.
@@ -92,6 +94,8 @@ class BuilderService(BaseService):
         model = SysModel(
             project_id=project_id,
             name=name,
+            technical_name=technical_name or name,
+            table_name=table_name or name,
             title=title,
             description=description,
             permissions=permissions
@@ -190,7 +194,7 @@ class BuilderService(BaseService):
         except Exception:
             pass
     
-    def create_field(self, model_id, name, field_type, title=None, **kwargs):
+    def create_field(self, model_id, name, field_type, title=None, technical_name=None, **kwargs):
         """
         Add a field to a model.
         
@@ -199,6 +203,7 @@ class BuilderService(BaseService):
             name: Field name.
             field_type: Type of field (string, integer, etc.).
             title: Display title.
+            technical_name: Technical name in DB.
             **kwargs: Additional field options.
             
         Returns:
@@ -221,6 +226,7 @@ class BuilderService(BaseService):
         field = SysField(
             model_id=model_id,
             name=name,
+            technical_name=technical_name or name,
             type=field_type,
             title=title or name,
             **kwargs

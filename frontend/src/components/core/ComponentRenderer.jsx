@@ -4,9 +4,10 @@
  * This module renders components dynamically based on their archetype.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import registry from './ArchetypeRegistry';
 import { resolveDataBinding } from '@/utils/binding';
+import { apiFetch } from '@/utils';
 
 /**
  * ComponentRenderer - Renders a component based on its archetype
@@ -23,10 +24,29 @@ const ComponentRenderer = ({
   config = {}, 
   data = null,
   context = {},
+  projectId,
+  modelId,
   onChange,
   ...otherProps 
 }) => {
   const archetype = useMemo(() => registry.get(type), [type]);
+  const [modelName, setModelName] = useState(null);
+
+  // Fetch model metadata if modelId is provided but modelName is not
+  useEffect(() => {
+    const fetchModelMeta = async () => {
+      if (projectId && modelId) {
+        try {
+          const response = await apiFetch(`/projects/${projectId}/models/${modelId}`);
+          const modelData = await response.json();
+          setModelName(modelData.name);
+        } catch (error) {
+          console.error("Error fetching model metadata for renderer:", error);
+        }
+      }
+    };
+    fetchModelMeta();
+  }, [projectId, modelId]);
 
   // Resolve data bindings in config using provided context
   const resolvedConfig = useMemo(() => {
@@ -56,6 +76,8 @@ const ComponentRenderer = ({
       config={resolvedConfig}
       data={data}
       onChange={onChange}
+      projectId={projectId}
+      modelName={modelName}
       {...otherProps}
     />
   );

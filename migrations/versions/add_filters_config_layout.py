@@ -15,27 +15,21 @@ depends_on = None
 
 
 def upgrade():
-    # Aggiungi filters_config a sys_charts (solo se non esiste)
+    # Use SQLAlchemy inspector to check for columns in a DB-agnostic way
+    from sqlalchemy import inspect
     connection = op.get_bind()
-    result = connection.execute(
-        sa.text("""
-        SELECT column_name FROM information_schema.columns 
-        WHERE table_name = 'sys_charts' AND column_name = 'filters_config'
-    """)
-    )
-    if result.fetchone() is None:
+    inspector = inspect(connection)
+
+    # Aggiungi filters_config a sys_charts (solo se non esiste)
+    columns = [c['name'] for c in inspector.get_columns('sys_charts')]
+    if 'filters_config' not in columns:
         op.add_column(
             "sys_charts", sa.Column("filters_config", sa.JSON(), nullable=True)
         )
 
     # Aggiungi layout a sys_dashboards (solo se non esiste)
-    result = connection.execute(
-        sa.text("""
-        SELECT column_name FROM information_schema.columns 
-        WHERE table_name = 'sys_dashboards' AND column_name = 'layout'
-    """)
-    )
-    if result.fetchone() is None:
+    columns = [c['name'] for c in inspector.get_columns('sys_dashboards')]
+    if 'layout' not in columns:
         op.add_column("sys_dashboards", sa.Column("layout", sa.Text(), nullable=True))
 
 

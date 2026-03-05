@@ -246,6 +246,7 @@ function BlockBuilder() {
     return (
       <VisualBuilder
         title={`Editing Block: ${editingBlockData.name}`}
+        projectId={projectId}
         initialComponents={editingBlockData.components}
         onSave={handleSaveBlock}
         onBack={() => { setEditingBlockId(null); setEditingBlockData(null); }}

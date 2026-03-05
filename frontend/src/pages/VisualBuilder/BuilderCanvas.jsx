@@ -16,7 +16,8 @@ const DraggableComponent = ({
   isSelected,
   onSelect,
   onDelete,
-  previewMode
+  previewMode,
+  projectId
 }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: id,
@@ -39,7 +40,7 @@ const DraggableComponent = ({
   const mockContext = {
     user: { name: 'Mario Rossi', role: 'admin' },
     company: { name: 'Esempio s.r.l.' },
-    now: new Date().toLocaleDateString()
+    now: new Date().toISOString()
   };
 
   return (
@@ -89,6 +90,8 @@ const DraggableComponent = ({
             type={component.type}
             config={component.config}
             context={mockContext}
+            projectId={projectId}
+            modelId={component.modelId}
           />
         </div>
       </Card>
@@ -101,7 +104,8 @@ const BuilderCanvas = ({
   selectedId,
   onSelect,
   onDelete,
-  previewMode
+  previewMode,
+  projectId
 }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: 'builder-canvas',
@@ -143,6 +147,7 @@ const BuilderCanvas = ({
             onSelect={onSelect}
             onDelete={onDelete}
             previewMode={previewMode}
+            projectId={projectId}
           />
         ))
       )}

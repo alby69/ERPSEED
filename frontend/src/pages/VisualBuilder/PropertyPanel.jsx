@@ -3,19 +3,40 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Form, Input, InputNumber, Switch, Select, Typography, Divider, Empty, Row, Col, Tooltip } from 'antd';
+import { Form, Input, InputNumber, Switch, Select, Typography, Divider, Empty, Row, Col, Tooltip, Spin } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { registry } from '@/components/core';
+import { apiFetch } from '@/utils';
 
 const { Title, Text } = Typography;
 
-const PropertyPanel = ({ component, onChange }) => {
+const PropertyPanel = ({ component, onChange, projectId }) => {
   const [form] = Form.useForm();
+  const [models, setModels] = useState([]);
+  const [loadingModels, setLoadingModels] = useState(false);
   const [context, setContext] = useState({
     user: { name: 'Admin', role: 'admin' },
     company: { name: 'FlaskERP Corp' },
     now: new Date().toISOString()
   });
+
+  useEffect(() => {
+    fetchModels();
+  }, [projectId]);
+
+  const fetchModels = async () => {
+    if (!projectId) return;
+    setLoadingModels(true);
+    try {
+      const response = await apiFetch(`/projects/${projectId}/models`);
+      const data = await response.json();
+      setModels(data);
+    } catch (error) {
+      console.error("Error fetching models:", error);
+    } finally {
+      setLoadingModels(false);
+    }
+  };
 
   useEffect(() => {
     if (component) {
@@ -25,6 +46,7 @@ const PropertyPanel = ({ component, onChange }) => {
         y: component.y,
         w: component.w,
         h: component.h,
+        modelId: component.modelId,
         ...component.config
       });
     }
@@ -42,7 +64,7 @@ const PropertyPanel = ({ component, onChange }) => {
   const propsSchema = archetype?.props_schema || {};
 
   const handleValuesChange = (_, allValues) => {
-    const { name, x, y, w, h, ...config } = allValues;
+    const { name, x, y, w, h, modelId, ...config } = allValues;
     onChange({
       ...component,
       name,
@@ -50,6 +72,7 @@ const PropertyPanel = ({ component, onChange }) => {
       y,
       w,
       h,
+      modelId,
       config
     });
   };
@@ -115,6 +138,18 @@ const PropertyPanel = ({ component, onChange }) => {
           <Input placeholder="Unique name" />
         </Form.Item>
 
+        <Form.Item name="modelId" label="Data Source (Model)">
+          <Select
+            placeholder="Select a model"
+            allowClear
+            loading={loadingModels}
+          >
+            {models.map(m => (
+              <Select.Option key={m.id} value={m.id}>{m.title || m.name}</Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+
         <Divider orientation="left" plain style={{ fontSize: 11 }}>Layout</Divider>
         <Row gutter={8}>
           <Col span={12}>
@@ -155,11 +190,19 @@ const PropertyPanel = ({ component, onChange }) => {
         <div style={{ fontSize: 11, background: '#f9f9f9', padding: 8, borderRadius: 4 }}>
           <Text type="secondary">Available context:</Text>
           <ul style={{ paddingLeft: 16, margin: '4px 0' }}>
-            <li><code>user.name</code></li>
+            <li><code>user.name</code>, <code>user.role</code></li>
             <li><code>company.name</code></li>
-            <li><code>now</code></li>
+            <li><code>now</code> (ISO Date)</li>
           </ul>
-          <Text type="secondary">Functions: <code>UPPER(), IF(), SUM()</code></Text>
+          <Divider style={{ margin: '4px 0' }} />
+          <Text type="secondary">Built-in Functions:</Text>
+          <ul style={{ paddingLeft: 16, margin: '4px 0' }}>
+            <li><code>UPPER(text)</code> / <code>LOWER(text)</code></li>
+            <li><code>IF(condition, then, else)</code></li>
+            <li><code>COUNT(array)</code> / <code>SUM(array, "field")</code></li>
+            <li><code>FORMAT_CURRENCY(val, "€")</code></li>
+          </ul>
+          <Text type="info" style={{ fontSize: 10 }}>Tip: Wrap expressions in <code>{`{{ ... }}`}</code></Text>
         </div>
       </Form>
     </div>
