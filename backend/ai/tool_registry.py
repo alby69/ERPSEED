@@ -674,6 +674,110 @@ class ToolRegistry:
             },
         ]
 
+    def get_ui_builder_tools(self, project_id: int = None) -> List[Dict]:
+        """Genera tool per la gestione della UI tramite Visual Builder."""
+        return [
+            {
+                "name": "create_ui_view",
+                "description": "Create a new UI view (SysView) for a model. A view defines how data is presented (list, form, kanban, etc.) and contains a set of UI components.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "model_name": {
+                            "type": "string",
+                            "description": "Name of the model this view belongs to",
+                        },
+                        "view_name": {
+                            "type": "string",
+                            "description": "Technical name for the view (e.g., 'customer_list')",
+                        },
+                        "view_title": {
+                            "type": "string",
+                            "description": "Display title for the view",
+                        },
+                        "view_type": {
+                            "type": "string",
+                            "enum": ["list", "form", "kanban", "dashboard", "custom"],
+                            "description": "Type of view",
+                        },
+                        "is_default": {
+                            "type": "boolean",
+                            "description": "Whether this should be the default view for the model",
+                        },
+                        "components": {
+                            "type": "array",
+                            "description": "Initial set of components for the view",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "description": "Component type (e.g., 'table', 'form', 'chart')",
+                                    },
+                                    "name": {"type": "string"},
+                                    "x": {"type": "integer"},
+                                    "y": {"type": "integer"},
+                                    "w": {"type": "integer"},
+                                    "h": {"type": "integer"},
+                                    "config": {
+                                        "type": "object",
+                                        "description": "Component-specific configuration (supports {{expressions}})",
+                                    },
+                                },
+                                "required": ["type", "x", "y"],
+                            },
+                        },
+                    },
+                    "required": ["model_name", "view_name", "view_type"],
+                },
+            },
+            {
+                "name": "add_ui_component",
+                "description": "Add a UI component to an existing view.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "view_id": {
+                            "type": "integer",
+                            "description": "ID of the view to modify",
+                        },
+                        "component": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"type": "string"},
+                                "name": {"type": "string"},
+                                "x": {"type": "integer"},
+                                "y": {"type": "integer"},
+                                "w": {"type": "integer"},
+                                "h": {"type": "integer"},
+                                "config": {"type": "object"},
+                            },
+                            "required": ["type", "x", "y"],
+                        },
+                    },
+                    "required": ["view_id", "component"],
+                },
+            },
+            {
+                "name": "update_ui_view_config",
+                "description": "Update the complete configuration of a UI view.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "view_id": {
+                            "type": "integer",
+                            "description": "ID of the view to update",
+                        },
+                        "components": {
+                            "type": "array",
+                            "description": "The new set of components for the view",
+                        },
+                    },
+                    "required": ["view_id", "components"],
+                },
+            },
+        ]
+
     def get_test_tools(self, project_id: int = None) -> List[Dict]:
         """Genera tool per la generazione automatica di test."""
         return [

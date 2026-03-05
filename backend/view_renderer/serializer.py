@@ -35,18 +35,14 @@ class ViewConfigSerializer:
     def sys_view_to_config(sys_view: SysView) -> ViewConfig:
         """Convert a SysView database model to a ViewConfig."""
         config = ViewConfigSerializer.deserialize_config(sys_view.config)
-        components = config.get("components", [])
+        components_data = config.get("components", [])
+
+        from backend.view_renderer import ComponentConfigParser
 
         parsed_components = []
-        for comp in components:
-            if isinstance(comp, dict):
-                parsed_components.append(
-                    ComponentConfig(
-                        component_type=comp.get("type", ""),
-                        props=comp.get("props", {}),
-                        condition=comp.get("condition"),
-                    )
-                )
+        for comp_data in components_data:
+            if isinstance(comp_data, dict):
+                parsed_components.append(ComponentConfigParser.parse(comp_data))
 
         return ViewConfig(
             view_type=sys_view.view_type,

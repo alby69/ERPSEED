@@ -593,6 +593,133 @@ class ScheduledTaskToolExecutor:
             return {"success": False, "error": str(e)}
 
 
+class UIToolExecutor:
+    """
+    Esegue tool per la gestione della UI tramite Visual Builder.
+    """
+
+    def create_ui_view(self, args: Dict, context: Dict) -> Dict:
+        project_id = context.get("project_id")
+        model_name = args.get("model_name")
+        view_name = args.get("view_name")
+        view_title = args.get("view_title")
+        view_type = args.get("view_type")
+        is_default = args.get("is_default", False)
+        components = args.get("components", [])
+
+        from backend.models import SysView, SysModel, db
+        from backend.view_renderer.serializer import deserialize_view_from_frontend
+
+        sys_model = SysModel.query.filter_by(
+            project_id=project_id, name=model_name
+        ).first()
+        if not sys_model:
+            return {"success": False, "error": f"Model '{model_name}' not found."}
+
+        # Check if view already exists
+        existing_view = SysView.query.filter_by(
+            model_id=sys_model.id, name=view_name
+        ).first()
+        if existing_view:
+            return {
+                "success": False,
+                "error": f"View '{view_name}' already exists for model '{model_name}'.",
+            }
+
+        view_data = {
+            "name": view_name,
+            "technicalName": f"{sys_model.technical_name}.{view_name}",
+            "title": view_title or view_name,
+            "viewType": view_type,
+            "isDefault": is_default,
+            "components": components,
+            "config": {},
+        }
+
+        try:
+            sys_view_data = deserialize_view_from_frontend(view_data, sys_model.id)
+            new_view = SysView(**sys_view_data)
+            db.session.add(new_view)
+            db.session.commit()
+            return {
+                "success": True,
+                "message": f"View '{view_title or view_name}' created successfully.",
+                "view_id": new_view.id,
+            }
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error creating view: {e}")
+            return {"success": False, "error": str(e)}
+
+    def add_ui_component(self, args: Dict, context: Dict) -> Dict:
+        view_id = args.get("view_id")
+        component = args.get("component")
+
+        from backend.models import SysView, db
+
+        sys_view = SysView.query.get(view_id)
+        if not sys_view:
+            return {"success": False, "error": f"View ID {view_id} not found."}
+
+        try:
+            config = (
+                json.loads(sys_view.config)
+                if isinstance(sys_view.config, str)
+                else sys_view.config
+            )
+            if config is None:
+                config = {}
+
+            components = config.get("components", [])
+
+            # Generate ID if not present
+            if "id" not in component:
+                component["id"] = f"comp_{int(datetime.now().timestamp() * 1000)}"
+
+            components.append(component)
+            config["components"] = components
+
+            sys_view.config = json.dumps(config)
+            db.session.commit()
+            return {"success": True, "message": f"Component added to view {view_id}."}
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error adding component: {e}")
+            return {"success": False, "error": str(e)}
+
+    def update_ui_view_config(self, args: Dict, context: Dict) -> Dict:
+        view_id = args.get("view_id")
+        components = args.get("components")
+
+        from backend.models import SysView, db
+
+        sys_view = SysView.query.get(view_id)
+        if not sys_view:
+            return {"success": False, "error": f"View ID {view_id} not found."}
+
+        try:
+            config = (
+                json.loads(sys_view.config)
+                if isinstance(sys_view.config, str)
+                else sys_view.config
+            )
+            if config is None:
+                config = {}
+
+            config["components"] = components
+
+            sys_view.config = json.dumps(config)
+            db.session.commit()
+            return {
+                "success": True,
+                "message": f"View configuration updated for view {view_id}.",
+            }
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error updating view config: {e}")
+            return {"success": False, "error": str(e)}
+
+
 class NotificationToolExecutor:
     """
     Esegue tool per la gestione di notifiche.
@@ -669,3 +796,4 @@ workflow_executor = WorkflowToolExecutor()
 hook_executor = HookToolExecutor()
 scheduled_task_executor = ScheduledTaskToolExecutor()
 notification_executor = NotificationToolExecutor()
+ui_executor = UIToolExecutor()
