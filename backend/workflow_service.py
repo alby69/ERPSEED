@@ -48,86 +48,12 @@ class WorkflowService(BaseService):
 
         workflows = query.all()
 
+        from backend.workflow_executor import WorkflowEngine
+
         for workflow in workflows:
             if workflow.trigger_event == event or workflow.trigger_event == "*":
-                WorkflowService._execute_workflow(workflow, event, data)
-
-    @staticmethod
-    def _execute_workflow(workflow, event: str, data: Dict[str, Any]):
-        """Execute a single workflow."""
-        from backend.workflows import WorkflowExecution, WorkflowLog
-        from backend.extensions import db as db_ext
-
-        execution = WorkflowExecution(
-            workflow_id=workflow.id,
-            trigger_event=event,
-            trigger_data=json.dumps(data),
-            status="running",
-        )
-
-        from backend.extensions import db as db_ext
-
-        db_ext.session.add(execution)
-        db_ext.session.flush()
-
-        try:
-            steps = workflow.get_steps()
-            project_id = workflow.project_id
-
-            for step in steps:
-                log = WorkflowLog(
-                    execution_id=execution.id,
-                    step_id=step.id,
-                    step_name=step.name,
-                    status="running",
-                    input_data=json.dumps(data),
-                    started_at=datetime.utcnow(),
-                )
-                db_ext.session.add(log)
-                db_ext.session.flush()
-
-                try:
-                    result = WorkflowService._execute_step(
-                        step, data, execution, project_id
-                    )
-
-                    if result.get("skip"):
-                        log.status = "skipped"
-                    elif result.get("error"):
-                        log.status = "failed"
-                        log.error_message = result.get("error")
-                    else:
-                        log.status = "success"
-                        log.set_output_data(result.get("output", {}))
-
-                    if result.get("error"):
-                        execution.status = "failed"
-                        execution.error_message = result.get("error")
-                        break
-
-                    if result.get("output"):
-                        data.update(result["output"])
-
-                except Exception as e:
-                    log.status = "failed"
-                    log.error_message = str(e)
-                    execution.status = "failed"
-                    execution.error_message = str(e)
-                    db_ext.session.commit()
-                    break
-
-                log.completed_at = datetime.utcnow()
-                db_ext.session.commit()
-
-            if execution.status == "running":
-                execution.status = "completed"
-
-        except Exception as e:
-            execution.status = "failed"
-            execution.error_message = str(e)
-
-        execution.completed_at = datetime.utcnow()
-        db_ext.session.commit()
+                # Use the new optimized WorkflowEngine
+                WorkflowEngine.run(workflow.id, event, data, project_id=project_id)
 
     @staticmethod
     def _execute_step(

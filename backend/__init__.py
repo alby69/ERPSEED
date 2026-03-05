@@ -74,6 +74,12 @@ from .marketplace.api import blp as marketplace_api_blp
 # Import AI Assistant API
 from .ai.api import blp as ai_bp
 
+# Import Visual Builder API
+from .visual_builder_api import blp as visual_builder_bp
+
+# Import Template API
+from .template_api import blp as template_bp
+
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -252,8 +258,6 @@ def create_app(db_url=None):
         },
     )
 
-    # Register CORS for test_runner blueprint
-    CORS(test_runner_bp)
 
     # --- Global Error Handler ---
     @app.errorhandler(Exception)
@@ -292,6 +296,8 @@ def create_app(db_url=None):
     api.register_blueprint(builder_api_blp)
     api.register_blueprint(marketplace_api_blp)
     api.register_blueprint(ai_bp)
+    api.register_blueprint(visual_builder_bp)
+    api.register_blueprint(template_bp)
     api.register_blueprint(custom_modules_bp)
     api.register_blueprint(module_api_bp)
     api.register_blueprint(import_export_bp)

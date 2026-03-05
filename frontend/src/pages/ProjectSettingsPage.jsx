@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Form, Input, Button, message, Spin, Alert, Card, Modal, Divider, ColorPicker, InputNumber, Radio, Table, Switch, Tag } from 'antd';
-import { ExclamationCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import { Form, Input, Button, message, Spin, Alert, Card, Modal, Divider, ColorPicker, InputNumber, Radio, Table, Switch, Tag, Tabs } from 'antd';
+import { ExclamationCircleOutlined, RocketOutlined, SettingOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useAuth, useTheme } from '@/context';
+import TemplateGallery from '@/components/ui/TemplateGallery';
 import { CHART_LIBRARIES, CHART_LIBRARY_LABELS } from '../components/charts';
 
 const ProjectSettingsPage = () => {
@@ -127,57 +128,81 @@ const ProjectSettingsPage = () => {
         return <Alert message="Error" description={error} type="error" showIcon />;
     }
 
+    const settingsTabs = [
+        {
+            key: 'general',
+            label: <span><SettingOutlined /> General Settings</span>,
+            children: (
+                <Card>
+                    <Form form={form} layout="vertical" onFinish={onFinish}>
+                        <Form.Item name="title" label="Project Title" rules={[{ required: true, message: 'The title is required.' }]}>
+                            <Input placeholder="The display name of the project" />
+                        </Form.Item>
+                        <Form.Item name="description" label="Description">
+                            <Input.TextArea rows={4} placeholder="A brief description of the project" />
+                        </Form.Item>
+                        <Form.Item name="version" label="Version" rules={[{ required: true, message: 'The version is required.' }]}>
+                            <Input placeholder="e.g., 1.0.1" />
+                        </Form.Item>
+
+                        <Divider orientation="left">Appearance & Theme</Divider>
+
+                        <div className="row">
+                            <div className="col-md-4">
+                                <Form.Item name="theme_mode" label="Theme Mode">
+                                    <Radio.Group buttonStyle="solid">
+                                        <Radio.Button value="light">Light</Radio.Button>
+                                        <Radio.Button value="dark">Dark</Radio.Button>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </div>
+                            <div className="col-md-4">
+                                <Form.Item name="primary_color" label="Primary Color">
+                                    <ColorPicker showText />
+                                </Form.Item>
+                            </div>
+                            <div className="col-md-4">
+                                <Form.Item name="border_radius" label="Border Radius (px)">
+                                    <InputNumber min={0} max={20} />
+                                </Form.Item>
+                            </div>
+                        </div>
+
+                        <Form.Item className="mt-4">
+                            <Button type="primary" htmlType="submit" loading={saving}>Save Settings</Button>
+                        </Form.Item>
+                    </Form>
+                </Card>
+            )
+        },
+        {
+            key: 'templates',
+            label: <span><RocketOutlined /> Starter Templates</span>,
+            children: (
+                <Card>
+                    <TemplateGallery projectId={projectId} onInstalled={() => fetchProjectDetails()} />
+                </Card>
+            )
+        },
+        {
+            key: 'charts',
+            label: <span><SettingOutlined /> Charts</span>,
+            children: (
+                <Card title="Chart Libraries">
+                    <div className="mb-3">
+                        <p className="text-muted">Configura le librerie grafiche disponibili per i dashboard.</p>
+                    </div>
+                    <ChartLibrarySettings />
+                </Card>
+            )
+        }
+    ];
+
     return (
         <>
-            <Card title="Project Settings">
-                <Form form={form} layout="vertical" onFinish={onFinish}>
-                    <Form.Item name="title" label="Project Title" rules={[{ required: true, message: 'The title is required.' }]}>
-                        <Input placeholder="The display name of the project" />
-                    </Form.Item>
-                    <Form.Item name="description" label="Description">
-                        <Input.TextArea rows={4} placeholder="A brief description of the project" />
-                    </Form.Item>
-                    <Form.Item name="version" label="Version" rules={[{ required: true, message: 'The version is required.' }]}>
-                        <Input placeholder="e.g., 1.0.1" />
-                    </Form.Item>
+            <Title level={3} style={{ marginBottom: 24 }}>Project Settings: {project?.title}</Title>
 
-                    <Divider orientation="left">Appearance & Theme</Divider>
-
-                    <div className="row">
-                        <div className="col-md-4">
-                            <Form.Item name="theme_mode" label="Theme Mode">
-                                <Radio.Group buttonStyle="solid">
-                                    <Radio.Button value="light">Light</Radio.Button>
-                                    <Radio.Button value="dark">Dark</Radio.Button>
-                                </Radio.Group>
-                            </Form.Item>
-                        </div>
-                        <div className="col-md-4">
-                            <Form.Item name="primary_color" label="Primary Color">
-                                <ColorPicker showText />
-                            </Form.Item>
-                        </div>
-                        <div className="col-md-4">
-                            <Form.Item name="border_radius" label="Border Radius (px)">
-                                <InputNumber min={0} max={20} />
-                            </Form.Item>
-                        </div>
-                    </div>
-
-                    <Form.Item className="mt-4">
-                        <Button type="primary" htmlType="submit" loading={saving}>Save Settings</Button>
-                    </Form.Item>
-                </Form>
-            </Card>
-
-            <Divider />
-
-            <Card title="Chart Libraries">
-                <div className="mb-3">
-                    <p className="text-muted">Configura le librerie grafiche disponibili per i dashboard.</p>
-                </div>
-                <ChartLibrarySettings />
-            </Card>
+            <Tabs defaultActiveKey="general" items={settingsTabs} />
 
             <Divider />
 

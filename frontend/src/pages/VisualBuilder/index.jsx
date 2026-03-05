@@ -41,7 +41,8 @@ const VisualBuilder = ({
   onSave,
   onBack,
   loading = false,
-  extraHeader
+  extraHeader,
+  projectId
 }) => {
   const [components, setComponents] = useState(initialComponents);
   const [selectedId, setSelectedId] = useState(null);
@@ -185,6 +186,7 @@ const VisualBuilder = ({
                 onSelect={setSelectedId}
                 onDelete={handleDelete}
                 previewMode={previewMode}
+                projectId={projectId}
               />
             </div>
           </Content>
@@ -194,6 +196,7 @@ const VisualBuilder = ({
               <PropertyPanel
                 component={selectedComponent}
                 onChange={handleUpdateComponent}
+                projectId={projectId}
               />
             </Sider>
           )}

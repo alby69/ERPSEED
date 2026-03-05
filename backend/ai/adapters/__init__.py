@@ -5,6 +5,8 @@ AI Adapters - Supporto per molteplici provider LLM.
 from .base import LLMAdapter, LLMResponse, ToolCall, StreamingLLMAdapter
 from .openrouter import OpenRouterAdapter, openrouter_adapter
 from .anthropic import AnthropicAdapter, anthropic_adapter
+from .openai import OpenAIAdapter, openai_adapter
+from .ollama import OllamaAdapter, ollama_adapter
 
 
 def get_adapter(provider: str = None) -> LLMAdapter:
@@ -26,6 +28,10 @@ def get_adapter(provider: str = None) -> LLMAdapter:
         return anthropic_adapter
     elif provider == "openrouter":
         return openrouter_adapter
+    elif provider == "openai":
+        return openai_adapter
+    elif provider == "ollama":
+        return ollama_adapter
     else:
         raise ValueError(f"Unknown provider: {provider}")
 
@@ -39,7 +45,11 @@ __all__ = [
     "StreamingLLMAdapter",
     "OpenRouterAdapter",
     "AnthropicAdapter",
+    "OpenAIAdapter",
+    "OllamaAdapter",
     "openrouter_adapter",
     "anthropic_adapter",
+    "openai_adapter",
+    "ollama_adapter",
     "get_adapter",
 ]
