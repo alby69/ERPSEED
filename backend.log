@@ -14,31 +14,36 @@
   name = get_unique_schema_name(self.spec.components, name)
 /home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name SysView. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
   name = get_unique_schema_name(self.spec.components, name)
- * Restarting with stat
-/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name AuthResponse. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
-  name = get_unique_schema_name(self.spec.components, name)
-/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name RefreshResponse. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
-  name = get_unique_schema_name(self.spec.components, name)
-/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name PasswordChange. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
-  name = get_unique_schema_name(self.spec.components, name)
-/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name UserUpdate. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
-  name = get_unique_schema_name(self.spec.components, name)
-/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name UserDisplay. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
-  name = get_unique_schema_name(self.spec.components, name)
-/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name Project. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
-  name = get_unique_schema_name(self.spec.components, name)
-/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name SysModel. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
-  name = get_unique_schema_name(self.spec.components, name)
-/home/jules/.pyenv/versions/3.12.12/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name SysView. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
-  name = get_unique_schema_name(self.spec.components, name)
- * Debugger is active!
- * Debugger PIN: 528-207-680
-(5608) wsgi starting up on http://0.0.0.0:5000
-(5608) accepted ('127.0.0.1', 56030)
-127.0.0.1 - - [05/Mar/2026 11:04:10] "GET /api/projects HTTP/1.1" 404 360 0.001665
-(5608) accepted ('127.0.0.1', 48490)
-127.0.0.1 - - [05/Mar/2026 11:06:19] "GET /api/v1/projects HTTP/1.1" 404 360 0.001176
-(5608) accepted ('127.0.0.1', 44122)
-127.0.0.1 - - [05/Mar/2026 11:09:50] "GET /login HTTP/1.1" 405 378 0.001241
-(5608) accepted ('127.0.0.1', 38314)
-127.0.0.1 - - [05/Mar/2026 11:10:09] "POST /login HTTP/1.1" 401 403 0.086723
+Error adding sys_dashboards.updated_at: (sqlite3.OperationalError) no such table: information_schema.columns
+[SQL:
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'sys_dashboards' AND column_name = 'updated_at'
+            ]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Error adding sys_models.updated_at: (sqlite3.OperationalError) no such table: information_schema.columns
+[SQL:
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'sys_models' AND column_name = 'updated_at'
+            ]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Error adding sys_fields.created_at: (sqlite3.OperationalError) no such table: information_schema.columns
+[SQL:
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'sys_fields' AND column_name = 'created_at'
+            ]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Error adding sys_fields.updated_at: (sqlite3.OperationalError) no such table: information_schema.columns
+[SQL:
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'sys_fields' AND column_name = 'updated_at'
+            ]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+ * Serving Flask app 'backend'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5002
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [05/Mar/2026 12:12:37] "OPTIONS /login HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 12:12:37] "[31m[1mPOST /login HTTP/1.1[0m" 401 -
+127.0.0.1 - - [05/Mar/2026 12:14:46] "OPTIONS /login HTTP/1.1" 200 -
+127.0.0.1 - - [05/Mar/2026 12:14:46] "[31m[1mPOST /login HTTP/1.1[0m" 401 -
