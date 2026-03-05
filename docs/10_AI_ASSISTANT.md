@@ -482,12 +482,12 @@ class MyAdapter(LLMAdapter):
 
 | Endpoint | Metodo | Autenticazione | Descrizione |
 |----------|--------|----------------|-------------|
-| `/api/ai/generate` | POST | JWT | Genera config ERP |
-| `/api/ai/apply` | POST | JWT | Applica config al DB |
-| `/api/ai/suggestions` | POST | JWT | Suggerimenti miglioramento |
-| `/api/ai/models` | GET | JWT | Lista modelli disponibili |
-| `/api/ai/conversations` | GET | JWT | Lista conversazioni |
-| `/api/ai/feedback` | POST | JWT | Salva feedback per learning |
+| `/api/ai/generate` | POST | JWT | Genera config ERP da linguaggio naturale |
+| `/api/ai/apply` | POST | JWT | Applica la configurazione generata al database |
+| `/api/ai/suggestions` | POST | JWT | Ottiene suggerimenti per migliorare un modello esistente |
+| `/api/ai/models` | GET | JWT | Lista i modelli LLM disponibili (es. DeepSeek, Claude) |
+| `/api/ai/conversations` | GET | JWT | Recupera la cronologia delle conversazioni per il progetto |
+| `/api/ai/feedback` | POST | JWT | Salva il feedback dell'utente per migliorare l'AI (Learning Loop) |
 
 ---
 
@@ -701,5 +701,9 @@ LLM_PROVIDER=openrouter  # o "anthropic"
 OPENROUTER_API_KEY=sk-or-...
 ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+---
+
+**Per approfondimenti tecnici sugli esempi di codice AI, consulta il [Manuale Tecnico Sviluppatore](planner/04_MANUALE_TECNICO_SVILUPPATORE.md).**
 
 *Documento aggiornato: Marzo 2026*
