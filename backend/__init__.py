@@ -80,7 +80,6 @@ from .visual_builder_api import blp as visual_builder_bp
 # Import Template API
 from .template_api import blp as template_bp
 
-
 def create_app(db_url=None):
     app = Flask(__name__)
 
@@ -122,70 +121,41 @@ def create_app(db_url=None):
         db.create_all()
 
         # Add missing columns to existing tables
-        from sqlalchemy import text
+        from sqlalchemy import inspect, text
+
+        inspector = inspect(db.engine)
+
+        def column_exists(table, column):
+            cols = [c["name"] for c in inspector.get_columns(table)]
+            return column in cols
 
         try:
-            # sys_dashboards.updated_at
-            result = db.session.execute(
-                text("""
-                SELECT column_name FROM information_schema.columns 
-                WHERE table_name = 'sys_dashboards' AND column_name = 'updated_at'
-            """)
-            )
-            if not result.fetchone():
-                db.session.execute(
-                    text("ALTER TABLE sys_dashboards ADD COLUMN updated_at TIMESTAMP")
-                )
+            if not column_exists("sys_dashboards", "updated_at"):
+                db.session.execute(text("ALTER TABLE sys_dashboards ADD COLUMN updated_at TIMESTAMP"))
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
             print(f"Error adding sys_dashboards.updated_at: {e}")
 
         try:
-            # sys_models.updated_at
-            result = db.session.execute(
-                text("""
-                SELECT column_name FROM information_schema.columns 
-                WHERE table_name = 'sys_models' AND column_name = 'updated_at'
-            """)
-            )
-            if not result.fetchone():
-                db.session.execute(
-                    text("ALTER TABLE sys_models ADD COLUMN updated_at TIMESTAMP")
-                )
+            if not column_exists("sys_models", "updated_at"):
+                db.session.execute(text("ALTER TABLE sys_models ADD COLUMN updated_at TIMESTAMP"))
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
             print(f"Error adding sys_models.updated_at: {e}")
 
         try:
-            # sys_fields.created_at and sys_fields.updated_at
-            result = db.session.execute(
-                text("""
-                SELECT column_name FROM information_schema.columns 
-                WHERE table_name = 'sys_fields' AND column_name = 'created_at'
-            """)
-            )
-            if not result.fetchone():
-                db.session.execute(
-                    text("ALTER TABLE sys_fields ADD COLUMN created_at TIMESTAMP")
-                )
+            if not column_exists("sys_fields", "created_at"):
+                db.session.execute(text("ALTER TABLE sys_fields ADD COLUMN created_at TIMESTAMP"))
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
             print(f"Error adding sys_fields.created_at: {e}")
 
         try:
-            result = db.session.execute(
-                text("""
-                SELECT column_name FROM information_schema.columns 
-                WHERE table_name = 'sys_fields' AND column_name = 'updated_at'
-            """)
-            )
-            if not result.fetchone():
-                db.session.execute(
-                    text("ALTER TABLE sys_fields ADD COLUMN updated_at TIMESTAMP")
-                )
+            if not column_exists("sys_fields", "updated_at"):
+                db.session.execute(text("ALTER TABLE sys_fields ADD COLUMN updated_at TIMESTAMP"))
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
