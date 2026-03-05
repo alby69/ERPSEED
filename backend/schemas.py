@@ -5,6 +5,9 @@ from .models import (
     Project,
     SysModel,
     SysField,
+    SysView,
+    SysComponent,
+    SysAction,
     Product,
     SalesOrder,
     SalesOrderLine,
@@ -230,5 +233,54 @@ class SysChartSchema(ma.SQLAlchemyAutoSchema):
 class SysDashboardSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SysDashboard
+        load_instance = True
+        include_fk = True
+
+
+# --- Meta-Architecture Schemas ---
+class SysViewSchema(ma.SQLAlchemyAutoSchema):
+    model = mm_fields.Nested(SysModelSchema(only=("id", "name", "technical_name")))
+
+    class Meta:
+        model = SysView
+        load_instance = True
+        include_fk = True
+
+
+class SysViewCreateSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = SysView
+        load_instance = True
+        include_fk = True
+        exclude = ("model",)
+
+
+class SysComponentSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = SysComponent
+        load_instance = True
+        include_fk = True
+
+
+class SysComponentCreateSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = SysComponent
+        load_instance = True
+        include_fk = True
+
+
+class SysActionSchema(ma.SQLAlchemyAutoSchema):
+    view = mm_fields.Nested(SysViewSchema(only=("id", "name")))
+    model = mm_fields.Nested(SysModelSchema(only=("id", "name", "technical_name")))
+
+    class Meta:
+        model = SysAction
+        load_instance = True
+        include_fk = True
+
+
+class SysActionCreateSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = SysAction
         load_instance = True
         include_fk = True

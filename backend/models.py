@@ -168,15 +168,45 @@ class User(BaseModel):
 
 
 class SysModel(BaseModel):
-    """Definition of a model (table) created dynamically by the Builder."""
+    """Definition of a model (table) created dynamically by the Builder.
+
+    This is the core of the meta-model architecture.
+    Models are defined in the database, not in Python code.
+    """
 
     __tablename__ = "sys_models"
-    name = db.Column(db.String(80), nullable=False)
-    title = db.Column(db.String(120))
+    name = db.Column(
+        db.String(80), nullable=False, comment="Technical name (e.g., 'customer')"
+    )
+    technical_name = db.Column(
+        db.String(80),
+        nullable=False,
+        comment="Full technical name (e.g., 'crm.customer')",
+    )
+    title = db.Column(db.String(120), comment="Display title (e.g., 'Cliente')")
     description = db.Column(db.Text)
+
+    # Table name in database (can be different from technical_name)
+    table_name = db.Column(db.String(100), nullable=False)
+
+    # Module system
+    module_id = db.Column(
+        db.Integer, db.ForeignKey("modules.id"), comment="Module this model belongs to"
+    )
+
+    # System flags
+    is_system = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False,
+        comment="Is a system model (cannot be deleted)",
+    )
+    is_active = db.Column(db.Boolean, default=True, nullable=False, comment="Is active")
+
     status = db.Column(
         db.String(20), default="draft", nullable=False
-    )  # draft, published
+    )  # draft, testing, published, deprecated
+
     permissions = db.Column(
         db.Text, comment="JSON string for Access Control List (ACL)"
     )
@@ -189,6 +219,9 @@ class SysModel(BaseModel):
 
     __table_args__ = (
         db.UniqueConstraint("project_id", "name", name="_project_model_name_uc"),
+        db.UniqueConstraint(
+            "project_id", "technical_name", name="_project_model_technical_name_uc"
+        ),
     )
 
     fields = db.relationship(
@@ -205,30 +238,91 @@ class SysModel(BaseModel):
 
 
 class SysField(BaseModel):
-    """Definition of a field (column) for a SysModel."""
+    """Definition of a field (column) for a SysModel.
+
+    Supports all field types needed for ERP-grade functionality:
+    - Basic: char, text, integer, float, boolean, date, datetime
+    - Advanced: select, many2one, one2many, many2many, json, file, image
+    - Computed: calculated fields with Python expressions
+    """
 
     __tablename__ = "sys_fields"
-    name = db.Column(db.String(80), nullable=False)
-    title = db.Column(db.String(120))
-    type = db.Column(db.String(50), nullable=False)
+    name = db.Column(db.String(80), nullable=False, comment="Field name for display")
+    technical_name = db.Column(
+        db.String(80), nullable=False, comment="Technical column name in DB"
+    )
+    title = db.Column(db.String(120), comment="Label for UI")
+    type = db.Column(db.String(50), nullable=False, comment="Field type")
+
+    # Basic properties
     required = db.Column(db.Boolean, default=False)
     is_unique = db.Column(db.Boolean, default=False)
+    is_index = db.Column(db.Boolean, default=False, comment="Create database index")
+    is_active = db.Column(db.Boolean, default=True)
+
     default_value = db.Column(db.String(255))
+
+    # Relation configuration
+    relation_model = db.Column(
+        db.String(80), comment="Related model for relations (many2one)"
+    )
+    relation_type = db.Column(db.String(20), comment="one2many, many2many")
+    relation_field = db.Column(db.String(80), comment="Inverse field name for one2many")
+
+    # Options for select, radio, etc.
     options = db.Column(
         db.Text, comment="JSON for select options, relation config, etc."
     )
+
+    # UI configuration
+    ui_widget = db.Column(
+        db.String(50),
+        comment="UI widget: text, textarea, select, radio, checkbox, datepicker, fileupload, etc.",
+    )
+    ui_placeholder = db.Column(db.String(255), comment="Placeholder text")
+    ui_group = db.Column(
+        db.String(80),
+        comment="Group field in forms (e.g., 'Anagrafica', 'Contabilità')",
+    )
+    ui_order = db.Column(db.Integer, default=0, comment="Order in form")
+    ui_visible = db.Column(db.Boolean, default=True, comment="Visible in UI")
+    ui_readonly = db.Column(db.Boolean, default=False, comment="Read-only in UI")
+    ui_searchable = db.Column(db.Boolean, default=True, comment="Included in search")
+    ui_filterable = db.Column(
+        db.Boolean, default=True, comment="Filterable in list views"
+    )
+
+    # Order in lists/forms
     order = db.Column(db.Integer, default=0)
-    formula = db.Column(db.String(255))
-    summary_expression = db.Column(db.String(255))
+
+    # Computed fields
+    is_computed = db.Column(db.Boolean, default=False, comment="Is a computed field")
+    compute_script = db.Column(db.Text, comment="Python code to compute field value")
+    depends_on = db.Column(
+        db.String(255), comment="Comma-separated fields this depends on"
+    )
+
+    # Aggregates (summary from related)
+    formula = db.Column(db.String(255), comment="Legacy: use is_computed instead")
+    summary_expression = db.Column(
+        db.String(255), comment="Aggregate expression from related"
+    )
+
+    # Validation
     validation_regex = db.Column(db.String(255))
     validation_message = db.Column(db.String(255))
+    validation_min = db.Column(db.Float, comment="Min value for numbers")
+    validation_max = db.Column(db.Float, comment="Max value for numbers")
+
+    # Help
+    help_text = db.Column(db.Text, comment="Help text for users")
 
     model_id = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
 
     model = db.relationship("SysModel", back_populates="fields")
 
     def __repr__(self):
-        return f"<SysField {self.name} in {self.model.name}>"
+        return f"<SysField {self.name} ({self.type}) in {self.model.name}>"
 
 
 # NOTE: AuditLog moved to backend/core/models/audit.py
@@ -459,3 +553,167 @@ class AIConversation(BaseModel):
 
     def __repr__(self):
         return f"<AIConversation project={self.project_id} user={self.user_id}>"
+
+
+class SysView(BaseModel):
+    """View configuration for a SysModel.
+
+    Defines how a model's data is presented (list, form, kanban, etc.).
+    """
+
+    __tablename__ = "sys_views"
+
+    name = db.Column(db.String(80), nullable=False, comment="View name")
+    technical_name = db.Column(
+        db.String(80),
+        nullable=False,
+        comment="Full technical name (e.g., 'crm.customer.list')",
+    )
+    title = db.Column(db.String(120), comment="Display title")
+    description = db.Column(db.Text)
+
+    view_type = db.Column(
+        db.String(50),
+        nullable=False,
+        comment="View type: list, form, kanban, calendar, gantt, graph, pivot, dashboard",
+    )
+
+    model_id = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
+
+    config = db.Column(
+        db.Text,
+        comment="JSON configuration: columns, filters, sorting, actions, etc.",
+    )
+
+    is_default = db.Column(
+        db.Boolean, default=False, comment="Is default view for this model"
+    )
+    is_active = db.Column(db.Boolean, default=True)
+
+    order = db.Column(db.Integer, default=0, comment="Order in view selector")
+
+    __table_args__ = (
+        db.UniqueConstraint("model_id", "name", name="_model_view_name_uc"),
+    )
+
+    model = db.relationship("SysModel", backref=db.backref("views", lazy="dynamic"))
+
+
+class SysComponent(BaseModel):
+    """Reusable UI component definition.
+
+    Components can be used in views to build custom UIs.
+    """
+
+    __tablename__ = "sys_components"
+
+    name = db.Column(db.String(80), nullable=False, comment="Component name")
+    technical_name = db.Column(
+        db.String(80),
+        nullable=False,
+        comment="Full technical name (e.g., 'table', 'form', 'kanban')",
+    )
+    title = db.Column(db.String(120), comment="Display title")
+    description = db.Column(db.Text)
+
+    component_type = db.Column(
+        db.String(50),
+        nullable=False,
+        comment="Component category: basic, layout, data, chart, custom",
+    )
+
+    # Frontend component path
+    component_path = db.Column(
+        db.String(255),
+        comment="React component path (e.g., '@/components/Table')",
+    )
+
+    # Default config for this component
+    default_config = db.Column(
+        db.Text,
+        comment="JSON default configuration",
+    )
+
+    # Schema for component properties
+    props_schema = db.Column(
+        db.Text,
+        comment="JSON schema for component properties",
+    )
+
+    # Icon for component palette
+    icon = db.Column(db.String(50), comment="Icon name (e.g., 'table', 'form')")
+
+    is_active = db.Column(db.Boolean, default=True)
+
+    # For custom components
+    is_custom = db.Column(
+        db.Boolean, default=False, comment="Is a custom user-defined component"
+    )
+
+    def __repr__(self):
+        return f"<SysComponent {self.name}>"
+
+
+class SysAction(BaseModel):
+    """Action definition for views.
+
+    Defines buttons, links, and other interactive elements.
+    """
+
+    __tablename__ = "sys_actions"
+
+    name = db.Column(db.String(80), nullable=False, comment="Action name")
+    technical_name = db.Column(
+        db.String(80),
+        nullable=False,
+        comment="Full technical name",
+    )
+    title = db.Column(db.String(120), comment="Display title")
+
+    action_type = db.Column(
+        db.String(50),
+        nullable=False,
+        comment="Action type: button, link, bulk, row_action",
+    )
+
+    # Target: view, api, script, webhook, workflow
+    target = db.Column(
+        db.String(50),
+        nullable=False,
+        comment="Action target: view, api, script, webhook, workflow",
+    )
+
+    # View this action belongs to
+    view_id = db.Column(db.Integer, db.ForeignKey("sys_views.id"), nullable=True)
+
+    # Model this action operates on
+    model_id = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=True)
+
+    # Configuration
+    config = db.Column(
+        db.Text,
+        comment="JSON configuration: api path, script, conditions, etc.",
+    )
+
+    # UI properties
+    icon = db.Column(db.String(50))
+    style = db.Column(db.String(50), comment="Button style: primary, secondary, danger")
+    position = db.Column(
+        db.String(50),
+        comment="Position: toolbar, header, row, bulk",
+    )
+
+    # Conditions
+    conditions = db.Column(
+        db.Text,
+        comment="JSON conditions when action is available",
+    )
+
+    is_active = db.Column(db.Boolean, default=True)
+    order = db.Column(db.Integer, default=0)
+
+    view = db.relationship("SysView", backref=db.backref("actions", lazy="dynamic"))
+    model = db.relationship("SysModel")
+
+    def __repr__(self):
+        return f"<SysAction {self.name}>"
