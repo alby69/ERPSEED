@@ -20,18 +20,10 @@ import {
 } from '@ant-design/icons';
 import {
   DndContext,
-  DragOverlay,
-  closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
-  useSensors,
-  defaultDropAnimationSideEffects
+  useSensors
 } from '@dnd-kit/core';
-import {
-  arrayMove,
-  sortableKeyboardCoordinates
-} from '@dnd-kit/sortable';
 
 import BuilderPalette from './BuilderPalette';
 import BuilderCanvas from './BuilderCanvas';
@@ -40,6 +32,8 @@ import { registry } from '@/components/core';
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
+
+const GRID_SIZE = 32;
 
 const VisualBuilder = ({
   title = "UI Builder",
@@ -63,9 +57,6 @@ const VisualBuilder = ({
       activationConstraint: {
         distance: 5,
       },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
@@ -74,21 +65,33 @@ const VisualBuilder = ({
   };
 
   const handleDragEnd = (event) => {
-    const { active, over } = event;
+    const { active, over, delta } = event;
     setActiveId(null);
-
-    if (!over) return;
 
     // Handle adding new component from palette
     if (active.id.toString().startsWith('palette-')) {
+      if (!over || over.id !== 'builder-canvas') return;
+
       const type = active.data.current.componentType;
       const archetype = registry.get(type);
+
+      // Snap drop position to grid
+      const rect = over.rect;
+      const dropX = event.activatorEvent.clientX + delta.x;
+      const dropY = event.activatorEvent.clientY + delta.y;
+
+      const x = Math.round((dropX - rect.left) / GRID_SIZE) * GRID_SIZE;
+      const y = Math.round((dropY - rect.top) / GRID_SIZE) * GRID_SIZE;
 
       const newComponent = {
         id: `comp_${Date.now()}`,
         type: type,
         name: `${archetype.title || type} ${components.length + 1}`,
         config: { ...archetype.defaultConfig },
+        x: x || 0,
+        y: y || 0,
+        w: 320,
+        h: 200
       };
 
       setComponents([...components, newComponent]);
@@ -96,12 +99,19 @@ const VisualBuilder = ({
       return;
     }
 
-    // Handle reordering within canvas
-    if (active.id !== over.id) {
+    // Handle moving component on canvas
+    if (delta && (delta.x !== 0 || delta.y !== 0)) {
       setComponents((items) => {
-        const oldIndex = items.findIndex((i) => i.id === active.id);
-        const newIndex = items.findIndex((i) => i.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        return items.map(item => {
+          if (item.id === active.id) {
+            return {
+              ...item,
+              x: Math.round((item.x + delta.x) / GRID_SIZE) * GRID_SIZE,
+              y: Math.round((item.y + delta.y) / GRID_SIZE) * GRID_SIZE,
+            };
+          }
+          return item;
+        });
       });
     }
   };
@@ -128,7 +138,6 @@ const VisualBuilder = ({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -159,8 +168,8 @@ const VisualBuilder = ({
             </Sider>
           )}
 
-          <Content style={{ overflow: 'auto', background: '#f5f5f5' }}>
-            <div style={{ maxWidth: 1000, margin: '0 auto', padding: 24 }}>
+          <Content style={{ overflow: 'auto', background: '#f5f5f5', position: 'relative' }}>
+            <div style={{ padding: 24 }}>
               {previewMode && (
                 <Alert
                   message="Preview Mode"

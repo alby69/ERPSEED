@@ -45,6 +45,14 @@ class AIService:
             hook_executor,
             scheduled_task_executor,
             notification_executor,
+            ui_executor,
+        )
+
+        # UI Builder tools
+        tool_registry.register_handler("create_ui_view", ui_executor.create_ui_view)
+        tool_registry.register_handler("add_ui_component", ui_executor.add_ui_component)
+        tool_registry.register_handler(
+            "update_ui_view_config", ui_executor.update_ui_view_config
         )
 
         tool_registry.register_handler(
@@ -149,6 +157,9 @@ class AIService:
 
                 test_tools = tool_registry.get_test_tools(project_id)
                 tools.extend(test_tools)
+
+                ui_tools = tool_registry.get_ui_builder_tools(project_id)
+                tools.extend(ui_tools)
             except Exception as e:
                 logger.warning(f"Error getting dynamic tools: {e}")
         else:

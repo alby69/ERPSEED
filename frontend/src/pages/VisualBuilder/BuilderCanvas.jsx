@@ -1,50 +1,45 @@
 /**
- * Builder Canvas - Main editing area for Visual Builder
+ * Builder Canvas - Main editing area for Visual Builder (Free Canvas version)
  */
 
 import React from 'react';
 import { Empty, Card, Button, Space } from 'antd';
-import { DeleteOutlined, SettingOutlined, HolderOutlined } from '@ant-design/icons';
-import {
-  useDroppable,
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { DeleteOutlined, DragOutlined } from '@ant-design/icons';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { ComponentRenderer } from '@/components/core';
 
-const SortableComponentWrapper = ({
+const GRID_SIZE = 32;
+
+const DraggableComponent = ({
   id,
   component,
   isSelected,
   onSelect,
   onDelete,
-  onSettings
+  previewMode
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: id,
+    data: component
+  });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    marginBottom: 16,
-    position: 'relative',
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 100 : 1,
+    position: 'absolute',
+    left: component.x || 0,
+    top: component.y || 0,
+    width: component.w || 300,
+    height: component.h || 'auto',
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    zIndex: isDragging ? 1000 : (isSelected ? 100 : 1),
+    opacity: isDragging ? 0.6 : 1,
+    cursor: previewMode ? 'default' : 'auto',
+  };
+
+  // Mock context for preview mode
+  const mockContext = {
+    user: { name: 'Mario Rossi', role: 'admin' },
+    company: { name: 'Esempio s.r.l.' },
+    now: new Date().toLocaleDateString()
   };
 
   return (
@@ -60,39 +55,40 @@ const SortableComponentWrapper = ({
         size="small"
         className={`builder-component-card ${isSelected ? 'selected' : ''}`}
         style={{
+          height: '100%',
           border: isSelected ? '2px solid #1677ff' : '1px solid #d9d9d9',
-          boxShadow: isSelected ? '0 0 8px rgba(22, 119, 255, 0.2)' : 'none'
+          boxShadow: isSelected ? '0 0 8px rgba(22, 119, 255, 0.2)' : 'none',
+          display: 'flex',
+          flexDirection: 'column'
         }}
+        bodyStyle={{ flex: 1, overflow: 'auto', padding: 8 }}
         title={
-          <div className="d-flex justify-content-between align-items-center">
-            <Space>
-              <div {...listeners} {...attributes} style={{ cursor: 'grab', padding: '0 4px' }}>
-                <HolderOutlined />
-              </div>
-              <span>{component.name || component.type}</span>
-            </Space>
-            <Space>
-              <Button
-                type="text"
-                size="small"
-                icon={<SettingOutlined />}
-                onClick={(e) => { e.stopPropagation(); onSettings(id); }}
-              />
-              <Button
-                type="text"
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={(e) => { e.stopPropagation(); onDelete(id); }}
-              />
-            </Space>
-          </div>
+          !previewMode ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Space>
+                <div {...listeners} {...attributes} style={{ cursor: 'grab', display: 'flex' }}>
+                  <DragOutlined />
+                </div>
+                <span style={{ fontSize: 12 }}>{component.name || component.type}</span>
+              </Space>
+              <Space>
+                <Button
+                  type="text"
+                  size="small"
+                  danger
+                  icon={<DeleteOutlined style={{ fontSize: 12 }} />}
+                  onClick={(e) => { e.stopPropagation(); onDelete(id); }}
+                />
+              </Space>
+            </div>
+          ) : null
         }
       >
-        <div style={{ pointerEvents: 'none', minHeight: 40 }}>
+        <div style={{ pointerEvents: previewMode ? 'auto' : 'none' }}>
           <ComponentRenderer
             type={component.type}
             config={component.config}
+            context={mockContext}
           />
         </div>
       </Card>
@@ -105,44 +101,50 @@ const BuilderCanvas = ({
   selectedId,
   onSelect,
   onDelete,
-  onReorder
+  previewMode
 }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: 'builder-canvas',
   });
 
-  const style = {
-    minHeight: 'calc(100vh - 160px)',
-    padding: 24,
-    background: isOver ? '#f0f5ff' : '#f5f5f5',
-    border: isOver ? '2px dashed #1677ff' : '2px solid transparent',
+  const canvasStyle = {
+    width: '100%',
+    minHeight: '800px',
+    position: 'relative',
+    background: previewMode ? '#fff' : (isOver ? '#f0f5ff' : '#fafafa'),
+    backgroundImage: previewMode ? 'none' : `
+      linear-gradient(to right, #eee 1px, transparent 1px),
+      linear-gradient(to bottom, #eee 1px, transparent 1px)
+    `,
+    backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
+    border: previewMode ? '1px solid #f0f0f0' : (isOver ? '2px dashed #1677ff' : '1px solid #d9d9d9'),
     borderRadius: 8,
-    transition: 'all 0.2s',
+    transition: 'background-color 0.2s',
+    overflow: 'hidden'
   };
 
   return (
-    <div ref={setNodeRef} style={style} onClick={() => onSelect(null)}>
-      {components.length === 0 ? (
-        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      ref={setNodeRef}
+      style={canvasStyle}
+      onClick={() => onSelect(null)}
+    >
+      {components.length === 0 && !previewMode ? (
+        <div style={{ height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Empty description="Drag components from the palette to start building" />
         </div>
       ) : (
-        <SortableContext
-          items={components.map(c => c.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {components.map((comp) => (
-            <SortableComponentWrapper
-              key={comp.id}
-              id={comp.id}
-              component={comp}
-              isSelected={selectedId === comp.id}
-              onSelect={onSelect}
-              onDelete={onDelete}
-              onSettings={onSelect}
-            />
-          ))}
-        </SortableContext>
+        components.map((comp) => (
+          <DraggableComponent
+            key={comp.id}
+            id={comp.id}
+            component={comp}
+            isSelected={selectedId === comp.id}
+            onSelect={onSelect}
+            onDelete={onDelete}
+            previewMode={previewMode}
+          />
+        ))
       )}
     </div>
   );
