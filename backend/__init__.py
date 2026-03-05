@@ -80,13 +80,6 @@ from .visual_builder_api import blp as visual_builder_bp
 # Import Template API
 from .template_api import blp as template_bp
 
-# Import Versioning API
-from .versioning_api import blp as versioning_bp
-
-# Import Debugging API
-from .debugging_api import blp as debugging_bp
-
-
 def create_app(db_url=None):
     # Configure Marshmallow schema name resolver to avoid name conflicts in OpenAPI spec
     def schema_name_resolver(schema):
@@ -155,6 +148,7 @@ def create_app(db_url=None):
 
         db.create_all()
 
+<<<<<<< HEAD
         # Add missing columns to existing tables using a cross-compatible way (SQLAlchemy inspector)
         from sqlalchemy import inspect, text
 
@@ -180,6 +174,48 @@ def create_app(db_url=None):
         add_column_if_not_exists('sys_models', 'updated_at', 'TIMESTAMP')
         add_column_if_not_exists('sys_fields', 'created_at', 'TIMESTAMP')
         add_column_if_not_exists('sys_fields', 'updated_at', 'TIMESTAMP')
+=======
+        # Add missing columns to existing tables
+        from sqlalchemy import inspect, text
+
+        inspector = inspect(db.engine)
+
+        def column_exists(table, column):
+            cols = [c["name"] for c in inspector.get_columns(table)]
+            return column in cols
+
+        try:
+            if not column_exists("sys_dashboards", "updated_at"):
+                db.session.execute(text("ALTER TABLE sys_dashboards ADD COLUMN updated_at TIMESTAMP"))
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error adding sys_dashboards.updated_at: {e}")
+
+        try:
+            if not column_exists("sys_models", "updated_at"):
+                db.session.execute(text("ALTER TABLE sys_models ADD COLUMN updated_at TIMESTAMP"))
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error adding sys_models.updated_at: {e}")
+
+        try:
+            if not column_exists("sys_fields", "created_at"):
+                db.session.execute(text("ALTER TABLE sys_fields ADD COLUMN created_at TIMESTAMP"))
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error adding sys_fields.created_at: {e}")
+
+        try:
+            if not column_exists("sys_fields", "updated_at"):
+                db.session.execute(text("ALTER TABLE sys_fields ADD COLUMN updated_at TIMESTAMP"))
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error adding sys_fields.updated_at: {e}")
+>>>>>>> main
 
     # --- Initialize Multi-tenant Filters ---
     TenantQueryFilter.init_app(app)
@@ -290,8 +326,11 @@ def create_app(db_url=None):
     api.register_blueprint(ai_bp)
     api.register_blueprint(visual_builder_bp)
     api.register_blueprint(template_bp)
+<<<<<<< HEAD
     api.register_blueprint(versioning_bp)
     api.register_blueprint(debugging_bp)
+=======
+>>>>>>> main
     api.register_blueprint(custom_modules_bp)
     api.register_blueprint(module_api_bp)
     api.register_blueprint(import_export_bp)
