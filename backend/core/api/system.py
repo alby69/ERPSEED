@@ -17,7 +17,7 @@ blp = Blueprint("system", __name__, url_prefix="/api/v1/system")
 
 @blp.route("/modules-info")
 class SystemModulesInfo(MethodView):
-    @blp.response(200)
+    @blp.response(200, schema={"type": "object"})
     @jwt_required()
     def get(self):
         """
@@ -25,10 +25,10 @@ class SystemModulesInfo(MethodView):
         Include stato, menu, widget per il tenant corrente.
         """
         user = User.query.get(get_jwt_identity())
-        tenant_id = user.tenant_id
+        tenant_id = user.tenant_id if user else None
 
         # Moduli abilitati per tenant
-        enabled_ids = set(TenantModuleService.get_enabled_module_ids(tenant_id))
+        enabled_ids = set(TenantModuleService.get_enabled_module_ids(tenant_id)) # type: ignore
 
         result = {
             "available_modules": [],
@@ -60,7 +60,7 @@ class SystemModulesInfo(MethodView):
                 plugin = ModuleRegistry.get(mod.module_id)
                 if plugin and hasattr(plugin, "get_menu_items"):
                     try:
-                        items = plugin.get_menu_items(tenant_id)
+                        items = plugin.get_menu_items(tenant_id) # type: ignore
                         result["menu"].extend(items)
                     except Exception as e:
                         print(f"Error getting menu items for {mod.module_id}: {e}")
@@ -68,7 +68,7 @@ class SystemModulesInfo(MethodView):
                 # Get plugin widgets
                 if plugin and hasattr(plugin, "get_widgets"):
                     try:
-                        w = plugin.get_widgets(tenant_id)
+                        w = plugin.get_widgets(tenant_id) # type: ignore
                         result["widgets"].extend(w)
                     except Exception as e:
                         print(f"Error getting widgets for {mod.module_id}: {e}")
@@ -81,7 +81,7 @@ class SystemModulesInfo(MethodView):
 
 @blp.route("/check-module/<string:module_id>")
 class CheckModule(MethodView):
-    @blp.response(200)
+    @blp.response(200, schema={"type": "object"})
     @jwt_required()
     def get(self, module_id):
         """
@@ -89,6 +89,6 @@ class CheckModule(MethodView):
         """
         user = User.query.get(get_jwt_identity())
 
-        is_enabled = TenantModuleService.is_module_enabled(user.tenant_id, module_id)
+        is_enabled = TenantModuleService.is_module_enabled(user.tenant_id if user else None, module_id) # type: ignore
 
         return {"module_id": module_id, "is_enabled": is_enabled}

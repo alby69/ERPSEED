@@ -184,7 +184,7 @@ const ProjectSelectionPage = () => {
                                         </Button>
                                     </>
                                 ),
-                                <Button type="primary" onClick={() => handleSelectProject(project.id)}>
+                                <Button type="primary" onClick={() => project.id && handleSelectProject(project.id)} disabled={!project.id}>
                                     Open
                                 </Button>,
                             ].filter(Boolean)}
@@ -222,7 +222,7 @@ const ProjectSelectionPage = () => {
                                                 </Button>
                                             </>
                                         ),
-                                        <Button type="primary" block onClick={() => handleSelectProject(project.id)}>
+                                        <Button type="primary" block onClick={() => project.id && handleSelectProject(project.id)} disabled={!project.id}>
                                             Open Project
                                         </Button>
                                     ].filter(Boolean)}

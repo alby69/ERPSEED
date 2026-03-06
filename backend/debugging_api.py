@@ -30,14 +30,20 @@ class SystemHealthSchema(Schema):
     database = fields.String()
     version = fields.String()
 
+class StateInspectorSchema(Schema):
+    message = fields.String()
+    active_sessions = fields.Int()
+    memory_usage = fields.String()
+
 @blp.route("/health")
 class SystemHealth(MethodView):
     @blp.response(200, SystemHealthSchema)
     def get(self):
         """Get system health status."""
+        from sqlalchemy import text
         db_status = "ok"
         try:
-            db.session.execute("SELECT 1")
+            db.session.execute(text("SELECT 1"))
         except Exception:
             db_status = "error"
 
@@ -60,6 +66,7 @@ class DebugLogs(MethodView):
 class StateInspector(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, StateInspectorSchema)
     def get(self):
         """Mock endpoint for state inspection logic."""
         return {

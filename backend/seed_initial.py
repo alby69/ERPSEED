@@ -4,7 +4,9 @@ Crea l'utente owner e il primo tenant.
 """
 from backend import create_app
 from backend.extensions import db
-from backend.core.models import User, Tenant, TenantMember, Modulo, ModuloAttivato
+from backend.models import User
+from backend.core.models import Tenant, TenantMember
+from backend.core.models.modulo import Modulo, ModuloAttivato
 from backend.entities import Soggetto, Ruolo, Indirizzo, Contatto
 
 
@@ -13,9 +15,7 @@ def init_db():
     app = create_app()
     
     with app.app_context():
-        # Drop all tables and recreate
         print("Creating tables...")
-        db.drop_all()
         db.create_all()
         
         # Create owner user

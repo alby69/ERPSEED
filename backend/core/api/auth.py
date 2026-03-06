@@ -81,6 +81,7 @@ class Login(MethodView):
 class CurrentUser(MethodView):
     @auth_bp.doc(security=[{"bearerAuth": []}])
     @jwt_required()
+    @auth_bp.response(200, UserSchema)
     def get(self):
         """Get current user info."""
         user_id = get_jwt_identity()
@@ -106,7 +107,7 @@ class Refresh(MethodView):
 @auth_bp.route('/password/reset')
 class PasswordResetRequest(MethodView):
     @auth_bp.arguments(PasswordResetRequestSchema)
-    @auth_bp.response(200)
+    @auth_bp.response(200, schema={"type": "object"})
     def post(self, data):
         """
         Request password reset.
@@ -121,7 +122,7 @@ class PasswordResetRequest(MethodView):
 @auth_bp.route('/password/reset/confirm')
 class PasswordResetConfirm(MethodView):
     @auth_bp.arguments(PasswordResetConfirmSchema)
-    @auth_bp.response(200)
+    @auth_bp.response(200, schema={"type": "object"})
     def post(self, data):
         """
         Confirm password reset.
@@ -145,7 +146,7 @@ class PasswordChange(MethodView):
     @auth_bp.doc(security=[{"bearerAuth": []}])
     @jwt_required()
     @auth_bp.arguments(PasswordChangeSchema)
-    @auth_bp.response(200)
+    @auth_bp.response(200, schema={"type": "object"})
     def put(self, data):
         """
         Change current user's password.

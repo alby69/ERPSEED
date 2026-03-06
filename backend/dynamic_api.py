@@ -1,7 +1,8 @@
 from flask.views import MethodView
 from flask import request
 from flask_smorest import Blueprint, abort
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from marshmallow import fields
 
 from .schemas import SysModelSchema, AuditLogSchema
 from .services import DynamicApiService
@@ -15,6 +16,7 @@ dynamic_api_service = DynamicApiService()
 class DynamicDataList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, {"type": "object"})
     def get(self, project_id, model_name):
         """List records from a dynamically created table."""
         page = request.args.get('page', 1, type=int)
@@ -31,6 +33,7 @@ class DynamicDataList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(201, {"type": "object"})
     def post(self, project_id, model_name):
         """Create a new record in a dynamically created table."""
         data = request.get_json() or {}
@@ -41,7 +44,9 @@ class DynamicDataList(MethodView):
             data=data
         )
         
-        return result, status
+        if status != 201:
+            abort(status, message=result.get('message', 'Error creating record.'))
+        return result
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -67,6 +72,7 @@ class DynamicDataList(MethodView):
 class DynamicDataItem(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, {"type": "object"})
     def get(self, project_id, model_name, item_id):
         """Retrieve a single record from a dynamic table."""
         return dynamic_api_service.get_record(
@@ -77,6 +83,7 @@ class DynamicDataItem(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, {"type": "object"})
     def put(self, project_id, model_name, item_id):
         """Update a record in a dynamic table."""
         data = request.get_json() or {}
@@ -118,6 +125,7 @@ class DynamicModelMeta(MethodView):
 class DynamicDataClone(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(201, {"type": "object"})
     def post(self, project_id, model_name, item_id):
         """Clone an existing record."""
         result, status = dynamic_api_service.clone_record(
@@ -126,7 +134,9 @@ class DynamicDataClone(MethodView):
             item_id=item_id
         )
         
-        return result, status
+        if status != 201:
+            abort(status, message=result.get('message', 'Error cloning record.'))
+        return result
 
 
 @blp.route("/audit-logs")
@@ -137,7 +147,6 @@ class AuditLogList(MethodView):
     def get(self):
         """Retrieve audit logs (admin only)."""
         from .models import User
-        from flask import get_jwt_identity
         from .extensions import db
         
         user_id = get_jwt_identity()
@@ -150,13 +159,13 @@ class AuditLogList(MethodView):
             from backend.core.models import AuditLog as CoreAuditLog
             AuditLog = CoreAuditLog
         except ImportError:
-            from .models import AuditLog
+            from backend.utils import AuditLog
         from sqlalchemy import desc
         
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         
-        query = AuditLog.query.order_by(desc(AuditLog.timestamp))
+        query = AuditLog.query.order_by(desc(AuditLog.created_at))
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
         
         return pagination.items
@@ -166,6 +175,7 @@ class AuditLogList(MethodView):
 class DynamicDataImport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, {"type": "object"})
     def post(self, project_id, model_name):
         """Import data from CSV."""
         if 'file' not in request.files:
@@ -175,7 +185,7 @@ class DynamicDataImport(MethodView):
         if file.filename == '':
             abort(400, message="No selected file")
             
-        if not file.filename.lower().endswith('.csv'):
+        if file.filename and not file.filename.lower().endswith('.csv'):
             abort(400, message="File must be a CSV")
         
         result, status = dynamic_api_service.import_csv(
@@ -184,4 +194,6 @@ class DynamicDataImport(MethodView):
             file=file
         )
         
-        return result, status
+        if status != 200:
+            abort(status, message=result.get('message', 'Error importing data.'))
+        return result

@@ -72,6 +72,7 @@ class AdminUserPasswordReset(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
     @blp.arguments(AdminPasswordResetSchema)
+    @blp.response(200, schema={"type": "object"})
     def put(self, data, user_id):
         """Reset a user's password (Admins only)"""
         password_data = data.__dict__ if hasattr(data, '__dict__') else data

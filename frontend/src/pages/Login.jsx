@@ -60,11 +60,11 @@ function Login() {
           </div>
           <div className="text-center mb-4">
             <i className="bi bi-layers-half display-1 mb-3"></i>
-            <h1 className="fw-bold display-4">FlaskERP</h1>
+            <h1 className="fw-bold display-4">ERPSeed</h1>
             <p className="lead opacity-75">Manage your business with simplicity and power.</p>
           </div>
           <div className="mt-auto text-center opacity-50 small">
-            &copy; {new Date().getFullYear()} FlaskERP Inc. All rights reserved.
+            &copy; {new Date().getFullYear()} ERPSeed Inc. All rights reserved.
           </div>
         </div>
 
@@ -75,7 +75,7 @@ function Login() {
               <LanguageSelector />
             </div>
             <div className="text-center mb-5 d-md-none">
-              <h2 className="fw-bold text-primary">FlaskERP</h2>
+              <h2 className="fw-bold text-primary">ERPSeed</h2>
             </div>
             
             <h3 className="mb-4 fw-bold">Welcome!</h3>

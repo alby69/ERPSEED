@@ -7,12 +7,49 @@ from flask.views import MethodView
 from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from marshmallow import Schema, fields
 
+import json
+from datetime import datetime
 from .webhooks import WebhookEndpoint, WebhookDelivery, WebhookEvent
 from .webhook_service import WebhookService
 from .extensions import db
 
 blp = Blueprint("webhooks", __name__, url_prefix="/webhooks", description="Webhook Management")
+
+class WebhookEndpointSchema(Schema):
+    id = fields.Int(dump_only=True)
+    name = fields.Str(required=True)
+    url = fields.Str(required=True)
+    events = fields.List(fields.Str(), required=True)
+    is_active = fields.Bool()
+    created_at = fields.Str(dump_only=True, allow_none=True)
+
+class WebhookEndpointDetailSchema(WebhookEndpointSchema):
+    secret = fields.Str(dump_only=True)
+
+class WebhookDeliverySchema(Schema):
+    id = fields.Int(dump_only=True)
+    endpoint_id = fields.Int()
+    event = fields.Str()
+    status_code = fields.Int(allow_none=True)
+    attempts = fields.Int()
+    delivered_at = fields.Str(allow_none=True)
+    error = fields.Str(dump_only=True, attribute="error_message", allow_none=True)
+    is_success = fields.Bool(dump_only=True)
+
+class WebhookTestResponseSchema(Schema):
+    success = fields.Bool()
+    status_code = fields.Int(allow_none=True)
+    response = fields.Str(allow_none=True)
+    error = fields.Str(allow_none=True)
+
+class WebhookSecretSchema(Schema):
+    secret = fields.Str()
+
+class WebhookEventListSchema(Schema):
+    events = fields.List(fields.Str())
+    categories = fields.Dict(keys=fields.Str(), values=fields.List(fields.Str()))
 
 
 @blp.route("")
@@ -21,6 +58,7 @@ class WebhookList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WebhookEndpointSchema(many=True))
     def get(self):
         """List all webhook endpoints."""
         endpoints = WebhookEndpoint.query.order_by(WebhookEndpoint.created_at.desc()).all()
@@ -38,16 +76,10 @@ class WebhookList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def post(self):
+    @blp.arguments(WebhookEndpointSchema)
+    @blp.response(201, WebhookEndpointDetailSchema)
+    def post(self, data):
         """Create a new webhook endpoint."""
-        data = request.get_json()
-        
-        if not data.get('name'):
-            abort(400, message="Name is required")
-        if not data.get('url'):
-            abort(400, message="URL is required")
-        if not data.get('events') or not isinstance(data['events'], list):
-            abort(400, message="Events list is required")
         
         # Validate events
         all_events = WebhookEvent.get_all_events()
@@ -64,15 +96,7 @@ class WebhookList(MethodView):
             user_id=user_id
         )
         
-        return {
-            'id': endpoint.id,
-            'name': endpoint.name,
-            'url': endpoint.url,
-            'secret': endpoint.secret,
-            'events': endpoint.get_events(),
-            'is_active': endpoint.is_active,
-            'created_at': endpoint.created_at.isoformat() if endpoint.created_at else None
-        }, 201
+        return endpoint
 
 
 @blp.route("/<int:endpoint_id>")
@@ -81,6 +105,7 @@ class WebhookResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WebhookEndpointSchema)
     def get(self, endpoint_id):
         """Get webhook endpoint details (secret hidden)."""
         endpoint = WebhookEndpoint.query.get_or_404(endpoint_id)
@@ -96,9 +121,10 @@ class WebhookResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def put(self, endpoint_id):
+    @blp.arguments(WebhookEndpointSchema(partial=True))
+    @blp.response(200, WebhookEndpointSchema)
+    def put(self, data, endpoint_id):
         """Update webhook endpoint."""
-        data = request.get_json()
         
         if 'events' in data:
             all_events = WebhookEvent.get_all_events()
@@ -108,20 +134,15 @@ class WebhookResource(MethodView):
         
         endpoint = WebhookService.update_endpoint(endpoint_id, data)
         
-        return {
-            'id': endpoint.id,
-            'name': endpoint.name,
-            'url': endpoint.url,
-            'events': endpoint.get_events(),
-            'is_active': endpoint.is_active
-        }
+        return endpoint
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(204)
     def delete(self, endpoint_id):
         """Delete webhook endpoint."""
         WebhookService.delete_endpoint(endpoint_id)
-        return '', 204
+        return ''
 
 
 @blp.route("/<int:endpoint_id>/test")
@@ -130,6 +151,7 @@ class WebhookTest(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WebhookTestResponseSchema)
     def post(self, endpoint_id):
         """Send test webhook."""
         endpoint = WebhookEndpoint.query.get_or_404(endpoint_id)
@@ -143,7 +165,6 @@ class WebhookTest(MethodView):
             }
         }
         
-        import datetime
         delivery = WebhookService._deliver_webhook(endpoint, 'test', test_payload)
         
         return {
@@ -160,13 +181,12 @@ class WebhookRegenerateSecret(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WebhookSecretSchema)
     def post(self, endpoint_id):
         """Regenerate webhook secret."""
         secret = WebhookService.regenerate_secret(endpoint_id)
         
-        return {
-            'secret': secret
-        }
+        return {'secret': secret}
 
 
 @blp.route("/deliveries")
@@ -175,6 +195,7 @@ class WebhookDeliveries(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WebhookDeliverySchema(many=True))
     def get(self):
         """List webhook deliveries."""
         endpoint_id = request.args.get('endpoint_id', type=int)
@@ -182,25 +203,12 @@ class WebhookDeliveries(MethodView):
         limit = request.args.get('limit', 50, type=int)
         
         deliveries = WebhookService.get_deliveries(
-            endpoint_id=endpoint_id,
-            status=status,
+            endpoint_id=endpoint_id if endpoint_id else 0,
+            status=status if status else "",
             limit=limit
         )
         
-        result = []
-        for d in deliveries:
-            result.append({
-                'id': d.id,
-                'endpoint_id': d.endpoint_id,
-                'event': d.event,
-                'status_code': d.status_code,
-                'attempts': d.attempts,
-                'delivered_at': d.delivered_at.isoformat() if d.delivered_at else None,
-                'error': d.error_message,
-                'is_success': d.is_success
-            })
-        
-        return result
+        return deliveries
 
 
 @blp.route("/events")
@@ -209,12 +217,10 @@ class WebhookEvents(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WebhookEventListSchema)
     def get(self):
         """Get list of available webhook events."""
-        return {
-            'events': WebhookEvent.get_all_events(),
-            'categories': WebhookEvent.get_categories()
-        }
+        return WebhookEvent.get_event_map()
 
 
 @blp.route("/deliveries/<int:delivery_id>/retry")
@@ -223,6 +229,7 @@ class WebhookRetry(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WebhookTestResponseSchema)
     def post(self, delivery_id):
         """Retry a failed webhook delivery."""
         delivery = WebhookDelivery.query.get_or_404(delivery_id)
@@ -237,7 +244,7 @@ class WebhookRetry(MethodView):
         payload = {
             'event': delivery.event,
             'timestamp': datetime.utcnow().isoformat() + 'Z',
-            'data': json.loads(delivery.payload)['data'] if delivery.payload else {}
+            'data': json.loads(delivery.payload)['data'] if delivery.payload else {} # type: ignore
         }
         
         new_delivery = WebhookService._deliver_webhook(endpoint, delivery.event, payload)
@@ -246,7 +253,3 @@ class WebhookRetry(MethodView):
             'success': new_delivery.is_success,
             'status_code': new_delivery.status_code
         }
-
-
-import json
-import datetime

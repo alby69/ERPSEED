@@ -85,7 +85,7 @@ def create_app(db_url=None):
     def schema_name_resolver(schema):
         # Strettamente basato sul suggerimento della chat per risolvere i warning di apispec
         cls_name = schema.__class__.__name__
-        module_name = schema.__module__.split(".")[-1]
+        module_name = getattr(schema, "__module__", "common").split(".")[-1]
 
         # Se il nome finisce con Schema lo togliamo per pulizia nel generare l'OpenAPI
         if cls_name.endswith("Schema"):
@@ -128,12 +128,6 @@ def create_app(db_url=None):
 
     api.init_app(app)
 
-    # Force the schema name resolver in the Marshmallow plugin
-    from apispec.ext.marshmallow import MarshmallowPlugin
-    for plugin in api.spec.plugins:
-        if isinstance(plugin, MarshmallowPlugin):
-            plugin.schema_name_resolver = schema_name_resolver
-
     jwt.init_app(app)
     ma.init_app(app)
 
@@ -148,14 +142,12 @@ def create_app(db_url=None):
 
         db.create_all()
 
-<<<<<<< HEAD
         # Add missing columns to existing tables using a cross-compatible way (SQLAlchemy inspector)
         from sqlalchemy import inspect, text
 
         def add_column_if_not_exists(table_name, column_name, column_type):
             try:
                 inspector = inspect(db.engine)
-                # Check if table exists first
                 if table_name not in inspector.get_table_names():
                     return
 
@@ -165,57 +157,15 @@ def create_app(db_url=None):
                         text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
                     )
                     db.session.commit()
-                    print(f"Added column {column_name} to table {table_name}")
             except Exception as e:
                 db.session.rollback()
                 print(f"Error adding {table_name}.{column_name}: {e}")
 
-        add_column_if_not_exists('sys_dashboards', 'updated_at', 'TIMESTAMP')
-        add_column_if_not_exists('sys_models', 'updated_at', 'TIMESTAMP')
-        add_column_if_not_exists('sys_fields', 'created_at', 'TIMESTAMP')
-        add_column_if_not_exists('sys_fields', 'updated_at', 'TIMESTAMP')
-=======
-        # Add missing columns to existing tables
-        from sqlalchemy import inspect, text
-
-        inspector = inspect(db.engine)
-
-        def column_exists(table, column):
-            cols = [c["name"] for c in inspector.get_columns(table)]
-            return column in cols
-
-        try:
-            if not column_exists("sys_dashboards", "updated_at"):
-                db.session.execute(text("ALTER TABLE sys_dashboards ADD COLUMN updated_at TIMESTAMP"))
-                db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error adding sys_dashboards.updated_at: {e}")
-
-        try:
-            if not column_exists("sys_models", "updated_at"):
-                db.session.execute(text("ALTER TABLE sys_models ADD COLUMN updated_at TIMESTAMP"))
-                db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error adding sys_models.updated_at: {e}")
-
-        try:
-            if not column_exists("sys_fields", "created_at"):
-                db.session.execute(text("ALTER TABLE sys_fields ADD COLUMN created_at TIMESTAMP"))
-                db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error adding sys_fields.created_at: {e}")
-
-        try:
-            if not column_exists("sys_fields", "updated_at"):
-                db.session.execute(text("ALTER TABLE sys_fields ADD COLUMN updated_at TIMESTAMP"))
-                db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error adding sys_fields.updated_at: {e}")
->>>>>>> main
+        with app.app_context():
+            add_column_if_not_exists('sys_dashboards', 'updated_at', 'TIMESTAMP')
+            add_column_if_not_exists('sys_models', 'updated_at', 'TIMESTAMP')
+            add_column_if_not_exists('sys_fields', 'created_at', 'TIMESTAMP')
+            add_column_if_not_exists('sys_fields', 'updated_at', 'TIMESTAMP')
 
     # --- Initialize Multi-tenant Filters ---
     TenantQueryFilter.init_app(app)
@@ -290,7 +240,11 @@ def create_app(db_url=None):
     def handle_exception(e):
         # Pass through HTTP errors
         if isinstance(e, HTTPException):
-            return e
+            return jsonify({
+                "code": e.code,
+                "name": e.name,
+                "description": e.description,
+            }), e.code or 500
         # Log and return JSON for 500 errors
         import traceback
 
@@ -299,8 +253,6 @@ def create_app(db_url=None):
 
     # --- Register Blueprints ---
     # Core API con Marshmallow (nuovo)
-    # Important: Set resolver BEFORE registering blueprints if possible
-    api.spec.marshmallow_schema_name_resolver = schema_name_resolver
     api.register_blueprint(core_auth_bp, url_prefix="/api/v1/auth")
     api.register_blueprint(tenant_bp, url_prefix="/api/v1/tenant")
     api.register_blueprint(modules_bp)
@@ -326,11 +278,8 @@ def create_app(db_url=None):
     api.register_blueprint(ai_bp)
     api.register_blueprint(visual_builder_bp)
     api.register_blueprint(template_bp)
-<<<<<<< HEAD
-    api.register_blueprint(versioning_bp)
-    api.register_blueprint(debugging_bp)
-=======
->>>>>>> main
+    # api.register_blueprint(versioning_bp) # Assuming these are not ready yet
+    # api.register_blueprint(debugging_bp)
     api.register_blueprint(custom_modules_bp)
     api.register_blueprint(module_api_bp)
     api.register_blueprint(import_export_bp)

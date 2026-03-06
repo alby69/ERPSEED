@@ -282,7 +282,7 @@ const BusinessRulesPage = () => {
                                 <h4>Esempi:</h4>
                                 <ul>
                                     <li>"Valida che il campo partita IVA sia sempre presente quando si crea un fornitore"</li>
-                                    <li>"Quando viene creato un ordine con totale > 1000€, imposta lo stato a 'approvazione richiesta'"</li>
+                                    <li>"Quando viene creato un ordine con totale &gt; 1000€, imposta lo stato a 'approvazione richiesta'"</li>
                                     <li>"Dopo la creazione di un cliente, invia una notifica al responsabile vendite"</li>
                                 </ul>
                                 <Alert

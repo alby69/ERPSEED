@@ -154,3 +154,11 @@ class WebhookEvent:
             'accounting': [cls.JOURNAL_ENTRY_CREATED, cls.JOURNAL_ENTRY_POSTED, cls.INVOICE_CREATED, cls.INVOICE_PAID],
             'hr': [cls.EMPLOYEE_CREATED, cls.EMPLOYEE_UPDATED, cls.LEAVE_REQUESTED, cls.LEAVE_APPROVED],
         }
+    
+    @classmethod
+    def get_event_map(cls):
+        """Get events and categories together."""
+        return {
+            'events': cls.get_all_events(),
+            'categories': cls.get_categories()
+        }

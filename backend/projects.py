@@ -2,7 +2,7 @@ from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import json
-from flask import make_response, request
+from flask import request
 
 from .models import Project, SysModel
 from .extensions import db
@@ -104,10 +104,10 @@ class ProjectModels(MethodView):
 
         project = project_service.get_by_id(project_id, user_id)
 
-        if user.role == "admin":
+        if user and user.role == "admin":
             return project.models
         else:
-            return [m for m in project.models if m.status == "published"]
+            return [m for m in project.models if m.status == "published"] # type: ignore
 
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
@@ -128,8 +128,8 @@ class ProjectModels(MethodView):
                 message=f"A model with name '{data['name']}' already exists in this project.",
             )
 
-        model = SysModel(project_id=project_id, **data)
-        db.session.add(model)
+        model = SysModel(project_id=project_id, **data) # type: ignore
+        db.session.add(model) # type: ignore
         db.session.commit()
         return model
 
@@ -172,26 +172,24 @@ class ProjectMemberResource(MethodView):
 class ProjectExport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
+    @blp.response(200, schema={"type": "object"}, content_type="application/json")
     def get(self, project_id):
         """Export project as JSON template"""
         project_service.get_by_id(project_id, get_jwt_identity())
 
         export_data = project_service.export_template(project_id)
-
-        response = make_response(json.dumps(export_data, indent=2))
-
         project = Project.query.get(project_id)
-        response.headers["Content-Disposition"] = (
-            f"attachment; filename={project.name}_template.json"
-        )
-        response.headers["Content-Type"] = "application/json"
-        return response
+        filename = project.name if project else "project"
+        headers = {"Content-Disposition": f"attachment; filename={filename}_template.json"}
+
+        return export_data, 200, headers
 
 
 @blp.route("/import")
 class ProjectImport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
+    @blp.response(200, schema={"type": "object"})
     def post(self):
         """Import project from JSON template (Create or Update)"""
         if "file" not in request.files:
@@ -202,7 +200,7 @@ class ProjectImport(MethodView):
             abort(400, message="No selected file")
 
         try:
-            data = json.load(file)
+            data = json.load(file.stream)
         except Exception as e:
             abort(400, message=f"Invalid JSON: {str(e)}")
 

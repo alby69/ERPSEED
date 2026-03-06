@@ -21,11 +21,22 @@ class TemplateInstallSchema(Schema):
     template_id = fields.String(required=True)
     project_id = fields.Integer(required=True)
 
+class TemplateSchema(Schema):
+    id = fields.String()
+    name = fields.String()
+    description = fields.String()
+    category = fields.String()
+    icon = fields.String()
+
+class TemplateInstallResponseSchema(Schema):
+    message = fields.String()
+    project_id = fields.Int()
+
 @blp.route("/")
 class TemplateList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200)
+    @blp.response(200, TemplateSchema(many=True))
     def get(self):
         """List all available starter templates."""
         return template_service.list_templates()
@@ -35,7 +46,7 @@ class TemplateInstall(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(TemplateInstallSchema)
-    @blp.response(201)
+    @blp.response(201, TemplateInstallResponseSchema)
     def post(self, args):
         """Install a starter template into a project."""
         try:

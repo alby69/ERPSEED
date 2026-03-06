@@ -151,7 +151,7 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
           textDecoration: 'none',
           whiteSpace: 'nowrap',
         }}>
-          FlaskERP
+          ERPSeed
         </Link>
         <Breadcrumb 
           items={breadcrumbs.length > 0 ? breadcrumbs : buildBreadcrumbs()} 

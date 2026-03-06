@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   Card, 
   Button, 
@@ -22,6 +22,7 @@ import {
   message,
   Spin,
 } from 'antd';
+import AppHeader from '@/components/AppHeader';
 import { 
   PlusOutlined, 
   DeleteOutlined, 
@@ -281,15 +282,24 @@ function BlockBuilder() {
     );
   }
 
+  const breadcrumbs = [
+    { title: <Link to="/projects">Progetti</Link> },
+    { title: <Link to={`/projects/${projectId || 1}`}>Demo Project</Link> },
+    { title: 'Builder' },
+    { title: 'Block Builder' },
+  ];
+
   return (
-    <div className="block-builder-page" style={{ padding: 24 }}>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <Title level={2} style={{ margin: 0 }}>
-            <BlockOutlined /> Block Builder
-          </Title>
-          <Text type="secondary">Create and manage Blocks with Components</Text>
-        </div>
+    <div>
+      <AppHeader breadcrumbs={breadcrumbs} />
+      <div className="block-builder-page" style={{ padding: 24 }}>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <Title level={2} style={{ margin: 0 }}>
+              <BlockOutlined /> Block Builder
+            </Title>
+            <Text type="secondary">Create and manage Blocks with Components</Text>
+          </div>
         <Space>
           <ImportExportToolbar 
             type="block" 
@@ -372,6 +382,7 @@ function BlockBuilder() {
           </Form.Item>
         </Form>
       </Modal>
+      </div>
     </div>
   );
 }

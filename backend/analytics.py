@@ -193,6 +193,7 @@ class SysDashboardResource(MethodView):
 class ChartData(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, {"type": "object"})
     def get(self, chart_id):
         """Esegue la query di aggregazione per un grafico specifico."""
         chart = SysChart.query.get_or_404(chart_id)

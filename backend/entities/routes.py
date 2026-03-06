@@ -2,6 +2,7 @@ from flask.views import MethodView
 from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
+from marshmallow import fields
 from backend.entities import (
     Soggetto,
     SoggettoRuolo,
@@ -18,7 +19,7 @@ from backend.entities.schemas import (
     IndirizzoSchema,
     ContattoSchema,
 )
-from backend.extensions import db
+from backend.extensions import db, ma
 from backend.core.services.tenant_context import TenantContext
 
 
@@ -33,7 +34,6 @@ def get_tenant_query(model):
     if tenant_id is None:
         abort(403, message="Tenant context not found")
     return model.query.filter_by(tenant_id=tenant_id)
-
 
 # ==================== SOGGETTO ====================
 
@@ -69,7 +69,7 @@ class SoggettoList(MethodView):
             query = query.filter(
                 (Soggetto.nome.ilike(f"%{q}%"))
                 | (Soggetto.codice.ilike(f"%{q}%"))
-                | (Soggetto.email.ilike(f"%{q}%"))
+                | (Soggetto.email_principale.ilike(f"%{q}%"))
             )
 
         # Pagination
@@ -120,10 +120,10 @@ class SoggettoList(MethodView):
         # Aggiungi ruoli
         for ruolo_data in ruoli_data:
             sr = SoggettoRuolo(
-                soggetto_id=soggetto.id,
-                ruolo_id=ruolo_data.get("ruolo_id"),
-                stato=ruolo_data.get("stato", "attivo"),
-                data_inizio=ruolo_data.get("data_inizio"),
+                soggetto_id=soggetto.id, # type: ignore
+                ruolo_id=ruolo_data.get("ruolo_id"), # type: ignore
+                stato=ruolo_data.get("stato", "attivo"), # type: ignore
+                data_inizio=ruolo_data.get("data_inizio"), # type: ignore
             )
             db.session.add(sr)
 
@@ -131,45 +131,45 @@ class SoggettoList(MethodView):
         for ind_data in indirizzi_data:
             # Crea o riutilizza indirizzo
             indirizzo = Indirizzo(
-                tenant_id=tenant_id,
-                denominazione=ind_data.get("denominazione"),
-                numero_civico=ind_data.get("numero_civico"),
-                CAP=ind_data.get("CAP"),
-                città=ind_data.get("città"),
-                provincia=ind_data.get("provincia"),
-                nazione=ind_data.get("nazione", "IT"),
-                latitudine=ind_data.get("latitudine"),
-                longitudine=ind_data.get("longitudine"),
-                tipo=ind_data.get("tipo"),
+                tenant_id=tenant_id, # type: ignore
+                denominazione=ind_data.get("denominazione"), # type: ignore
+                numero_civico=ind_data.get("numero_civico"), # type: ignore
+                CAP=ind_data.get("CAP"), # type: ignore
+                città=ind_data.get("città"), # type: ignore
+                provincia=ind_data.get("provincia"), # type: ignore
+                nazione=ind_data.get("nazione", "IT"), # type: ignore
+                latitudine=ind_data.get("latitudine"), # type: ignore
+                longitudine=ind_data.get("longitudine"), # type: ignore
+                tipo=ind_data.get("tipo"), # type: ignore
             )
             db.session.add(indirizzo)
             db.session.flush()
 
             si = SoggettoIndirizzo(
-                soggetto_id=soggetto.id,
-                indirizzo_id=indirizzo.id,
-                tipo_riferimento=ind_data.get("tipo_riferimento"),
-                is_preferred=ind_data.get("is_preferred", False),
+                soggetto_id=soggetto.id, # type: ignore
+                indirizzo_id=indirizzo.id, # type: ignore
+                tipo_riferimento=ind_data.get("tipo_riferimento"), # type: ignore
+                is_preferred=ind_data.get("is_preferred", False), # type: ignore
             )
             db.session.add(si)
 
         # Aggiungi contatti
         for cont_data in contatti_data:
             contatto = Contatto(
-                tenant_id=tenant_id,
-                canale=cont_data.get("canale"),
-                valore=cont_data.get("valore"),
-                tipo_utilizzo=cont_data.get("tipo_utilizzo"),
-                is_preferred=cont_data.get("is_preferred", False),
+                tenant_id=tenant_id, # type: ignore
+                canale=cont_data.get("canale"), # type: ignore
+                valore=cont_data.get("valore"), # type: ignore
+                tipo_utilizzo=cont_data.get("tipo_utilizzo"), # type: ignore
+                is_preferred=cont_data.get("is_preferred", False), # type: ignore
             )
             db.session.add(contatto)
             db.session.flush()
 
             sc = SoggettoContatto(
-                soggetto_id=soggetto.id,
-                contatto_id=contatto.id,
-                tipo_riferimento=cont_data.get("tipo_riferimento"),
-                is_primary=cont_data.get("is_primary", False),
+                soggetto_id=soggetto.id, # type: ignore
+                contatto_id=contatto.id, # type: ignore
+                tipo_riferimento=cont_data.get("tipo_riferimento"), # type: ignore
+                is_primary=cont_data.get("is_primary", False), # type: ignore
             )
             db.session.add(sc)
 
@@ -489,7 +489,6 @@ class ContattoList(MethodView):
             query = query.filter(
                 (Contatto.valore.ilike(f"%{q}%"))
                 | (Contatto.canale.ilike(f"%{q}%"))
-                | (Contatto.note.ilike(f"%{q}%"))
             )
 
         # Pagination

@@ -3,6 +3,7 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
 from sqlalchemy import func
 from datetime import datetime, timedelta
+from marshmallow import fields, Schema
 
 from .extensions import db
 from .core.services.tenant_context import TenantContext
@@ -18,10 +19,31 @@ def get_tenant_id():
     return tenant_id
 
 
+class KpiSchema(Schema):
+    parties = fields.Dict(keys=fields.Str(), values=fields.Int())
+    products = fields.Int()
+    sales = fields.Dict(keys=fields.Str(), values=fields.Raw())
+    purchases = fields.Dict(keys=fields.Str(), values=fields.Raw())
+
+class SummarySchema(Schema):
+    count = fields.Int()
+    total = fields.Float()
+
+class RecentOrderSchema(Schema):
+    id = fields.Int()
+    number = fields.Str()
+    status = fields.Str()
+    total_amount = fields.Float()
+    date = fields.Date(allow_none=True)
+    created_at = fields.DateTime(allow_none=True)
+    customer_id = fields.Int(allow_none=True)
+    supplier_id = fields.Int(allow_none=True)
+
 @blp.route("/dashboard/kpi")
 class DashboardKPI(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, KpiSchema)
     def get(self):
         """Get dashboard KPI summary"""
         tenant_id = get_tenant_id()
@@ -77,6 +99,7 @@ class DashboardKPI(MethodView):
 class SalesSummary(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, fields.Dict(keys=fields.Str(), values=fields.Nested(SummarySchema)))
     def get(self):
         """Get sales summary by status"""
         tenant_id = get_tenant_id()
@@ -105,6 +128,7 @@ class SalesSummary(MethodView):
 class PurchasesSummary(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, fields.Dict(keys=fields.Str(), values=fields.Nested(SummarySchema)))
     def get(self):
         """Get purchases summary by status"""
         tenant_id = get_tenant_id()
@@ -133,6 +157,7 @@ class PurchasesSummary(MethodView):
 class RecentSales(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, RecentOrderSchema(many=True))
     def get(self):
         """Get recent sales orders"""
         tenant_id = get_tenant_id()
@@ -158,6 +183,7 @@ class RecentSales(MethodView):
 class RecentPurchases(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, RecentOrderSchema(many=True))
     def get(self):
         """Get recent purchase orders"""
         tenant_id = get_tenant_id()

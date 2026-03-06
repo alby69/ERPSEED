@@ -56,6 +56,20 @@ class TestExecutionSchema(Schema):
     percentuale_successo = fields.Float()
 
 
+class TestSuiteListResponseSchema(Schema):
+    test_suites = fields.List(fields.Nested(TestSuiteSchema))
+    total = fields.Int()
+    pages = fields.Int()
+    current_page = fields.Int()
+
+class TestExecutionListResponseSchema(Schema):
+    executions = fields.List(fields.Nested(TestExecutionSchema))
+
+class ModuleStatusResponseSchema(Schema):
+    modulo = fields.Str()
+    stato = fields.Str()
+    storico = fields.List(fields.Dict())
+
 class ModuleStatusChangeSchema(Schema):
     modulo_nome = fields.Str(required=True)
     nuovo_stato = fields.Str(required=True)
@@ -74,6 +88,7 @@ blp = Blueprint('test_runner', __name__, url_prefix='/api/v1/tests', description
 @blp.route('/suites')
 class TestSuiteList(MethodView):
     @jwt_required()
+    @blp.response(200, TestSuiteListResponseSchema)
     def get(self):
         """Lista tutte le test suites con paginazione."""
         page = request.args.get('page', 1, type=int)
@@ -93,52 +108,55 @@ class TestSuiteList(MethodView):
         )
 
         return {
-            'test_suites': TestSuiteSchema(many=True).dump(pagination.items),
+            'test_suites': pagination.items,
             'total': pagination.total,
             'pages': pagination.pages,
             'current_page': pagination.page
         }
     
     @jwt_required()
-    def post(self):
+    @blp.arguments(TestSuiteSchema(exclude=("id", "ultimo_esito", "created_at", "updated_at", "test_cases")))
+    @blp.response(201, TestSuiteSchema)
+    def post(self, data):
         """Crea una nuova test suite."""
-        data = request.get_json()
-        
         suite = TestSuite(
-            nome=data['nome'],
-            descrizione=data.get('descrizione', ''),
-            modulo_target=data['modulo_target'],
-            test_type=data.get('test_type', 'crud'),
-            stato='bozza'
+            nome=data['nome'], # type: ignore
+            descrizione=data.get('descrizione', ''), # type: ignore
+            modulo_target=data['modulo_target'], # type: ignore
+            test_type=data.get('test_type', 'crud'), # type: ignore
+            stato='bozza' # type: ignore
         )
         db.session.add(suite)
         db.session.commit()
         
-        return TestSuiteSchema().dump(suite), 201
+        return suite
 
 
 @blp.route('/suites/<int:suite_id>')
 class TestSuiteResource(MethodView):
     @jwt_required()
+    @blp.response(200, TestSuiteSchema)
     def get(self, suite_id):
         """Dettagli di una test suite."""
         suite = TestSuite.query.get_or_404(suite_id)
-        return TestSuiteSchema().dump(suite)
+        return suite
     
     @jwt_required()
-    def put(self, suite_id):
+    @blp.arguments(TestSuiteSchema(partial=True, exclude=("id", "ultimo_esito", "created_at", "updated_at", "test_cases")))
+    @blp.response(200, TestSuiteSchema)
+    def put(self, data, suite_id):
         """Aggiorna una test suite."""
         suite = TestSuite.query.get_or_404(suite_id)
-        data = request.get_json()
         
         for key, value in data.items():
             if hasattr(suite, key):
                 setattr(suite, key, value)
         
         db.session.commit()
-        return TestSuiteSchema().dump(suite)
+        return suite
     
     @jwt_required()
+    @blp.response(204)
     def delete(self, suite_id):
         """Elimina una test suite."""
         try:
@@ -149,19 +167,20 @@ class TestSuiteResource(MethodView):
             
             db.session.delete(suite)
             db.session.commit()
-            return {'message': 'TestSuite eliminata'}
+            return ''
         except Exception as e:
             db.session.rollback()
-            return {'error': str(e)}, 500
+            abort(500, message=str(e))
 
 
 @blp.route('/suites/<int:suite_id>/cases')
 class TestCaseList(MethodView):
     @jwt_required()
-    def post(self, suite_id):
+    @blp.arguments(TestCaseSchema(exclude=("id",)))
+    @blp.response(201, TestCaseSchema)
+    def post(self, data, suite_id):
         """Aggiunge un test case alla suite."""
         suite = TestSuite.query.get_or_404(suite_id)
-        data = request.get_json()
         
         # Gestione payload se inviato come stringa JSON
         payload = data.get('payload', {})
@@ -173,36 +192,38 @@ class TestCaseList(MethodView):
                 pass
 
         case = TestCase(
-            test_suite_id=suite.id,
-            nome=data['nome'],
-            descrizione=data.get('descrizione', ''),
-            test_type=data['test_type'],
-            metodo=data['metodo'],
-            endpoint=data['endpoint'],
-            payload=payload,
-            expected_status=data.get('expected_status', 200),
-            expected_fields=data.get('expected_fields', []),
-            ordine=data.get('ordine', 0)
+            test_suite_id=suite.id, # type: ignore
+            nome=data['nome'], # type: ignore
+            descrizione=data.get('descrizione', ''), # type: ignore
+            test_type=data['test_type'], # type: ignore
+            metodo=data['metodo'], # type: ignore
+            endpoint=data['endpoint'], # type: ignore
+            payload=payload, # type: ignore
+            expected_status=data.get('expected_status', 200), # type: ignore
+            expected_fields=data.get('expected_fields', []), # type: ignore
+            ordine=data.get('ordine', 0) # type: ignore
         )
         db.session.add(case)
         db.session.commit()
         
-        return TestCaseSchema().dump(case), 201
+        return case
 
 
 @blp.route('/cases/<int:case_id>')
 class TestCaseResource(MethodView):
     @jwt_required()
+    @blp.response(200, TestCaseSchema)
     def get(self, case_id):
         """Dettagli di un test case."""
         case = TestCase.query.get_or_404(case_id)
-        return TestCaseSchema().dump(case)
+        return case
 
     @jwt_required()
-    def put(self, case_id):
+    @blp.arguments(TestCaseSchema(partial=True, exclude=("id",)))
+    @blp.response(200, TestCaseSchema)
+    def put(self, data, case_id):
         """Aggiorna un test case."""
         case = TestCase.query.get_or_404(case_id)
-        data = request.get_json()
 
         for key, value in data.items():
             if hasattr(case, key):
@@ -215,20 +236,22 @@ class TestCaseResource(MethodView):
                 setattr(case, key, value)
 
         db.session.commit()
-        return TestCaseSchema().dump(case)
+        return case
 
     @jwt_required()
+    @blp.response(204)
     def delete(self, case_id):
         """Elimina un test case."""
         case = TestCase.query.get_or_404(case_id)
         db.session.delete(case)
         db.session.commit()
-        return {'message': 'TestCase eliminato'}
+        return ''
 
 
 @blp.route('/suites/<int:suite_id>/run')
 class TestSuiteRun(MethodView):
     @jwt_required()
+    @blp.response(200, TestExecutionSchema)
     def post(self, suite_id):
         """Esegue una test suite."""
         identity = get_jwt_identity()
@@ -242,16 +265,17 @@ class TestSuiteRun(MethodView):
         
         auth_token = request.headers.get('Authorization', '').replace('Bearer ', '')
         
-        runner = TestRunner(auth_token=auth_token, tenant_id=tenant_id)
+        runner = TestRunner(auth_token=auth_token, tenant_id=tenant_id if tenant_id else 0)
         
         execution = runner.esegui_suite(suite, user_id)
         
-        return TestExecutionSchema().dump(execution)
+        return execution
 
 
 @blp.route('/executions')
 class TestExecutionList(MethodView):
     @jwt_required()
+    @blp.response(200, TestExecutionListResponseSchema)
     def get(self):
         """Lista tutte le esecuzioni test."""
         limit = request.args.get('limit', 50, type=int)
@@ -263,18 +287,20 @@ class TestExecutionList(MethodView):
             query = query.filter_by(test_suite_id=suite_id)
         
         executions = query.limit(limit).all()
-        return {'executions': TestExecutionSchema(many=True).dump(executions)}
+        return {'executions': executions}
 
 
 @blp.route('/executions/<int:exec_id>')
 class TestExecutionResource(MethodView):
     @jwt_required()
+    @blp.response(200, TestExecutionSchema)
     def get(self, exec_id):
         """Dettagli esecuzione test."""
         execution = TestExecution.query.get_or_404(exec_id)
-        return TestExecutionSchema().dump(execution)
+        return execution
     
     @jwt_required()
+    @blp.response(204)
     def delete(self, exec_id):
         """Elimina esecuzione test."""
         import traceback
@@ -282,19 +308,21 @@ class TestExecutionResource(MethodView):
             execution = TestExecution.query.get_or_404(exec_id)
             db.session.delete(execution)
             db.session.commit()
-            return '', 204
+            return ''
         except Exception as e:
             db.session.rollback()
             traceback.print_exc()
-            return {'error': str(e)}, 500
+            abort(500, message=str(e))
 
 
 @blp.route('/generate')
 class TestSuiteGeneratorEndpoint(MethodView):
     @jwt_required()
-    def post(self):
+    @blp.arguments(GenerateSuiteSchema)
+    @blp.response(201, TestSuiteSchema)
+    @blp.alt_response(200, schema=TestSuiteSchema)
+    def post(self, data):
         """Genera automaticamente una test suite."""
-        data = request.get_json()
         
         tipo = data.get('tipo', 'crud')
         
@@ -315,23 +343,23 @@ class TestSuiteGeneratorEndpoint(MethodView):
         
         existing = TestSuite.query.filter_by(nome=suite.nome).first()
         if existing:
-            return TestSuiteSchema().dump(existing), 200
+            return existing, 200
         
         db.session.add(suite)
         db.session.commit()
         
-        return TestSuiteSchema().dump(suite), 201
+        return suite
 
 
 @blp.route('/module/status', methods=['POST'])
 class ModuleStatusChange(MethodView):
     @jwt_required()
-    def post(self):
+    @blp.arguments(ModuleStatusChangeSchema)
+    @blp.response(200, {"type": "object"})
+    def post(self, data):
         """Cambia lo stato di un modulo."""
         identity = get_jwt_identity()
         user_id = int(identity)
-        
-        data = request.get_json()
         
         success, message = ModuleStatusManager.cambia_stato(
             data['modulo_nome'],
@@ -349,6 +377,7 @@ class ModuleStatusChange(MethodView):
 @blp.route('/module/status/<modulo_nome>')
 class ModuleStatusGet(MethodView):
     @jwt_required()
+    @blp.response(200, ModuleStatusResponseSchema)
     def get(self, modulo_nome):
         """Stato corrente di un modulo."""
         stato = ModuleStatusManager.get_stato_modulo(modulo_nome)
@@ -379,6 +408,7 @@ class ModuleStatusGet(MethodView):
 @blp.route('/modules/status')
 class AllModulesStatus(MethodView):
     @jwt_required()
+    @blp.response(200, {"type": "object"})
     def get(self):
         """Stato di tutti i moduli."""
         suites = TestSuite.query.all()

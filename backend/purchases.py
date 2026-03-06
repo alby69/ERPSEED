@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required
 from .models import PurchaseOrder, PurchaseOrderLine
 from backend.entities.soggetto import Soggetto
 from .extensions import db
-from .schemas import SalesOrderSchema
+from .schemas import PurchaseOrderSchema
 from .utils import apply_filters, paginate, apply_sorting, apply_date_filters
 from .core.services.tenant_context import TenantContext
 
@@ -22,7 +22,7 @@ def get_tenant_query(model):
 class PurchaseOrderList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, SalesOrderSchema(many=True))
+    @blp.response(200, PurchaseOrderSchema(many=True))
     def get(self):
         """List purchase orders"""
         query = get_tenant_query(PurchaseOrder)
@@ -34,8 +34,8 @@ class PurchaseOrderList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SalesOrderSchema)
-    @blp.response(201, SalesOrderSchema)
+    @blp.arguments(PurchaseOrderSchema)
+    @blp.response(201, PurchaseOrderSchema)
     def post(self, order_data):
         """Create a new purchase order"""
         tenant_id = TenantContext.get_tenant_id()
@@ -44,7 +44,7 @@ class PurchaseOrderList(MethodView):
         
         order_data.tenant_id = tenant_id
         
-        if not Soggetto.query.filter_by(id=order_data.customer_id, tenant_id=tenant_id).first():
+        if not Soggetto.query.filter_by(id=order_data.supplier_id, tenant_id=tenant_id).first():
             abort(404, message="Supplier not found")
 
         for line in order_data.lines:
@@ -59,7 +59,7 @@ class PurchaseOrderList(MethodView):
 class PurchaseOrderResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, SalesOrderSchema)
+    @blp.response(200, PurchaseOrderSchema)
     def get(self, order_id):
         """Get purchase order by ID"""
         query = get_tenant_query(PurchaseOrder)
@@ -70,8 +70,8 @@ class PurchaseOrderResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SalesOrderSchema)
-    @blp.response(200, SalesOrderSchema)
+    @blp.arguments(PurchaseOrderSchema)
+    @blp.response(200, PurchaseOrderSchema)
     def put(self, order_data, order_id):
         """Update a purchase order"""
         query = get_tenant_query(PurchaseOrder)
@@ -107,7 +107,7 @@ class PurchaseOrderResource(MethodView):
 class PurchaseOrderConfirm(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, SalesOrderSchema)
+    @blp.response(200, PurchaseOrderSchema)
     def post(self, order_id):
         """Confirm a purchase order"""
         query = get_tenant_query(PurchaseOrder)
@@ -127,7 +127,7 @@ class PurchaseOrderConfirm(MethodView):
 class PurchaseOrderReceive(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, SalesOrderSchema)
+    @blp.response(200, PurchaseOrderSchema)
     def post(self, order_id):
         """Mark purchase order as received"""
         query = get_tenant_query(PurchaseOrder)
@@ -147,7 +147,7 @@ class PurchaseOrderReceive(MethodView):
 class PurchaseOrderCancel(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, SalesOrderSchema)
+    @blp.response(200, PurchaseOrderSchema)
     def post(self, order_id):
         """Cancel a purchase order"""
         query = get_tenant_query(PurchaseOrder)

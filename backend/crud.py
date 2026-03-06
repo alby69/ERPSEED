@@ -142,35 +142,37 @@ def register_crud_routes(blueprint, model, schema, url_prefix="", search_fields=
     @blueprint.route(url_prefix + "/export")
     class ExportResource(MethodView):
         @jwt_required()
+        @blueprint.response(200, schema={"type": "string"}, content_type="text/csv")
         def get(self):
             """Export filtered data to CSV."""
             # Apply the same filters as the list, but without pagination
             query = apply_filters_to_query(model.query)
             items = query.all()
-            
+
             # Generate CSV in memory
             string_io = io.StringIO()
             csv_writer = csv.writer(string_io)
-            
+
             schema_instance = schema()
-            
+
             # Determine which fields to export:
             # 1. From 'fields' query param (e.g., ?fields=name,email)
             # 2. From the route configuration (csv_fields)
             # 3. Default: all schema fields
             req_fields = request.args.get('fields')
             export_fields = req_fields.split(',') if req_fields else (csv_fields or list(schema_instance.fields.keys()))
-            
+
             csv_writer.writerow(export_fields)
-            
+
             for item in items:
                 data = schema_instance.dump(item)
                 csv_writer.writerow([data.get(f, '') for f in export_fields])
-                
-            output = make_response(string_io.getvalue())
-            output.headers["Content-Disposition"] = "attachment; filename=export.csv"
-            output.headers["Content-type"] = "text/csv"
-            return output
+
+            csv_content = string_io.getvalue()
+            headers = {
+                "Content-Disposition": "attachment; filename=export.csv"
+            }
+            return csv_content, 200, headers
 
     # Routes for a Single Item (Detail, Update, Delete)
     @blueprint.route(url_prefix + "/<int:item_id>")

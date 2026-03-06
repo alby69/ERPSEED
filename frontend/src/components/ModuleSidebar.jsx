@@ -146,7 +146,7 @@ const ModuleSidebar = ({ projectMenuItems = [] }) => {
         return (
             <div className="sidebar">
                 <div className="sidebar-logo">
-                    <Link to="/projects">FlaskERP</Link>
+                    <Link to="/projects">ERPSeed</Link>
                 </div>
                 <div style={{ padding: '20px', color: '#888' }}>Caricamento menu...</div>
             </div>

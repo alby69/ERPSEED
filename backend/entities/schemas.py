@@ -7,12 +7,18 @@ from backend.entities import (
 )
 
 
-class SoggettoSchema(ma.SQLAlchemyAutoSchema):
+class TimestampMixin:
+    created_at = mm_fields.DateTime(dump_only=True)
+    updated_at = mm_fields.DateTime(dump_only=True)
+
+
+class SoggettoSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = Soggetto
         load_instance = True
         include_fk = True
-        dump_only = ("id", "created_at", "updated_at")
+        exclude = ("tenant_id",)
+        dump_only = ("id",)
     
     denominazione = mm_fields.Str(dump_only=True)
     ruoli = mm_fields.List(mm_fields.Nested('SoggettoRuoloSchema'), dump_only=True)
@@ -20,71 +26,75 @@ class SoggettoSchema(ma.SQLAlchemyAutoSchema):
     contatti = mm_fields.List(mm_fields.Nested('SoggettoContattoSchema'), dump_only=True)
 
 
-class SoggettoCreateSchema(ma.SQLAlchemyAutoSchema):
+class SoggettoCreateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = Soggetto
         load_instance = False
         include_fk = True
-        dump_only = ("id", "created_at", "updated_at")
+        exclude = ("tenant_id",)
+        dump_only = ("id",)
     
     ruoli = mm_fields.List(mm_fields.Dict(), load_only=True, required=False)
     indirizzi = mm_fields.List(mm_fields.Dict(), load_only=True, required=False)
     contatti = mm_fields.List(mm_fields.Dict(), load_only=True, required=False)
 
 
-class RuoloSchema(ma.SQLAlchemyAutoSchema):
+class RuoloSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = Ruolo
         load_instance = False
         include_fk = True
-        dump_only = ("id", "created_at", "updated_at")
+        exclude = ("tenant_id",)
+        dump_only = ("id",)
 
 
-class SoggettoRuoloSchema(ma.SQLAlchemyAutoSchema):
+class SoggettoRuoloSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SoggettoRuolo
         load_instance = True
         include_fk = True
-        dump_only = ("id", "created_at", "updated_at")
+        dump_only = ("id",)
     
     ruolo_codice = mm_fields.Str(dump_only=True)
     ruolo_nome = mm_fields.Str(dump_only=True)
 
 
-class IndirizzoSchema(ma.SQLAlchemyAutoSchema):
+class IndirizzoSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = Indirizzo
         load_instance = False
         include_fk = True
-        dump_only = ("id", "created_at", "updated_at")
+        exclude = ("tenant_id",)
+        dump_only = ("id",)
     
     regione = mm_fields.Str(required=False, allow_none=True)
     città = mm_fields.Str(required=False, allow_none=True)
 
 
-class SoggettoIndirizzoSchema(ma.SQLAlchemyAutoSchema):
+class SoggettoIndirizzoSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SoggettoIndirizzo
         load_instance = False
         include_fk = True
-        dump_only = ("id", "created_at", "updated_at")
+        dump_only = ("id",)
     
     indirizzo = mm_fields.Nested('IndirizzoSchema', dump_only=True)
 
 
-class ContattoSchema(ma.SQLAlchemyAutoSchema):
+class ContattoSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = Contatto
         load_instance = False
         include_fk = True
-        dump_only = ("id", "created_at", "updated_at")
+        exclude = ("tenant_id",)
+        dump_only = ("id",)
 
 
-class SoggettoContattoSchema(ma.SQLAlchemyAutoSchema):
+class SoggettoContattoSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SoggettoContatto
         load_instance = False
         include_fk = True
-        dump_only = ("id", "created_at", "updated_at")
+        dump_only = ("id",)
     
     contatto = mm_fields.Nested('ContattoSchema', dump_only=True)

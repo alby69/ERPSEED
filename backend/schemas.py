@@ -11,6 +11,8 @@ from .models import (
     Product,
     SalesOrder,
     SalesOrderLine,
+    PurchaseOrder,
+    PurchaseOrderLine,
     SysChart,
     SysDashboard,
     ChartLibraryConfig,
@@ -27,6 +29,10 @@ try:
     from backend.entities.soggetto import Soggetto
 except ImportError:
     pass
+
+class TimestampMixin:
+    created_at = mm_fields.DateTime(dump_only=True)
+    updated_at = mm_fields.DateTime(dump_only=True)
 
 
 class UserSummarySchema(ma.SQLAlchemyAutoSchema):
@@ -53,7 +59,7 @@ class SoggettoSummarySchema(ma.SQLAlchemyAutoSchema):
         fields = ("id", "codice", "denominazione", "nome", "cognome", "ragione_sociale")
 
 
-class UserDisplaySchema(ma.SQLAlchemyAutoSchema):
+class UserDisplaySchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     """Schema for displaying user data (output)."""
 
     class Meta:
@@ -61,7 +67,7 @@ class UserDisplaySchema(ma.SQLAlchemyAutoSchema):
         exclude = ("password_hash",)
 
 
-class UserRegisterSchema(ma.SQLAlchemyAutoSchema):
+class UserRegisterSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     """Schema for registering a new user (input)."""
 
     class Meta:
@@ -74,7 +80,7 @@ class UserRegisterSchema(ma.SQLAlchemyAutoSchema):
     password = mm_fields.Str(required=True, load_only=True)
 
 
-class UserUpdateSchema(ma.SQLAlchemyAutoSchema):
+class UserUpdateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = User
         load_instance = False
@@ -108,7 +114,7 @@ class PasswordChangeSchema(ma.Schema):
 
 
 # --- Schemas for Projects ---
-class ProjectSchema(ma.SQLAlchemyAutoSchema):
+class ProjectSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     # Show owner details in read-only mode
     owner = mm_fields.Nested(UserDisplaySchema(only=("id", "email")), dump_only=True)
 
@@ -120,7 +126,7 @@ class ProjectSchema(ma.SQLAlchemyAutoSchema):
         dump_only = ("id", "created_at", "updated_at", "owner")
 
 
-class ProjectUpdateSchema(ma.SQLAlchemyAutoSchema):
+class ProjectUpdateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = Project
         load_instance = True
@@ -134,15 +140,15 @@ class ProjectMemberSchema(ma.Schema):
 
 
 # --- Schemas for the Builder ---
-class SysFieldSchema(ma.SQLAlchemyAutoSchema):
+class SysFieldSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SysField
         load_instance = True
         include_fk = True
 
 
-class SysModelSchema(ma.SQLAlchemyAutoSchema):
-    fields = mm_fields.List(mm_fields.Nested(SysFieldSchema))
+class SysModelSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+    model_fields = mm_fields.List(mm_fields.Nested(SysFieldSchema), attribute="fields") # type: ignore
     project = mm_fields.Nested(ProjectSchema(only=("id", "name")))
 
     class Meta:
@@ -151,8 +157,8 @@ class SysModelSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
 
 
-class SysModelCreateSchema(ma.SQLAlchemyAutoSchema):
-    fields = mm_fields.List(mm_fields.Nested(SysFieldSchema))
+class SysModelCreateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+    model_fields = mm_fields.List(mm_fields.Nested(SysFieldSchema), attribute="fields") # type: ignore
 
     class Meta:
         model = SysModel
@@ -161,7 +167,7 @@ class SysModelCreateSchema(ma.SQLAlchemyAutoSchema):
         exclude = ("project_id", "project")
 
 
-class AuditLogSchema(ma.SQLAlchemyAutoSchema):
+class AuditLogSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     user = mm_fields.Nested(UserDisplaySchema(only=("id", "email")))
 
     class Meta:
@@ -171,7 +177,7 @@ class AuditLogSchema(ma.SQLAlchemyAutoSchema):
 
 
 # --- Master Data Schemas ---
-class PartySchema(ma.SQLAlchemyAutoSchema):
+class PartySchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = Soggetto
         load_instance = True
@@ -179,7 +185,7 @@ class PartySchema(ma.SQLAlchemyAutoSchema):
         exclude = ("tenant_id",)
 
 
-class SoggettoSchema(ma.SQLAlchemyAutoSchema):
+class SoggettoSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = Soggetto
         load_instance = True
@@ -187,7 +193,7 @@ class SoggettoSchema(ma.SQLAlchemyAutoSchema):
         exclude = ("tenant_id",)
 
 
-class ProductSchema(ma.SQLAlchemyAutoSchema):
+class ProductSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = Product
         load_instance = True
@@ -195,7 +201,7 @@ class ProductSchema(ma.SQLAlchemyAutoSchema):
 
 
 # --- Sales Schemas ---
-class SalesOrderLineSchema(ma.SQLAlchemyAutoSchema):
+class SalesOrderLineSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SalesOrderLine
         load_instance = True
@@ -203,12 +209,13 @@ class SalesOrderLineSchema(ma.SQLAlchemyAutoSchema):
         exclude = ("order",)  # Avoid recursion
 
 
-class SalesOrderSchema(ma.SQLAlchemyAutoSchema):
+class SalesOrderSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     lines = mm_fields.List(mm_fields.Nested(SalesOrderLineSchema))
     customer = mm_fields.Nested(
         PartySchema(only=("id", "codice", "nome", "cognome", "ragione_sociale")),
         dump_only=True,
     )
+    date = mm_fields.Date()
 
     class Meta:
         model = SalesOrder
@@ -216,21 +223,42 @@ class SalesOrderSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
 
 
+class PurchaseOrderLineSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+    class Meta:
+        model = PurchaseOrderLine
+        load_instance = True
+        include_fk = True
+        exclude = ("order",)
+
+
+class PurchaseOrderSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+    lines = mm_fields.List(mm_fields.Nested(PurchaseOrderLineSchema))
+    supplier = mm_fields.Nested(
+        SoggettoSchema(only=("id", "codice", "nome", "cognome", "ragione_sociale")),
+        dump_only=True,
+    )
+    date = mm_fields.Date()
+
+    class Meta:
+        model = PurchaseOrder
+        load_instance = True
+        include_fk = True
+
 # --- Analytics Schemas ---
-class ChartLibraryConfigSchema(ma.SQLAlchemyAutoSchema):
+class ChartLibraryConfigSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = ChartLibraryConfig
         load_instance = True
 
 
-class SysChartSchema(ma.SQLAlchemyAutoSchema):
+class SysChartSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SysChart
         load_instance = True
         include_fk = True
 
 
-class SysDashboardSchema(ma.SQLAlchemyAutoSchema):
+class SysDashboardSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SysDashboard
         load_instance = True
@@ -238,7 +266,7 @@ class SysDashboardSchema(ma.SQLAlchemyAutoSchema):
 
 
 # --- Meta-Architecture Schemas ---
-class SysViewSchema(ma.SQLAlchemyAutoSchema):
+class SysViewSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     model = mm_fields.Nested(SysModelSchema(only=("id", "name", "technical_name")))
 
     class Meta:
@@ -247,7 +275,7 @@ class SysViewSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
 
 
-class SysViewCreateSchema(ma.SQLAlchemyAutoSchema):
+class SysViewCreateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SysView
         load_instance = True
@@ -255,21 +283,21 @@ class SysViewCreateSchema(ma.SQLAlchemyAutoSchema):
         exclude = ("model",)
 
 
-class SysComponentSchema(ma.SQLAlchemyAutoSchema):
+class SysComponentSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SysComponent
         load_instance = True
         include_fk = True
 
 
-class SysComponentCreateSchema(ma.SQLAlchemyAutoSchema):
+class SysComponentCreateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SysComponent
         load_instance = True
         include_fk = True
 
 
-class SysActionSchema(ma.SQLAlchemyAutoSchema):
+class SysActionSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     view = mm_fields.Nested(SysViewSchema(only=("id", "name")))
     model = mm_fields.Nested(SysModelSchema(only=("id", "name", "technical_name")))
 
@@ -279,7 +307,7 @@ class SysActionSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
 
 
-class SysActionCreateSchema(ma.SQLAlchemyAutoSchema):
+class SysActionCreateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
     class Meta:
         model = SysAction
         load_instance = True

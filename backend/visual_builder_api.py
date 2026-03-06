@@ -48,13 +48,41 @@ class VisualBuilderSaveSchema(Schema):
     config = fields.Dict()
     is_default = fields.Boolean()
 
+class VisualBuilderLoadResponseSchema(Schema):
+    id = fields.Int()
+    name = fields.String()
+    technicalName = fields.String()
+    title = fields.String()
+    viewType = fields.String()
+    isDefault = fields.Boolean()
+    config = fields.Dict()
+    components = fields.List(fields.Nested(ComponentConfigSchema))
+    actions = fields.List(fields.Dict())
+    model = fields.Dict(allow_none=True)
+
+class VisualBuilderSaveResponseSchema(Schema):
+    id = fields.Int()
+    message = fields.String()
+    technicalName = fields.String()
+
+class SysComponentResponseSchema(Schema):
+    id = fields.Int()
+    technicalName = fields.String()
+    name = fields.String()
+    title = fields.String()
+    type = fields.String()
+    icon = fields.String()
+    description = fields.String()
+    defaultConfig = fields.Dict()
+    propsSchema = fields.Dict()
+
 # === ROUTES ===
 
 @blp.route("/load/<int:view_id>")
 class VisualBuilderLoad(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200)
+    @blp.response(200, VisualBuilderLoadResponseSchema)
     def get(self, view_id):
         """Load a view configuration with full metadata."""
         sys_view = SysView.query.get_or_404(view_id)
@@ -92,7 +120,7 @@ class VisualBuilderSave(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(VisualBuilderSaveSchema)
-    @blp.response(201)
+    @blp.response(201, VisualBuilderSaveResponseSchema)
     def post(self, view_data):
         """Save or update a view configuration."""
         view_id = view_data.get("view_id")
@@ -125,7 +153,7 @@ class VisualBuilderSave(MethodView):
 class VisualBuilderComponents(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200)
+    @blp.response(200, SysComponentResponseSchema(many=True))
     def get(self):
         """List all available UI components from SysComponent."""
         from backend.models import SysComponent

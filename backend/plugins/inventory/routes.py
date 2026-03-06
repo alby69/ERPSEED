@@ -12,12 +12,56 @@ from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import datetime
+from marshmallow import fields
 
 from .models import InventoryLocation, ProductStock, StockMovement, InventoryCount, InventoryCountLine
 from backend.core.services.tenant_context import TenantContext
-from backend.extensions import db
+from backend.extensions import db, ma
 
 blp = Blueprint("inventory", __name__, url_prefix="/inventory", description="Inventory Operations")
+
+class InventoryLocationSchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    class Meta:
+        model = InventoryLocation
+        load_instance = True
+
+class ProductStockSchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    class Meta:
+        model = ProductStock
+        load_instance = True
+        include_fk = True
+
+class StockMovementSchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    class Meta:
+        model = StockMovement
+        load_instance = True
+        include_fk = True
+
+class InventoryCountLineSchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    class Meta:
+        model = InventoryCountLine
+        load_instance = True
+        include_fk = True
+        exclude = ('count',)
+
+class InventoryCountSchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    scheduled_date = fields.Date()
+    completed_date = fields.Date()
+    lines = fields.List(fields.Nested(InventoryCountLineSchema))
+    class Meta:
+        model = InventoryCount
+        load_instance = True
+        include_fk = True
 
 
 def get_tenant_query(model):
@@ -34,6 +78,7 @@ class LocationList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, InventoryLocationSchema(many=True))
     def get(self):
         """List all inventory locations."""
         tenant_id = TenantContext.get_tenant_id()
@@ -44,6 +89,8 @@ class LocationList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(InventoryLocationSchema)
+    @blp.response(201, InventoryLocationSchema)
     def post(self):
         """Create new inventory location."""
         data = request.get_json()
@@ -56,13 +103,13 @@ class LocationList(MethodView):
             abort(409, message=f"Location code '{data['code']}' already exists.")
         
         location = InventoryLocation(
-            tenant_id=tenant_id,
-            name=data['name'],
-            code=data['code'],
-            description=data.get('description'),
-            address=data.get('address'),
-            city=data.get('city'),
-            is_default=data.get('is_default', False)
+            tenant_id=tenant_id, # type: ignore
+            name=data['name'], # type: ignore
+            code=data['code'], # type: ignore
+            description=data.get('description'), # type: ignore
+            address=data.get('address'), # type: ignore
+            city=data.get('city'), # type: ignore
+            is_default=data.get('is_default', False) # type: ignore
         )
         
         db.session.add(location)
@@ -77,6 +124,7 @@ class LocationResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, InventoryLocationSchema)
     def get(self, location_id):
         """Get location by ID."""
         tenant_id = TenantContext.get_tenant_id()
@@ -89,6 +137,8 @@ class LocationResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(InventoryLocationSchema(partial=True))
+    @blp.response(200, InventoryLocationSchema)
     def put(self, location_id):
         """Update location."""
         data = request.get_json()
@@ -108,6 +158,7 @@ class LocationResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(204)
     def delete(self, location_id):
         """Deactivate location."""
         tenant_id = TenantContext.get_tenant_id()
@@ -127,6 +178,7 @@ class StockList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, ProductStockSchema(many=True))
     def get(self):
         """List stock levels (optionally filtered by product or location)."""
         tenant_id = TenantContext.get_tenant_id()
@@ -147,6 +199,8 @@ class StockList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(ProductStockSchema)
+    @blp.response(201, ProductStockSchema)
     def post(self):
         """Set initial stock level for a product at a location."""
         data = request.get_json()
@@ -164,12 +218,12 @@ class StockList(MethodView):
             abort(409, message="Stock record already exists for this product at this location.")
         
         stock = ProductStock(
-            tenant_id=tenant_id,
-            product_id=data['product_id'],
-            location_id=data['location_id'],
-            quantity=data.get('quantity', 0),
-            reorder_level=data.get('reorder_level', 0),
-            reorder_quantity=data.get('reorder_quantity', 0)
+            tenant_id=tenant_id, # type: ignore
+            product_id=data['product_id'], # type: ignore
+            location_id=data['location_id'], # type: ignore
+            quantity=data.get('quantity', 0), # type: ignore
+            reorder_level=data.get('reorder_level', 0), # type: ignore
+            reorder_quantity=data.get('reorder_quantity', 0) # type: ignore
         )
         
         db.session.add(stock)
@@ -184,6 +238,7 @@ class StockResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, ProductStockSchema)
     def get(self, stock_id):
         """Get stock level."""
         tenant_id = TenantContext.get_tenant_id()
@@ -196,6 +251,8 @@ class StockResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(ProductStockSchema(partial=True))
+    @blp.response(200, ProductStockSchema)
     def put(self, stock_id):
         """Update stock level."""
         data = request.get_json()
@@ -220,6 +277,7 @@ class StockMovementList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, StockMovementSchema(many=True))
     def get(self):
         """List stock movements."""
         tenant_id = TenantContext.get_tenant_id()
@@ -243,6 +301,8 @@ class StockMovementList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(StockMovementSchema)
+    @blp.response(201, StockMovementSchema)
     def post(self):
         """Create stock movement (in, out, transfer, adjustment)."""
         data = request.get_json()
@@ -258,16 +318,16 @@ class StockMovementList(MethodView):
         movement_number = self._generate_movement_number(tenant_id, movement_type)
         
         movement = StockMovement(
-            tenant_id=tenant_id,
-            movement_number=movement_number,
-            movement_type=movement_type,
-            product_id=product_id,
-            location_id=location_id,
-            quantity=quantity,
-            reference_type=data.get('reference_type'),
-            reference_id=data.get('reference_id'),
-            notes=data.get('notes'),
-            created_by_id=get_jwt_identity()
+            tenant_id=tenant_id, # type: ignore
+            movement_number=movement_number, # type: ignore
+            movement_type=movement_type, # type: ignore
+            product_id=product_id, # type: ignore
+            location_id=location_id, # type: ignore
+            quantity=quantity, # type: ignore
+            reference_type=data.get('reference_type'), # type: ignore
+            reference_id=data.get('reference_id'), # type: ignore
+            notes=data.get('notes'), # type: ignore
+            created_by_id=get_jwt_identity() # type: ignore
         )
         
         db.session.add(movement)
@@ -281,10 +341,10 @@ class StockMovementList(MethodView):
         
         if not stock:
             stock = ProductStock(
-                tenant_id=tenant_id,
-                product_id=product_id,
-                location_id=location_id,
-                quantity=0
+                tenant_id=tenant_id, # type: ignore
+                product_id=product_id, # type: ignore
+                location_id=location_id, # type: ignore
+                quantity=0 # type: ignore
             )
             db.session.add(stock)
             db.session.flush()
@@ -333,6 +393,7 @@ class InventoryCountList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, InventoryCountSchema(many=True))
     def get(self):
         """List inventory counts."""
         tenant_id = TenantContext.get_tenant_id()
@@ -349,6 +410,8 @@ class InventoryCountList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(InventoryCountSchema)
+    @blp.response(201, InventoryCountSchema)
     def post(self):
         """Create new inventory count."""
         data = request.get_json()
@@ -359,12 +422,12 @@ class InventoryCountList(MethodView):
         count_number = self._generate_count_number(tenant_id)
         
         count = InventoryCount(
-            tenant_id=tenant_id,
-            count_number=count_number,
-            location_id=data['location_id'],
-            scheduled_date=data.get('scheduled_date'),
-            notes=data.get('notes'),
-            created_by_id=get_jwt_identity()
+            tenant_id=tenant_id, # type: ignore
+            count_number=count_number, # type: ignore
+            location_id=data['location_id'], # type: ignore
+            scheduled_date=data.get('scheduled_date'), # type: ignore
+            notes=data.get('notes'), # type: ignore
+            created_by_id=get_jwt_identity() # type: ignore
         )
         
         db.session.add(count)
@@ -378,10 +441,10 @@ class InventoryCountList(MethodView):
         
         for stock in stock_levels:
             line = InventoryCountLine(
-                tenant_id=tenant_id,
-                count_id=count.id,
-                product_id=stock.product_id,
-                expected_quantity=stock.quantity
+                tenant_id=tenant_id, # type: ignore
+                count_id=count.id, # type: ignore
+                product_id=stock.product_id, # type: ignore
+                expected_quantity=stock.quantity # type: ignore
             )
             db.session.add(line)
         
@@ -413,6 +476,7 @@ class InventoryCountResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, InventoryCountSchema)
     def get(self, count_id):
         """Get inventory count with lines."""
         tenant_id = TenantContext.get_tenant_id()
@@ -425,6 +489,7 @@ class InventoryCountResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, InventoryCountSchema)
     def post(self, count_id):
         """Complete inventory count (process variances)."""
         tenant_id = TenantContext.get_tenant_id()
@@ -455,15 +520,15 @@ class InventoryCountResource(MethodView):
                         
                         # Create adjustment movement
                         movement = StockMovement(
-                            tenant_id=tenant_id,
-                            movement_number=f'INV-ADJ-{datetime.date.today().year}{datetime.date.today().month:02d}-{count.id:05d}',
-                            movement_type='adjustment',
-                            product_id=line.product_id,
-                            location_id=count.location_id,
-                            quantity=line.counted_quantity,
-                            reference_type='inventory_count',
-                            reference_id=count.id,
-                            notes=f"Inventory count adjustment: {line.variance:+.0f}"
+                            tenant_id=tenant_id, # type: ignore
+                            movement_number=f'INV-ADJ-{datetime.date.today().year}{datetime.date.today().month:02d}-{count.id:05d}', # type: ignore
+                            movement_type='adjustment', # type: ignore
+                            product_id=line.product_id, # type: ignore
+                            location_id=count.location_id, # type: ignore
+                            quantity=line.counted_quantity, # type: ignore
+                            reference_type='inventory_count', # type: ignore
+                            reference_id=count.id, # type: ignore
+                            notes=f"Inventory count adjustment: {line.variance:+.0f}" # type: ignore
                         )
                         db.session.add(movement)
         
@@ -480,6 +545,8 @@ class InventoryCountLineResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(InventoryCountLineSchema(partial=True))
+    @blp.response(200, InventoryCountLineSchema)
     def put(self, count_id, line_id):
         """Update counted quantity for a line."""
         data = request.get_json()
@@ -516,6 +583,7 @@ class StockSummary(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, fields.List(fields.Dict()))
     def get(self):
         """Get stock summary (all products with total stock levels)."""
         tenant_id = TenantContext.get_tenant_id()
@@ -558,6 +626,7 @@ class LowStockReport(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, fields.List(fields.Dict()))
     def get(self):
         """Get products below reorder level."""
         tenant_id = TenantContext.get_tenant_id()

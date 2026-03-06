@@ -34,7 +34,7 @@ class ModuleConfigSchema(Schema):
 
 @blp.route('/')
 class ModuleList(MethodView):
-    @blp.response(200)
+    @blp.response(200, schema={"type": "array", "items": {"type": "object"}})
     @jwt_required()
     def get(self):
         """
@@ -46,7 +46,7 @@ class ModuleList(MethodView):
 
 @blp.route('/categories')
 class ModuleCategories(MethodView):
-    @blp.response(200)
+    @blp.response(200, schema={"type": "object"})
     @jwt_required()
     def get(self):
         """
@@ -61,20 +61,20 @@ class ModuleCategories(MethodView):
 
 @blp.route('/enabled')
 class TenantModules(MethodView):
-    @blp.response(200)
+    @blp.response(200, schema={"type": "array", "items": {"type": "object"}})
     @jwt_required()
     def get(self):
         """
         Lista moduli attivi per il tenant corrente.
         """
         user = User.query.get(get_jwt_identity())
-        tenant_id = user.tenant_id
+        tenant_id = user.tenant_id if user else None
         
-        enabled = TenantModuleService.get_enabled_modules(tenant_id)
+        enabled = TenantModuleService.get_enabled_modules(tenant_id) # type: ignore
         return [tm.to_dict() for tm in enabled]
     
     @blp.arguments(ModuleEnableSchema)
-    @blp.response(200)
+    @blp.response(200, schema={"type": "object"})
     @jwt_required()
     def post(self, args):
         """
@@ -83,7 +83,7 @@ class TenantModules(MethodView):
         user = User.query.get(get_jwt_identity())
         
         # Solo admin può attivare moduli
-        if user.role != 'admin':
+        if not user or user.role != 'admin':
             abort(403, message="Solo gli admin possono gestire i moduli")
         
         module_id = args['module_id']
@@ -92,7 +92,7 @@ class TenantModules(MethodView):
         
         try:
             tm = TenantModuleService.enable_module(
-                user.tenant_id, 
+                user.tenant_id if user else None, # type: ignore
                 module_id,
                 license_key,
                 config
@@ -112,7 +112,7 @@ class TenantModules(MethodView):
 
 @blp.route('/<string:module_id>')
 class ModuleDetail(MethodView):
-    @blp.response(200)
+    @blp.response(200, schema={"type": "object"})
     @jwt_required()
     def get(self, module_id):
         """
@@ -123,7 +123,7 @@ class ModuleDetail(MethodView):
             abort(404, message="Modulo non trovato")
         
         user = User.query.get(get_jwt_identity())
-        is_enabled = TenantModuleService.is_module_enabled(user.tenant_id, module_id)
+        is_enabled = TenantModuleService.is_module_enabled(user.tenant_id if user else None, module_id) # type: ignore
         
         result = module.to_dict()
         result['is_enabled'] = is_enabled
@@ -137,11 +137,11 @@ class ModuleDetail(MethodView):
         """
         user = User.query.get(get_jwt_identity())
         
-        if user.role != 'admin':
+        if not user or user.role != 'admin':
             abort(403, message="Solo gli admin possono gestire i moduli")
         
         try:
-            TenantModuleService.disable_module(user.tenant_id, module_id)
+            TenantModuleService.disable_module(user.tenant_id if user else None, module_id) # type: ignore
         except ModuleDependencyError as e:
             abort(400, message=str(e))
         except ValueError as e:
@@ -150,18 +150,18 @@ class ModuleDetail(MethodView):
 
 @blp.route('/<string:module_id>/config')
 class ModuleConfig(MethodView):
-    @blp.response(200)
+    @blp.response(200, schema={"type": "object"})
     @jwt_required()
     def get(self, module_id):
         """
         Configurazione del modulo per il tenant corrente.
         """
         user = User.query.get(get_jwt_identity())
-        config = TenantModuleService.get_module_config(user.tenant_id, module_id)
+        config = TenantModuleService.get_module_config(user.tenant_id if user else None, module_id) # type: ignore
         return {'config': config}
     
     @blp.arguments(ModuleConfigSchema)
-    @blp.response(200)
+    @blp.response(200, schema={"type": "object"})
     @jwt_required()
     def put(self, args, module_id):
         """
@@ -169,12 +169,12 @@ class ModuleConfig(MethodView):
         """
         user = User.query.get(get_jwt_identity())
         
-        if user.role != 'admin':
+        if not user or user.role != 'admin':
             abort(403, message="Solo gli admin possono gestire la configurazione")
         
         try:
             config = TenantModuleService.update_module_config(
-                user.tenant_id, 
+                user.tenant_id if user else None, # type: ignore
                 module_id, 
                 args['config']
             )

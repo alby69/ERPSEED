@@ -67,6 +67,7 @@ class PasswordChange(MethodView):
     @auth_bp.doc(security=[{"jwt": []}])
     @jwt_required()
     @auth_bp.arguments(PasswordChangeSchema)
+    @auth_bp.response(200, schema={"type": "object"})
     def put(self, data):
         """Change current user's password"""
         user_id = get_jwt_identity()

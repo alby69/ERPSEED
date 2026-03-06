@@ -7,14 +7,100 @@ from flask.views import MethodView
 from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from marshmallow import Schema, fields
 
 from .workflows import Workflow, WorkflowStep, WorkflowExecution, WorkflowLog
 from .workflow_service import WorkflowService
 from .extensions import db
 from .webhooks import WebhookEvent
+from .workflow_executor import WorkflowEngine
 
 blp = Blueprint("workflows", __name__, url_prefix="/workflows", description="Workflow Automation")
 
+# --- Schemas ---
+
+class WorkflowLogSchema(Schema):
+    id = fields.Int(dump_only=True)
+    step_name = fields.Str()
+    status = fields.Str()
+    input_data = fields.Method("get_input_data_dict")
+    output_data = fields.Method("get_output_data_dict")
+    error_message = fields.Str()
+    started_at = fields.DateTime(allow_none=True)
+    completed_at = fields.DateTime(allow_none=True)
+
+    def get_input_data_dict(self, obj):
+        return obj.get_input_data()
+
+    def get_output_data_dict(self, obj):
+        return obj.get_output_data()
+
+class WorkflowExecutionSchema(Schema):
+    id = fields.Int(dump_only=True)
+    trigger_event = fields.Str()
+    status = fields.Str()
+    started_at = fields.DateTime(allow_none=True)
+    completed_at = fields.DateTime(allow_none=True)
+    error_message = fields.Str()
+
+class WorkflowExecutionDetailSchema(WorkflowExecutionSchema):
+    workflow_id = fields.Int()
+    trigger_data = fields.Method("get_trigger_data_dict")
+    logs = fields.List(fields.Nested(WorkflowLogSchema), dump_only=True)
+
+    def get_trigger_data_dict(self, obj):
+        return obj.get_trigger_data()
+
+class WorkflowStepSchema(Schema):
+    id = fields.Int(dump_only=True)
+    order = fields.Int()
+    step_type = fields.Str()
+    name = fields.Str()
+    config = fields.Dict()
+
+class WorkflowListSchema(Schema):
+    id = fields.Int(dump_only=True)
+    name = fields.Str()
+    description = fields.Str(allow_none=True)
+    trigger_event = fields.Str()
+    is_active = fields.Bool()
+    project_id = fields.Int(allow_none=True)
+    steps_count = fields.Int(dump_only=True)
+    created_at = fields.DateTime(dump_only=True, allow_none=True)
+
+class WorkflowDetailSchema(WorkflowListSchema):
+    steps = fields.List(fields.Nested(WorkflowStepSchema), dump_only=True)
+    updated_at = fields.DateTime(dump_only=True, allow_none=True)
+
+class WorkflowCreateSchema(Schema):
+    name = fields.Str(required=True)
+    trigger_event = fields.Str(required=True)
+    description = fields.Str()
+    project_id = fields.Int()
+
+class WorkflowUpdateSchema(Schema):
+    name = fields.Str()
+    description = fields.Str()
+    trigger_event = fields.Str()
+    is_active = fields.Bool()
+    project_id = fields.Int()
+
+class WorkflowStepCreateSchema(Schema):
+    step_type = fields.Str(required=True)
+    name = fields.Str(required=True)
+    config = fields.Dict(load_default={})
+    order = fields.Int()
+
+class TriggerListSchema(Schema):
+    triggers = fields.List(fields.Str())
+    categories = fields.Dict(keys=fields.Str(), values=fields.List(fields.Str()))
+
+class WorkflowTestResponseSchema(Schema):
+    execution_id = fields.Int()
+    status = fields.Str()
+    error = fields.Str(allow_none=True)
+
+# --- Routes ---
 
 @blp.route("")
 class WorkflowList(MethodView):
@@ -22,39 +108,24 @@ class WorkflowList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WorkflowListSchema(many=True))
     def get(self):
         """List all workflows."""
         project_id = request.args.get('project_id', type=int)
         active_only = request.args.get('active_only', 'true').lower() == 'true'
         
-        workflows = WorkflowService.get_workflows(project_id, active_only)
-        
-        result = []
+        workflows = WorkflowService.get_workflows(project_id if project_id else 0, active_only)
+
         for w in workflows:
-            result.append({
-                'id': w.id,
-                'name': w.name,
-                'description': w.description,
-                'trigger_event': w.trigger_event,
-                'is_active': w.is_active,
-                'project_id': w.project_id,
-                'steps_count': w.steps.count(),
-                'created_at': w.created_at.isoformat() if w.created_at else None
-            })
-        
-        return result
+            w.steps_count = w.steps.count()
+        return workflows
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def post(self):
+    @blp.arguments(WorkflowCreateSchema)
+    @blp.response(201, WorkflowListSchema)
+    def post(self, data):
         """Create a new workflow."""
-        data = request.get_json()
-        
-        if not data.get('name'):
-            abort(400, message="Name is required")
-        if not data.get('trigger_event'):
-            abort(400, message="Trigger event is required")
-        
         if data['trigger_event'] not in WebhookEvent.get_all_events() and data['trigger_event'] != '*':
             abort(400, message=f"Invalid trigger event: {data['trigger_event']}")
         
@@ -68,15 +139,8 @@ class WorkflowList(MethodView):
             user_id=user_id
         )
         
-        return {
-            'id': workflow.id,
-            'name': workflow.name,
-            'description': workflow.description,
-            'trigger_event': workflow.trigger_event,
-            'is_active': workflow.is_active,
-            'project_id': workflow.project_id,
-            'created_at': workflow.created_at.isoformat() if workflow.created_at else None
-        }, 201
+        workflow.steps_count = 0
+        return workflow
 
 
 @blp.route("/<int:workflow_id>")
@@ -85,52 +149,26 @@ class WorkflowResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WorkflowDetailSchema)
     def get(self, workflow_id):
         """Get workflow details with steps."""
         workflow = Workflow.query.get_or_404(workflow_id)
-        
-        steps = []
-        for s in workflow.get_steps():
-            steps.append({
-                'id': s.id,
-                'order': s.order,
-                'step_type': s.step_type,
-                'name': s.name,
-                'config': s.get_config()
-            })
-        
-        return {
-            'id': workflow.id,
-            'name': workflow.name,
-            'description': workflow.description,
-            'trigger_event': workflow.trigger_event,
-            'is_active': workflow.is_active,
-            'project_id': workflow.project_id,
-            'steps': steps,
-            'created_at': workflow.created_at.isoformat() if workflow.created_at else None,
-            'updated_at': workflow.updated_at.isoformat() if workflow.updated_at else None
-        }
+        return workflow
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def put(self, workflow_id):
+    @blp.arguments(WorkflowUpdateSchema)
+    @blp.response(200, WorkflowListSchema)
+    def put(self, data, workflow_id):
         """Update workflow."""
-        data = request.get_json()
-        
         if 'trigger_event' in data:
             if data['trigger_event'] not in WebhookEvent.get_all_events() and data['trigger_event'] != '*':
                 abort(400, message=f"Invalid trigger event: {data['trigger_event']}")
         
         workflow = WorkflowService.update_workflow(workflow_id, data)
         
-        return {
-            'id': workflow.id,
-            'name': workflow.name,
-            'description': workflow.description,
-            'trigger_event': workflow.trigger_event,
-            'is_active': workflow.is_active,
-            'project_id': workflow.project_id
-        }
+        workflow.steps_count = workflow.steps.count()
+        return workflow
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -146,15 +184,10 @@ class WorkflowSteps(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def post(self, workflow_id):
+    @blp.arguments(WorkflowStepCreateSchema)
+    @blp.response(201, WorkflowStepSchema)
+    def post(self, data, workflow_id):
         """Add a step to workflow."""
-        data = request.get_json()
-        
-        if not data.get('step_type'):
-            abort(400, message="Step type is required")
-        if not data.get('name'):
-            abort(400, message="Step name is required")
-        
         valid_types = ['condition', 'action', 'notification', 'delay', 'webhook']
         if data['step_type'] not in valid_types:
             abort(400, message=f"Invalid step type. Must be one of: {valid_types}")
@@ -173,13 +206,7 @@ class WorkflowSteps(MethodView):
             order=data.get('order', max_order + 1)
         )
         
-        return {
-            'id': step.id,
-            'order': step.order,
-            'step_type': step.step_type,
-            'name': step.name,
-            'config': step.get_config()
-        }, 201
+        return step
 
 
 @blp.route("/steps/<int:step_id>")
@@ -188,10 +215,10 @@ class WorkflowStepResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def put(self, step_id):
+    @blp.arguments(WorkflowStepSchema)
+    @blp.response(200, WorkflowStepSchema)
+    def put(self, data, step_id):
         """Update a step."""
-        data = request.get_json()
-        
         step = WorkflowStep.query.get_or_404(step_id)
         
         if 'name' in data:
@@ -203,13 +230,7 @@ class WorkflowStepResource(MethodView):
         
         db.session.commit()
         
-        return {
-            'id': step.id,
-            'order': step.order,
-            'step_type': step.step_type,
-            'name': step.name,
-            'config': step.get_config()
-        }
+        return step
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -227,24 +248,13 @@ class WorkflowExecutions(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WorkflowExecutionSchema(many=True))
     def get(self, workflow_id):
         """Get workflow execution history."""
         limit = request.args.get('limit', 50, type=int)
         
         executions = WorkflowService.get_workflow_executions(workflow_id, limit)
-        
-        result = []
-        for e in executions:
-            result.append({
-                'id': e.id,
-                'trigger_event': e.trigger_event,
-                'status': e.status,
-                'started_at': e.started_at.isoformat() if e.started_at else None,
-                'completed_at': e.completed_at.isoformat() if e.completed_at else None,
-                'error_message': e.error_message
-            })
-        
-        return result
+        return executions
 
 
 @blp.route("/executions/<int:execution_id>")
@@ -253,38 +263,11 @@ class WorkflowExecutionDetail(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WorkflowExecutionDetailSchema)
     def get(self, execution_id):
         """Get execution details with step logs."""
         execution = WorkflowExecution.query.get_or_404(execution_id)
-        
-        logs = WorkflowLog.query.filter_by(execution_id=execution_id).order_by(
-            WorkflowLog.started_at
-        ).all()
-        
-        log_list = []
-        for log in logs:
-            log_list.append({
-                'id': log.id,
-                'step_name': log.step_name,
-                'status': log.status,
-                'input_data': log.get_input_data(),
-                'output_data': log.get_output_data(),
-                'error_message': log.error_message,
-                'started_at': log.started_at.isoformat() if log.started_at else None,
-                'completed_at': log.completed_at.isoformat() if log.completed_at else None
-            })
-        
-        return {
-            'id': execution.id,
-            'workflow_id': execution.workflow_id,
-            'trigger_event': execution.trigger_event,
-            'trigger_data': execution.get_trigger_data(),
-            'status': execution.status,
-            'started_at': execution.started_at.isoformat() if execution.started_at else None,
-            'completed_at': execution.completed_at.isoformat() if execution.completed_at else None,
-            'error_message': execution.error_message,
-            'logs': log_list
-        }
+        return execution
 
 
 @blp.route("/<int:workflow_id>/test")
@@ -293,6 +276,7 @@ class WorkflowTest(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, WorkflowTestResponseSchema)
     def post(self, workflow_id):
         """Test run a workflow with provided data."""
         data = request.get_json() or {}
@@ -300,19 +284,18 @@ class WorkflowTest(MethodView):
         workflow = Workflow.query.get_or_404(workflow_id)
         
         execution = WorkflowExecution(
-            workflow_id=workflow_id,
-            trigger_event='test',
-            trigger_data=json.dumps(data),
-            status='running'
+            workflow_id=workflow_id, # type: ignore
+            trigger_event='test', # type: ignore
+            trigger_data=json.dumps(data), # type: ignore
+            status='running' # type: ignore
         )
         db.session.add(execution)
         db.session.commit()
         
         import datetime
-        from .workflow_service import WorkflowService as WS
         
         try:
-            result = WS._execute_workflow(workflow, 'test', data)
+            result = WorkflowEngine.run(workflow.id, 'test', data) # type: ignore
             execution.status = 'completed'
         except Exception as e:
             execution.status = 'failed'
@@ -334,6 +317,7 @@ class WorkflowTriggers(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, TriggerListSchema)
     def get(self):
         """Get list of available trigger events."""
         return {
@@ -348,6 +332,7 @@ class WorkflowStepTypes(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, fields.Dict())
     def get(self):
         """Get list of available step types."""
         return WorkflowService.get_step_types()

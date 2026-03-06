@@ -8,10 +8,12 @@ from flask_smorest import abort
 
 # Import AuditLog from core if available, else create dummy
 try:
-    from backend.core.models import AuditLog
+    from backend.core.models import AuditLog # type: ignore
 except ImportError:
     # Fallback for migration period
     class AuditLog:
+        def __init__(self, *args, **kwargs):
+            pass
         @staticmethod
         def log_create(*args, **kwargs):
             pass
@@ -253,4 +255,5 @@ def log_audit(user_id, model_name, record_id, action, changes=None):
         action=action,
         changes=json.dumps(changes, default=str) if changes else None
     )
-    db.session.add(log)
+    if hasattr(log, '_sa_instance_state'):
+        db.session.add(log)

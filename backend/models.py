@@ -68,6 +68,13 @@ class Project(BaseModel):
     members = db.relationship(
         "User", secondary=project_members, back_populates="projects", lazy="dynamic"
     )
+    user_memberships = db.relationship(
+        "TenantMember",
+        secondary=project_members,
+        primaryjoin="Project.id == project_members.c.project_id",
+        secondaryjoin="TenantMember.user_id == project_members.c.user_id",
+        viewonly=True,
+    )
 
     def __repr__(self):
         return f"<Project {self.name}>"
@@ -118,6 +125,13 @@ class User(BaseModel):
         back_populates="user",
         foreign_keys="TenantMember.user_id",
         lazy="dynamic",
+    )
+    project_memberships = db.relationship(
+        "TenantMember",
+        secondary=project_members,
+        primaryjoin="User.id == project_members.c.user_id",
+        secondaryjoin="TenantMember.user_id == project_members.c.user_id",
+        viewonly=True,
     )
 
     # Constraints

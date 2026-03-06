@@ -15,7 +15,7 @@ pdf_bp = Blueprint('pdf', __name__, url_prefix='/api/v1/pdf', description='PDF G
 
 @pdf_bp.route('/sales-order/<int:order_id>')
 class SalesOrderPDF(MethodView):
-    @pdf_bp.response(200)
+    @pdf_bp.response(200, content_type="application/pdf", schema={"type": "string", "format": "binary"})
     @jwt_required()
     def get(self, order_id):
         """
@@ -33,12 +33,10 @@ class SalesOrderPDF(MethodView):
         try:
             pdf_content = PDFService.generate_sales_order(order_id, tenant_id)
             
-            return send_file(
-                BytesIO(pdf_content),
-                mimetype='application/pdf',
-                as_attachment=True,
-                download_name=f'ordine_{order_id}.pdf'
-            )
+            headers = {
+                "Content-Disposition": f"attachment; filename=ordine_{order_id}.pdf"
+            }
+            return pdf_content, 200, headers
         except ValueError as e:
             abort(404, message=str(e))
         except Exception as e:
@@ -47,7 +45,7 @@ class SalesOrderPDF(MethodView):
 
 @pdf_bp.route('/invoice/<int:invoice_id>')
 class InvoicePDF(MethodView):
-    @pdf_bp.response(200)
+    @pdf_bp.response(200, content_type="application/pdf", schema={"type": "string", "format": "binary"})
     @jwt_required()
     def get(self, invoice_id):
         """
@@ -65,12 +63,10 @@ class InvoicePDF(MethodView):
         try:
             pdf_content = PDFService.generate_invoice(invoice_id, tenant_id)
             
-            return send_file(
-                BytesIO(pdf_content),
-                mimetype='application/pdf',
-                as_attachment=True,
-                download_name=f'fattura_{invoice_id}.pdf'
-            )
+            headers = {
+                "Content-Disposition": f"attachment; filename=fattura_{invoice_id}.pdf"
+            }
+            return pdf_content, 200, headers
         except ValueError as e:
             abort(404, message=str(e))
         except Exception as e:
@@ -79,7 +75,7 @@ class InvoicePDF(MethodView):
 
 @pdf_bp.route('/quote/<int:quote_id>')
 class QuotePDF(MethodView):
-    @pdf_bp.response(200)
+    @pdf_bp.response(200, content_type="application/pdf", schema={"type": "string", "format": "binary"})
     @jwt_required()
     def get(self, quote_id):
         """
@@ -97,12 +93,10 @@ class QuotePDF(MethodView):
         try:
             pdf_content = PDFService.generate_quote(quote_id, tenant_id)
             
-            return send_file(
-                BytesIO(pdf_content),
-                mimetype='application/pdf',
-                as_attachment=True,
-                download_name=f'preventivo_{quote_id}.pdf'
-            )
+            headers = {
+                "Content-Disposition": f"attachment; filename=preventivo_{quote_id}.pdf"
+            }
+            return pdf_content, 200, headers
         except ValueError as e:
             abort(404, message=str(e))
         except Exception as e:

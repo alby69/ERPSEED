@@ -12,12 +12,67 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import func
 import datetime
+from marshmallow import fields
 
 from .models import ChartOfAccounts, Account, JournalEntry, JournalEntryLine, Invoice, InvoiceLine
 from backend.core.services.tenant_context import TenantContext
-from backend.extensions import db
+from backend.extensions import db, ma
 
 blp = Blueprint("accounting", __name__, url_prefix="/accounting", description="Accounting Operations")
+
+class ChartOfAccountsSchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    class Meta:
+        model = ChartOfAccounts
+        load_instance = True
+        include_fk = True
+
+class AccountSchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    class Meta:
+        model = Account
+        load_instance = True
+        include_fk = True
+
+class JournalEntryLineSchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    class Meta:
+        model = JournalEntryLine
+        load_instance = True
+        include_fk = True
+        exclude = ('entry',)
+
+class JournalEntrySchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    date = fields.Date()
+    lines = fields.List(fields.Nested(JournalEntryLineSchema))
+    class Meta:
+        model = JournalEntry
+        load_instance = True
+        include_fk = True
+
+class InvoiceLineSchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    class Meta:
+        model = InvoiceLine
+        load_instance = True
+        include_fk = True
+        exclude = ('invoice',)
+
+class InvoiceSchema(ma.SQLAlchemyAutoSchema):
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+    date = fields.Date()
+    lines = fields.List(fields.Nested(InvoiceLineSchema))
+    class Meta:
+        model = Invoice
+        load_instance = True
+        include_fk = True
 
 
 def get_tenant_query(model):
@@ -34,6 +89,7 @@ class COAList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, ChartOfAccountsSchema(many=True))
     def get(self):
         """List all accounts in Chart of Accounts."""
         tenant_id = TenantContext.get_tenant_id()
@@ -44,6 +100,8 @@ class COAList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(ChartOfAccountsSchema)
+    @blp.response(201, ChartOfAccountsSchema)
     def post(self):
         """Create new account in Chart of Accounts."""
         data = request.get_json()
@@ -56,12 +114,12 @@ class COAList(MethodView):
             abort(409, message=f"Account code '{data['code']}' already exists.")
         
         coa = ChartOfAccounts(
-            tenant_id=tenant_id,
-            code=data['code'],
-            name=data['name'],
-            type=data['type'],
-            parent_id=data.get('parent_id'),
-            allow_transaction=data.get('allow_transaction', True)
+            tenant_id=tenant_id, # type: ignore
+            code=data['code'], # type: ignore
+            name=data['name'], # type: ignore
+            type=data['type'], # type: ignore
+            parent_id=data.get('parent_id'), # type: ignore
+            allow_transaction=data.get('allow_transaction', True) # type: ignore
         )
         
         db.session.add(coa)
@@ -76,6 +134,7 @@ class COAResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, ChartOfAccountsSchema)
     def get(self, coa_id):
         """Get account by ID."""
         tenant_id = TenantContext.get_tenant_id()
@@ -88,6 +147,8 @@ class COAResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(ChartOfAccountsSchema(partial=True))
+    @blp.response(200, ChartOfAccountsSchema)
     def put(self, coa_id):
         """Update account."""
         data = request.get_json()
@@ -107,6 +168,7 @@ class COAResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(204)
     def delete(self, coa_id):
         """Deactivate account (soft delete)."""
         tenant_id = TenantContext.get_tenant_id()
@@ -127,6 +189,7 @@ class AccountList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, AccountSchema(many=True))
     def get(self):
         """List all active accounts."""
         tenant_id = TenantContext.get_tenant_id()
@@ -137,6 +200,8 @@ class AccountList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(AccountSchema)
+    @blp.response(201, AccountSchema)
     def post(self):
         """Create new account."""
         data = request.get_json()
@@ -149,11 +214,11 @@ class AccountList(MethodView):
             abort(409, message=f"Account code '{data['code']}' already exists.")
         
         account = Account(
-            tenant_id=tenant_id,
-            coa_id=data['coa_id'],
-            code=data['code'],
-            name=data['name'],
-            description=data.get('description')
+            tenant_id=tenant_id, # type: ignore
+            coa_id=data['coa_id'], # type: ignore
+            code=data['code'], # type: ignore
+            name=data['name'], # type: ignore
+            description=data.get('description') # type: ignore
         )
         
         db.session.add(account)
@@ -168,6 +233,7 @@ class JournalEntryList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, JournalEntrySchema(many=True))
     def get(self):
         """List journal entries."""
         tenant_id = TenantContext.get_tenant_id()
@@ -184,6 +250,8 @@ class JournalEntryList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(JournalEntrySchema)
+    @blp.response(201, JournalEntrySchema)
     def post(self):
         """Create journal entry with double-entry validation."""
         data = request.get_json()
@@ -202,24 +270,24 @@ class JournalEntryList(MethodView):
         entry_number = self._generate_entry_number(tenant_id)
         
         entry = JournalEntry(
-            tenant_id=tenant_id,
-            entry_number=entry_number,
-            date=data.get('date', datetime.date.today()),
-            description=data['description'],
-            reference=data.get('reference'),
-            created_by=get_jwt_identity()
+            tenant_id=tenant_id, # type: ignore
+            entry_number=entry_number, # type: ignore
+            date=data.get('date', datetime.date.today()), # type: ignore
+            description=data['description'], # type: ignore
+            reference=data.get('reference'), # type: ignore
+            created_by=get_jwt_identity() # type: ignore
         )
         db.session.add(entry)
         db.session.flush()
         
         for line_data in lines:
             line = JournalEntryLine(
-                tenant_id=tenant_id,
-                entry_id=entry.id,
-                account_id=line_data['account_id'],
-                debit=line_data.get('debit', 0),
-                credit=line_data.get('credit', 0),
-                description=line_data.get('description')
+                tenant_id=tenant_id, # type: ignore
+                entry_id=entry.id, # type: ignore
+                account_id=line_data['account_id'], # type: ignore
+                debit=line_data.get('debit', 0), # type: ignore
+                credit=line_data.get('credit', 0), # type: ignore
+                description=line_data.get('description') # type: ignore
             )
             db.session.add(line)
             
@@ -262,6 +330,7 @@ class JournalEntryResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, JournalEntrySchema)
     def get(self, entry_id):
         """Get journal entry with lines."""
         tenant_id = TenantContext.get_tenant_id()
@@ -274,6 +343,7 @@ class JournalEntryResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, JournalEntrySchema)
     def post(self, entry_id):
         """Post (validate and finalize) journal entry."""
         tenant_id = TenantContext.get_tenant_id()
@@ -301,6 +371,7 @@ class InvoiceList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, InvoiceSchema(many=True))
     def get(self):
         """List invoices."""
         tenant_id = TenantContext.get_tenant_id()
@@ -320,6 +391,8 @@ class InvoiceList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(InvoiceSchema)
+    @blp.response(201, InvoiceSchema)
     def post(self):
         """Create new invoice."""
         data = request.get_json()
@@ -332,32 +405,32 @@ class InvoiceList(MethodView):
         invoice_number = self._generate_invoice_number(tenant_id, data['invoice_type'])
         
         invoice = Invoice(
-            tenant_id=tenant_id,
-            invoice_number=invoice_number,
-            invoice_type=data['invoice_type'],
-            party_id=data['party_id'],
-            date=data.get('date', datetime.date.today()),
-            due_date=data.get('due_date'),
-            description=data.get('description')
+            tenant_id=tenant_id, # type: ignore
+            invoice_number=invoice_number, # type: ignore
+            invoice_type=data['invoice_type'], # type: ignore
+            party_id=data['party_id'], # type: ignore
+            date=data.get('date', datetime.date.today()), # type: ignore
+            due_date=data.get('due_date'), # type: ignore
+            description=data.get('description') # type: ignore
         )
         
         subtotal = 0
         for line_data in lines:
             line = InvoiceLine(
-                tenant_id=tenant_id,
-                product_id=line_data.get('product_id'),
-                description=line_data.get('description'),
-                quantity=line_data.get('quantity', 1),
-                unit_price=line_data.get('unit_price', 0),
-                discount_percent=line_data.get('discount_percent', 0),
-                tax_percent=line_data.get('tax_percent', 0)
+                tenant_id=tenant_id, # type: ignore
+                product_id=line_data.get('product_id'), # type: ignore
+                description=line_data.get('description'), # type: ignore
+                quantity=line_data.get('quantity', 1), # type: ignore
+                unit_price=line_data.get('unit_price', 0), # type: ignore
+                discount_percent=line_data.get('discount_percent', 0), # type: ignore
+                tax_percent=line_data.get('tax_percent', 0) # type: ignore
             )
             line.calculate()
             invoice.lines.append(line)
             subtotal += line.amount
         
         invoice.subtotal = subtotal
-        invoice.tax_amount = sum(l.amount - (l.amount / (1 + l.tax_percent/100)) for l in invoice.lines if l.tax_percent > 0)
+        invoice.tax_amount = sum(l.amount - (l.amount / (1 + l.tax_percent/100)) for l in invoice.lines if l.tax_percent > 0) # type: ignore
         invoice.total = invoice.subtotal + invoice.tax_amount
         
         db.session.add(invoice)
@@ -396,6 +469,7 @@ class InvoiceResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, InvoiceSchema)
     def get(self, invoice_id):
         """Get invoice with lines."""
         tenant_id = TenantContext.get_tenant_id()
@@ -408,6 +482,7 @@ class InvoiceResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, InvoiceSchema)
     def post(self, invoice_id):
         """Send/Confirm invoice."""
         tenant_id = TenantContext.get_tenant_id()
@@ -432,6 +507,7 @@ class TrialBalance(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, fields.Dict())
     def get(self):
         """Generate trial balance report."""
         tenant_id = TenantContext.get_tenant_id()
