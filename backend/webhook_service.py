@@ -71,11 +71,10 @@ class WebhookService:
         payload_str = json.dumps(payload, default=str)
         signature = endpoint.sign_payload(payload_str)
         
-        delivery = WebhookDelivery(
-            endpoint_id=endpoint.id,
-            event=event,
-            payload=payload_str
-        )
+        delivery = WebhookDelivery()
+        delivery.endpoint_id=endpoint.id
+        delivery.event=event
+        delivery.payload=payload_str
         from backend.extensions import db
         db.session.add(delivery)
         db.session.flush()
@@ -152,13 +151,12 @@ class WebhookService:
         """Create a new webhook endpoint."""
         from backend.extensions import db
         
-        endpoint = WebhookEndpoint(
-            name=name,
-            url=url,
-            secret=WebhookEndpoint.generate_secret(),
-            events=json.dumps(events),
-            created_by=user_id
-        )
+        endpoint = WebhookEndpoint()
+        endpoint.name=name
+        endpoint.url=url
+        endpoint.secret=WebhookEndpoint.generate_secret()
+        endpoint.events=json.dumps(events)
+        endpoint.created_by=user_id
         
         db.session.add(endpoint)
         db.session.commit()
@@ -197,8 +195,8 @@ class WebhookService:
             db.session.commit()
     
     @staticmethod
-    def get_deliveries(endpoint_id: int = None, status: str = None, limit: int = 50):
-        """Get webhook deliveries with filters."""
+    def get_deliveries_query(endpoint_id: Optional[int] = None, status: Optional[str] = None):
+        """Get webhook deliveries query with filters."""
         query = WebhookDelivery.query
         
         if endpoint_id:
@@ -214,7 +212,7 @@ class WebhookService:
         elif status == 'pending':
             query = query.filter(WebhookDelivery.next_retry_at > datetime.utcnow())
         
-        return query.order_by(desc(WebhookDelivery.created_at)).limit(limit).all()
+        return query.order_by(desc(WebhookDelivery.created_at))
     
     @staticmethod
     def regenerate_secret(endpoint_id: int) -> str:

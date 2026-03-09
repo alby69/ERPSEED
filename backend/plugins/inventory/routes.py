@@ -17,59 +17,53 @@ from marshmallow import fields
 from .models import InventoryLocation, ProductStock, StockMovement, InventoryCount, InventoryCountLine
 from backend.core.services.tenant_context import TenantContext
 from backend.extensions import db, ma
+from backend.schemas import BaseSchema
+from backend.services.generic_service import generic_service
+from backend.utils import paginate, apply_filters, apply_sorting
+from backend.decorators import tenant_required
 
 blp = Blueprint("inventory", __name__, url_prefix="/inventory", description="Inventory Operations")
 
-class InventoryLocationSchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    class Meta:
+class InventoryLocationSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = InventoryLocation
-        load_instance = True
 
-class ProductStockSchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    class Meta:
+class InventoryLocationUpdateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
+        model = InventoryLocation
+        load_instance = False
+
+class ProductStockSchema(BaseSchema):
+    available_quantity = fields.Function(lambda obj: obj.available_quantity, dump_only=True)
+    class Meta(BaseSchema.Meta):
         model = ProductStock
-        load_instance = True
-        include_fk = True
 
-class StockMovementSchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    class Meta:
+class ProductStockUpdateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
+        model = ProductStock
+        load_instance = False
+
+class StockMovementSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = StockMovement
-        load_instance = True
-        include_fk = True
 
-class InventoryCountLineSchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    class Meta:
+class InventoryCountLineSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = InventoryCountLine
-        load_instance = True
-        include_fk = True
-        exclude = ('count',)
+        exclude = BaseSchema.Meta.exclude + ('count',)
 
-class InventoryCountSchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    scheduled_date = fields.Date()
-    completed_date = fields.Date()
+class InventoryCountLineUpdateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
+        model = InventoryCountLine
+        load_instance = False
+        exclude = BaseSchema.Meta.exclude + ('count',)
+
+class InventoryCountSchema(BaseSchema):
+    scheduled_date = fields.Date(load_default=None)
+    completed_date = fields.Date(load_default=None)
     lines = fields.List(fields.Nested(InventoryCountLineSchema))
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = InventoryCount
-        load_instance = True
-        include_fk = True
-
-
-def get_tenant_query(model):
-    """Get query filtered by current tenant."""
-    tenant_id = TenantContext.get_tenant_id()
-    if tenant_id is None:
-        abort(403, message="Tenant context not found")
-    return model.query.filter_by(tenant_id=tenant_id)
 
 
 @blp.route("/locations")
@@ -78,44 +72,26 @@ class LocationList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, InventoryLocationSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List all inventory locations."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        query = InventoryLocation.query.filter_by(tenant_id=tenant_id, is_active=True).order_by(InventoryLocation.name)
-        return query.all()
+        query = InventoryLocation.query.filter_by(tenant_id=tenant_id, is_active=True)
+        query = apply_filters(query, InventoryLocation, ['name', 'code'])
+        query = apply_sorting(query, InventoryLocation, default_sort_column='name')
+        items, headers = paginate(query)
+        return items, 200, headers
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(InventoryLocationSchema)
     @blp.response(201, InventoryLocationSchema)
-    def post(self):
+    def post(self, location_instance, tenant_id):
         """Create new inventory location."""
-        data = request.get_json()
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        existing = InventoryLocation.query.filter_by(tenant_id=tenant_id, code=data['code']).first()
-        if existing:
-            abort(409, message=f"Location code '{data['code']}' already exists.")
-        
-        location = InventoryLocation(
-            tenant_id=tenant_id, # type: ignore
-            name=data['name'], # type: ignore
-            code=data['code'], # type: ignore
-            description=data.get('description'), # type: ignore
-            address=data.get('address'), # type: ignore
-            city=data.get('city'), # type: ignore
-            is_default=data.get('is_default', False) # type: ignore
+        return generic_service.create_tenant_resource(
+            InventoryLocation, location_instance, tenant_id, unique_fields=['code']
         )
-        
-        db.session.add(location)
-        db.session.commit()
-        
-        return location, 201
 
 
 @blp.route("/locations/<int:location_id>")
@@ -124,49 +100,43 @@ class LocationResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, InventoryLocationSchema)
-    def get(self, location_id):
+    def get(self, location_id, tenant_id):
         """Get location by ID."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        location = InventoryLocation.query.filter_by(id=location_id, tenant_id=tenant_id).first()
-        if not location:
-            abort(404, message="Location not found")
-        return location
+        return generic_service.get_tenant_resource(
+            InventoryLocation, location_id, tenant_id, not_found_message="Location not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(InventoryLocationSchema(partial=True))
+    @tenant_required
+    @blp.arguments(InventoryLocationUpdateSchema(partial=True))
     @blp.response(200, InventoryLocationSchema)
-    def put(self, location_id):
+    def put(self, data, location_id, tenant_id):
         """Update location."""
-        data = request.get_json()
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        location = InventoryLocation.query.filter_by(id=location_id, tenant_id=tenant_id).first()
-        if not location:
-            abort(404, message="Location not found")
-        
-        for key, value in data.items():
-            if hasattr(location, key):
-                setattr(location, key, value)
-        
-        db.session.commit()
-        return location
+        return generic_service.update_tenant_resource(
+            InventoryLocation, location_id, tenant_id, data, not_found_message="Location not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(204)
-    def delete(self, location_id):
+    def delete(self, location_id, tenant_id):
         """Deactivate location."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
         location = InventoryLocation.query.filter_by(id=location_id, tenant_id=tenant_id).first()
         if not location:
             abort(404, message="Location not found")
+
+        # Check if there is any stock at this location
+        stock_at_location = ProductStock.query.filter(
+            ProductStock.location_id == location_id,
+            ProductStock.quantity != 0
+        ).first()
+        if stock_at_location:
+            abort(409, message="Cannot deactivate a location that has stock. Please move or adjust stock first.")
+
         location.is_active = False
         db.session.commit()
         return '', 204
@@ -178,58 +148,32 @@ class StockList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, ProductStockSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List stock levels (optionally filtered by product or location)."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        product_id = request.args.get('product_id', type=int)
-        location_id = request.args.get('location_id', type=int)
-        
         query = ProductStock.query.filter_by(tenant_id=tenant_id)
         
-        if product_id:
-            query = query.filter_by(product_id=product_id)
-        if location_id:
-            query = query.filter_by(location_id=location_id)
+        if request.args.get('product_id'):
+            query = query.filter_by(product_id=request.args.get('product_id'))
+        if request.args.get('location_id'):
+            query = query.filter_by(location_id=request.args.get('location_id'))
         
-        return query.all()
+        query = apply_sorting(query, ProductStock)
+        items, headers = paginate(query)
+        return items, 200, headers
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(ProductStockSchema)
     @blp.response(201, ProductStockSchema)
-    def post(self):
+    def post(self, stock_instance, tenant_id):
         """Set initial stock level for a product at a location."""
-        data = request.get_json()
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        existing = ProductStock.query.filter_by(
-            tenant_id=tenant_id,
-            product_id=data['product_id'],
-            location_id=data['location_id']
-        ).first()
-        
-        if existing:
-            abort(409, message="Stock record already exists for this product at this location.")
-        
-        stock = ProductStock(
-            tenant_id=tenant_id, # type: ignore
-            product_id=data['product_id'], # type: ignore
-            location_id=data['location_id'], # type: ignore
-            quantity=data.get('quantity', 0), # type: ignore
-            reorder_level=data.get('reorder_level', 0), # type: ignore
-            reorder_quantity=data.get('reorder_quantity', 0) # type: ignore
+        return generic_service.create_tenant_resource(
+            ProductStock, stock_instance, tenant_id,
+            unique_fields=['product_id', 'location_id']
         )
-        
-        db.session.add(stock)
-        db.session.commit()
-        
-        return stock, 201
 
 
 @blp.route("/stock/<int:stock_id>")
@@ -238,37 +182,24 @@ class StockResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, ProductStockSchema)
-    def get(self, stock_id):
+    def get(self, stock_id, tenant_id):
         """Get stock level."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        stock = ProductStock.query.filter_by(id=stock_id, tenant_id=tenant_id).first()
-        if not stock:
-            abort(404, message="Stock record not found")
-        return stock
+        return generic_service.get_tenant_resource(
+            ProductStock, stock_id, tenant_id, not_found_message="Stock record not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(ProductStockSchema(partial=True))
+    @tenant_required
+    @blp.arguments(ProductStockUpdateSchema(partial=True))
     @blp.response(200, ProductStockSchema)
-    def put(self, stock_id):
+    def put(self, data, stock_id, tenant_id):
         """Update stock level."""
-        data = request.get_json()
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        stock = ProductStock.query.filter_by(id=stock_id, tenant_id=tenant_id).first()
-        if not stock:
-            abort(404, message="Stock record not found")
-        
-        for key, value in data.items():
-            if hasattr(stock, key):
-                setattr(stock, key, value)
-        
-        db.session.commit()
-        return stock
+        return generic_service.update_tenant_resource(
+            ProductStock, stock_id, tenant_id, data, not_found_message="Stock record not found"
+        )
 
 
 @blp.route("/movements")
@@ -277,75 +208,62 @@ class StockMovementList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, StockMovementSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List stock movements."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        product_id = request.args.get('product_id', type=int)
-        location_id = request.args.get('location_id', type=int)
-        movement_type = request.args.get('type')
-        
         query = StockMovement.query.filter_by(tenant_id=tenant_id)
         
-        if product_id:
-            query = query.filter_by(product_id=product_id)
-        if location_id:
-            query = query.filter_by(location_id=location_id)
-        if movement_type:
-            query = query.filter_by(movement_type=movement_type)
+        if request.args.get('product_id'):
+            query = query.filter_by(product_id=request.args.get('product_id'))
+        if request.args.get('location_id'):
+            query = query.filter_by(location_id=request.args.get('location_id'))
+        if request.args.get('type'):
+            query = query.filter_by(movement_type=request.args.get('type'))
         
-        return query.order_by(StockMovement.created_at.desc()).limit(100).all()
+        query = apply_filters(query, StockMovement, ['movement_number', 'notes'])
+        
+        sort_by = request.args.get('sort_by')
+        if not sort_by:
+             query = query.order_by(StockMovement.created_at.desc())
+        else:
+             query = apply_sorting(query, StockMovement)
+
+        items, headers = paginate(query)
+        return items, 200, headers
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(StockMovementSchema)
     @blp.response(201, StockMovementSchema)
-    def post(self):
+    def post(self, movement_instance, tenant_id):
         """Create stock movement (in, out, transfer, adjustment)."""
-        data = request.get_json()
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        movement_type = data.get('movement_type')
-        quantity = data.get('quantity', 0)
-        product_id = data['product_id']
-        location_id = data['location_id']
+        movement_type = movement_instance.movement_type
+        quantity = movement_instance.quantity
+        product_id = movement_instance.product_id
+        location_id = movement_instance.location_id
         
         movement_number = self._generate_movement_number(tenant_id, movement_type)
         
-        movement = StockMovement(
-            tenant_id=tenant_id, # type: ignore
-            movement_number=movement_number, # type: ignore
-            movement_type=movement_type, # type: ignore
-            product_id=product_id, # type: ignore
-            location_id=location_id, # type: ignore
-            quantity=quantity, # type: ignore
-            reference_type=data.get('reference_type'), # type: ignore
-            reference_id=data.get('reference_id'), # type: ignore
-            notes=data.get('notes'), # type: ignore
-            created_by_id=get_jwt_identity() # type: ignore
-        )
+        # Set server-side fields
+        movement_instance.tenant_id = tenant_id
+        movement_instance.movement_number = movement_number
+        movement_instance.created_by_id = get_jwt_identity()
         
-        db.session.add(movement)
+        db.session.add(movement_instance)
         
         # Update stock levels
         stock = ProductStock.query.filter_by(
-            tenant_id=tenant_id,
-            product_id=product_id,
-            location_id=location_id
+            tenant_id=tenant_id, product_id=product_id, location_id=location_id
         ).first()
         
         if not stock:
-            stock = ProductStock(
-                tenant_id=tenant_id, # type: ignore
-                product_id=product_id, # type: ignore
-                location_id=location_id, # type: ignore
-                quantity=0 # type: ignore
-            )
+            stock = ProductStock()
+            stock.tenant_id=tenant_id
+            stock.product_id=product_id
+            stock.location_id=location_id
+            stock.quantity=0
             db.session.add(stock)
             db.session.flush()
         
@@ -360,7 +278,7 @@ class StockMovementList(MethodView):
         
         db.session.commit()
         
-        return movement, 201
+        return movement_instance, 201
     
     def _generate_movement_number(self, tenant_id, movement_type):
         """Generate unique movement number."""
@@ -393,64 +311,58 @@ class InventoryCountList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, InventoryCountSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List inventory counts."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        status = request.args.get('status')
-        
         query = InventoryCount.query.filter_by(tenant_id=tenant_id)
-        if status:
-            query = query.filter_by(status=status)
+        if request.args.get('status'):
+            query = query.filter_by(status=request.args.get('status'))
         
-        return query.order_by(InventoryCount.created_at.desc()).all()
+        query = apply_filters(query, InventoryCount, ['count_number', 'notes'])
+        
+        sort_by = request.args.get('sort_by')
+        if not sort_by:
+             query = query.order_by(InventoryCount.created_at.desc())
+        else:
+             query = apply_sorting(query, InventoryCount)
+             
+        items, headers = paginate(query)
+        return items, 200, headers
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(InventoryCountSchema)
     @blp.response(201, InventoryCountSchema)
-    def post(self):
+    def post(self, count_instance, tenant_id):
         """Create new inventory count."""
-        data = request.get_json()
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
         count_number = self._generate_count_number(tenant_id)
-        
-        count = InventoryCount(
-            tenant_id=tenant_id, # type: ignore
-            count_number=count_number, # type: ignore
-            location_id=data['location_id'], # type: ignore
-            scheduled_date=data.get('scheduled_date'), # type: ignore
-            notes=data.get('notes'), # type: ignore
-            created_by_id=get_jwt_identity() # type: ignore
-        )
-        
-        db.session.add(count)
+
+        # Set server-side fields
+        count_instance.tenant_id = tenant_id
+        count_instance.count_number = count_number
+        count_instance.created_by_id = get_jwt_identity()
+
+        db.session.add(count_instance)
         db.session.flush()
         
         # Create count lines with current stock levels
         stock_levels = ProductStock.query.filter_by(
-            tenant_id=tenant_id,
-            location_id=data['location_id']
+            tenant_id=tenant_id, location_id=count_instance.location_id
         ).all()
         
         for stock in stock_levels:
-            line = InventoryCountLine(
-                tenant_id=tenant_id, # type: ignore
-                count_id=count.id, # type: ignore
-                product_id=stock.product_id, # type: ignore
-                expected_quantity=stock.quantity # type: ignore
-            )
+            line = InventoryCountLine()
+            line.tenant_id=tenant_id
+            line.count_id=count_instance.id
+            line.product_id=stock.product_id
+            line.expected_quantity=stock.quantity
             db.session.add(line)
         
         db.session.commit()
-        
-        return count, 201
+
+        return count_instance, 201
     
     def _generate_count_number(self, tenant_id):
         """Generate unique count number."""
@@ -476,25 +388,20 @@ class InventoryCountResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, InventoryCountSchema)
-    def get(self, count_id):
+    def get(self, count_id, tenant_id):
         """Get inventory count with lines."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        count = InventoryCount.query.filter_by(id=count_id, tenant_id=tenant_id).first()
-        if not count:
-            abort(404, message="Inventory count not found")
-        return count
+        return generic_service.get_tenant_resource(
+            InventoryCount, count_id, tenant_id, not_found_message="Inventory count not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, InventoryCountSchema)
-    def post(self, count_id):
+    def post(self, count_id, tenant_id):
         """Complete inventory count (process variances)."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
         count = InventoryCount.query.filter_by(id=count_id, tenant_id=tenant_id).first()
         if not count:
             abort(404, message="Inventory count not found")
@@ -519,17 +426,16 @@ class InventoryCountResource(MethodView):
                         stock.quantity = line.counted_quantity
                         
                         # Create adjustment movement
-                        movement = StockMovement(
-                            tenant_id=tenant_id, # type: ignore
-                            movement_number=f'INV-ADJ-{datetime.date.today().year}{datetime.date.today().month:02d}-{count.id:05d}', # type: ignore
-                            movement_type='adjustment', # type: ignore
-                            product_id=line.product_id, # type: ignore
-                            location_id=count.location_id, # type: ignore
-                            quantity=line.counted_quantity, # type: ignore
-                            reference_type='inventory_count', # type: ignore
-                            reference_id=count.id, # type: ignore
-                            notes=f"Inventory count adjustment: {line.variance:+.0f}" # type: ignore
-                        )
+                        movement = StockMovement()
+                        movement.tenant_id=tenant_id
+                        movement.movement_number=f'INV-ADJ-{datetime.date.today().year}{datetime.date.today().month:02d}-{count.id:05d}'
+                        movement.movement_type='adjustment'
+                        movement.product_id=line.product_id
+                        movement.location_id=count.location_id
+                        movement.quantity=line.counted_quantity
+                        movement.reference_type='inventory_count'
+                        movement.reference_id=count.id
+                        movement.notes=f"Inventory count adjustment: {line.variance:+.0f}"
                         db.session.add(movement)
         
         count.status = 'completed'
@@ -545,15 +451,11 @@ class InventoryCountLineResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(InventoryCountLineSchema(partial=True))
+    @tenant_required
+    @blp.arguments(InventoryCountLineUpdateSchema(partial=True))
     @blp.response(200, InventoryCountLineSchema)
-    def put(self, count_id, line_id):
+    def put(self, data, count_id, line_id, tenant_id):
         """Update counted quantity for a line."""
-        data = request.get_json()
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
         count = InventoryCount.query.filter_by(id=count_id, tenant_id=tenant_id).first()
         if not count:
             abort(404, message="Inventory count not found")
@@ -583,12 +485,10 @@ class StockSummary(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, fields.List(fields.Dict()))
-    def get(self):
+    def get(self, tenant_id):
         """Get stock summary (all products with total stock levels)."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
         
         from backend.models import Product
         from sqlalchemy import func
@@ -626,12 +526,10 @@ class LowStockReport(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, fields.List(fields.Dict()))
-    def get(self):
+    def get(self, tenant_id):
         """Get products below reorder level."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
         
         # Products where available stock <= reorder level
         from backend.models import Product

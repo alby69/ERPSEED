@@ -6,7 +6,7 @@ Provides double-entry accounting functionality:
 - General Journal
 - Invoices (Accounts Receivable/Payable)
 """
-from datetime import datetime
+from datetime import datetime, date
 from backend.extensions import db
 
 
@@ -78,7 +78,7 @@ class JournalEntry(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     entry_number = db.Column(db.String(50), nullable=False, index=True)
-    date = db.Column(db.Date, nullable=False, default=datetime.now().date)
+    date = db.Column(db.Date, nullable=False, default=date.today)
     description = db.Column(db.String(255), nullable=False)
     reference = db.Column(db.String(100))
     status = db.Column(db.String(20), default='draft')  # draft, posted, cancelled
@@ -148,7 +148,7 @@ class Invoice(db.Model):
     invoice_number = db.Column(db.String(50), nullable=False, index=True)
     invoice_type = db.Column(db.String(10), nullable=False)  # AR (receivable), AP (payable)
     party_id = db.Column(db.Integer, db.ForeignKey('soggetti.id'), nullable=False)
-    date = db.Column(db.Date, nullable=False, default=datetime.now().date)
+    date = db.Column(db.Date, nullable=False, default=date.today)
     due_date = db.Column(db.Date)
     description = db.Column(db.String(255))
     subtotal = db.Column(db.Float, default=0.0)

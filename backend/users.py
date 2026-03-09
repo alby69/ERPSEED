@@ -17,14 +17,12 @@ class UserRegister(MethodView):
     @blp.response(201, UserDisplaySchema)
     def post(self, user_data):
         """Register a new user"""
-        data = user_data.__dict__ if hasattr(user_data, '__dict__') else user_data
-        
         return user_service.register(
-            email=data['email'],
-            password=data['password'],
-            first_name=data.get('first_name'),
-            last_name=data.get('last_name'),
-            role=data.get('role', 'user')
+            email=user_data['email'],
+            password=user_data['password'],
+            first_name=user_data.get('first_name'),
+            last_name=user_data.get('last_name'),
+            role=user_data.get('role', 'user')
         )
 
 
@@ -54,8 +52,7 @@ class UserResource(MethodView):
     @blp.response(200, UserDisplaySchema)
     def put(self, update_data, user_id):
         """Update user details (Admins only)"""
-        data = update_data.__dict__ if hasattr(update_data, '__dict__') else update_data
-        return user_service.update(user_id, data)
+        return user_service.update(user_id, update_data)
 
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
@@ -75,5 +72,4 @@ class AdminUserPasswordReset(MethodView):
     @blp.response(200, schema={"type": "object"})
     def put(self, data, user_id):
         """Reset a user's password (Admins only)"""
-        password_data = data.__dict__ if hasattr(data, '__dict__') else data
-        return {"message": user_service.reset_password(user_id, password_data['new_password'])}
+        return {"message": user_service.reset_password(user_id, data['new_password'])}

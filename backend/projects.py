@@ -3,7 +3,7 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import json
 from flask import request
-
+from marshmallow import Schema, fields
 from .models import Project, SysModel
 from .extensions import db
 from .schemas import (
@@ -17,10 +17,14 @@ from .schemas import (
 from .decorators import admin_required
 from .utils import paginate
 from .services import ProjectService
+from .services.generic_service import generic_service
 
 blp = Blueprint(
     "projects", "projects", url_prefix="/projects", description="Operations on projects"
 )
+
+class FileUploadSchema(Schema):
+    file = fields.Raw(metadata={"type": "file"}, required=True)
 
 project_service = ProjectService()
 
@@ -44,15 +48,11 @@ class ProjectList(MethodView):
     def post(self, project_data):
         """Create a new project (Admin only)"""
         owner_id = get_jwt_identity()
-
-        data = (
-            project_data.__dict__ if hasattr(project_data, "__dict__") else project_data
-        )
-
+        
         return project_service.create(
-            name=data["name"],
-            title=data["title"],
-            description=data.get("description"),
+            name=project_data.name,
+            title=project_data.title,
+            description=project_data.description,
             owner_id=owner_id,
         ), 201
 
@@ -116,22 +116,9 @@ class ProjectModels(MethodView):
     def post(self, model_data, project_id):
         """Create a new model in a project (Admin only)"""
         project_service.get_by_id(project_id, get_jwt_identity())
-
-        data = model_data.__dict__ if hasattr(model_data, "__dict__") else model_data
-
-        existing = SysModel.query.filter_by(
-            project_id=project_id, name=data["name"]
-        ).first()
-        if existing:
-            abort(
-                409,
-                message=f"A model with name '{data['name']}' already exists in this project.",
-            )
-
-        model = SysModel(project_id=project_id, **data) # type: ignore
-        db.session.add(model) # type: ignore
-        db.session.commit()
-        return model
+        return generic_service.create_scoped_resource(
+            SysModel, model_data, {'project_id': project_id}, unique_fields=['name']
+        )
 
 
 @blp.route("/<int:project_id>/members")
@@ -189,15 +176,11 @@ class ProjectExport(MethodView):
 class ProjectImport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
+    @blp.arguments(FileUploadSchema, location="files")
     @blp.response(200, schema={"type": "object"})
-    def post(self):
+    def post(self, files):
         """Import project from JSON template (Create or Update)"""
-        if "file" not in request.files:
-            abort(400, message="No file part")
-
-        file = request.files["file"]
-        if file.filename == "":
-            abort(400, message="No selected file")
+        file = files["file"]
 
         try:
             data = json.load(file.stream)

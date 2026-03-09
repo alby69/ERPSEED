@@ -3,29 +3,30 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
 from .models import PurchaseOrder, PurchaseOrderLine
 from backend.entities.soggetto import Soggetto
-from .extensions import db
-from .schemas import PurchaseOrderSchema
+from .extensions import db, ma
+from .schemas import PurchaseOrderSchema, BaseSchema
 from .utils import apply_filters, paginate, apply_sorting, apply_date_filters
-from .core.services.tenant_context import TenantContext
+from .decorators import tenant_required
+from .services.generic_service import generic_service
 
 blp = Blueprint("purchases", __name__, description="Operations on purchase orders")
 
-def get_tenant_query(model):
-    """Get query filtered by current tenant."""
-    tenant_id = TenantContext.get_tenant_id()
-    if tenant_id is None:
-        abort(403, message="Tenant context not found")
-    return model.query.filter_by(tenant_id=tenant_id)
+class PurchaseOrderUpdateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
+        model = PurchaseOrder
+        load_instance = False
+        exclude = BaseSchema.Meta.exclude + ("date",)
 
 
 @blp.route("/purchase-orders")
 class PurchaseOrderList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, PurchaseOrderSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List purchase orders"""
-        query = get_tenant_query(PurchaseOrder)
+        query = PurchaseOrder.query.filter_by(tenant_id=tenant_id)
         query = apply_filters(query, PurchaseOrder, ['number'])
         query = apply_date_filters(query, PurchaseOrder, 'date')
         query = apply_sorting(query, PurchaseOrder)
@@ -34,14 +35,11 @@ class PurchaseOrderList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(PurchaseOrderSchema)
     @blp.response(201, PurchaseOrderSchema)
-    def post(self, order_data):
+    def post(self, order_data, tenant_id):
         """Create a new purchase order"""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
         order_data.tenant_id = tenant_id
         
         if not Soggetto.query.filter_by(id=order_data.supplier_id, tenant_id=tenant_id).first():
@@ -59,23 +57,22 @@ class PurchaseOrderList(MethodView):
 class PurchaseOrderResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, PurchaseOrderSchema)
-    def get(self, order_id):
+    def get(self, order_id, tenant_id):
         """Get purchase order by ID"""
-        query = get_tenant_query(PurchaseOrder)
-        order = query.get(order_id)
-        if not order:
-            abort(404, message="Purchase order not found")
-        return order
+        return generic_service.get_tenant_resource(
+            PurchaseOrder, order_id, tenant_id, not_found_message="Purchase order not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(PurchaseOrderSchema)
+    @tenant_required
+    @blp.arguments(PurchaseOrderUpdateSchema(partial=True))
     @blp.response(200, PurchaseOrderSchema)
-    def put(self, order_data, order_id):
+    def put(self, order_data, order_id, tenant_id):
         """Update a purchase order"""
-        query = get_tenant_query(PurchaseOrder)
-        order = query.get(order_id)
+        order = PurchaseOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order:
             abort(404, message="Purchase order not found")
         
@@ -90,16 +87,13 @@ class PurchaseOrderResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(204)
-    def delete(self, order_id):
+    def delete(self, order_id, tenant_id):
         """Delete a purchase order"""
-        query = get_tenant_query(PurchaseOrder)
-        order = query.get(order_id)
-        if not order:
-            abort(404, message="Purchase order not found")
-        
-        db.session.delete(order)
-        db.session.commit()
+        generic_service.delete_tenant_resource(
+            PurchaseOrder, order_id, tenant_id, not_found_message="Purchase order not found"
+        )
         return '', 204
 
 
@@ -107,11 +101,11 @@ class PurchaseOrderResource(MethodView):
 class PurchaseOrderConfirm(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, PurchaseOrderSchema)
-    def post(self, order_id):
+    def post(self, order_id, tenant_id):
         """Confirm a purchase order"""
-        query = get_tenant_query(PurchaseOrder)
-        order = query.get(order_id)
+        order = PurchaseOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order:
             abort(404, message="Purchase order not found")
         
@@ -127,11 +121,11 @@ class PurchaseOrderConfirm(MethodView):
 class PurchaseOrderReceive(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, PurchaseOrderSchema)
-    def post(self, order_id):
+    def post(self, order_id, tenant_id):
         """Mark purchase order as received"""
-        query = get_tenant_query(PurchaseOrder)
-        order = query.get(order_id)
+        order = PurchaseOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order:
             abort(404, message="Purchase order not found")
         
@@ -147,11 +141,11 @@ class PurchaseOrderReceive(MethodView):
 class PurchaseOrderCancel(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, PurchaseOrderSchema)
-    def post(self, order_id):
+    def post(self, order_id, tenant_id):
         """Cancel a purchase order"""
-        query = get_tenant_query(PurchaseOrder)
-        order = query.get(order_id)
+        order = PurchaseOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order:
             abort(404, message="Purchase order not found")
         

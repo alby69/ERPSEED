@@ -22,114 +22,24 @@ def get_comuni_from_db():
     try:
         from backend.entities.comune import Comune
         from backend.extensions import db
-        from backend import create_app
         
-        app = create_app()
-        with app.app_context():
-            comuni = Comune.query.filter(
-                Comune.latitudine.isnot(None),
-                Comune.longitudine.isnot(None)
-            ).all()
-            _comuni_cache = [{
-                'nome': c.nome.upper(),
-                'latitudine': c.latitudine,
-                'longitudine': c.longitudine,
-                'provincia': c.codice_provincia,
-                'regione': c.codice_regione,
-                'cap': c.cap
-            } for c in comuni]
-            return _comuni_cache
+        comuni = Comune.query.filter(
+            Comune.latitudine.isnot(None),
+            Comune.longitudine.isnot(None)
+        ).all()
+        _comuni_cache = [{
+            'nome': c.nome.upper(),
+            'latitudine': c.latitudine,
+            'longitudine': c.longitudine,
+            'provincia': c.codice_provincia,
+            'regione': c.codice_regione,
+            'cap': c.cap
+        } for c in comuni]
+        return _comuni_cache
     except Exception as e:
         print(f"Error loading comuni from DB: {e}")
         return []
 
-
-# Fallback hardcoded
-REGIONI = [
-    {"codice": "CL", "nome": "Caltanissetta", "regione": "15"},
-    {"codice": "CN", "nome": "Cuneo", "regione": "12"},
-    {"codice": "CO", "nome": "Como", "regione": "09"},
-    {"codice": "CR", "nome": "Cremona", "regione": "09"},
-    {"codice": "CS", "nome": "Cosenza", "regione": "03"},
-    {"codice": "CT", "nome": "Catania", "regione": "15"},
-    {"codice": "CZ", "nome": "Catanzaro", "regione": "03"},
-    {"codice": "EN", "nome": "Enna", "regione": "15"},
-    {"codice": "FE", "nome": "Ferrara", "regione": "05"},
-    {"codice": "FG", "nome": "Foggia", "regione": "13"},
-    {"codice": "FI", "nome": "Firenze", "regione": "16"},
-    {"codice": "FM", "nome": "Fermo", "regione": "10"},
-    {"codice": "FO", "nome": "Forlì-Cesena", "regione": "05"},
-    {"codice": "FR", "nome": "Frosinone", "regione": "07"},
-    {"codice": "GE", "nome": "Genova", "regione": "08"},
-    {"codice": "GO", "nome": "Gorizia", "regione": "06"},
-    {"codice": "GR", "nome": "Grosseto", "regione": "16"},
-    {"codice": "IM", "nome": "Imperia", "regione": "08"},
-    {"codice": "IS", "nome": "Isernia", "regione": "11"},
-    {"codice": "KR", "nome": "Crotone", "regione": "03"},
-    {"codice": "LC", "nome": "Lecco", "regione": "09"},
-    {"codice": "LE", "nome": "Lecce", "regione": "13"},
-    {"codice": "LI", "nome": "Livorno", "regione": "16"},
-    {"codice": "LO", "nome": "Lodi", "regione": "09"},
-    {"codice": "LT", "nome": "Latina", "regione": "07"},
-    {"codice": "LU", "nome": "Lucca", "regione": "16"},
-    {"codice": "MB", "nome": "Monza e Brianza", "regione": "09"},
-    {"codice": "MC", "nome": "Macerata", "regione": "10"},
-    {"codice": "ME", "nome": "Messina", "regione": "15"},
-    {"codice": "MI", "nome": "Milano", "regione": "09"},
-    {"codice": "MN", "nome": "Mantova", "regione": "09"},
-    {"codice": "MO", "nome": "Modena", "regione": "05"},
-    {"codice": "MS", "nome": "Massa-Carrara", "regione": "16"},
-    {"codice": "MT", "nome": "Matera", "regione": "02"},
-    {"codice": "NA", "nome": "Napoli", "regione": "04"},
-    {"codice": "NO", "nome": "Novara", "regione": "12"},
-    {"codice": "NU", "nome": "Nuoro", "regione": "14"},
-    {"codice": "OR", "nome": "Oristano", "regione": "14"},
-    {"codice": "PA", "nome": "Palermo", "regione": "15"},
-    {"codice": "PC", "nome": "Piacenza", "regione": "05"},
-    {"codice": "PD", "nome": "Padova", "regione": "20"},
-    {"codice": "PE", "nome": "Pescara", "regione": "01"},
-    {"codice": "PG", "nome": "Perugia", "regione": "18"},
-    {"codice": "PI", "nome": "Pisa", "regione": "16"},
-    {"codice": "PN", "nome": "Pordenone", "regione": "06"},
-    {"codice": "PO", "nome": "Prato", "regione": "16"},
-    {"codice": "PR", "nome": "Parma", "regione": "05"},
-    {"codice": "PT", "nome": "Pistoia", "regione": "16"},
-    {"codice": "PU", "nome": "Pesaro e Urbino", "regione": "10"},
-    {"codice": "PV", "nome": "Pavia", "regione": "09"},
-    {"codice": "PZ", "nome": "Potenza", "regione": "02"},
-    {"codice": "RA", "nome": "Ravenna", "regione": "05"},
-    {"codice": "RC", "nome": "Reggio Calabria", "regione": "03"},
-    {"codice": "RE", "nome": "Reggio Emilia", "regione": "05"},
-    {"codice": "RG", "nome": "Ragusa", "regione": "15"},
-    {"codice": "RI", "nome": "Rieti", "regione": "07"},
-    {"codice": "RM", "nome": "Roma", "regione": "07"},
-    {"codice": "RN", "nome": "Rimini", "regione": "05"},
-    {"codice": "RO", "nome": "Rovigo", "regione": "20"},
-    {"codice": "SA", "nome": "Salerno", "regione": "04"},
-    {"codice": "SI", "nome": "Siena", "regione": "16"},
-    {"codice": "SO", "nome": "Sondrio", "regione": "09"},
-    {"codice": "SP", "nome": "La Spezia", "regione": "08"},
-    {"codice": "SR", "nome": "Siracusa", "regione": "15"},
-    {"codice": "SS", "nome": "Sassari", "regione": "14"},
-    {"codice": "SV", "nome": "Savona", "regione": "08"},
-    {"codice": "TA", "nome": "Taranto", "regione": "13"},
-    {"codice": "TE", "nome": "Teramo", "regione": "01"},
-    {"codice": "TN", "nome": "Trento", "regione": "17"},
-    {"codice": "TO", "nome": "Torino", "regione": "12"},
-    {"codice": "TP", "nome": "Trapani", "regione": "15"},
-    {"codice": "TR", "nome": "Terni", "regione": "18"},
-    {"codice": "TS", "nome": "Trieste", "regione": "06"},
-    {"codice": "TV", "nome": "Treviso", "regione": "20"},
-    {"codice": "UD", "nome": "Udine", "regione": "06"},
-    {"codice": "VA", "nome": "Varese", "regione": "09"},
-    {"codice": "VB", "nome": "Verbano-Cusio-Ossola", "regione": "12"},
-    {"codice": "VC", "nome": "Vercelli", "regione": "12"},
-    {"codice": "VE", "nome": "Venezia", "regione": "20"},
-    {"codice": "VI", "nome": "Vicenza", "regione": "20"},
-    {"codice": "VR", "nome": "Verona", "regione": "20"},
-    {"codice": "VT", "nome": "Viterbo", "regione": "07"},
-    {"codice": "VV", "nome": "Vibo Valentia", "regione": "03"},
-]
 
 # Fallback hardcoded
 REGIONI = [
@@ -370,12 +280,9 @@ class Regioni(MethodView):
         try:
             from backend.entities.comune import Regione
             from backend.extensions import db
-            from backend import create_app
             
-            app = create_app()
-            with app.app_context():
-                regioni = Regione.query.order_by(Regione.nome).all()
-                return jsonify([{"codice": r.codice, "nome": r.nome} for r in regioni])
+            regioni = Regione.query.order_by(Regione.nome).all()
+            return jsonify([{"codice": r.codice, "nome": r.nome} for r in regioni])
         except:
             return jsonify(REGIONI)
 
@@ -388,15 +295,12 @@ class Province(MethodView):
         
         try:
             from backend.entities.comune import Provincia
-            from backend import create_app
             
-            app = create_app()
-            with app.app_context():
-                query = Provincia.query
-                if regione:
-                    query = query.filter_by(codice_regione=regione)
-                province = query.order_by(Provincia.nome).all()
-                return jsonify([{"codice": p.codice, "nome": p.nome, "regione": p.codice_regione} for p in province])
+            query = Provincia.query
+            if regione:
+                query = query.filter_by(codice_regione=regione)
+            province = query.order_by(Provincia.nome).all()
+            return jsonify([{"codice": p.codice, "nome": p.nome, "regione": p.codice_regione} for p in province])
         except:
             if regione:
                 province = [p for p in PROVINCE if p["regione"] == regione]

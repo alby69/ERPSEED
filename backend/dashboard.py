@@ -6,18 +6,9 @@ from datetime import datetime, timedelta
 from marshmallow import fields, Schema
 
 from .extensions import db
-from .core.services.tenant_context import TenantContext
+from .decorators import tenant_required
 
 blp = Blueprint("dashboard", __name__, description="Dashboard & KPI Operations")
-
-
-def get_tenant_id():
-    """Get current tenant ID."""
-    tenant_id = TenantContext.get_tenant_id()
-    if tenant_id is None:
-        abort(403, message="Tenant context not found")
-    return tenant_id
-
 
 class KpiSchema(Schema):
     parties = fields.Dict(keys=fields.Str(), values=fields.Int())
@@ -43,11 +34,10 @@ class RecentOrderSchema(Schema):
 class DashboardKPI(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, KpiSchema)
-    def get(self):
+    def get(self, tenant_id):
         """Get dashboard KPI summary"""
-        tenant_id = get_tenant_id()
-        
         from .models import Product, SalesOrder, PurchaseOrder
         from backend.entities.soggetto import Soggetto
         from backend.entities.ruolo import SoggettoRuolo, Ruolo
@@ -86,11 +76,11 @@ class DashboardKPI(MethodView):
             'products': total_products,
             'sales': {
                 'total_orders': total_sales,
-                'total_amount': float(total_sales_amount),
+                'total_amount': total_sales_amount,
             },
             'purchases': {
                 'total_orders': total_purchases,
-                'total_amount': float(total_purchases_amount),
+                'total_amount': total_purchases_amount,
             }
         }
 
@@ -99,11 +89,10 @@ class DashboardKPI(MethodView):
 class SalesSummary(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, fields.Dict(keys=fields.Str(), values=fields.Nested(SummarySchema)))
-    def get(self):
+    def get(self, tenant_id):
         """Get sales summary by status"""
-        tenant_id = get_tenant_id()
-        
         from .models import SalesOrder
         
         summary = db.session.query(
@@ -118,7 +107,7 @@ class SalesSummary(MethodView):
         for status, count, total in summary:
             result[status] = {
                 'count': count,
-                'total': float(total or 0)
+                'total': total or 0
             }
         
         return result
@@ -128,11 +117,10 @@ class SalesSummary(MethodView):
 class PurchasesSummary(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, fields.Dict(keys=fields.Str(), values=fields.Nested(SummarySchema)))
-    def get(self):
+    def get(self, tenant_id):
         """Get purchases summary by status"""
-        tenant_id = get_tenant_id()
-        
         from .models import PurchaseOrder
         
         summary = db.session.query(
@@ -147,7 +135,7 @@ class PurchasesSummary(MethodView):
         for status, count, total in summary:
             result[status] = {
                 'count': count,
-                'total': float(total or 0)
+                'total': total or 0
             }
         
         return result
@@ -157,49 +145,29 @@ class PurchasesSummary(MethodView):
 class RecentSales(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, RecentOrderSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """Get recent sales orders"""
-        tenant_id = get_tenant_id()
-        
         from .models import SalesOrder
         
         recent = SalesOrder.query.filter_by(tenant_id=tenant_id).order_by(
             SalesOrder.created_at.desc()
         ).limit(10).all()
-        
-        return [{
-            'id': order.id,
-            'number': order.number,
-            'customer_id': order.customer_id,
-            'status': order.status,
-            'total_amount': order.total_amount,
-            'date': order.date.isoformat() if order.date else None,
-            'created_at': order.created_at.isoformat() if order.created_at else None
-        } for order in recent]
+        return recent
 
 
 @blp.route("/dashboard/recent-purchases")
 class RecentPurchases(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, RecentOrderSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """Get recent purchase orders"""
-        tenant_id = get_tenant_id()
-        
         from .models import PurchaseOrder
         
         recent = PurchaseOrder.query.filter_by(tenant_id=tenant_id).order_by(
             PurchaseOrder.created_at.desc()
         ).limit(10).all()
-        
-        return [{
-            'id': order.id,
-            'number': order.number,
-            'supplier_id': order.supplier_id,
-            'status': order.status,
-            'total_amount': order.total_amount,
-            'date': order.date.isoformat() if order.date else None,
-            'created_at': order.created_at.isoformat() if order.created_at else None
-        } for order in recent]
+        return recent

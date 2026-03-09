@@ -10,6 +10,7 @@ from .extensions import db
 from .schemas import SysChartSchema, SysDashboardSchema, ChartLibraryConfigSchema
 from .utils import get_table_object
 from .services import DynamicApiService
+from .services.generic_service import generic_service
 from .utils import paginate, serialize_value
 
 dynamic_service = DynamicApiService()
@@ -25,7 +26,9 @@ class ChartLibraryList(MethodView):
     @blp.response(200, ChartLibraryConfigSchema(many=True))
     def get(self):
         """Lista tutte le librerie grafiche configurate."""
-        return ChartLibraryConfig.query.all()
+        query = ChartLibraryConfig.query
+        items, headers = paginate(query)
+        return items, 200, headers
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -53,26 +56,25 @@ class ChartLibraryResource(MethodView):
     @jwt_required()
     @blp.response(200, ChartLibraryConfigSchema)
     def get(self, library_id):
-        return ChartLibraryConfig.query.get_or_404(library_id)
+        return generic_service.get_resource(
+            ChartLibraryConfig, library_id, not_found_message="Chart library not found"
+        )
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(ChartLibraryConfigSchema)
     @blp.response(200, ChartLibraryConfigSchema)
     def put(self, library_data, library_id):
-        library = ChartLibraryConfig.query.get_or_404(library_id)
-        for key, value in library_data.items():
-            setattr(library, key, value)
-        db.session.commit()
-        return library
+        return generic_service.update_resource(
+            ChartLibraryConfig, library_id, library_data, not_found_message="Chart library not found"
+        )
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
     def delete(self, library_id):
-        library = ChartLibraryConfig.query.get_or_404(library_id)
-        db.session.delete(library)
-        db.session.commit()
+        generic_service.delete_resource(
+            ChartLibraryConfig, library_id, not_found_message="Chart library not found")
         return ""
 
 
@@ -105,10 +107,7 @@ class SysChartList(MethodView):
     @blp.arguments(SysChartSchema)
     @blp.response(201, SysChartSchema)
     def post(self, chart_data):
-        chart = SysChart(**chart_data)
-        db.session.add(chart)
-        db.session.commit()
-        return chart
+        return generic_service.create_resource(SysChart, chart_data)
 
 
 @blp.route("/sys-charts/<int:chart_id>")
@@ -117,26 +116,25 @@ class SysChartResource(MethodView):
     @jwt_required()
     @blp.response(200, SysChartSchema)
     def get(self, chart_id):
-        return SysChart.query.get_or_404(chart_id)
+        return generic_service.get_resource(
+            SysChart, chart_id, not_found_message="Chart not found"
+        )
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(SysChartSchema)
     @blp.response(200, SysChartSchema)
     def put(self, chart_data, chart_id):
-        chart = SysChart.query.get_or_404(chart_id)
-        for key, value in chart_data.items():
-            setattr(chart, key, value)
-        db.session.commit()
-        return chart
+        return generic_service.update_resource(
+            SysChart, chart_id, chart_data, not_found_message="Chart not found"
+        )
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
     def delete(self, chart_id):
-        chart = SysChart.query.get_or_404(chart_id)
-        db.session.delete(chart)
-        db.session.commit()
+        generic_service.delete_resource(
+            SysChart, chart_id, not_found_message="Chart not found")
         return ""
 
 
@@ -162,10 +160,7 @@ class SysDashboardList(MethodView):
     @blp.arguments(SysDashboardSchema)
     @blp.response(201, SysDashboardSchema)
     def post(self, dashboard_data):
-        dashboard = SysDashboard(**dashboard_data)
-        db.session.add(dashboard)
-        db.session.commit()
-        return dashboard
+        return generic_service.create_resource(SysDashboard, dashboard_data)
 
 
 @blp.route("/sys-dashboards/<int:dashboard_id>")
@@ -174,18 +169,18 @@ class SysDashboardResource(MethodView):
     @jwt_required()
     @blp.response(200, SysDashboardSchema)
     def get(self, dashboard_id):
-        return SysDashboard.query.get_or_404(dashboard_id)
+        return generic_service.get_resource(
+            SysDashboard, dashboard_id, not_found_message="Dashboard not found"
+        )
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(SysDashboardSchema)
     @blp.response(200, SysDashboardSchema)
     def put(self, dashboard_data, dashboard_id):
-        dashboard = SysDashboard.query.get_or_404(dashboard_id)
-        for key, value in dashboard_data.items():
-            setattr(dashboard, key, value)
-        db.session.commit()
-        return dashboard
+        return generic_service.update_resource(
+            SysDashboard, dashboard_id, dashboard_data, not_found_message="Dashboard not found"
+        )
 
 
 # --- Motore di Query Analytics ---

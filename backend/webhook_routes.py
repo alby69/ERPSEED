@@ -7,13 +7,14 @@ from flask.views import MethodView
 from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, post_dump
 
 import json
 from datetime import datetime
 from .webhooks import WebhookEndpoint, WebhookDelivery, WebhookEvent
 from .webhook_service import WebhookService
 from .extensions import db
+from .services.generic_service import generic_service
 
 blp = Blueprint("webhooks", __name__, url_prefix="/webhooks", description="Webhook Management")
 
@@ -22,8 +23,17 @@ class WebhookEndpointSchema(Schema):
     name = fields.Str(required=True)
     url = fields.Str(required=True)
     events = fields.List(fields.Str(), required=True)
-    is_active = fields.Bool()
-    created_at = fields.Str(dump_only=True, allow_none=True)
+    is_active = fields.Bool(load_default=True)
+    created_at = fields.DateTime(dump_only=True, allow_none=True)
+
+    @post_dump
+    def format_output(self, data, **kwargs):
+        if 'events' in data and isinstance(data['events'], str):
+            try:
+                data['events'] = json.loads(data['events'])
+            except (json.JSONDecodeError, TypeError):
+                data['events'] = []
+        return data
 
 class WebhookEndpointDetailSchema(WebhookEndpointSchema):
     secret = fields.Str(dump_only=True)
@@ -34,9 +44,9 @@ class WebhookDeliverySchema(Schema):
     event = fields.Str()
     status_code = fields.Int(allow_none=True)
     attempts = fields.Int()
-    delivered_at = fields.Str(allow_none=True)
+    delivered_at = fields.DateTime(dump_only=True, allow_none=True)
     error = fields.Str(dump_only=True, attribute="error_message", allow_none=True)
-    is_success = fields.Bool(dump_only=True)
+    is_success = fields.Function(lambda obj: obj.is_success, dump_only=True)
 
 class WebhookTestResponseSchema(Schema):
     success = fields.Bool()
@@ -61,18 +71,10 @@ class WebhookList(MethodView):
     @blp.response(200, WebhookEndpointSchema(many=True))
     def get(self):
         """List all webhook endpoints."""
-        endpoints = WebhookEndpoint.query.order_by(WebhookEndpoint.created_at.desc()).all()
-        result = []
-        for ep in endpoints:
-            result.append({
-                'id': ep.id,
-                'name': ep.name,
-                'url': ep.url,
-                'events': ep.get_events(),
-                'is_active': ep.is_active,
-                'created_at': ep.created_at.isoformat() if ep.created_at else None
-            })
-        return result
+        from backend.utils import paginate
+        query = WebhookEndpoint.query.order_by(WebhookEndpoint.created_at.desc())
+        items, headers = paginate(query)
+        return items, 200, headers
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -108,16 +110,7 @@ class WebhookResource(MethodView):
     @blp.response(200, WebhookEndpointSchema)
     def get(self, endpoint_id):
         """Get webhook endpoint details (secret hidden)."""
-        endpoint = WebhookEndpoint.query.get_or_404(endpoint_id)
-        
-        return {
-            'id': endpoint.id,
-            'name': endpoint.name,
-            'url': endpoint.url,
-            'events': endpoint.get_events(),
-            'is_active': endpoint.is_active,
-            'created_at': endpoint.created_at.isoformat() if endpoint.created_at else None
-        }
+        return generic_service.get_resource(WebhookEndpoint, endpoint_id)
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -200,15 +193,14 @@ class WebhookDeliveries(MethodView):
         """List webhook deliveries."""
         endpoint_id = request.args.get('endpoint_id', type=int)
         status = request.args.get('status')
-        limit = request.args.get('limit', 50, type=int)
         
-        deliveries = WebhookService.get_deliveries(
-            endpoint_id=endpoint_id if endpoint_id else 0,
-            status=status if status else "",
-            limit=limit
+        from backend.utils import paginate
+        query = WebhookService.get_deliveries_query(
+            endpoint_id=endpoint_id,
+            status=status
         )
-        
-        return deliveries
+        items, headers = paginate(query)
+        return items, 200, headers
 
 
 @blp.route("/events")

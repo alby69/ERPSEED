@@ -1,5 +1,5 @@
 # Fase 1: Build - Installa le dipendenze di sistema per pycairo
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 

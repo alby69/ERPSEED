@@ -12,6 +12,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from flask import current_app
+from sqlalchemy.orm import Query
 
 import sys
 import os
@@ -19,7 +20,9 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from services.base import BaseService
+from backend.extensions import db
 from backend.webhooks import WebhookEvent
+from backend.workflows import Workflow, WorkflowStep
 
 
 class WorkflowService(BaseService):
@@ -29,7 +32,7 @@ class WorkflowService(BaseService):
     """
 
     @staticmethod
-    def trigger_event(event: str, data: Dict[str, Any], project_id: int = None):
+    def trigger_event(event: str, data: Dict[str, Any], project_id: Optional[int] = None):
         """
         Trigger all workflows that listen for this event.
 
@@ -57,7 +60,7 @@ class WorkflowService(BaseService):
 
     @staticmethod
     def _execute_step(
-        step, data: Dict[str, Any], execution, project_id: int = None
+        step, data: Dict[str, Any], execution, project_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """Execute a single workflow step."""
         step_config = step.get_config()
@@ -94,15 +97,15 @@ class WorkflowService(BaseService):
         elif operator == "not_equals":
             result = str(field_value) != str(value)
         elif operator == "contains":
-            result = value in str(field_value) if field_value else False
+            result = str(value) in str(field_value) if field_value is not None else False
         elif operator == "greater_than":
             try:
-                result = float(field_value) > float(value)
+                result = float(field_value or 0) > float(value or 0)
             except (ValueError, TypeError):
                 result = False
         elif operator == "less_than":
             try:
-                result = float(field_value) < float(value)
+                result = float(field_value or 0) < float(value or 0)
             except (ValueError, TypeError):
                 result = False
         elif operator == "is_empty":
@@ -114,7 +117,7 @@ class WorkflowService(BaseService):
 
     @staticmethod
     def _execute_action(
-        step, config: dict, data: dict, project_id: int = None
+        step, config: dict, data: dict, project_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """Execute an action step."""
         action_type = config.get("action_type")
@@ -142,7 +145,7 @@ class WorkflowService(BaseService):
         return {"output": {"message": f"Action {action_type} executed"}}
 
     @staticmethod
-    def _extract_model_from_trigger(event: str) -> str:
+    def _extract_model_from_trigger(event: str) -> Optional[str]:
         """Estrae il nome del modello da un trigger event.
 
         Esempi:
@@ -161,7 +164,7 @@ class WorkflowService(BaseService):
 
     @staticmethod
     def _execute_update_record(
-        step, config: dict, data: dict, project_id: int = None
+        step, config: dict, data: dict, project_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """Esegue l'azione update_record usando DynamicApiService."""
         try:
@@ -211,7 +214,7 @@ class WorkflowService(BaseService):
 
     @staticmethod
     def _execute_create_record(
-        step, config: dict, data: dict, project_id: int = None
+        step, config: dict, data: dict, project_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """Esegue l'azione create_record usando DynamicApiService."""
         try:
@@ -339,22 +342,20 @@ class WorkflowService(BaseService):
     def create_workflow(
         name: str,
         trigger_event: str,
-        description: str = None,
-        project_id: int = None,
-        user_id: int = None,
+        description: Optional[str] = None,
+        project_id: Optional[int] = None,
+        user_id: Optional[int] = None,
     ) -> "Workflow":
         """Create a new workflow."""
-        from backend.workflows import Workflow
-        from backend.extensions import db
-
         workflow = Workflow(
-            name=name,
-            trigger_event=trigger_event,
-            description=description,
-            project_id=project_id,
-            created_by=user_id,
+            name=name, # type: ignore
+            trigger_event=trigger_event, # type: ignore
+            description=description, # type: ignore
+            project_id=project_id, # type: ignore
+            created_by=user_id, # type: ignore
         )
 
+        from backend.extensions import db
         db.session.add(workflow)
         db.session.commit()
 
@@ -365,17 +366,15 @@ class WorkflowService(BaseService):
         workflow_id: int, step_type: str, name: str, config: dict, order: int = 0
     ) -> "WorkflowStep":
         """Add a step to a workflow."""
-        from backend.workflows import WorkflowStep
-        from backend.extensions import db
-
         step = WorkflowStep(
-            workflow_id=workflow_id,
-            step_type=step_type,
-            name=name,
-            config=config,
-            order=order,
+            workflow_id=workflow_id, # type: ignore
+            step_type=step_type, # type: ignore
+            name=name, # type: ignore
+            config=config, # type: ignore
+            order=order, # type: ignore
         )
 
+        from backend.extensions import db
         db.session.add(step)
         db.session.commit()
 
@@ -384,9 +383,7 @@ class WorkflowService(BaseService):
     @staticmethod
     def update_workflow(workflow_id: int, data: dict) -> "Workflow":
         """Update a workflow."""
-        from backend.workflows import Workflow
-        from backend.extensions import db
-
+        
         workflow = db.session.get(Workflow, workflow_id)
         if not workflow:
             raise ValueError(f"Workflow {workflow_id} not found")
@@ -408,19 +405,14 @@ class WorkflowService(BaseService):
     @staticmethod
     def delete_workflow(workflow_id: int):
         """Delete a workflow."""
-        from backend.workflows import Workflow
-        from backend.extensions import db
-
         workflow = db.session.get(Workflow, workflow_id)
         if workflow:
             db.session.delete(workflow)
             db.session.commit()
 
     @staticmethod
-    def get_workflows(project_id: int = None, active_only: bool = True):
-        """Get workflows with optional filters."""
-        from backend.workflows import Workflow
-
+    def get_workflows(project_id: Optional[int] = None, active_only: bool = True) -> "Query":
+        """Get workflows query with optional filters."""
         query = Workflow.query
 
         if project_id:
@@ -431,19 +423,17 @@ class WorkflowService(BaseService):
         if active_only:
             query = query.filter_by(is_active=True)
 
-        return query.order_by(Workflow.created_at.desc()).all()
+        return query.order_by(Workflow.created_at.desc())
 
     @staticmethod
-    def get_workflow_executions(workflow_id: int, limit: int = 50):
-        """Get workflow execution history."""
+    def get_workflow_executions(workflow_id: int) -> "Query":
+        """Get workflow execution history query."""
         from backend.workflows import WorkflowExecution
         from sqlalchemy import desc
 
         return (
             WorkflowExecution.query.filter_by(workflow_id=workflow_id)
             .order_by(desc(WorkflowExecution.started_at))
-            .limit(limit)
-            .all()
         )
 
     @staticmethod
@@ -547,7 +537,7 @@ class WorkflowService(BaseService):
         }
 
 
-def trigger_workflow_event(event: str, data: Dict[str, Any], project_id: int = None):
+def trigger_workflow_event(event: str, data: Dict[str, Any], project_id: Optional[int] = None):
     """
     Convenience function to trigger workflow automation.
 

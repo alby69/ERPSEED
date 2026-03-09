@@ -3,28 +3,30 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
 from .models import SalesOrder, SalesOrderLine
 from backend.entities.soggetto import Soggetto
-from .extensions import db
-from .schemas import SalesOrderSchema
+from .extensions import db, ma
+from .decorators import tenant_required
+from .schemas import SalesOrderSchema, BaseSchema
 from .utils import apply_filters, paginate, apply_sorting, apply_date_filters
 from .core.services.tenant_context import TenantContext
+from .services.generic_service import generic_service
 
 blp = Blueprint("sales", __name__, description="Operations on sales orders")
 
-def get_tenant_query(model):
-    """Get query filtered by current tenant."""
-    tenant_id = TenantContext.get_tenant_id()
-    if tenant_id is None:
-        abort(403, message="Tenant context not found")
-    return model.query.filter_by(tenant_id=tenant_id)
+class SalesOrderUpdateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
+        model = SalesOrder
+        load_instance = False
+        exclude = BaseSchema.Meta.exclude + ("date",)
 
 @blp.route("/sales-orders")
 class SalesOrderList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, SalesOrderSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List sales orders"""
-        query = get_tenant_query(SalesOrder)
+        query = SalesOrder.query.filter_by(tenant_id=tenant_id)
         query = apply_filters(query, SalesOrder, ['number'])
         query = apply_date_filters(query, SalesOrder, 'date')
         query = apply_sorting(query, SalesOrder)
@@ -33,14 +35,11 @@ class SalesOrderList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(SalesOrderSchema)
     @blp.response(201, SalesOrderSchema)
-    def post(self, order_data):
+    def post(self, order_data, tenant_id):
         """Create a new order"""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
         order_data.tenant_id = tenant_id
         
         if not Soggetto.query.filter_by(id=order_data.customer_id, tenant_id=tenant_id).first():
@@ -57,23 +56,22 @@ class SalesOrderList(MethodView):
 class SalesOrderResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, SalesOrderSchema)
-    def get(self, order_id):
+    def get(self, order_id, tenant_id):
         """Get sales order by ID"""
-        query = get_tenant_query(SalesOrder)
-        order = query.get(order_id)
-        if not order:
-            abort(404, message="Sales order not found")
-        return order
+        return generic_service.get_tenant_resource(
+            SalesOrder, order_id, tenant_id, not_found_message="Sales order not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SalesOrderSchema)
+    @tenant_required
+    @blp.arguments(SalesOrderUpdateSchema(partial=True))
     @blp.response(200, SalesOrderSchema)
-    def put(self, order_data, order_id):
+    def put(self, order_data, order_id, tenant_id):
         """Update a sales order"""
-        query = get_tenant_query(SalesOrder)
-        order = query.get(order_id)
+        order = SalesOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order:
             abort(404, message="Sales order not found")
         
@@ -88,16 +86,19 @@ class SalesOrderResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(204)
-    def delete(self, order_id):
+    def delete(self, order_id, tenant_id):
         """Delete a sales order"""
-        query = get_tenant_query(SalesOrder)
-        order = query.get(order_id)
-        if not order:
-            abort(404, message="Sales order not found")
-        
-        db.session.delete(order)
-        db.session.commit()
+        def check_status(order):
+            if order.status not in ['draft', 'cancelled']:
+                abort(400, message="Only draft or cancelled orders can be deleted.")
+
+        generic_service.delete_tenant_resource(
+            SalesOrder, order_id, tenant_id,
+            pre_delete_check=check_status,
+            not_found_message="Sales order not found"
+        )
         return '', 204
 
 
@@ -105,11 +106,11 @@ class SalesOrderResource(MethodView):
 class SalesOrderConfirm(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, SalesOrderSchema)
-    def post(self, order_id):
+    def post(self, order_id, tenant_id):
         """Confirm a sales order"""
-        query = get_tenant_query(SalesOrder)
-        order = query.get(order_id)
+        order = SalesOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order:
             abort(404, message="Sales order not found")
         
@@ -125,11 +126,11 @@ class SalesOrderConfirm(MethodView):
 class SalesOrderCancel(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, SalesOrderSchema)
-    def post(self, order_id):
+    def post(self, order_id, tenant_id):
         """Cancel a sales order"""
-        query = get_tenant_query(SalesOrder)
-        order = query.get(order_id)
+        order = SalesOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order:
             abort(404, message="Sales order not found")
         

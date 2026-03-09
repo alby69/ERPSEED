@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class NodeExecutor:
     """Esegue la logica specifica per ogni tipo di nodo nel workflow."""
 
-    def __init__(self, project_id: int = None):
+    def __init__(self, project_id: Optional[int] = None):
         self.project_id = project_id
         self.dynamic_api = DynamicApiService()
 
@@ -92,19 +92,18 @@ class WorkflowEngine:
     """Motore orchestratore per l'esecuzione dei workflow."""
 
     @staticmethod
-    def run(workflow_id: int, trigger_event: str, trigger_data: Dict[str, Any], project_id: int = None):
+    def run(workflow_id: int, trigger_event: str, trigger_data: Dict[str, Any], project_id: Optional[int] = None):
         """Avvia l'esecuzione di un workflow."""
         workflow = db.session.get(Workflow, workflow_id)
         if not workflow or not workflow.is_active:
             return None
 
-        execution = WorkflowExecution(
-            workflow_id=workflow.id,
-            trigger_event=trigger_event,
-            trigger_data=json.dumps(trigger_data),
-            status="running",
-            started_at=datetime.utcnow()
-        )
+        execution = WorkflowExecution()
+        execution.workflow_id=workflow.id
+        execution.trigger_event=trigger_event
+        execution.trigger_data=json.dumps(trigger_data)
+        execution.status="running"
+        execution.started_at=datetime.utcnow()
         db.session.add(execution)
         db.session.commit()
 
@@ -116,14 +115,13 @@ class WorkflowEngine:
 
             for step in steps:
                 # Log step start
-                log = WorkflowLog(
-                    execution_id=execution.id,
-                    step_id=step.id,
-                    step_name=step.name,
-                    status="running",
-                    input_data=json.dumps(current_data),
-                    started_at=datetime.utcnow()
-                )
+                log = WorkflowLog()
+                log.execution_id=execution.id
+                log.step_id=step.id
+                log.step_name=step.name
+                log.status="running"
+                log.input_data=json.dumps(current_data)
+                log.started_at=datetime.utcnow()
                 db.session.add(log)
                 db.session.commit()
 

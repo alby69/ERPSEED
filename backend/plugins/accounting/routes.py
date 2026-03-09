@@ -16,71 +16,53 @@ from marshmallow import fields
 
 from .models import ChartOfAccounts, Account, JournalEntry, JournalEntryLine, Invoice, InvoiceLine
 from backend.core.services.tenant_context import TenantContext
+from backend.decorators import tenant_required
 from backend.extensions import db, ma
+from backend.schemas import BaseSchema
+from backend.services.generic_service import generic_service
+from backend.utils import paginate, apply_filters, apply_sorting
 
 blp = Blueprint("accounting", __name__, url_prefix="/accounting", description="Accounting Operations")
 
-class ChartOfAccountsSchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    class Meta:
+class ChartOfAccountsSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = ChartOfAccounts
-        load_instance = True
-        include_fk = True
 
-class AccountSchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    class Meta:
+class ChartOfAccountsUpdateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
+        model = ChartOfAccounts
+        load_instance = False
+
+class AccountSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = Account
-        load_instance = True
-        include_fk = True
 
-class JournalEntryLineSchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    class Meta:
+class JournalEntryLineSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = JournalEntryLine
-        load_instance = True
-        include_fk = True
-        exclude = ('entry',)
+        exclude = BaseSchema.Meta.exclude + ('entry',)
 
-class JournalEntrySchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    date = fields.Date()
+class JournalEntrySchema(BaseSchema):
+    date = fields.Date(load_default=None)
     lines = fields.List(fields.Nested(JournalEntryLineSchema))
-    class Meta:
+    total_debit = fields.Function(lambda obj: obj.total_debit, dump_only=True)
+    total_credit = fields.Function(lambda obj: obj.total_credit, dump_only=True)
+    is_balanced = fields.Function(lambda obj: obj.is_balanced, dump_only=True)
+    class Meta(BaseSchema.Meta):
         model = JournalEntry
-        load_instance = True
-        include_fk = True
+        exclude = BaseSchema.Meta.exclude + ("date",)
 
-class InvoiceLineSchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    class Meta:
+class InvoiceLineSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = InvoiceLine
-        load_instance = True
-        include_fk = True
-        exclude = ('invoice',)
+        exclude = BaseSchema.Meta.exclude + ('invoice',)
 
-class InvoiceSchema(ma.SQLAlchemyAutoSchema):
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    date = fields.Date()
+class InvoiceSchema(BaseSchema):
+    date = fields.Date(load_default=None)
     lines = fields.List(fields.Nested(InvoiceLineSchema))
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = Invoice
-        load_instance = True
-        include_fk = True
-
-
-def get_tenant_query(model):
-    """Get query filtered by current tenant."""
-    tenant_id = TenantContext.get_tenant_id()
-    if tenant_id is None:
-        abort(403, message="Tenant context not found")
-    return model.query.filter_by(tenant_id=tenant_id)
+        exclude = BaseSchema.Meta.exclude + ("date",)
 
 
 @blp.route("/coa")
@@ -89,43 +71,26 @@ class COAList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, ChartOfAccountsSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List all accounts in Chart of Accounts."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        query = ChartOfAccounts.query.filter_by(tenant_id=tenant_id, is_active=True).order_by(ChartOfAccounts.code)
-        return query.all()
+        query = ChartOfAccounts.query.filter_by(tenant_id=tenant_id, is_active=True)
+        query = apply_filters(query, ChartOfAccounts, ['code', 'name'])
+        query = apply_sorting(query, ChartOfAccounts, default_sort_column='code')
+        items, headers = paginate(query)
+        return items, 200, headers
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(ChartOfAccountsSchema)
     @blp.response(201, ChartOfAccountsSchema)
-    def post(self):
+    def post(self, coa_instance, tenant_id):
         """Create new account in Chart of Accounts."""
-        data = request.get_json()
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        existing = ChartOfAccounts.query.filter_by(tenant_id=tenant_id, code=data['code']).first()
-        if existing:
-            abort(409, message=f"Account code '{data['code']}' already exists.")
-        
-        coa = ChartOfAccounts(
-            tenant_id=tenant_id, # type: ignore
-            code=data['code'], # type: ignore
-            name=data['name'], # type: ignore
-            type=data['type'], # type: ignore
-            parent_id=data.get('parent_id'), # type: ignore
-            allow_transaction=data.get('allow_transaction', True) # type: ignore
+        return generic_service.create_tenant_resource(
+            ChartOfAccounts, coa_instance, tenant_id, unique_fields=['code']
         )
-        
-        db.session.add(coa)
-        db.session.commit()
-        
-        return coa, 201
 
 
 @blp.route("/coa/<int:coa_id>")
@@ -134,51 +99,46 @@ class COAResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, ChartOfAccountsSchema)
-    def get(self, coa_id):
+    def get(self, coa_id, tenant_id):
         """Get account by ID."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        coa = ChartOfAccounts.query.filter_by(id=coa_id, tenant_id=tenant_id).first()
-        if not coa:
-            abort(404, message="Account not found")
-        return coa
+        return generic_service.get_tenant_resource(
+            ChartOfAccounts, coa_id, tenant_id, not_found_message="Account not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(ChartOfAccountsSchema(partial=True))
+    @tenant_required
+    @blp.arguments(ChartOfAccountsUpdateSchema(partial=True))
     @blp.response(200, ChartOfAccountsSchema)
-    def put(self, coa_id):
+    def put(self, data, coa_id, tenant_id):
         """Update account."""
-        data = request.get_json()
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        coa = ChartOfAccounts.query.filter_by(id=coa_id, tenant_id=tenant_id).first()
-        if not coa:
-            abort(404, message="Account not found")
-        
-        for key, value in data.items():
-            if hasattr(coa, key):
-                setattr(coa, key, value)
-        
-        db.session.commit()
-        return coa
+        return generic_service.update_tenant_resource(
+            ChartOfAccounts, coa_id, tenant_id, data, not_found_message="Account not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(204)
-    def delete(self, coa_id):
+    def delete(self, coa_id, tenant_id):
         """Deactivate account (soft delete)."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
         coa = ChartOfAccounts.query.filter_by(id=coa_id, tenant_id=tenant_id).first()
         if not coa:
             abort(404, message="Account not found")
-        coa.is_active = False
         
+        # Prevent deactivation if any associated account has a non-zero balance
+        accounts_with_balance = Account.query.filter(
+            Account.coa_id == coa.id,
+            Account.balance != 0
+        ).first()
+        if accounts_with_balance:
+            abort(409, message="Cannot deactivate account with a non-zero balance in one of its sub-accounts.")
+
+        coa.is_active = False
+        Account.query.filter_by(coa_id=coa.id).update({"is_active": False})
+
         db.session.commit()
         return '', 204
 
@@ -189,42 +149,26 @@ class AccountList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, AccountSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List all active accounts."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        query = Account.query.filter_by(tenant_id=tenant_id, is_active=True).order_by(Account.code)
-        return query.all()
+        query = Account.query.filter_by(tenant_id=tenant_id, is_active=True)
+        query = apply_filters(query, Account, ['code', 'name'])
+        query = apply_sorting(query, Account, default_sort_column='code')
+        items, headers = paginate(query)
+        return items, 200, headers
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(AccountSchema)
     @blp.response(201, AccountSchema)
-    def post(self):
+    def post(self, account_instance, tenant_id):
         """Create new account."""
-        data = request.get_json()
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        existing = Account.query.filter_by(tenant_id=tenant_id, code=data['code']).first()
-        if existing:
-            abort(409, message=f"Account code '{data['code']}' already exists.")
-        
-        account = Account(
-            tenant_id=tenant_id, # type: ignore
-            coa_id=data['coa_id'], # type: ignore
-            code=data['code'], # type: ignore
-            name=data['name'], # type: ignore
-            description=data.get('description') # type: ignore
+        return generic_service.create_tenant_resource(
+            Account, account_instance, tenant_id, unique_fields=['code']
         )
-        
-        db.session.add(account)
-        db.session.commit()
-        
-        return account, 201
 
 
 @blp.route("/journal")
@@ -233,77 +177,64 @@ class JournalEntryList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, JournalEntrySchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List journal entries."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
+        query = JournalEntry.query.filter_by(tenant_id=tenant_id)
+        query = apply_filters(query, JournalEntry, ['entry_number', 'description', 'reference'])
         
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
-        
-        query = JournalEntry.query.filter_by(tenant_id=tenant_id).order_by(JournalEntry.date.desc(), JournalEntry.entry_number.desc())
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-        
-        return pagination.items
+        sort_by = request.args.get('sort_by')
+        if not sort_by:
+             query = query.order_by(JournalEntry.date.desc(), JournalEntry.entry_number.desc())
+        else:
+             query = apply_sorting(query, JournalEntry)
+        items, headers = paginate(query)
+        return items, 200, headers
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(JournalEntrySchema)
     @blp.response(201, JournalEntrySchema)
-    def post(self):
+    def post(self, entry_instance, tenant_id):
         """Create journal entry with double-entry validation."""
-        data = request.get_json()
-        lines = data.pop('lines', [])
+        # The lines are already on the instance from Marshmallow
+        lines = entry_instance.lines
         
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        total_debit = sum(l.get('debit', 0) for l in lines)
-        total_credit = sum(l.get('credit', 0) for l in lines)
+        total_debit = sum(line.debit for line in lines)
+        total_credit = sum(line.credit for line in lines)
         
         if abs(total_debit - total_credit) > 0.01:
             abort(400, message=f"Debits ({total_debit}) must equal credits ({total_credit}).")
         
         entry_number = self._generate_entry_number(tenant_id)
         
-        entry = JournalEntry(
-            tenant_id=tenant_id, # type: ignore
-            entry_number=entry_number, # type: ignore
-            date=data.get('date', datetime.date.today()), # type: ignore
-            description=data['description'], # type: ignore
-            reference=data.get('reference'), # type: ignore
-            created_by=get_jwt_identity() # type: ignore
-        )
-        db.session.add(entry)
-        db.session.flush()
-        
-        for line_data in lines:
-            line = JournalEntryLine(
-                tenant_id=tenant_id, # type: ignore
-                entry_id=entry.id, # type: ignore
-                account_id=line_data['account_id'], # type: ignore
-                debit=line_data.get('debit', 0), # type: ignore
-                credit=line_data.get('credit', 0), # type: ignore
-                description=line_data.get('description') # type: ignore
-            )
-            db.session.add(line)
-            
-            account = Account.query.filter_by(id=line_data['account_id'], tenant_id=tenant_id).first()
-            if account:
-                account.balance += line_data.get('debit', 0) - line_data.get('credit', 0)
-        
+        # Set tenant_id and other server-side fields on the main instance
+        entry_instance.tenant_id = tenant_id
+        entry_instance.entry_number = entry_number
+        entry_instance.created_by = get_jwt_identity()
+        if not entry_instance.date:
+            entry_instance.date = datetime.date.today()
+
+        # Set tenant_id for each line and update account balances
+        for line in lines:
+            line.tenant_id = tenant_id
+            account = db.session.get(Account, line.account_id)
+            if not account or account.tenant_id != tenant_id:
+                abort(400, message=f"Account with ID {line.account_id} not found for this tenant.")
+            account.balance += line.debit - line.credit
+
+        db.session.add(entry_instance)
         db.session.commit()
         
         try:
             from backend.webhook_triggers import on_journal_entry_created
-            on_journal_entry_created(entry)
+            on_journal_entry_created(entry_instance)
         except Exception:
             pass
         
-        return entry, 201
+        return entry_instance, 201
     
     def _generate_entry_number(self, tenant_id):
         """Generate unique entry number."""
@@ -330,25 +261,20 @@ class JournalEntryResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, JournalEntrySchema)
-    def get(self, entry_id):
+    def get(self, entry_id, tenant_id):
         """Get journal entry with lines."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        entry = JournalEntry.query.filter_by(id=entry_id, tenant_id=tenant_id).first()
-        if not entry:
-            abort(404, message="Journal entry not found")
-        return entry
+        return generic_service.get_tenant_resource(
+            JournalEntry, entry_id, tenant_id, not_found_message="Journal entry not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, JournalEntrySchema)
-    def post(self, entry_id):
+    def post(self, entry_id, tenant_id):
         """Post (validate and finalize) journal entry."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
         entry = JournalEntry.query.filter_by(id=entry_id, tenant_id=tenant_id).first()
         if not entry:
             abort(404, message="Journal entry not found")
@@ -371,78 +297,64 @@ class InvoiceList(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, InvoiceSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List invoices."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        invoice_type = request.args.get('type')
-        status = request.args.get('status')
-        
         query = Invoice.query.filter_by(tenant_id=tenant_id)
-        if invoice_type:
-            query = query.filter_by(invoice_type=invoice_type)
-        if status:
-            query = query.filter_by(status=status)
         
-        return query.order_by(Invoice.date.desc()).all()
+        if request.args.get('type'):
+            query = query.filter_by(invoice_type=request.args.get('type'))
+        if request.args.get('status'):
+            query = query.filter_by(status=request.args.get('status'))
+        
+        query = apply_filters(query, Invoice, ['invoice_number', 'description'])
+        
+        sort_by = request.args.get('sort_by')
+        if not sort_by:
+             query = query.order_by(Invoice.date.desc())
+        else:
+             query = apply_sorting(query, Invoice)
+             
+        items, headers = paginate(query)
+        return items, 200, headers
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(InvoiceSchema)
     @blp.response(201, InvoiceSchema)
-    def post(self):
+    def post(self, invoice_instance, tenant_id):
         """Create new invoice."""
-        data = request.get_json()
-        lines = data.pop('lines', [])
+        invoice_number = self._generate_invoice_number(tenant_id, invoice_instance.invoice_type)
         
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        invoice_number = self._generate_invoice_number(tenant_id, data['invoice_type'])
-        
-        invoice = Invoice(
-            tenant_id=tenant_id, # type: ignore
-            invoice_number=invoice_number, # type: ignore
-            invoice_type=data['invoice_type'], # type: ignore
-            party_id=data['party_id'], # type: ignore
-            date=data.get('date', datetime.date.today()), # type: ignore
-            due_date=data.get('due_date'), # type: ignore
-            description=data.get('description') # type: ignore
-        )
+        # Set server-side fields on the instance from Marshmallow
+        invoice_instance.tenant_id = tenant_id
+        invoice_instance.invoice_number = invoice_number
+        if not invoice_instance.date:
+            invoice_instance.date = datetime.date.today()
         
         subtotal = 0
-        for line_data in lines:
-            line = InvoiceLine(
-                tenant_id=tenant_id, # type: ignore
-                product_id=line_data.get('product_id'), # type: ignore
-                description=line_data.get('description'), # type: ignore
-                quantity=line_data.get('quantity', 1), # type: ignore
-                unit_price=line_data.get('unit_price', 0), # type: ignore
-                discount_percent=line_data.get('discount_percent', 0), # type: ignore
-                tax_percent=line_data.get('tax_percent', 0) # type: ignore
-            )
+        # Process lines that were loaded by Marshmallow
+        for line in invoice_instance.lines:
+            line.tenant_id = tenant_id
             line.calculate()
-            invoice.lines.append(line)
             subtotal += line.amount
         
-        invoice.subtotal = subtotal
-        invoice.tax_amount = sum(l.amount - (l.amount / (1 + l.tax_percent/100)) for l in invoice.lines if l.tax_percent > 0) # type: ignore
-        invoice.total = invoice.subtotal + invoice.tax_amount
+        invoice_instance.subtotal = subtotal
+        invoice_instance.tax_amount = sum(l.amount - (l.amount / (1 + l.tax_percent/100)) for l in invoice_instance.lines if l.tax_percent > 0)
+        invoice_instance.total = invoice_instance.subtotal + invoice_instance.tax_amount
         
-        db.session.add(invoice)
+        db.session.add(invoice_instance)
         db.session.commit()
         
         try:
             from backend.webhook_triggers import on_invoice_created
-            on_invoice_created(invoice)
+            on_invoice_created(invoice_instance)
         except Exception:
             pass
         
-        return invoice, 201
+        return invoice_instance, 201
     
     def _generate_invoice_number(self, tenant_id, invoice_type):
         """Generate unique invoice number."""
@@ -469,25 +381,20 @@ class InvoiceResource(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, InvoiceSchema)
-    def get(self, invoice_id):
+    def get(self, invoice_id, tenant_id):
         """Get invoice with lines."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        invoice = Invoice.query.filter_by(id=invoice_id, tenant_id=tenant_id).first()
-        if not invoice:
-            abort(404, message="Invoice not found")
-        return invoice
+        return generic_service.get_tenant_resource(
+            Invoice, invoice_id, tenant_id, not_found_message="Invoice not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, InvoiceSchema)
-    def post(self, invoice_id):
+    def post(self, invoice_id, tenant_id):
         """Send/Confirm invoice."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
         invoice = Invoice.query.filter_by(id=invoice_id, tenant_id=tenant_id).first()
         if not invoice:
             abort(404, message="Invoice not found")
@@ -507,13 +414,10 @@ class TrialBalance(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, fields.Dict())
-    def get(self):
+    def get(self, tenant_id):
         """Generate trial balance report."""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
         accounts = Account.query.filter_by(tenant_id=tenant_id, is_active=True).all()
         
         result = []

@@ -2,14 +2,23 @@ from flask.views import MethodView
 from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from marshmallow import fields
+from marshmallow import fields, Schema
 
 from .schemas import SysModelSchema, AuditLogSchema
 from .services import DynamicApiService
+from .extensions import db
+from .utils import paginate
 
 blp = Blueprint("dynamic_api", __name__, url_prefix="/projects/<int:project_id>", description="Dynamic CRUD API for builder models")
 
 dynamic_api_service = DynamicApiService()
+
+class AnyJsonSchema(Schema):
+    class Meta:
+        unknown = "INCLUDE"
+
+class BulkDeleteSchema(Schema):
+    ids = fields.List(fields.Int(), required=True)
 
 
 @blp.route("/data/<string:model_name>")
@@ -33,10 +42,10 @@ class DynamicDataList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(AnyJsonSchema)
     @blp.response(201, {"type": "object"})
-    def post(self, project_id, model_name):
+    def post(self, data, project_id, model_name):
         """Create a new record in a dynamically created table."""
-        data = request.get_json() or {}
         
         result, status = dynamic_api_service.create_record(
             project_id=project_id,
@@ -50,14 +59,11 @@ class DynamicDataList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(BulkDeleteSchema)
     @blp.response(204)
-    def delete(self, project_id, model_name):
+    def delete(self, data, project_id, model_name):
         """Delete multiple records."""
-        data = request.get_json() or {}
-        ids_to_delete = data.get('ids')
-        
-        if not ids_to_delete or not isinstance(ids_to_delete, list):
-            abort(400, message="A list of 'ids' is required for bulk delete.")
+        ids_to_delete = data['ids']
         
         dynamic_api_service.bulk_delete(
             project_id=project_id,
@@ -83,10 +89,10 @@ class DynamicDataItem(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(AnyJsonSchema)
     @blp.response(200, {"type": "object"})
-    def put(self, project_id, model_name, item_id):
+    def put(self, data, project_id, model_name, item_id):
         """Update a record in a dynamic table."""
-        data = request.get_json() or {}
         
         return dynamic_api_service.update_record(
             project_id=project_id,
@@ -159,32 +165,25 @@ class AuditLogList(MethodView):
             from backend.core.models import AuditLog as CoreAuditLog
             AuditLog = CoreAuditLog
         except ImportError:
-            from backend.utils import AuditLog
+            abort(500, message="AuditLog model not available.")
         from sqlalchemy import desc
         
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
-        
         query = AuditLog.query.order_by(desc(AuditLog.created_at))
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-        
-        return pagination.items
+        items, headers = paginate(query)
+        return items, 200, headers
 
 
 @blp.route("/data/<string:model_name>/import")
 class DynamicDataImport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.arguments(Schema.from_dict({"file": fields.Raw(metadata={"type": "file"}, required=True)}), location="files")
     @blp.response(200, {"type": "object"})
-    def post(self, project_id, model_name):
+    def post(self, files, project_id, model_name):
         """Import data from CSV."""
-        if 'file' not in request.files:
-            abort(400, message="No file part")
-        
-        file = request.files['file']
+        file = files['file']
         if file.filename == '':
             abort(400, message="No selected file")
-            
         if file.filename and not file.filename.lower().endswith('.csv'):
             abort(400, message="File must be a CSV")
         

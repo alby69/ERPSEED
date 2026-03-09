@@ -3,6 +3,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_babel import Babel, gettext as _
 from werkzeug.exceptions import HTTPException
+from flask.json.provider import DefaultJSONProvider
+import decimal
 
 from .extensions import db, socketio, api, jwt, ma, migrate
 
@@ -80,6 +82,17 @@ from .visual_builder_api import blp as visual_builder_bp
 # Import Template API
 from .template_api import blp as template_bp
 
+
+class CustomJSONProvider(DefaultJSONProvider):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return float(o)
+        if callable(o):
+            import logging
+            logging.getLogger(__name__).error(f"JSON serialization error: callable type={type(o)}, obj={o}")
+            return str(o)
+        return super().default(o)
+
 def create_app(db_url=None):
     # Configure Marshmallow schema name resolver to avoid name conflicts in OpenAPI spec
     def schema_name_resolver(schema):
@@ -117,16 +130,22 @@ def create_app(db_url=None):
     )
     app.config["JWT_TOKEN_LOCATION"] = ["headers"]
 
-    # Configure Smorest API with schema name resolver
-    app.config["API_SPEC_OPTIONS"] = {
-        "marshmallow_schema_name_resolver": schema_name_resolver
-    }
+    # --- Custom JSON Provider ---
+    app.json_provider_class = CustomJSONProvider
+    app.json = app.json_provider_class(app)
 
     # --- Initialize Extensions ---
     db.init_app(app)
     migrate.init_app(app, db)
 
     api.init_app(app)
+
+    # Configure Marshmallow schema name resolver AFTER api.init_app to avoid serialization in spec
+    if hasattr(api, 'spec') and hasattr(api.spec, 'plugins'):
+        for plugin in api.spec.plugins:
+            if hasattr(plugin, 'schema_name_resolver'):
+                plugin.schema_name_resolver = schema_name_resolver
+                break
 
     jwt.init_app(app)
     ma.init_app(app)

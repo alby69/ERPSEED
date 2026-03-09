@@ -22,7 +22,8 @@ except ImportError:
             pass
 
 def apply_filters(query, model, search_fields):
-    """Apply text search filters (q) to the query."""
+    """Apply text search filters (q, search_field, search_value) to the query."""
+    # Global search
     q = request.args.get('q')
     if q and search_fields:
         filters = []
@@ -31,11 +32,19 @@ def apply_filters(query, model, search_fields):
                 filters.append(getattr(model, field).ilike(f"%{q}%"))
         if filters:
             query = query.filter(or_(*filters))
+            
+    # Specific field search
+    search_field = request.args.get("search_field")
+    search_value = request.args.get("search_value")
+    if search_field and search_value and hasattr(model, search_field):
+        col = getattr(model, search_field)
+        query = query.filter(col.ilike(f"%{search_value}%"))
+        
     return query
 
-def apply_sorting(query, model):
+def apply_sorting(query, model, default_sort_column=None):
     """Apply sorting to the query based on sort_by and sort_order."""
-    sort_by = request.args.get('sort_by')
+    sort_by = request.args.get('sort_by', default_sort_column)
     sort_order = request.args.get('sort_order', 'asc')
 
     if sort_by and hasattr(model, sort_by):

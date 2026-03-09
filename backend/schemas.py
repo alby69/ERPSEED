@@ -34,57 +34,61 @@ class TimestampMixin:
     created_at = mm_fields.DateTime(dump_only=True)
     updated_at = mm_fields.DateTime(dump_only=True)
 
-
-class UserSummarySchema(ma.SQLAlchemyAutoSchema):
+class BaseSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+    """Base schema to automatically exclude timestamps and set common options."""
     class Meta:
+        load_instance = True
+        include_fk = True
+        exclude = ("created_at", "updated_at")
+
+
+class UserSummarySchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = User
         fields = ("id", "email")
 
-
-class ProjectSummarySchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
+class ProjectSummarySchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = Project
         fields = ("id", "name")
 
-
-class PartySummarySchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
+class PartySummarySchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = Soggetto
         fields = ("id", "codice", "denominazione", "nome", "cognome", "ragione_sociale")
 
-
-class SoggettoSummarySchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
+class SoggettoSummarySchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = Soggetto
         fields = ("id", "codice", "denominazione", "nome", "cognome", "ragione_sociale")
 
-
-class UserDisplaySchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+class UserDisplaySchema(BaseSchema):
     """Schema for displaying user data (output)."""
+    full_name = mm_fields.Function(lambda obj: obj.full_name, dump_only=True)
 
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = User
-        exclude = ("password_hash",)
+        exclude = BaseSchema.Meta.exclude + ("password_hash",)
 
 
-class UserRegisterSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+class UserRegisterSchema(BaseSchema):
     """Schema for registering a new user (input)."""
 
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = User
         load_instance = False  # Set to False to handle password hashing in the view
         # Exclude password_hash from serialization
-        exclude = ("password_hash",)
+        exclude = BaseSchema.Meta.exclude + ("password_hash",)
 
     # Password field for loading (never shown in output)
     password = mm_fields.Str(required=True, load_only=True)
 
 
-class UserUpdateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class UserUpdateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = User
         load_instance = False
-        exclude = ("password_hash",)
+        exclude = BaseSchema.Meta.exclude + ("password_hash",)
         # All fields are optional for updates
         partial = True
 
@@ -114,25 +118,22 @@ class PasswordChangeSchema(ma.Schema):
 
 
 # --- Schemas for Projects ---
-class ProjectSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+class ProjectSchema(BaseSchema):
     # Show owner details in read-only mode
     owner = mm_fields.Nested(UserDisplaySchema(only=("id", "email")), dump_only=True)
 
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = Project
-        load_instance = True
-        include_fk = True
         # Fields managed automatically by the server
-        dump_only = ("id", "created_at", "updated_at", "owner")
+        dump_only = ("id",)
 
 
-class ProjectUpdateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class ProjectUpdateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = Project
-        load_instance = True
         partial = True
         # Do not allow changing the owner via API
-        exclude = ("owner_id", "name")
+        exclude = BaseSchema.Meta.exclude + ("owner_id", "name")
 
 
 class ProjectMemberSchema(ma.Schema):
@@ -140,175 +141,138 @@ class ProjectMemberSchema(ma.Schema):
 
 
 # --- Schemas for the Builder ---
-class SysFieldSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class SysFieldSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = SysField
-        load_instance = True
-        include_fk = True
 
 
-class SysModelSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+class SysModelSchema(BaseSchema):
     model_fields = mm_fields.List(mm_fields.Nested(SysFieldSchema), attribute="fields") # type: ignore
     project = mm_fields.Nested(ProjectSchema(only=("id", "name")))
 
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = SysModel
-        load_instance = True
-        include_fk = True
 
 
-class SysModelCreateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+class SysModelCreateSchema(BaseSchema):
     model_fields = mm_fields.List(mm_fields.Nested(SysFieldSchema), attribute="fields") # type: ignore
 
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = SysModel
-        load_instance = True
-        include_fk = True
-        exclude = ("project_id", "project")
+        exclude = BaseSchema.Meta.exclude + ("project_id", "project",)
 
 
-class AuditLogSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+class AuditLogSchema(BaseSchema):
     user = mm_fields.Nested(UserDisplaySchema(only=("id", "email")))
 
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = AuditLog
-        load_instance = True
-        include_fk = True
 
 
 # --- Master Data Schemas ---
-class PartySchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class PartySchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = Soggetto
-        load_instance = True
-        include_fk = True
-        exclude = ("tenant_id",)
+        exclude = BaseSchema.Meta.exclude + ("tenant_id",)
 
 
-class SoggettoSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class SoggettoSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = Soggetto
-        load_instance = True
-        include_fk = True
-        exclude = ("tenant_id",)
+        exclude = BaseSchema.Meta.exclude + ("tenant_id",)
 
 
-class ProductSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class ProductSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = Product
-        load_instance = True
-        include_fk = True
 
 
 # --- Sales Schemas ---
-class SalesOrderLineSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class SalesOrderLineSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = SalesOrderLine
-        load_instance = True
-        include_fk = True
-        exclude = ("order",)  # Avoid recursion
+        exclude = BaseSchema.Meta.exclude + ("order",)  # Avoid recursion
 
 
-class SalesOrderSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+class SalesOrderSchema(BaseSchema):
     lines = mm_fields.List(mm_fields.Nested(SalesOrderLineSchema))
     customer = mm_fields.Nested(
         PartySchema(only=("id", "codice", "nome", "cognome", "ragione_sociale")),
         dump_only=True,
     )
-    date = mm_fields.Date()
+    date = mm_fields.Date(load_default=None)
 
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = SalesOrder
-        load_instance = True
-        include_fk = True
+        exclude = BaseSchema.Meta.exclude + ("date",)
 
 
-class PurchaseOrderLineSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class PurchaseOrderLineSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = PurchaseOrderLine
-        load_instance = True
-        include_fk = True
-        exclude = ("order",)
+        exclude = BaseSchema.Meta.exclude + ("order",)
 
 
-class PurchaseOrderSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+class PurchaseOrderSchema(BaseSchema):
     lines = mm_fields.List(mm_fields.Nested(PurchaseOrderLineSchema))
     supplier = mm_fields.Nested(
         SoggettoSchema(only=("id", "codice", "nome", "cognome", "ragione_sociale")),
         dump_only=True,
     )
-    date = mm_fields.Date()
+    date = mm_fields.Date(load_default=None)
 
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = PurchaseOrder
-        load_instance = True
-        include_fk = True
+        exclude = BaseSchema.Meta.exclude + ("date",)
 
 # --- Analytics Schemas ---
-class ChartLibraryConfigSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class ChartLibraryConfigSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = ChartLibraryConfig
-        load_instance = True
 
 
-class SysChartSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class SysChartSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = SysChart
-        load_instance = True
-        include_fk = True
 
 
-class SysDashboardSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class SysDashboardSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = SysDashboard
-        load_instance = True
-        include_fk = True
 
 
 # --- Meta-Architecture Schemas ---
-class SysViewSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+class SysViewSchema(BaseSchema):
     model = mm_fields.Nested(SysModelSchema(only=("id", "name", "technical_name")))
 
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = SysView
-        load_instance = True
-        include_fk = True
 
 
-class SysViewCreateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class SysViewCreateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = SysView
-        load_instance = True
-        include_fk = True
-        exclude = ("model",)
+        exclude = BaseSchema.Meta.exclude + ("model",)
 
 
-class SysComponentSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class SysComponentSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = SysComponent
-        load_instance = True
-        include_fk = True
 
 
-class SysComponentCreateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class SysComponentCreateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = SysComponent
-        load_instance = True
-        include_fk = True
 
 
-class SysActionSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
+class SysActionSchema(BaseSchema):
     view = mm_fields.Nested(SysViewSchema(only=("id", "name")))
     model = mm_fields.Nested(SysModelSchema(only=("id", "name", "technical_name")))
 
-    class Meta:
+    class Meta(BaseSchema.Meta):
         model = SysAction
-        load_instance = True
-        include_fk = True
 
 
-class SysActionCreateSchema(ma.SQLAlchemyAutoSchema, TimestampMixin):
-    class Meta:
+class SysActionCreateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
         model = SysAction
-        load_instance = True
-        include_fk = True

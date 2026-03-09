@@ -2,28 +2,28 @@ from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
 from .models import Product
-from .extensions import db
-from .schemas import ProductSchema
+from .extensions import db, ma
+from .schemas import ProductSchema, BaseSchema
 from .utils import apply_filters, paginate, apply_sorting
-from .core.services.tenant_context import TenantContext
+from .decorators import tenant_required
+from .services.generic_service import generic_service
 
 blp = Blueprint("products", __name__, description="Operations on products")
 
-def get_tenant_query(model):
-    """Get query filtered by current tenant."""
-    tenant_id = TenantContext.get_tenant_id()
-    if tenant_id is None:
-        abort(403, message="Tenant context not found")
-    return model.query.filter_by(tenant_id=tenant_id)
+class ProductUpdateSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
+        model = Product
+        load_instance = False
 
 @blp.route("/products")
 class ProductList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, ProductSchema(many=True))
-    def get(self):
+    def get(self, tenant_id):
         """List all products"""
-        query = get_tenant_query(Product)
+        query = Product.query.filter_by(tenant_id=tenant_id)
         query = apply_filters(query, Product, ['name', 'code', 'description'])
         query = apply_sorting(query, Product)
         items, headers = paginate(query)
@@ -31,66 +31,55 @@ class ProductList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.arguments(ProductSchema)
     @blp.response(201, ProductSchema)
-    def post(self, product_data):
+    def post(self, product_data, tenant_id):
         """Create a new product"""
-        tenant_id = TenantContext.get_tenant_id()
-        if tenant_id is None:
-            abort(403, message="Tenant context not found")
-        
-        product_data.tenant_id = tenant_id
-        
-        if product_data.code:
-            existing = Product.query.filter_by(tenant_id=tenant_id, code=product_data.code).first()
-            if existing:
-                abort(409, message="Product code already exists")
-            
-        db.session.add(product_data)
-        db.session.commit()
-        return product_data
+        return generic_service.create_tenant_resource(
+            Product, product_data, tenant_id, unique_fields=['code']
+        )
 
 @blp.route("/products/<int:product_id>")
 class ProductResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(200, ProductSchema)
-    def get(self, product_id):
+    def get(self, product_id, tenant_id):
         """Get product by ID"""
-        query = get_tenant_query(Product)
-        product = query.get(product_id)
-        if not product:
-            abort(404, message="Product not found")
-        return product
+        return generic_service.get_tenant_resource(
+            Product, product_id, tenant_id, not_found_message="Product not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(ProductSchema)
+    @tenant_required
+    @blp.arguments(ProductUpdateSchema(partial=True))
     @blp.response(200, ProductSchema)
-    def put(self, product_data, product_id):
+    def put(self, product_data, product_id, tenant_id):
         """Update a product"""
-        query = get_tenant_query(Product)
-        product = query.get(product_id)
-        if not product:
-            abort(404, message="Product not found")
-        
-        for key, value in product_data.items():
-            if hasattr(product, key):
-                setattr(product, key, value)
-        
-        db.session.commit()
-        return product
+        return generic_service.update_tenant_resource(
+            Product, product_id, tenant_id, product_data, not_found_message="Product not found"
+        )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @tenant_required
     @blp.response(204)
-    def delete(self, product_id):
+    def delete(self, product_id, tenant_id):
         """Delete a product"""
-        query = get_tenant_query(Product)
-        product = query.get(product_id)
-        if not product:
-            abort(404, message="Product not found")
-        
-        db.session.delete(product)
-        db.session.commit()
+        def check_dependencies(product):
+            from .models import SalesOrderLine, PurchaseOrderLine
+            if SalesOrderLine.query.filter_by(product_id=product.id).first() or \
+               PurchaseOrderLine.query.filter_by(product_id=product.id).first() or \
+               product.stock_levels.first():
+                abort(409, message="Cannot delete a product that has associated orders or stock records. "
+                                   "Consider deactivating it instead.")
+
+        generic_service.delete_tenant_resource(
+            Product, product_id, tenant_id,
+            pre_delete_check=check_dependencies,
+            not_found_message="Product not found"
+        )
         return '', 204

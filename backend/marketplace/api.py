@@ -55,6 +55,52 @@ class ListingCreateSchema(Schema):
     documentation_url = fields.String()
 
 
+class CategorySchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
+    slug = fields.Str()
+    description = fields.Str()
+    icon = fields.Str()
+    parent_id = fields.Int()
+    block_count = fields.Int()
+
+class AuthorSchema(Schema):
+    id = fields.Int()
+    display_name = fields.Str()
+    avatar_url = fields.Str()
+    bio = fields.Str()
+
+class BlockListingSchema(Schema):
+    id = fields.Int()
+    title = fields.Str()
+    slug = fields.Str()
+    description = fields.Str()
+    price = fields.Float()
+    currency = fields.Str()
+    rating_avg = fields.Function(lambda obj: obj.rating_avg)
+    rating_count = fields.Int()
+    downloads = fields.Int()
+    author = fields.Nested(AuthorSchema)
+    category = fields.Nested(CategorySchema)
+    thumbnail_url = fields.Str()
+
+class BlockListingDetailSchema(BlockListingSchema):
+    long_description = fields.Str()
+    status = fields.Str()
+    current_version = fields.Str()
+    changelog = fields.Str()
+    screenshots = fields.List(fields.Str())
+    demo_url = fields.Str()
+    created_at = fields.DateTime()
+
+class PaginatedBlockListingSchema(Schema):
+    items = fields.List(fields.Nested(BlockListingSchema))
+    total = fields.Int()
+    page = fields.Int()
+    per_page = fields.Int()
+    pages = fields.Int()
+
+
 # === CATEGORIES ===
 
 
@@ -62,22 +108,14 @@ class ListingCreateSchema(Schema):
 class CategoryList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200)
+    @blp.response(200, CategorySchema(many=True))
     def get(self):
         """List all marketplace categories"""
         categories = Category.query.order_by(Category.order_index).all()
-        return [
-            {
-                "id": c.id,
-                "name": c.name,
-                "slug": c.slug,
-                "description": c.description,
-                "icon": c.icon,
-                "parent_id": c.parent_id,
-                "block_count": len(c.listings) if c.listings else 0,
-            }
-            for c in categories
-        ]
+        # Manually add block_count to each category object before serialization
+        for c in categories:
+            c.block_count = len(c.listings) if c.listings else 0
+        return categories
 
 
 # === LISTINGS ===
@@ -87,7 +125,7 @@ class CategoryList(MethodView):
 class ListingList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200)
+    @blp.response(200, PaginatedBlockListingSchema)
     def get(self):
         """Browse marketplace blocks"""
         # Get query params
@@ -123,88 +161,19 @@ class ListingList(MethodView):
         # Paginate
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-        return {
-            "items": [
-                {
-                    "id": l.id,
-                    "title": l.title,
-                    "slug": l.slug,
-                    "description": l.description,
-                    "price": float(l.price) if l.price else 0,
-                    "currency": l.currency,
-                    "rating_avg": l.rating_avg,
-                    "rating_count": l.rating_count,
-                    "downloads": l.downloads,
-                    "author": {
-                        "id": l.author.id,
-                        "display_name": l.author.display_name or l.author.user.email,
-                    }
-                    if l.author
-                    else None,
-                    "category": {
-                        "id": l.category.id,
-                        "name": l.category.name,
-                        "slug": l.category.slug,
-                    }
-                    if l.category
-                    else None,
-                    "thumbnail_url": l.thumbnail_url,
-                }
-                for l in pagination.items
-            ],
-            "total": pagination.total,
-            "page": page,
-            "per_page": per_page,
-            "pages": pagination.pages,
-        }
+        return pagination
 
 
 @blp.route("/blocks/<int:listing_id>")
 class ListingDetail(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200)
+    @blp.response(200, BlockListingDetailSchema)
     def get(self, listing_id):
         """Get block listing details"""
         listing = BlockListing.query.get_or_404(listing_id)
 
-        return {
-            "id": listing.id,
-            "title": listing.title,
-            "slug": listing.slug,
-            "description": listing.description,
-            "long_description": listing.long_description,
-            "price": float(listing.price) if listing.price else 0,
-            "currency": listing.currency,
-            "rating_avg": listing.rating_avg,
-            "rating_count": listing.rating_count,
-            "downloads": listing.downloads,
-            "status": listing.status,
-            "current_version": listing.current_version,
-            "changelog": listing.changelog,
-            "thumbnail_url": listing.thumbnail_url,
-            "screenshots": listing.screenshots,
-            "demo_url": listing.demo_url,
-            "author": {
-                "id": listing.author.id,
-                "display_name": listing.author.display_name
-                or listing.author.user.email,
-                "avatar_url": listing.author.avatar_url,
-                "bio": listing.author.bio,
-            }
-            if listing.author
-            else None,
-            "category": {
-                "id": listing.category.id,
-                "name": listing.category.name,
-                "slug": listing.category.slug,
-            }
-            if listing.category
-            else None,
-            "created_at": listing.created_at.isoformat()
-            if listing.created_at
-            else None,
-        }
+        return listing
 
 
 # === REVIEWS ===
