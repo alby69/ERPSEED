@@ -1,4 +1,5 @@
 import os
+from typing import Any
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_babel import Babel, gettext as _
@@ -84,7 +85,7 @@ from .template_api import blp as template_bp
 
 
 class CustomJSONProvider(DefaultJSONProvider):
-    def default(self, o):
+    def default(self, o: Any) -> Any:
         if isinstance(o, decimal.Decimal):
             return float(o)
         if callable(o):
@@ -141,11 +142,14 @@ def create_app(db_url=None):
     api.init_app(app)
 
     # Configure Marshmallow schema name resolver AFTER api.init_app to avoid serialization in spec
-    if hasattr(api, 'spec') and hasattr(api.spec, 'plugins'):
-        for plugin in api.spec.plugins:
-            if hasattr(plugin, 'schema_name_resolver'):
-                plugin.schema_name_resolver = schema_name_resolver
-                break
+    spec = getattr(api, 'spec', None)
+    if spec is not None:
+        plugins = getattr(spec, 'plugins', None)
+        if plugins is not None:
+            for plugin in plugins:
+                if hasattr(plugin, 'schema_name_resolver'):
+                    plugin.schema_name_resolver = schema_name_resolver
+                    break
 
     jwt.init_app(app)
     ma.init_app(app)

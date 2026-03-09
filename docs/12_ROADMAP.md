@@ -1,230 +1,568 @@
-# Roadmap Completa FlaskERP
+# FlaskERP Roadmap Completa
 
-Questo documento raccoglie tutte le funzionalità implementate e quelle da implementare, organizzate per modulo/componente.
+Questo documento raccoglie lo stato delle funzionalità, il piano di refactoring architetturale e la roadmap per gli sviluppi futuri.
 
 ---
 
-## AI Assistant
+# PARTE 1: Funzionalità Implementate
 
-### ✅ Implementazioni Completate
+## ✅ Core System
 
-| Funzionalità | Data | Note |
-|--------------|------|------|
-| Architettura base (service + API) | Feb 2026 | backend/ai/service.py, api.py |
-| Integrazione LLM OpenRouter | Feb 2026 | NVIDIA Nemotron, Qwen3 |
-| Generazione modelli da linguaggio naturale | Feb 2026 | Genera JSON config |
-| Interfaccia chat frontend | Feb 2026 | Modal con chat Ant Design |
-| Preview JSON modificabile | Feb 2026 | TextArea nel modal |
-| Applicazione config al DB | Feb 2026 | Crea modelli, campi, tabelle |
+| Componente | Stato | Data | Note |
+|-----------|-------|------|------|
+| Autenticazione JWT | ✅ Completo | 2024 | Login, logout, refresh token |
+| Multi-Progetto/Tenant | ✅ Completo | 2024 | Isolamento dati completo |
+| Gestione Utenti | ✅ Completo | 2024 | Ruoli, permessi |
+| Modulo Sistema | ✅ Completo | 2024 | Plugin, eventi |
+| Soft Delete | ✅ Completo | 2024 | Cancellazione logica |
+| API RESTful | ✅ Completo | 2024 | Flask-smorest + OpenAPI |
 
-### 📋 Da Implementare
+---
+
+## ✅ Builder (No-Code)
+
+| Funzionalità | Stato | Data | Note |
+|-------------|-------|------|------|
+| Creazione modelli (SysModel) | ✅ Completo | 2024 | CRUD completo |
+| Tipi campo base | ✅ Completo | 2024 | string, number, date, boolean, etc |
+| Tipi campo avanzati | ✅ Completo | 2024 | relation, calculated, summary |
+| Viste Kanban | ✅ Completo | 2024 | Drag & drop |
+| Relazioni | ✅ Completo | 2024 | 1:N, N:N |
+| Validazioni | ✅ Completo | 2024 | required, unique, regex |
+| Import/Export | ✅ Completo | Feb 2026 | Toolbar, context menu, backup completo |
+| Sync schema | ✅ Completo | 2024 | ALTER TABLE automatico |
+
+---
+
+## ✅ AI Assistant
+
+| Funzionalità | Stato | Data | Note |
+|-------------|-------|------|------|
+| Architettura base (service + API) | ✅ Completo | Feb 2026 | backend/ai/service.py, api.py |
+| Integrazione LLM OpenRouter | ✅ Completo | Feb 2026 | NVIDIA Nemotron, Qwen3, Anthropic |
+| Integrazione Ollama locale | ✅ Completo | Feb 2026 | Per ambienti offline |
+| Generazione modelli da linguaggio naturale | ✅ Completo | Feb 2026 | Genera JSON config |
+| Interfaccia chat frontend | ✅ Completo | Feb 2026 | Modal con chat Ant Design |
+| Preview JSON modificabile | ✅ Completo | Feb 2026 | TextArea nel modal |
+| Applicazione config al DB | ✅ Completo | Feb 2026 | Crea modelli, campi, tabelle |
+| Test Generator | ✅ Completo | Feb 2026 | Genera test per modelli creati |
+
+### 📋 Da Implementare (AI)
 
 | Funzionalità | Priorità | Note |
-|--------------|----------|------|
-| Ripristino autenticazione JWT | Alta | /api/ai/generate |
-| Test end-to-end | Media | Generazione → apply → modello creato |
-| Generazione automatica test | Bassa | Test per modelli creati |
-| Integrazione Workflow Builder | Bassa | AI crea workflow |
+|-------------|----------|------|
+| Ripristino autenticazione JWT | Alta | /api/ai/generate richiede fix |
 | Suggerimenti intelligenti | Bassa | Analisi modelli esistenti |
-
-### Riferimenti
-- Documento: [09_AI_ASSISTANT.md](09_AI_ASSISTANT.md)
-- Codice: `backend/ai/`, `frontend/src/components/ui/AIAssistant.jsx`
+| Integrazione Workflow Builder | Bassa | AI crea workflow |
 
 ---
 
-## Workflow Automation
+## ✅ Workflow Automation
 
-### ✅ Implementazioni Completate
+| Funzionalità | Stato | Data | Note |
+|-------------|-------|------|------|
+| Workflow models | ✅ Completo | 2025 | Workflow, WorkflowStep, WorkflowExecution |
+| WorkflowService | ✅ Completo | 2025 | Esecuzione step, trigger event |
+| API Routes | ✅ Completo | 2025 | CRUD workflow, test, executions |
+| WorkflowsPage UI | ✅ Completo | 2025 | Lista, creazione, monitoraggio |
+| Tipi step base | ✅ Completo | 2025 | condition, action, notification, delay, webhook |
+| Workflow Builder visivo | ✅ Completo | Feb 2026 | React Flow + Zustand + drag&drop |
+| Salvataggio/caricamento workflow | ✅ Completo | Feb 2026 | Persistenza completa |
 
-| Funzionalità | Data | Note |
-|--------------|------|------|
-| Workflow models | 2025 | Workflow, WorkflowStep, WorkflowExecution |
-| WorkflowService | 2025 | Esecuzione step, trigger event |
-| API Routes | 2025 | CRUD workflow, test, executions |
-| WorkflowsPage UI | 2025 | Lista, creazione, monitoraggio |
-| Tipi step base | 2025 | condition, action, notification, delay, webhook |
-| Workflow Builder visivo | Feb 2026 | React Flow + Zustand + drag&drop |
-
-### 📋 Da Implementare
+### 📋 Da Implementare (Workflow)
 
 | Funzionalità | Priorità | Note |
-|--------------|----------|------|
+|-------------|----------|------|
 | Estendere tipi step | Media | sub_workflow, HTTP request |
 | Variabili di contesto | Media | {{user.name}}, {{date.today}} |
 | Workflow asincroni | Bassa | Celery per delay lunghi |
 | Versionamento workflow | Bassa | Cronologia modifiche |
-| Validazione in tempo reale | Bassa | Nel builder |
-| Output passo-passo test | Bassa | Debug esecuzione |
-
-### Workflow Builder - Implementazione Completata
-
-**FASE 1: Setup e Infrastruttura** ✅
-- [x] Installare `@xyflow/react` e `zustand`
-- [x] Creare store Zustand
-- [x] Creare componenti base canvas
-
-**FASE 2: Backend Enhancement** ✅
-- [x] WorkflowService esistente
-- [x] API Routes esistenti
-
-**FASE 3: Canvas UI** ✅
-- [x] Layout principale (toolbox, canvas, properties)
-- [x] Toolbox con tipi step draggabili
-- [x] Nodi personalizzati
-- [x] Gestione rami True/False
-
-**FASE 4: Properties Panel** ✅
-- [x] Form dinamici per tipo nodo
-- [x] Field picker con variabili
-
-**FASE 5: Validazione e Test** ✅
-- [x] Pulsante Test nel builder
-- [ ] Validazione in tempo reale (futuro)
-
-**FASE 6: Persistenza** ✅
-- [x] Salvataggio/caricamento workflow
-
-### File Creati
-- `frontend/src/stores/workflowBuilderStore.js`
-- `frontend/src/components/workflow/WorkflowNodes.jsx`
-- `frontend/src/components/workflow/WorkflowPropertiesPanel.jsx`
-- `frontend/src/pages/WorkflowBuilder.jsx`
-
-### Accesso
-- URL: `/projects/:projectId/workflow-builder`
-
-### Riferimenti
-- Documento: [01B_AUTOMAZIONE.md](01B_AUTOMAZIONE.md)
-- Codice: `backend/workflow_service.py`, `backend/workflows.py`, `frontend/src/pages/WorkflowsPage.jsx`
 
 ---
 
-## Hook e Eventi
+## ✅ Hook e Eventi
 
-### ✅ Implementazioni Completate
+| Funzionalità | Stato | Data | Note |
+|-------------|-------|------|------|
+| Hook Manager | ✅ Completo | 2025 | Callback lifecycle entità |
+| Event Bus (in-memory) | ✅ Completo | 2025 | Comunicazione asincrona |
+| Tipi hook base | ✅ Completo | 2025 | Before/After CRUD |
+| Eventi sistema | ✅ Completo | 2025 | entity.created, etc. |
 
-| Funzionalità | Data | Note |
-|--------------|------|------|
-| Hook Manager | 2025 | Callback lifecycle entità |
-| Event Bus | 2025 | Comunicazione asincrona |
-| Tipi hook base | 2025 | Before/After CRUD |
-| Eventi sistema | 2025 | entity.created, etc. |
-
-### 📋 Da Implementare
+### 📋 Da Implementare (Hook/Eventi)
 
 | Funzionalità | Priorità | Note |
-|--------------|----------|------|
+|-------------|----------|------|
 | Hook configurabili da UI | Bassa | Simili ai workflow ma più semplici |
 | Eventi custom | Bassa | Utenti definiscono eventi |
 
-### Riferimenti
-- Documento: [01B_AUTOMAZIONE.md](01B_AUTOMAZIONE.md)
-- Codice: `backend/composition/hooks.py`, `backend/composition/events.py`
+---
+
+## ✅ Moduli Personalizzati
+
+| Funzionalità | Stato | Data | Note |
+|-------------|-------|------|------|
+| Status su SysModel | ✅ Completo | Feb 2026 | draft/published |
+| Tabella Module | ✅ Completo | 2024 | Già esistente |
+| API CRUD per Module | ✅ Completo | 2024 | Già esistente |
+| Filtro DynamicApiService per status | ✅ Completo | Feb 2026 | Solo published |
+| Filtro /projects/{id}/models per ruolo | ✅ Completo | Feb 2026 | Admin vs utenti |
+| UI Lista Moduli nel Builder | ✅ Completo | Feb 2026 | CustomModulesPage |
+| Sistema test auto-generati | ✅ Completo | Feb 2026 | CRUD, validation, FK, performance |
+| Pubblicazione con regole | ✅ Completo | Feb 2026 | Test + quality score >= 80% |
+| Dashboard App-Like | ✅ Completo | Feb 2026 | ModuleAppPage |
+| Sistema API Ibrido | ✅ Completo | Feb 2026 | /api/modules/{module_name}/* |
+| FK tra moduli | ✅ Completo | Feb 2026 | Campo relation con target_table |
+| Menu Builder > Moduli | ✅ Completo | Feb 2026 | Administration > Modules |
+| Migrazione/Backup dati | ✅ Completo | Feb 2026 | /backup endpoint |
 
 ---
 
-## Builder (No-Code)
+## ✅ Marketplace
 
-### ✅ Implementazioni Completate
-
-| Funzionalità | Data | Note |
-|--------------|------|------|
-| Creazione modelli | 2024 | CRUD completo |
-| Tipi campo base | 2024 | string, number, date, etc |
-| Tipi campo avanzati | 2024 | relation, calculated, summary |
-| Viste Kanban | 2024 | Drag & drop |
-| Relazioni | 2024 | 1:N, N:N |
-| Validazioni | 2024 | required, unique, regex |
-| Import/Export | Feb 2026 | Toolbar, context menu, backup completo |
+| Funzionalità | Stato | Data | Note |
+|-------------|-------|------|------|
+| Pubblicazione Blocchi | ✅ Completo | 2024 | Con workflow approvazione |
+| Installazione | ✅ Completo | 2024 | Con un click |
+| Certificazione | ✅ Completo | 2024 | Quality score >= 80% |
+| Recensioni | ✅ Completo | 2024 | Rating e commenti |
 
 ---
 
-## Moduli Personalizzati
+## ✅ Testing
 
-### ✅ Implementazioni Completate
-
-| Funzionalità | Data | Note |
-|--------------|------|------|
-| Status su SysModel | Feb 2026 | draft/published |
-| Tabella Module | Feb 2026 | Già esistente |
-| API CRUD per Module | Feb 2026 | Già esistente |
-| Filtro DynamicApiService per status | Feb 2026 | Solo published |
-| Filtro /projects/{id}/models per ruolo | Feb 2026 | Admin vs utenti |
-| UI Lista Moduli nel Builder | Feb 2026 | CustomModulesPage |
-| Sistema test auto-generati | Feb 2026 | CRUD, validation, FK, performance |
-| Pubblicazione con regole | Feb 2026 | Test + quality score >= 80% |
-| Dashboard App-Like | Feb 2026 | ModuleAppPage |
-| Sistema API Ibrido | Feb 2026 | /api/modules/{module_name}/* |
-| FK tra moduli | Feb 2026 | Campo relation con target_table |
-| Menu Builder > Moduli | Feb 2026 | Administration > Modules |
-| Migrazione/Backup dati | Feb 2026 | /backup endpoint |
-
-### 📋 Da Implementare
-
-| Funzionalità | Priorità | Note |
-|--------------|----------|------|
-| Validazione in tempo reale | Bassa | Nel builder workflow |
-| Output passo-passo test | Bassa | Debug esecuzione |
-
-### File Riferimento
-- Codice: `backend/core/api/custom_modules.py`, `frontend/src/pages/CustomModulesPage.jsx`, `frontend/src/pages/ModuleAppPage.jsx`
+| Funzionalità | Stato | Data | Note |
+|-------------|-------|------|------|
+| Test Runner UI | ✅ Completo | 2024 | Interfaccia web |
+| Generazione Auto | ✅ Completo | Feb 2026 | Suite CRUD |
+| Esecuzione Test | ✅ Completo | 2024 | Con risultati |
+| Quality Score | ✅ Completo | 2024 | Calcolo automatico |
 
 ---
 
-## Moduli ERP
+## ✅ Moduli ERP
 
 ### Contabilità 🟡
 
-**Stato**: 70%
+**Stato**: 75%
 
 - [x] Piano dei conti
 - [x] Prima nota
 - [x] Partitario
-- [ ] Bilancio
+- [x] Scritture automatiche (da movimenti)
+- [ ] Bilancio (in corso)
 - [ ] Fatturazione elettronica (SDI)
 
 ### Risorse Umane 🟡
 
-**Stato**: 50%
+**Stato**: 60%
 
 - [x] Anagrafica dipendenti
 - [x] Dipartimenti
 - [x] Presenze
 - [x] Richieste ferie
-- [ ] Calcolo stipendi
+- [ ] Calcolo stipendi (in corso)
 - [ ] Contratti
 
-### 📋 Prossimi Moduli
+### Magazzino 🟡
 
-| Modulo | Stato | Priorità |
-|--------|-------|----------|
-| CRM | Da iniziare | Media |
-| Produzione | Da iniziare | Bassa |
-| Progetti/Task | Da iniziare | Media |
-| Documentale | Da iniziare | Bassa |
-| Helpdesk | Da iniziare | Bassa |
+**Stato**: 80%
+
+- [x] Gestione ubicazioni
+- [x] Movimenti di stock
+- [x] Inventario
+- [x] Prodotti con varianti
 
 ---
 
-## Struttura Documentazione
+# PARTE 2: Piano di Refactoring Architetturale
+
+## Premessa
+
+Il progetto sta crescendo e diventa necessario disaccoppiare i componenti per:
+1. **Manutenibilità**: Codice più testabile e mantenibile
+2. **Scalabilità**: Possibilità di scalare componenti indipendentemente
+3. **Futuri Microservizi**: Preparazione per split in servizi separati
+
+## Obiettivo: Database Separati per Servizio
 
 ```
-docs/
-├── README.md              # Indice principale
-├── 01_CONCETTI.md         # Architettura, pilastri
-├── 01B_AUTOMAZIONE.md    # Hook, Eventi, Workflow
-├── 02_BUILDER.md         # Guida al Builder
-├── 03_MODULI.md          # Moduli ERP
-├── 04_AMMINISTRAZIONE.md # Gestione sistema
-├── 05_MARKETPLACE.md     # Marketplace
-├── 06_INTEGRAZIONI.md    # API, Webhooks
-├── 07_TESTING.md         # Testing
-├── 08_DEPLOYMENT.md      # Deploy
-├── 09_AI_ASSISTANT.md    # AI Assistant
-├── 11_TODO.md            # Stato attuale + task attivi
-└── 12_ROADMAP.md         # Roadmap completa dettagliata
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         FLASKERP ORCHESTRATOR                           │
+│  (Entry Point, Router, Event Bus, Service Locator)                     │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+        ┌───────────────────────────┼───────────────────────────┐
+        │                           │                           │
+        ▼                           ▼                           ▼
+┌───────────────────┐   ┌───────────────────┐   ┌───────────────────┐
+│   AUTH SERVICE    │   │   TENANT SERVICE  │   │  ENTITY SERVICE   │
+│   (auth_db)       │   │   (tenant_db)    │   │   (entity_db)     │
+└───────────────────┘   └───────────────────┘   └───────────────────┘
+        │                           │                           │
+        └───────────────────────────┼───────────────────────────┘
+                                    │
+                                    ▼
+        ┌───────────────────────────────────────────────────────────┐
+        │                   SHARED LAYER                            │
+        │  (ORM, Utils, Exceptions, Interfaces, Event Bus)         │
+        └───────────────────────────────────────────────────────────┘
 ```
+
+## FASE 1: Infrastructure Layer (Shared)
+
+### 1.1 Creare Pacchetto Shared
+
+```
+backend/shared/
+├── orm/
+│   ├── __init__.py
+│   ├── fields.py          # Da backend/orm/fields.py
+│   ├── relations.py       # Da backend/orm/relations.py
+│   └── query.py           # Da backend/orm/query.py
+├── utils/
+│   ├── __init__.py
+│   ├── pagination.py      # Da estrazione utils.py
+│   ├── filters.py         # Da estrazione utils.py
+│   └── audit.py           # Logica AuditLog
+├── exceptions/
+│   ├── __init__.py
+│   └── flaskerp_exceptions.py
+├── interfaces/
+│   ├── __init__.py
+│   ├── i_tenant_service.py
+│   ├── i_auth_service.py
+│   └── i_crud_service.py
+└── events/
+    ├── __init__.py
+    ├── event.py           # DomainEvent dataclass
+    └── event_bus.py       # In-memory event bus
+```
+
+### 1.2 Dependency Injection Container
+
+```python
+# backend/container.py
+class ServiceContainer:
+    """Container DI per servizi"""
+    
+    def register(self, name: str, factory: callable):
+        """Registra un servizio"""
+        
+    def get(self, name: str):
+        """Ottiene un servizio"""
+```
+
+### 📋 Task FASE 1
+
+| Task | Descrizione | Priorità |
+|------|-------------|----------|
+| T1.1 | Creare struttura `backend/shared/` | Alta |
+| T1.2 | Spostare ORM fields in shared/orm/ | Alta |
+| T1.3 | Creare shared/utils/ con funzioni pure | Alta |
+| T1.4 | Definire interfacce in shared/interfaces/ | Alta |
+| T1.5 | Implementare EventBus in-memory | Alta |
+| T1.6 | Creare ServiceContainer | Alta |
+| T1.7 | Refactoring imports in tutti i moduli | Alta |
+
+---
+
+## FASE 2: AI Service Isolation
+
+### 2.1 Struttura Target
+
+```
+ai_service/
+├── api/
+│   ├── __init__.py
+│   └── endpoints.py       # Flask blueprint
+├── domain/
+│   ├── models/           # Conversation, Message
+│   ├── ports/            # Interfacce astratte
+│   │   ├── llm_port.py
+│   │   └── vectorstore_port.py
+│   └── services/
+│       ├── chat_service.py
+│       └── tool_service.py
+├── adapters/
+│   ├── openai.py
+│   ├── anthropic.py
+│   ├── ollama.py
+│   └── openrouter.py
+└── container.py
+```
+
+### 2.2 Ports & Adapters Pattern
+
+```python
+# ai_service/domain/ports/llm_port.py
+class LLMPort(ABC):
+    @abstractmethod
+    async def chat(self, messages: list[dict]) -> str:
+        pass
+```
+
+### 📋 Task FASE 2
+
+| Task | Descrizione | Priorità |
+|------|-------------|----------|
+| T2.1 | Creare struttura ai_service/ | Alta |
+| T2.2 | Definire LLMPort interface | Alta |
+| T2.3 | Implementare OpenAIAdapter | Alta |
+| T2.4 | Implementare AnthropicAdapter | Alta |
+| T2.5 | Implementare OllamaAdapter | Alta |
+| T2.6 | Refactoring ai/service.py verso nuova struttura | Alta |
+| T2.7 | Integrare EventBus per eventi AI | Media |
+
+---
+
+## FASE 3: Builder Service Isolation
+
+### 3.1 Struttura Target
+
+```
+builder_service/
+├── api/
+│   └── blueprints.py
+├── domain/
+│   ├── entities/
+│   │   ├── sys_model.py
+│   │   ├── sys_field.py
+│   │   ├── sys_view.py
+│   │   └── sys_component.py
+│   ├── repositories/      # Repository pattern
+│   │   └── model_repository.py
+│   └── events/
+│       └── model_events.py
+├── application/
+│   ├── commands/
+│   │   ├── create_model.py
+│   │   ├── add_field.py
+│   │   └── sync_schema.py
+│   └── queries/
+│       ├── get_model.py
+│       └── list_models.py
+├── infrastructure/
+│   ├── persistence/      # SQLAlchemy repos
+│   └── code_generator/
+│       └── generator.py
+└── container.py
+```
+
+### 3.2 Repository Pattern
+
+```python
+# builder_service/domain/repositories/model_repository.py
+class ModelRepository(ABC):
+    @abstractmethod
+    def find_by_id(self, model_id: int) -> Optional[SysModel]:
+        pass
+    
+    @abstractmethod
+    def save(self, model: SysModel) -> SysModel:
+        pass
+```
+
+### 📋 Task FASE 3
+
+| Task | Descrizione | Priorità |
+|------|-------------|----------|
+| T3.1 | Creare struttura builder_service/ | Alta |
+| T3.2 | Definire ModelRepository interface | Alta |
+| T3.3 | Implementare SQLAlchemyModelRepository | Alta |
+| T3.4 | Creare Command Handlers | Alta |
+| T3.5 | Creare Query Handlers | Alta |
+| T3.6 | Refactoring builder/api.py | Alta |
+| T3.7 | Integrare EventBus | Alta |
+
+---
+
+## FASE 4: Event-Driven Communication
+
+### 4.1 Event Bus Standard
+
+```python
+# shared/events/event_bus.py
+class EventBus:
+    def subscribe(self, event_type: str, handler: callable):
+        """Sottoscrivi un handler a un tipo di evento"""
+        
+    def publish(self, event: DomainEvent):
+        """Pubblica un evento a tutti gli sottoscrittori"""
+```
+
+### 4.2 Sostituire Import Diretti con Eventi
+
+**PRIMA**:
+```python
+from backend.webhook_triggers import trigger_webhook
+trigger_webhook("invoice.created", invoice)
+```
+
+**DOPO**:
+```python
+from shared.events import event_bus, DomainEvent
+event_bus.publish(DomainEvent(
+    event_type="invoice.created",
+    payload={"invoice_id": invoice.id}
+))
+```
+
+### 📋 Task FASE 4
+
+| Task | Descrizione | Priorità |
+|------|-------------|----------|
+| T4.1 | Definire eventi standard del sistema | Alta |
+| T4.2 | Migrare workflow → eventi | Alta |
+| T4.3 | Migrare webhooks → eventi | Alta |
+| T4.4 | Migrare plugins → eventi | Alta |
+| T4.5 | Rimuovere import diretti cross-modulo | Alta |
+
+---
+
+## FASE 5: Plugin System Isolation
+
+### 5.1 Plugin Interface Standard
+
+```python
+# backend/plugin_system/interfaces.py
+class Plugin(ABC):
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+    
+    @property
+    @abstractmethod
+    def version(self) -> str:
+        pass
+    
+    @abstractmethod
+    def register(self, app, container):
+        pass
+    
+    @abstractmethod
+    def unregister(self, app):
+        pass
+```
+
+### 5.2 Plugin Communication
+
+```python
+# plugins/inventory/plugin.py
+class InventoryPlugin(Plugin):
+    def register(self, app, container):
+        event_bus.subscribe("invoice.created", self.on_invoice_created)
+    
+    def on_invoice_created(self, event):
+        self.inventory_service.decrease_stock(event.payload)
+```
+
+### 📋 Task FASE 5
+
+| Task | Descrizione | Priorità |
+|------|-------------|----------|
+| T5.1 | Creare backend/plugin_system/ | Alta |
+| T5.2 | Definire Plugin interface | Alta |
+| T5.3 | Implementare PluginManager | Alta |
+| T5.4 | Refactoring plugins esistenti | Alta |
+| T5.5 | Sistema hot-reload plugin | Media |
+
+---
+
+## Timeline Riepilogativa
+
+| Fase | Descrizione | Durata Stimata |
+|------|-------------|----------------|
+| **Fase 1** | Infrastructure Layer (shared/, DI) | 2-3 settimane |
+| **Fase 2** | AI Service isolation | 2-3 settimane |
+| **Fase 3** | Builder Service isolation | 3-4 settimane |
+| **Fase 4** | Event-Driven Communication | 2-3 settimane |
+| **Fase 5** | Plugin System isolation | 2-3 settimane |
+
+**Totale**: ~12-16 settimane
+
+---
+
+## Metriche di Successo
+
+| Metrica | Prima | Obiettivo |
+|---------|-------|-----------|
+| Test coverage | ~30% | >70% |
+| Circular dependencies | 50+ | 0 |
+| Deploy indipendente servizi | No | Sì |
+| Tempo boot applicazione | 5s | <2s |
+
+---
+
+# PARTE 3: Roadmap Funzionalità Future
+
+## Q2 2026
+
+### Completamento Contabilità
+- [ ] Bilancio
+- [ ] Chiusure esercizio
+- [ ] Integrazione SDI (fatturazione elettronica italiana)
+
+### AI Assistant v1
+- [ ] Fix autenticazione JWT
+- [ ] Suggerimenti automatici basati su modelli esistenti
+
+### CRM Module
+- [ ] Pipeline commerciali
+- [ ] Campagne
+- [ ] Lead scoring
+
+## Q3 2026
+
+### Progetti e Task
+- [ ] Gantt integrato
+- [ ] Allocazione risorse
+- [ ] Timeline
+
+### Documentale
+- [ ] Archiviazione
+- [ ] Versioning
+- [ ] Ricerca
+
+## Q4 2026
+
+### Helpdesk
+- [ ] Ticket
+- [ ] Knowledge base
+- [ ] SLA
+
+### Multi-company
+- [ ] Consolidamento
+- [ ] Reporting cross-company
+
+### Reporting avanzato
+- [ ] Designer grafico
+- [ ] Dashboard custom
+
+---
+
+# PARTE 4: Dettagli Implementativi
+
+## Riferimenti Codice
+
+| Componente | Percorso |
+|------------|----------|
+| Core | `backend/core/` |
+| Builder | `backend/builder/` |
+| AI | `backend/ai/` |
+| Workflow | `backend/workflows.py`, `backend/workflow_service.py` |
+| Plugins | `backend/plugins/` |
+| Marketplace | `backend/marketplace/` |
+| Entities | `backend/entities/` |
+
+## Riferimenti Documentazione
+
+| Documento | Descrizione |
+|-----------|-------------|
+| [01_ARCHITETTURA.md](01_ARCHITETTURA.md) | Architettura generale |
+| [02_BUILDER.md](02_BUILDER.md) | Guida al Builder |
+| [13_ARCHITETTURA_DISTRIBUITA.md](13_ARCHITETTURA_DISTRIBUITA.md) | Analisi architetturale distribuita |
 
 ---
 
@@ -235,8 +573,8 @@ Quando implementi una nuova funzionalità:
 1. Aggiungi la funzionalità nella sezione ✅ appropriata
 2. Se è da fare, aggiungi in 📋 con priorità
 3. Aggiorna la data
-4. Rimuovi dalla lista TODO se completata
+4. Sposta i task dalla Roadmap alle implementazioni
 
 ---
 
-*Ultimo aggiornamento: 1 Marzo 2026*
+*Ultimo aggiornamento: 9 Marzo 2026*
