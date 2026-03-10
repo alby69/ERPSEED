@@ -2,7 +2,7 @@
 
 ## Cos'è il Builder
 
-Il Builder è il cuore low-code di FlaskERP. È uno strumento integrato nell'interfaccia web che permette di creare, modificare e gestire entità aziendali senza scrivere codice. Attraverso il Builder puoi definire tabelle, campi, relazioni, viste e molto altro.
+Il Builder è il cuore low-code di ERPSeed. È uno strumento integrato nell'interfaccia web che permette di creare, modificare e gestire entità aziendali senza scrivere codice. Attraverso il Builder puoi definire tabelle, campi, relazioni, viste e molto altro.
 
 Il Builder sfrutta il metaprogramming per generare automaticamente: le tabelle nel database, le API REST, i form e le tabelle nell'interfaccia utente.
 
@@ -10,7 +10,7 @@ Il Builder sfrutta il metaprogramming per generare automaticamente: le tabelle n
 
 ## Accedere al Builder
 
-Per utilizzare il Builder, accedi all'interfaccia di FlaskERP come amministratore. Dal menu di navigazione trovi la sezione Builder che contiene:
+Per utilizzare il Builder, accedi all'interfaccia di ERPSeed come amministratore. Dal menu di navigazione trovi la sezione Builder che contiene:
 
 - **Modelli**: Le entità dati (SysModel)
 - **Blocchi**: Collezioni di componenti UI (Block)
@@ -20,7 +20,7 @@ Per utilizzare il Builder, accedi all'interfaccia di FlaskERP come amministrator
 
 ## Creare un Nuovo Modello (SysModel)
 
-Un modello in FlaskERP corrisponde a una tabella nel database e rappresenta un'entità del tuo business.
+Un modello in ERPSeed corrisponde a una tabella nel database e rappresenta un'entità del tuo business.
 
 ### Passaggi per Creare un Modello
 

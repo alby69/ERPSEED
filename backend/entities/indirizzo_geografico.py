@@ -376,7 +376,7 @@ class Geocodifica(MethodView):
                 "countrycodes": "it"
             }
             headers = {
-                "User-Agent": "FlaskERP/1.0"
+                "User-Agent": "ERPSeed/1.0"
             }
             
             try:
@@ -433,7 +433,7 @@ class Geocodifica(MethodView):
                 "countrycodes": "it"
             }
             headers = {
-                "User-Agent": "FlaskERP/1.0"
+                "User-Agent": "ERPSeed/1.0"
             }
             
             try:
@@ -512,7 +512,7 @@ class GeocodificaInversa(MethodView):
             "zoom": 18
         }
         headers = {
-            "User-Agent": "FlaskERP/1.0"
+            "User-Agent": "ERPSeed/1.0"
         }
         
         try:

@@ -1,5 +1,5 @@
 """
-Test Engine - Core testing logic for FlaskERP modules
+Test Engine - Core testing logic for ERPSeed modules
 """
 import time
 import json

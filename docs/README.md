@@ -1,6 +1,6 @@
-# Documentazione FlaskERP
+# Documentazione ERPSeed
 
-Benvenuto nella documentazione di FlaskERP. Qui trovi tutto quello che ti serve per capire, configurare e usare il sistema.
+Benvenuto nella documentazione di ERPSeed. Qui trovi tutto quello che ti serve per capire, configurare e usare il sistema.
 
 ## Struttura dei Manuali Operativi
 
@@ -26,17 +26,15 @@ Documenti strategici e manuali approfonditi per stakeholder e sviluppatori.
 
 | File | Titolo | Descrizione |
 |------|--------|-------------|
-| [01_PROGETTO_ISTITUZIONALE.md](planner/01_PROGETTO_ISTITUZIONALE.md) | Biglietto da Visita | Visione, Missione e Impatto Sociale |
-| [02_PITCH_INVESTITORI.md](planner/02_PITCH_INVESTITORI.md) | Pitch & Business | Business model, scalabilità e investimenti |
+| [01_PROGETTO_ISTITUZIONALE.md](planner/01_PROGETTO_ISTITUZIONALE.md) | Visione e Roadmap | Visione, Missione, Business Model, Nodi Locali, DAO |
 | [03_MANUALE_UTENTE_DISCORSIVO.md](planner/03_MANUALE_UTENTE_DISCORSIVO.md) | Manuale Utente | Guida ai processi aziendali (non tecnica) |
 | [04_MANUALE_TECNICO_SVILUPPATORE.md](planner/04_MANUALE_TECNICO_SVILUPPATORE.md) | Manuale Tecnico | Guida per sviluppatori con esempi di codice |
-| [05_ECOSISTEMA_ERPSEED.md](planner/05_ECOSISTEMA_ERPSEED.md) | ERPSeed Ecosystem | Nodi locali, governance e impatto sociale |
 
 ## Ordine di Lettura Consigliato
 
 ### Per nuovi utenti
 
-1. **01_ARCHITETTURA** - Capire come funziona FlaskERP
+1. **01_ARCHITETTURA** - Capire come funziona ERPSeed
 2. **02_BUILDER** - Creare le prime entità
 3. **04_AMMINISTRAZIONE** - Gestire utenti e progetti
 
@@ -68,7 +66,7 @@ SysModel → Block → Module
 
 ## Nuova Architettura (2026)
 
-FlaskERP ha completato un refactoring architetturale con:
+ERPSeed ha completato un refactoring architetturale con:
 
 - **Ports & Adapters**: Per astrazione provider LLM
 - **CQRS**: Per separazione command/query nei servizi

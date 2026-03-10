@@ -2,7 +2,7 @@
 
 ## Cos'è un Modulo
 
-Un **Modulo** in FlaskERP è l'unità funzionale completa che combina:
+Un **Modulo** in ERPSeed è l'unità funzionale completa che combina:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

@@ -1,5 +1,5 @@
 """
-PDF Generation API per FlaskERP
+PDF Generation API per ERPSeed
 Endpoint per generazione PDF di documenti
 """
 from flask import request, send_file, abort

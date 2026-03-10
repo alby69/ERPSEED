@@ -1,10 +1,10 @@
-# FlaskERP - Low-Code ERP Platform
+# ERPSeed - Low-Code ERP Platform
 
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.x-orange)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-FlaskERP is an open-source, modular ERP platform that enables organizations to build and customize their business management system through a low-code approach. Unlike traditional ERP solutions that impose rigid processes, FlaskERP allows complete flexibility in modeling data, workflows, and user interfaces.
+ERPSeed is an open-source, modular ERP platform that enables organizations to build and customize their business management system through a low-code approach. Unlike traditional ERP solutions that impose rigid processes, ERPSeed allows complete flexibility in modeling data, workflows, and user interfaces.
 
 ---
 
@@ -19,7 +19,7 @@ A built-in visual builder lets you define entities, fields, relationships, and v
 
 ### Multi-Project Architecture
 
-FlaskERP natively supports multiple isolated projects within a single installation. Each project has its own:
+ERPSeed natively supports multiple isolated projects within a single installation. Each project has its own:
 - Database schema
 - Users and permissions
 - Modules and configurations
@@ -47,7 +47,7 @@ An AI-powered assistant that generates ERP configurations from natural language.
 
 ## Architecture
 
-FlaskERP follows a modern **Domain-Driven Design** architecture with clean separation of concerns:
+ERPSeed follows a modern **Domain-Driven Design** architecture with clean separation of concerns:
 
 ```
 backend/
@@ -121,7 +121,7 @@ backend/
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/flaskERP.git
+git clone https://github.com/your-repo/erpseed.git
 
 # Start with Docker
 docker-compose up -d
@@ -166,10 +166,8 @@ MIT License - See LICENSE file for details
 
 ## About ERPSeed
 
-FlaskERP is developed by **ERPSeed**, an open ecosystem that combines technology, education, and community to create opportunities for young people and small businesses.
-
-For more information about the ERPSeed project, community nodes, and how to join, see [docs/ERPSEED.md](docs/ERPSEED.md).
+ERPSeed is developed by **ERPSeed**, an open ecosystem that combines technology, education, and community to create opportunities for young people and small businesses.
 
 ---
 
-**FlaskERP: Build your ERP. Your way.**
+**ERPSeed: Build your ERP. Your way.**

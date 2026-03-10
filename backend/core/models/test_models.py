@@ -1,6 +1,6 @@
 """
 Test Models - TestSuite, TestCase, TestExecution
-Sistema di testing per i moduli FlaskERP
+Sistema di testing per i moduli ERPSeed
 """
 from datetime import datetime
 from backend.core.models.base import BaseModel

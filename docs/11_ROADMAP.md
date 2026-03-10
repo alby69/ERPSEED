@@ -1,4 +1,4 @@
-# FlaskERP Roadmap Completa
+# ERPSeed Roadmap Completa
 
 Questo documento raccoglie lo stato delle funzionalità, il piano di refactoring architetturale e la roadmap per gli sviluppi futuri.
 

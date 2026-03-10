@@ -1,8 +1,8 @@
-# 🛠️ Manuale Tecnico Sviluppatore FlaskERP
+# 🛠️ Manuale Tecnico Sviluppatore ERPSeed
 
 ## Benvenuto, Developer!
 
-FlaskERP è un ecosistema low-code "Living Code" basato su Flask (Backend) e React (Frontend). In questa guida tecnica, esploreremo come estendere e personalizzare il sistema con esempi pratici.
+ERPSeed è un ecosistema low-code "Living Code" basato su Flask (Backend) e React (Frontend). In questa guida tecnica, esploreremo come estendere e personalizzare il sistema con esempi pratici.
 
 ---
 

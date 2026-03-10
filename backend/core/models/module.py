@@ -1,5 +1,5 @@
 """
-Module - Sistema di modularizzazione per FlaskERP.
+Module - Sistema di modularizzazione per ERPSeed.
 
 Un Module è un'unità logica che raggruppa:
 - SysModel (tabelle dati)

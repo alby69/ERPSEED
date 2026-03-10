@@ -1,5 +1,5 @@
 """
-FlaskERP Dynamic ORM
+ERPSeed Dynamic ORM
 
 A meta-model driven ORM that generates database tables from SysModel/SysField definitions.
 Provides an Odoo-like interface for working with dynamic models.

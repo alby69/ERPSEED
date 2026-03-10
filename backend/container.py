@@ -1,5 +1,5 @@
 """
-Service Container - Dependency Injection container for FlaskERP services.
+Service Container - Dependency Injection container for ERPSeed services.
 """
 
 from typing import Any, Callable, Dict, Optional

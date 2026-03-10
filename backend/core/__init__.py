@@ -1,5 +1,5 @@
 """
-FlaskERP Core Module.
+ERPSeed Core Module.
 
 Provides:
 - Multi-tenant support

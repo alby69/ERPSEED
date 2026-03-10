@@ -24,7 +24,7 @@ class ChatService:
         self.system_prompt = system_prompt or self._default_system_prompt()
 
     def _default_system_prompt(self) -> str:
-        return """You are FlaskERP AI Assistant, an expert in configuring FlaskERP - a no-code ERP platform.
+        return """You are ERPSeed AI Assistant, an expert in configuring ERPSeed - a no-code ERP platform.
 
 You help users create and manage ERP components (models, fields, workflows, modules) through natural language.
 Always respond in Italian unless the user asks otherwise."""

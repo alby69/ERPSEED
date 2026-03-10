@@ -1,17 +1,17 @@
-# 📘 Manuale Utente FlaskERP (Manuale Discorsivo)
+# 📘 Manuale Utente ERPSeed (Manuale Discorsivo)
 
-## Benvenuto in FlaskERP
+## Benvenuto in ERPSeed
 
 Benvenuto nel futuro della gestione aziendale. Se stai leggendo questo manuale, significa che hai deciso di digitalizzare la tua azienda con uno strumento flessibile, intuitivo e potente.
 
-A differenza degli ERP tradizionali, FlaskERP è progettato per adattarsi a te, non il contrario. In questa guida esploreremo i concetti fondamentali che ti permetteranno di gestire i tuoi processi quotidiani senza stress.
+A differenza degli ERP tradizionali, ERPSeed è progettato per adattarsi a te, non il contrario. In questa guida esploreremo i concetti fondamentali che ti permetteranno di gestire i tuoi processi quotidiani senza stress.
 
 ---
 
 ## 1. Il Tuo Spazio di Lavoro (Dashboard)
 
 Quando effettui l'accesso, verrai accolto dalla tua **Dashboard**. È il centro di comando del tuo business.
--   **Progetti**: FlaskERP ti permette di gestire diversi rami d'azienda o società in spazi completamente isolati.
+-   **Progetti**: ERPSeed ti permette di gestire diversi rami d'azienda o società in spazi completamente isolati.
 -   **Moduli**: Ogni funzionalità (Vendite, Magazzino, Anagrafica) è un modulo che puoi attivare o disattivare a piacimento.
 -   **App-like Experience**: Ogni modulo ha una sua dashboard dedicata, pensata per rendere le operazioni veloci e piacevoli.
 
@@ -19,7 +19,7 @@ Quando effettui l'accesso, verrai accolto dalla tua **Dashboard**. È il centro 
 
 ## 2. Gestione delle Anagrafiche (Chi sono i tuoi contatti?)
 
-Ogni business gira attorno alle persone. In FlaskERP le abbiamo raggruppate nel modulo **Anagrafica**:
+Ogni business gira attorno alle persone. In ERPSeed le abbiamo raggruppate nel modulo **Anagrafica**:
 -   **Soggetti**: Sono le persone fisiche o le aziende.
 -   **Ruoli**: Un'azienda può essere contemporaneamente un Fornitore e un Cliente. Basta assegnare i ruoli corretti.
 -   **Contatti e Indirizzi**: Gestisci più sedi e più riferimenti (email, telefono) per ogni soggetto.
@@ -28,7 +28,7 @@ Ogni business gira attorno alle persone. In FlaskERP le abbiamo raggruppate nel 
 
 ## 3. Il Ciclo Attivo e Passivo (Vendite e Acquisti)
 
-Gestire il flusso dei documenti è il cuore di FlaskERP:
+Gestire il flusso dei documenti è il cuore di ERPSeed:
 -   **Preventivi**: Invia proposte ai tuoi clienti in pochi secondi.
 -   **Ordini**: Una volta confermato, il preventivo diventa un ordine.
 -   **DDT e Fatture**: Genera i documenti necessari per la consegna e il pagamento.

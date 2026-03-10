@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-FlaskERP è progettato per integrarsi con il mondo esterno. Attraverso le API REST, i webhooks e il sistema plugin, puoi connettere FlaskERP con altri sistemi, automatizzare flussi di lavoro e estendere le funzionalità.
+ERPSeed è progettato per integrarsi con il mondo esterno. Attraverso le API REST, i webhooks e il sistema plugin, puoi connettere ERPSeed con altri sistemi, automatizzare flussi di lavoro e estendere le funzionalità.
 
 ---
 
@@ -10,7 +10,7 @@ FlaskERP è progettato per integrarsi con il mondo esterno. Attraverso le API RE
 
 ### Introduzione alle API
 
-Tutte le funzionalità di FlaskERP sono accessibili via API. Questo significa che puoi:
+Tutte le funzionalità di ERPSeed sono accessibili via API. Questo significa che puoi:
 
 - Integrare con siti web
 - Creare APP mobile
@@ -95,7 +95,7 @@ curl -X POST "http://localhost:5000/api/projects/1/data/clienti" \
 
 ## Webhooks
 
-I webhooks permettono a FlaskERP di notificare altri sistemi quando accadono eventi.
+I webhooks permettono a ERPSeed di notificare altri sistemi quando accadono eventi.
 
 ### Configurare un Webhook
 
@@ -130,7 +130,7 @@ I webhooks permettono a FlaskERP di notificare altri sistemi quando accadono eve
 
 ### Payload del Webhook
 
-Quando si attiva un webhook, FlaskERP invia un POST con:
+Quando si attiva un webhook, ERPSeed invia un POST con:
 
 ```json
 {
@@ -146,13 +146,13 @@ Quando si attiva un webhook, FlaskERP invia un POST con:
 
 ### Sicurezza
 
-Ogni webhook include un header `X-Webhook-Signature` che puoi verificare per assicurarti che la richiesta arrivi da FlaskERP.
+Ogni webhook include un header `X-Webhook-Signature` che puoi verificare per assicurarti che la richiesta arrivi da ERPSeed.
 
 ---
 
 ## Sistema Plugin (ModuleRegistry)
 
-Il sistema plugin di FlaskERP permette di estendere le funzionalità con moduli custom. Il cuore del sistema è il **ModuleRegistry** (precedentemente chiamato PluginRegistry).
+Il sistema plugin di ERPSeed permette di estendere le funzionalità con moduli custom. Il cuore del sistema è il **ModuleRegistry** (precedentemente chiamato PluginRegistry).
 
 Vedi [03_MODULI.md](03_MODULI.md) per una descrizione completa di come funzionano i moduli.
 

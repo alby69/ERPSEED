@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-L'automazione in FlaskERP è ciò che lega i Block e i Module in un sistema funzionale. Permette ai componenti di comunicare e reagire agli eventi automaticamente.
+L'automazione in ERPSeed è ciò che lega i Block e i Module in un sistema funzionale. Permette ai componenti di comunicare e reagire agli eventi automaticamente.
 
 I tre meccanismi sono:
 
@@ -267,7 +267,7 @@ Trigger: employee.created
 
 ## Workflow Builder Visivo
 
-FlaskERP include un builder visivo per creare workflow senza codice.
+ERPSeed include un builder visivo per creare workflow senza codice.
 
 ### Accesso
 

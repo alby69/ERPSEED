@@ -4,7 +4,7 @@
 
 L'AI Assistant è un assistente che ti aiuta a costruire il tuo ERP usando il linguaggio naturale. Invece di dover navigare interfacce e configurare manualmente, puoi semplicemente descrivere quello che ti serve e l'AI si occupa del resto.
 
-Questa funzionalità sfrutta il quarto pilastro di FlaskERP: il Self-Modifying Code. L'AI genera configurazioni che il sistema applica automaticamente.
+Questa funzionalità sfrutta il quarto pilastro di ERPSeed: il Self-Modifying Code. L'AI genera configurazioni che il sistema applica automaticamente.
 
 ---
 
@@ -655,7 +655,7 @@ L'AI Assistant è in fase di sviluppo. Prossime funzionalità:
 
 ## Conclusione
 
-L'AI Assistant rende FlaskERP ancora più accessibile. Anche senza conoscenze tecniche, puoi costruire il tuo sistema gestionale semplicemente descrivendo ciò che ti serve.
+L'AI Assistant rende ERPSeed ancora più accessibile. Anche senza conoscenze tecniche, puoi costruire il tuo sistema gestionale semplicemente descrivendo ciò che ti serve.
 
 Il sistema impara dalle conversazioni: più lo usi, migliore sarà il risultato grazie al feedback loop.
 

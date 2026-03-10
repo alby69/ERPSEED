@@ -1,10 +1,10 @@
-# Architettura di FlaskERP
+# Architettura di ERPSeed
 
 ## Panoramica del Sistema
 
-FlaskERP è un sistema ERP modulare di nuova generazione, progettato per adattarsi alle esigenze specifiche di ogni organizzazione. A differenza dei gestionali tradizionali che impongono processi predefiniti, FlaskERP permette di modellare il sistema informativo esattamente secondo le proprie necessità.
+ERPSeed è un sistema ERP modulare di nuova generazione, progettato per adattarsi alle esigenze specifiche di ogni organizzazione. A differenza dei gestionali tradizionali che impongono processi predefiniti, ERPSeed permette di modellare il sistema informativo esattamente secondo le proprie necessità.
 
-Il cuore di FlaskERP è il **Builder**, un motore low-code integrato che consente di creare entità, campi, relazioni e viste direttamente dall'interfaccia web, senza scrivere codice.
+Il cuore di ERPSeed è il **Builder**, un motore low-code integrato che consente di creare entità, campi, relazioni e viste direttamente dall'interfaccia web, senza scrivere codice.
 
 La natura multi-tenant garantisce l'isolamento completo dei dati: ogni progetto opera in uno spazio separato, potendo però condividere template e configurazioni quando necessario.
 
@@ -12,7 +12,7 @@ La natura multi-tenant garantisce l'isolamento completo dei dati: ogni progetto 
 
 ## Architettura Refactoring (2026)
 
-FlaskERP ha completato un importante refactoring architetturale seguendo i pattern **Domain-Driven Design** e **Hexagonal Architecture**:
+ERPSeed ha completato un importante refactoring architetturale seguendo i pattern **Domain-Driven Design** e **Hexagonal Architecture**:
 
 ```
 backend/
@@ -40,41 +40,41 @@ backend/
 
 ### Pattern Implementati
 
-| Pattern | Componente | Scopo |
-|---------|-----------|-------|
-| **Ports & Adapters** | `ai_service/` | Astrazione provider LLM |
-| **CQRS** | `builder_service/` | Separazione Command/Query |
-| **Repository** | `builder_service/domain/` | Astrazione accesso dati |
-| **Event-Driven** | `shared/events/` | Comunicazione decoupled |
-| **Dependency Injection** | `container.py` | Gestione servizi |
-| **Plugin** | `plugin_system/` | Estensibilità |
+| Pattern                  | Componente                | Scopo                     |
+| ------------------------ | ------------------------- | ------------------------- |
+| **Ports & Adapters**     | `ai_service/`             | Astrazione provider LLM   |
+| **CQRS**                 | `builder_service/`        | Separazione Command/Query |
+| **Repository**           | `builder_service/domain/` | Astrazione accesso dati   |
+| **Event-Driven**         | `shared/events/`          | Comunicazione decoupled   |
+| **Dependency Injection** | `container.py`            | Gestione servizi          |
+| **Plugin**               | `plugin_system/`          | Estensibilità             |
 
 ---
 
 ## Livelli Architetturali
 
-FlaskERP è organizzato in livelli crescenti di astrazione:
+ERPSeed è organizzato in livelli crescenti di astrazione:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      APPLICAZIONE FLASKERP                       │
+│                      APPLICAZIONE ERPSEED                       │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │              LIVELLO FUNZIONALE (Module)                │   │
-│  │  Module = SysModel + Block + Hook + API                │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                              │                                   │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │              LIVELLO UI (Block)                         │   │
-│  │  Block = Component + Relazioni                         │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                              │                                   │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │              LIVELLO DATI (SysModel)                    │   │
-│  │  SysModel + SysField = Entità + Campi                  │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                  │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │              LIVELLO FUNZIONALE (Module)                │    │
+│  │  Module = SysModel + Block + Hook + API                 │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              │                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │              LIVELLO UI (Block)                         │    │
+│  │  Block = Component + Relazioni                          │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              │                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │              LIVELLO DATI (SysModel)                    │    │
+│  │  SysModel + SysField = Entità + Campi                   │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -83,7 +83,8 @@ FlaskERP è organizzato in livelli crescenti di astrazione:
 ## I Concetti Fondamentali
 
 ### 0. AI-First Construction
-A differenza dei sistemi tradizionali, FlaskERP nasce per essere costruito dall'**AI Assistant**. L'utente non configura solo tramite UI, ma descrive le proprie necessità in linguaggio naturale. L'AI interpreta i requisiti e genera automaticamente `SysModel`, `Fields` e `Blocks`, riducendo i tempi di setup del 90%.
+
+A differenza dei sistemi tradizionali, ERPSeed nasce per essere costruito dall'**AI Assistant**. L'utente non configura solo tramite UI, ma descrive le proprie necessità in linguaggio naturale. L'AI interpreta i requisiti e genera automaticamente `SysModel`, `Fields` e `Blocks`, riducendo i tempi di setup del 90%.
 
 ### 1. SysModel (Entità)
 
@@ -96,6 +97,7 @@ Ogni SysModel è composto da **SysField** (campi) che ne definiscono la struttur
 ### 2. SysField (Campo)
 
 Un **SysField** definisce un singolo attributo di un SysModel. Ogni campo ha:
+
 - **Tipo**: string, text, integer, decimal, boolean, date, datetime, select, relation
 - **Configurazione**: required, unique, default, validation
 - **Opzioni**: per select, relation, lookup
@@ -123,6 +125,7 @@ Un **Block** è una collezione di Component con relazioni tra loro. È l'unità 
 ### 5. Module (Modulo)
 
 Un **Module** è l'unità funzionale completa che combina:
+
 - **SysModel**: le entità dati
 - **Block**: le interfacce utente
 - **Hook**: la logica di business (validazioni, calcoli)
@@ -131,6 +134,7 @@ Un **Module** è l'unità funzionale completa che combina:
 Quando un modulo viene pubblicato nel Marketplace, acquisisce una **Dashboard App-like**: un'interfaccia dedicata e ottimizzata (simile a una Single Page Application) che raggruppa tutti i suoi componenti in un unico ambiente di lavoro coerente.
 
 **Esempio**: Il modulo "Vendite" include:
+
 - SysModel: Ordine, RigaOrdine, Pagamento
 - Block: ListaOrdini, FormOrdine, KanbanOrdini, StatisticheVendite
 - Hook: calcolo totale, verifica stock, generazione fattura
@@ -144,32 +148,32 @@ Ogni ERP necessita di questi **modelli fondamentali** predefiniti:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     CORE BLOCK (ERP Foundation)                │
+│                     CORE BLOCK (ERP Foundation)                 │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────────┐    ┌─────────────────┐                    │
-│  │     SOGGETTO    │    │      RUOLO      │                    │
+│                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐                     │
+│  │     SOGGETTO    │    │      RUOLO      │                     │
 │  │   (Party)       │◄───│ (Cliente, Forn., │                    │
-│  │                 │    │  Dipendente...) │                    │
-│  └────────┬────────┘    └─────────────────┘                    │
-│           │                                                      │
-│     ┌─────┴─────┐                                              │
-│     ▼           ▼                                              │
-│ ┌─────────┐ ┌─────────┐                                        │
-│ │INDIRIZZO│ │CONTATTO │  (multipli per soggetto)            │
-│ │(Address)│ │(Contact)│                                        │
-│ └─────────┘ └─────────┘                                        │
-│                                                                  │
-│  ┌─────────────────┐    ┌─────────────────┐                    │
-│  │    PRODOTTO    │    │    Ubicazione  │                    │
-│  │   (Product)    │    │  (Warehouse)    │                    │
-│  └─────────────────┘    └─────────────────┘                    │
-│                                                                  │
-│  ┌─────────────────┐    ┌─────────────────┐                    │
-│  │    UTENTE      │    │    PROGETTO     │                    │
-│  │   (User)       │    │   (Project)    │                    │
-│  └─────────────────┘    └─────────────────┘                    │
-│                                                                  │
+│  │                 │    │  Dipendente...) │                     │
+│  └────────┬────────┘    └─────────────────┘                     │
+│           │                                                     │
+│     ┌─────┴─────┐                                               │
+│     ▼           ▼                                               │
+│ ┌─────────┐ ┌─────────┐                                         │
+│ │INDIRIZZO│ │CONTATTO │  (multipli per soggetto)                │
+│ │(Address)│ │(Contact)│                                         │
+│ └─────────┘ └─────────┘                                         │
+│                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐                     │
+│  │    PRODOTTO     │    │    Ubicazione   │                     │
+│  │   (Product)     │    │  (Warehouse)    │                     │
+│  └─────────────────┘    └─────────────────┘                     │
+│                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐                     │
+│  │    UTENTE       │    │    PROGETTO     │                     │
+│  │   (User)        │    │   (Project)     │                     │
+│  └─────────────────┘    └─────────────────┘                     │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -179,12 +183,12 @@ Questi Core Block sono preinstallati e non eliminabili.
 
 ## Categorie dei Moduli
 
-| Categoria | Fornitore | Licenza | Esempio |
-|-----------|-----------|---------|---------|
-| **core** | Sistema | Sempre disponibile | Auth, Progetti, Builder |
-| **builtin** | Sviluppatori core | Inclusi nell'installazione | Anagrafica, Vendite, Magazzino |
-| **premium** | Sviluppatori core | A pagamento | Contabilità avanzata, Produzione |
-| **marketplace** | Comunità | Vari (gratis/pagamento) | Template specifici, widget custom |
+| Categoria       | Fornitore         | Licenza                    | Esempio                           |
+| --------------- | ----------------- | -------------------------- | --------------------------------- |
+| **core**        | Sistema           | Sempre disponibile         | Auth, Progetti, Builder           |
+| **builtin**     | Sviluppatori core | Inclusi nell'installazione | Anagrafica, Vendite, Magazzino    |
+| **premium**     | Sviluppatori core | A pagamento                | Contabilità avanzata, Produzione  |
+| **marketplace** | Comunità          | Vari (gratis/pagamento)    | Template specifici, widget custom |
 
 La categoria indica **provenienza e modello di business**, non importanza funzionale.
 
@@ -232,7 +236,8 @@ AFTER_DELETE  → Dopo la cancellazione
 
 Sistema di messaggistica **asincrona** per eventi di business. Un componente pubblica, altri reagiscono.
 
-FlaskERP usa un EventBus in-memory con supporto per:
+ERPSeed usa un EventBus in-memory con supporto per:
+
 - **Eventi Standard**: model.created, record.updated, user.login, etc.
 - **Eventi Custom**: Qualsiasi evento definito dal modulo
 - **Sottoscrizioni**: Handler si iscrivono a tipi specifici di eventi
@@ -249,7 +254,7 @@ Sequenze dichiarative di azioni condizionali, configurabili via UI dall'amminist
 
 ## Dependency Injection Container
 
-FlaskERP usa un Container DI centralizzato per la gestione dei servizi:
+ERPSeed usa un Container DI centralizzato per la gestione dei servizi:
 
 ```python
 from backend.container import get_container
@@ -266,21 +271,21 @@ user_service = container.get('user_service')
 
 ## Stack Tecnologico
 
-| Componente | Tecnologia |
-|------------|------------|
-| Backend | Flask 3.x |
-| API | Flask-smorest (OpenAPI) |
-| Database | PostgreSQL 14+ |
-| ORM | SQLAlchemy |
-| Auth | JWT |
-| Frontend | React 19 + Ant Design |
-| Container | Docker |
+| Componente | Tecnologia              |
+| ---------- | ----------------------- |
+| Backend    | Flask 3.x               |
+| API        | Flask-smorest (OpenAPI) |
+| Database   | PostgreSQL 14+          |
+| ORM        | SQLAlchemy              |
+| Auth       | JWT                     |
+| Frontend   | React 19 + Ant Design   |
+| Container  | Docker                  |
 
 ---
 
 ## Quick Start
 
-Per iniziare a utilizzare FlaskERP:
+Per iniziare a utilizzare ERPSeed:
 
 1. **Accedi** all'interfaccia web
 2. **Crea un progetto** dal menu di amministrazione
@@ -294,16 +299,16 @@ Per aspetti tecnici approfonditi, consulta i manuali specifici.
 
 ## Documentazione
 
-| Documento | Descrizione |
-|-----------|-------------|
-| [02_BUILDER.md](02_BUILDER.md) | Creare entità, campi, relazioni |
-| [03_MODULI.md](03_MODULI.md) | Moduli disponibili e gestione |
-| [04_AMMINISTRAZIONE.md](04_AMMINISTRAZIONE.md) | Utenti, permessi, backup |
-| [05_MARKETPLACE.md](05_MARKETPLACE.md) | Pubblicare e installare |
-| [06_AUTOMAZIONE.md](06_AUTOMAZIONE.md) | Hook, Eventi, Workflow |
-| [10_AI_ASSISTANT.md](10_AI_ASSISTANT.md) | AI Assistant per auto-configurazione |
-| [12_ROADMAP.md](12_ROADMAP.md) | Roadmap refactoring architetturale |
+| Documento                                      | Descrizione                          |
+| ---------------------------------------------- | ------------------------------------ |
+| [02_BUILDER.md](02_BUILDER.md)                 | Creare entità, campi, relazioni      |
+| [03_MODULI.md](03_MODULI.md)                   | Moduli disponibili e gestione        |
+| [04_AMMINISTRAZIONE.md](04_AMMINISTRAZIONE.md) | Utenti, permessi, backup             |
+| [05_MARKETPLACE.md](05_MARKETPLACE.md)         | Pubblicare e installare              |
+| [06_AUTOMAZIONE.md](06_AUTOMAZIONE.md)         | Hook, Eventi, Workflow               |
+| [10_AI_ASSISTANT.md](10_AI_ASSISTANT.md)       | AI Assistant per auto-configurazione |
+| [12_ROADMAP.md](12_ROADMAP.md)                 | Roadmap refactoring architetturale   |
 
 ---
 
-*Documento aggiornato: Marzo 2026*
+_Documento aggiornato: Marzo 2026_

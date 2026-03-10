@@ -153,7 +153,7 @@ class WebhookTest(MethodView):
             'event': 'test',
             'timestamp': datetime.utcnow().isoformat() + 'Z',
             'data': {
-                'message': 'This is a test webhook from FlaskERP',
+                'message': 'This is a test webhook from ERPSeed',
                 'endpoint_id': endpoint_id
             }
         }

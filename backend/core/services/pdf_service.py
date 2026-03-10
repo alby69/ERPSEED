@@ -1,5 +1,5 @@
 """
-PDF Generation Service per FlaskERP
+PDF Generation Service per ERPSeed
 Supporta: Sales Orders, Invoices, Quotes
 
 Per utilizzare questo servizio:

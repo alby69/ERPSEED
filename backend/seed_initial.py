@@ -21,8 +21,8 @@ def init_db():
         # Create owner user
         print("Creating owner user...")
         owner = User(
-            email='owner@flaskerp.local',
-            first_name='Owner',
+            email='admin@erpseed.org',
+            first_name='Admin',
             last_name='Admin',
             role='owner',
             is_active=True
@@ -34,9 +34,9 @@ def init_db():
         # Create default tenant (ERP del owner)
         print("Creating default tenant...")
         tenant = Tenant(
-            name='FlaskERP Main',
+            name='ERPSeed Main',
             slug='flaskerp-main',
-            email='owner@flaskerp.local',
+            email='admin@erpseed.org',
             piano='starter',
             stato='attivo',
             owner_id=owner.id,
@@ -65,7 +65,7 @@ def init_db():
             versione='1.0.0_20260219',
             titolo='Core Entities',
             descrizione='Entità core del sistema: Soggetto, Ruolo, Indirizzo, Contatto',
-            autore='FlaskERP',
+            autore='ERPSeed',
             tipo='core',
             stato='attivo',
             dipendenze=[],
@@ -115,7 +115,7 @@ def init_db():
         print("Database initialized successfully!")
         print("="*50)
         print(f"\nOwner User:")
-        print(f"  Email: owner@flaskerp.local")
+        print(f"  Email: admin@erpseed.org")
         print(f"  Password: admin123")
         print(f"\nDefault Tenant:")
         print(f"  Name: {tenant.name}")
