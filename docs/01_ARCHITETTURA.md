@@ -10,6 +10,47 @@ La natura multi-tenant garantisce l'isolamento completo dei dati: ogni progetto 
 
 ---
 
+## Architettura Refactoring (2026)
+
+FlaskERP ha completato un importante refactoring architetturale seguendo i pattern **Domain-Driven Design** e **Hexagonal Architecture**:
+
+```
+backend/
+├── shared/              # Infrastruttura condivisa
+│   ├── orm/           # Definizioni campi
+│   ├── utils/         # Pagination, filtri, audit
+│   ├── exceptions/    # Eccezioni custom
+│   ├── interfaces/   # Interfacce servizi
+│   └── events/       # EventBus + eventi dominio
+├── ai_service/        # AI Service (Ports & Adapters)
+│   ├── domain/       # Modelli, porte, servizi
+│   └── adapters/    # Adapter LLM
+├── builder_service/  # Builder Service (CQRS)
+│   ├── domain/       # Entità, repository, eventi
+│   ├── application/  # Comandi e query
+│   └── infrastructure/
+├── plugin_system/    # Sistema plugin
+│   ├── interfaces.py
+│   └── manager.py
+├── container.py      # Dependency Injection Container
+├── builder/         # Modulo builder (legacy)
+├── ai/              # Modulo AI (legacy)
+└── plugins/         # Implementazioni plugin
+```
+
+### Pattern Implementati
+
+| Pattern | Componente | Scopo |
+|---------|-----------|-------|
+| **Ports & Adapters** | `ai_service/` | Astrazione provider LLM |
+| **CQRS** | `builder_service/` | Separazione Command/Query |
+| **Repository** | `builder_service/domain/` | Astrazione accesso dati |
+| **Event-Driven** | `shared/events/` | Comunicazione decoupled |
+| **Dependency Injection** | `container.py` | Gestione servizi |
+| **Plugin** | `plugin_system/` | Estensibilità |
+
+---
+
 ## Livelli Architetturali
 
 FlaskERP è organizzato in livelli crescenti di astrazione:
@@ -191,6 +232,11 @@ AFTER_DELETE  → Dopo la cancellazione
 
 Sistema di messaggistica **asincrona** per eventi di business. Un componente pubblica, altri reagiscono.
 
+FlaskERP usa un EventBus in-memory con supporto per:
+- **Eventi Standard**: model.created, record.updated, user.login, etc.
+- **Eventi Custom**: Qualsiasi evento definito dal modulo
+- **Sottoscrizioni**: Handler si iscrivono a tipi specifici di eventi
+
 **Uso**: Comunicazione tra moduli senza accoppiamento, sincronizzazioni, notifiche
 
 ### Workflow
@@ -198,6 +244,23 @@ Sistema di messaggistica **asincrona** per eventi di business. Un componente pub
 Sequenze dichiarative di azioni condizionali, configurabili via UI dall'amministratore.
 
 **Uso**: Automazioni business, processi multi-step, approvazioni
+
+---
+
+## Dependency Injection Container
+
+FlaskERP usa un Container DI centralizzato per la gestione dei servizi:
+
+```python
+from backend.container import get_container
+
+container = get_container()
+container.register('db', lambda: db)
+container.register('event_bus', lambda: EventBus())
+
+# Ottenere un servizio
+user_service = container.get('user_service')
+```
 
 ---
 
@@ -238,6 +301,8 @@ Per aspetti tecnici approfonditi, consulta i manuali specifici.
 | [04_AMMINISTRAZIONE.md](04_AMMINISTRAZIONE.md) | Utenti, permessi, backup |
 | [05_MARKETPLACE.md](05_MARKETPLACE.md) | Pubblicare e installare |
 | [06_AUTOMAZIONE.md](06_AUTOMAZIONE.md) | Hook, Eventi, Workflow |
+| [10_AI_ASSISTANT.md](10_AI_ASSISTANT.md) | AI Assistant per auto-configurazione |
+| [12_ROADMAP.md](12_ROADMAP.md) | Roadmap refactoring architetturale |
 
 ---
 

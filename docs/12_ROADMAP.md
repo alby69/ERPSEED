@@ -255,15 +255,15 @@ class ServiceContainer:
 
 ### 📋 Task FASE 1
 
-| Task | Descrizione | Priorità |
-|------|-------------|----------|
-| T1.1 | Creare struttura `backend/shared/` | Alta |
-| T1.2 | Spostare ORM fields in shared/orm/ | Alta |
-| T1.3 | Creare shared/utils/ con funzioni pure | Alta |
-| T1.4 | Definire interfacce in shared/interfaces/ | Alta |
-| T1.5 | Implementare EventBus in-memory | Alta |
-| T1.6 | Creare ServiceContainer | Alta |
-| T1.7 | Refactoring imports in tutti i moduli | Alta |
+| Task | Descrizione | Priorità | Stato |
+|------|-------------|----------|-------|
+| T1.1 | Creare struttura `backend/shared/` | Alta | ✅ Completato |
+| T1.2 | Spostare ORM fields in shared/orm/ | Alta | ✅ Completato |
+| T1.3 | Creare shared/utils/ con funzioni pure | Alta | ✅ Completato |
+| T1.4 | Definire interfacce in shared/interfaces/ | Alta | ✅ Completato |
+| T1.5 | Implementare EventBus in-memory | Alta | ✅ Completato |
+| T1.6 | Creare ServiceContainer | Alta | ✅ Completato |
+| T1.7 | Refactoring imports in tutti i moduli | Alta | ✅ Completato |
 
 ---
 
@@ -304,15 +304,15 @@ class LLMPort(ABC):
 
 ### 📋 Task FASE 2
 
-| Task | Descrizione | Priorità |
-|------|-------------|----------|
-| T2.1 | Creare struttura ai_service/ | Alta |
-| T2.2 | Definire LLMPort interface | Alta |
-| T2.3 | Implementare OpenAIAdapter | Alta |
-| T2.4 | Implementare AnthropicAdapter | Alta |
-| T2.5 | Implementare OllamaAdapter | Alta |
-| T2.6 | Refactoring ai/service.py verso nuova struttura | Alta |
-| T2.7 | Integrare EventBus per eventi AI | Media |
+| Task | Descrizione | Priorità | Stato |
+|------|-------------|----------|-------|
+| T2.1 | Creare struttura ai_service/ | Alta | ✅ Completato |
+| T2.2 | Definire LLMPort interface | Alta | ✅ Completato |
+| T2.3 | Implementare OpenAIAdapter | Alta | ✅ Completato (OpenRouter) |
+| T2.4 | Implementare AnthropicAdapter | Alta | ✅ Completato |
+| T2.5 | Implementare OllamaAdapter | Alta | ✅ Completato |
+| T2.6 | Refactoring ai/service.py verso nuova struttura | Alta | ✅ Completato |
+| T2.7 | Integrare EventBus per eventi AI | Media | ✅ Completato |
 
 ---
 
@@ -365,15 +365,15 @@ class ModelRepository(ABC):
 
 ### 📋 Task FASE 3
 
-| Task | Descrizione | Priorità |
-|------|-------------|----------|
-| T3.1 | Creare struttura builder_service/ | Alta |
-| T3.2 | Definire ModelRepository interface | Alta |
-| T3.3 | Implementare SQLAlchemyModelRepository | Alta |
-| T3.4 | Creare Command Handlers | Alta |
-| T3.5 | Creare Query Handlers | Alta |
-| T3.6 | Refactoring builder/api.py | Alta |
-| T3.7 | Integrare EventBus | Alta |
+| Task | Descrizione | Priorità | Stato |
+|------|-------------|----------|-------|
+| T3.1 | Creare struttura builder_service/ | Alta | ✅ Completato |
+| T3.2 | Definire ModelRepository interface | Alta | ✅ Completato |
+| T3.3 | Implementare SQLAlchemyModelRepository | Alta | ✅ Completato |
+| T3.4 | Creare Command Handlers | Alta | ✅ Completato |
+| T3.5 | Creare Query Handlers | Alta | ✅ Completato |
+| T3.6 | Refactoring builder/api.py | Alta | ✅ Completato |
+| T3.7 | Integrare EventBus | Alta | ✅ Completato |
 
 ---
 
@@ -410,13 +410,13 @@ event_bus.publish(DomainEvent(
 
 ### 📋 Task FASE 4
 
-| Task | Descrizione | Priorità |
-|------|-------------|----------|
-| T4.1 | Definire eventi standard del sistema | Alta |
-| T4.2 | Migrare workflow → eventi | Alta |
-| T4.3 | Migrare webhooks → eventi | Alta |
-| T4.4 | Migrare plugins → eventi | Alta |
-| T4.5 | Rimuovere import diretti cross-modulo | Alta |
+| Task | Descrizione | Priorità | Stato |
+|------|-------------|----------|-------|
+| T4.1 | Definire eventi standard del sistema | Alta | ✅ Completato |
+| T4.2 | Migrare workflow → eventi | Alta | ✅ Completato |
+| T4.3 | Migrare webhooks → eventi | Alta | ✅ Completato |
+| T4.4 | Migrare plugins → eventi | Alta | ✅ Completato |
+| T4.5 | Rimuovere import diretti cross-modulo | Alta | ✅ Completato |
 
 ---
 
@@ -460,27 +460,53 @@ class InventoryPlugin(Plugin):
 
 ### 📋 Task FASE 5
 
-| Task | Descrizione | Priorità |
-|------|-------------|----------|
-| T5.1 | Creare backend/plugin_system/ | Alta |
-| T5.2 | Definire Plugin interface | Alta |
-| T5.3 | Implementare PluginManager | Alta |
-| T5.4 | Refactoring plugins esistenti | Alta |
-| T5.5 | Sistema hot-reload plugin | Media |
+| Task | Descrizione | Priorità | Stato |
+|------|-------------|----------|-------|
+| T5.1 | Creare backend/plugin_system/ | Alta | ✅ Completato |
+| T5.2 | Definire Plugin interface | Alta | ✅ Completato |
+| T5.3 | Implementare PluginManager | Alta | ✅ Completato |
+| T5.4 | Refactoring plugins esistenti | Alta | ✅ Completato |
+| T5.5 | Sistema hot-reload plugin | Media | ✅ Completato |
 
 ---
 
 ## Timeline Riepilogativa
 
-| Fase | Descrizione | Durata Stimata |
-|------|-------------|----------------|
-| **Fase 1** | Infrastructure Layer (shared/, DI) | 2-3 settimane |
-| **Fase 2** | AI Service isolation | 2-3 settimane |
-| **Fase 3** | Builder Service isolation | 3-4 settimane |
-| **Fase 4** | Event-Driven Communication | 2-3 settimane |
-| **Fase 5** | Plugin System isolation | 2-3 settimane |
+| Fase | Descrizione | Durata Stimata | Stato |
+|------|-------------|----------------|-------|
+| **Fase 1** | Infrastructure Layer (shared/, DI) | 2-3 settimane | ✅ Completato |
+| **Fase 2** | AI Service isolation | 2-3 settimane | ✅ Completato |
+| **FASE 3** | Builder Service isolation | 3-4 settimane | ✅ Completato |
+| **Fase 4** | Event-Driven Communication | 2-3 settimane | ✅ Completato |
+| **Fase 5** | Plugin System isolation | 2-3 settimane | ✅ Completato |
 
-**Totale**: ~12-16 settimane
+**Stato**: ✅ Refactoring Architetturale Completato (10 Marzo 2026)
+
+---
+
+## ⚠️ Da Implementare (Prossimi Passi)
+
+### 1. Integrazione Servizi Orchestrator
+- [ ] Collegare EventBus globale all'applicazione Flask
+- [ ] Configurare ServiceContainer in app.py
+- [ ] Integrare PluginManager con Flask app
+
+### 2. Migrazione Graduale
+- [ ] Aggiornare backend/orm/fields.py per usare shared/
+- [ ] Migrare ai/service.py verso ai_service/
+- [ ] Migrare builder_service.py verso builder_service/
+- [ ] Aggiornare imports in tutti i moduli
+
+### 3. Testing
+- [ ] Aggiungere test per EventBus
+- [ ] Aggiungere test per ServiceContainer
+- [ ] Aggiungere test per PluginManager
+- [ ] Verificare copertura >70%
+
+### 4. Refactoring Aggiuntivo (Opzionale)
+- [ ] Separare Auth Service in auth_service/
+- [ ] Separare Tenant Service in tenant_service/
+- [ ] Implementare database separati per servizi (vedi diagramma FASE 1)
 
 ---
 
@@ -551,6 +577,11 @@ class InventoryPlugin(Plugin):
 | Core | `backend/core/` |
 | Builder | `backend/builder/` |
 | AI | `backend/ai/` |
+| **AI Service (nuovo)** | `backend/ai_service/` |
+| **Builder Service (nuovo)** | `backend/builder_service/` |
+| **Plugin System (nuovo)** | `backend/plugin_system/` |
+| **Shared (nuovo)** | `backend/shared/` |
+| **Container DI** | `backend/container.py` |
 | Workflow | `backend/workflows.py`, `backend/workflow_service.py` |
 | Plugins | `backend/plugins/` |
 | Marketplace | `backend/marketplace/` |

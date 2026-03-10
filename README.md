@@ -1,5 +1,9 @@
 # FlaskERP - Low-Code ERP Platform
 
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.x-orange)](https://flask.palletsprojects.com/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 FlaskERP is an open-source, modular ERP platform that enables organizations to build and customize their business management system through a low-code approach. Unlike traditional ERP solutions that impose rigid processes, FlaskERP allows complete flexibility in modeling data, workflows, and user interfaces.
 
 ---
@@ -32,12 +36,54 @@ An AI-powered assistant that generates ERP configurations from natural language.
 - Natural language → JSON configuration
 - RAG-based context injection (knows your project schema)
 - **Embedded Tool Calling** - AI can operate directly on your data
-- **Multi-LLM Support** - OpenRouter (DeepSeek) or Anthropic Claude
+- **Multi-LLM Support** - OpenRouter (DeepSeek), Anthropic Claude, Ollama (local)
 - **Business Logic Automation** - Workflows, Hooks, Scheduled Tasks
 - **AI Test Generator** - Automatic test suite generation
 - Tool Registry automatically generates CRUD tools from your dynamic models
 - Preview and edit before applying
 - Feedback loop for continuous learning
+
+---
+
+## Architecture
+
+FlaskERP follows a modern **Domain-Driven Design** architecture with clean separation of concerns:
+
+```
+backend/
+├── shared/              # Shared infrastructure (NEW!)
+│   ├── orm/           # Field definitions
+│   ├── utils/         # Pagination, filters, audit
+│   ├── exceptions/    # Custom exceptions
+│   ├── interfaces/    # Service interfaces
+│   └── events/       # EventBus + domain events
+├── ai_service/        # AI Service - Ports & Adapters (NEW!)
+│   ├── domain/       # Models, ports, services
+│   └── adapters/    # LLM adapters (OpenRouter, Claude, Ollama)
+├── builder_service/  # Builder Service - CQRS (NEW!)
+│   ├── domain/       # Entities, repositories, events
+│   ├── application/  # Commands & queries
+│   └── infrastructure/
+├── plugin_system/    # Plugin system (NEW!)
+│   ├── interfaces.py # Plugin base class
+│   └── manager.py    # Lifecycle management
+├── container.py      # Dependency Injection Container
+├── builder/          # Legacy builder module
+├── ai/              # Legacy AI module
+├── services/        # Business services
+└── plugins/         # Plugin implementations
+```
+
+### Design Patterns Implemented
+
+| Pattern | Component | Purpose |
+|---------|-----------|---------|
+| **Ports & Adapters** | `ai_service/` | LLM provider abstraction |
+| **CQRS** | `builder_service/` | Command/Query separation |
+| **Repository** | `builder_service/domain/` | Data access abstraction |
+| **Event-Driven** | `shared/events/` | Decoupled communication |
+| **Dependency Injection** | `container.py` | Service management |
+| **Plugin** | `plugin_system/` | Extensibility |
 
 ---
 
@@ -60,23 +106,13 @@ An AI-powered assistant that generates ERP configurations from natural language.
 
 ---
 
-## Architecture Highlights
-
-| Layer | Description |
-|-------|-------------|
-| **Data** | SysModel + SysField = Custom entities with relations |
-| **UI** | Block = Collection of Components (table, form, kanban, chart) |
-| **Business Logic** | Hooks = Synchronous handlers (validation, calculations) |
-| **Integration** | Event Bus + REST API + Webhooks |
-| **AI** | Natural language → Auto-generated configurations |
-
-### Technology Stack
+## Technology Stack
 
 - **Backend**: Flask 3.x + SQLAlchemy + PostgreSQL 14+
 - **API**: Flask-smorest with OpenAPI/Swagger
 - **Frontend**: React 19 + Ant Design
 - **Auth**: JWT with refresh tokens
-- **AI**: OpenRouter (DeepSeek) or Anthropic Claude + Tool Registry
+- **AI**: OpenRouter (DeepSeek), Anthropic Claude, Ollama (local)
 - **Container**: Docker
 
 ---
@@ -108,8 +144,9 @@ open http://localhost:8080
 | [docs/06_AUTOMAZIONE.md](docs/06_AUTOMAZIONE.md) | Hooks, Events, Workflows |
 | [docs/07_INTEGRAZIONI.md](docs/07_INTEGRAZIONI.md) | API, Webhooks, Registry |
 | [docs/10_AI_ASSISTANT.md](docs/10_AI_ASSISTANT.md) | AI Assistant for auto-configuration |
+| [docs/12_ROADMAP.md](docs/12_ROADMAP.md) | Architecture refactoring roadmap |
 | [docs/PROJECT_ANALYSIS.md](docs/PROJECT_ANALYSIS.md) | Technical deep-dive |
-| [docs/ERPSEED_PLATFORM.md](docs/ERPSEED_PLATFORM.md) | Open source infrastructure (Nextcloud) |
+| [docs/ERPSEED_PLATFORM.md](docs/ERPSEED_PLATFORM.md) | Open source infrastructure |
 
 ---
 

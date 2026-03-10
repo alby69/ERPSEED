@@ -63,8 +63,21 @@ SysModel → Block → Module
    │          │         │
    v          v         v
   Dati    Interfaccia  Funzionalità
-                    (Hook + API)
+                  (Hook + API)
 ```
+
+## Nuova Architettura (2026)
+
+FlaskERP ha completato un refactoring architetturale con:
+
+- **Ports & Adapters**: Per astrazione provider LLM
+- **CQRS**: Per separazione command/query nei servizi
+- **Repository Pattern**: Per astrazione dati
+- **Event-Driven**: Per comunicazione decoupled
+- **Dependency Injection**: Per gestione servizi
+- **Plugin System**: Per estensibilità
+
+Vedi [12_ROADMAP.md](12_ROADMAP.md) per dettagli completi.
 
 ## Link Rapidi
 

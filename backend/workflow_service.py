@@ -32,7 +32,9 @@ class WorkflowService(BaseService):
     """
 
     @staticmethod
-    def trigger_event(event: str, data: Dict[str, Any], project_id: Optional[int] = None):
+    def trigger_event(
+        event: str, data: Dict[str, Any], project_id: Optional[int] = None
+    ):
         """
         Trigger all workflows that listen for this event.
 
@@ -55,8 +57,30 @@ class WorkflowService(BaseService):
 
         for workflow in workflows:
             if workflow.trigger_event == event or workflow.trigger_event == "*":
-                # Use the new optimized WorkflowEngine
                 WorkflowEngine.run(workflow.id, event, data, project_id=project_id)
+
+        try:
+            from backend.shared.events import get_event_bus, DomainEvent
+
+            event_bus = get_event_bus()
+            event_bus.publish(
+                DomainEvent(
+                    event_type=event,
+                    payload=data,
+                    metadata={
+                        "project_id": project_id,
+                        "workflows_triggered": len(
+                            [
+                                w
+                                for w in workflows
+                                if w.trigger_event == event or w.trigger_event == "*"
+                            ]
+                        ),
+                    },
+                )
+            )
+        except Exception:
+            pass
 
     @staticmethod
     def _execute_step(
@@ -97,7 +121,9 @@ class WorkflowService(BaseService):
         elif operator == "not_equals":
             result = str(field_value) != str(value)
         elif operator == "contains":
-            result = str(value) in str(field_value) if field_value is not None else False
+            result = (
+                str(value) in str(field_value) if field_value is not None else False
+            )
         elif operator == "greater_than":
             try:
                 result = float(field_value or 0) > float(value or 0)
@@ -348,14 +374,15 @@ class WorkflowService(BaseService):
     ) -> "Workflow":
         """Create a new workflow."""
         workflow = Workflow(
-            name=name, # type: ignore
-            trigger_event=trigger_event, # type: ignore
-            description=description, # type: ignore
-            project_id=project_id, # type: ignore
-            created_by=user_id, # type: ignore
+            name=name,  # type: ignore
+            trigger_event=trigger_event,  # type: ignore
+            description=description,  # type: ignore
+            project_id=project_id,  # type: ignore
+            created_by=user_id,  # type: ignore
         )
 
         from backend.extensions import db
+
         db.session.add(workflow)
         db.session.commit()
 
@@ -367,14 +394,15 @@ class WorkflowService(BaseService):
     ) -> "WorkflowStep":
         """Add a step to a workflow."""
         step = WorkflowStep(
-            workflow_id=workflow_id, # type: ignore
-            step_type=step_type, # type: ignore
-            name=name, # type: ignore
-            config=config, # type: ignore
-            order=order, # type: ignore
+            workflow_id=workflow_id,  # type: ignore
+            step_type=step_type,  # type: ignore
+            name=name,  # type: ignore
+            config=config,  # type: ignore
+            order=order,  # type: ignore
         )
 
         from backend.extensions import db
+
         db.session.add(step)
         db.session.commit()
 
@@ -383,7 +411,7 @@ class WorkflowService(BaseService):
     @staticmethod
     def update_workflow(workflow_id: int, data: dict) -> "Workflow":
         """Update a workflow."""
-        
+
         workflow = db.session.get(Workflow, workflow_id)
         if not workflow:
             raise ValueError(f"Workflow {workflow_id} not found")
@@ -411,7 +439,9 @@ class WorkflowService(BaseService):
             db.session.commit()
 
     @staticmethod
-    def get_workflows(project_id: Optional[int] = None, active_only: bool = True) -> "Query":
+    def get_workflows(
+        project_id: Optional[int] = None, active_only: bool = True
+    ) -> "Query":
         """Get workflows query with optional filters."""
         query = Workflow.query
 
@@ -431,9 +461,8 @@ class WorkflowService(BaseService):
         from backend.workflows import WorkflowExecution
         from sqlalchemy import desc
 
-        return (
-            WorkflowExecution.query.filter_by(workflow_id=workflow_id)
-            .order_by(desc(WorkflowExecution.started_at))
+        return WorkflowExecution.query.filter_by(workflow_id=workflow_id).order_by(
+            desc(WorkflowExecution.started_at)
         )
 
     @staticmethod
@@ -537,7 +566,9 @@ class WorkflowService(BaseService):
         }
 
 
-def trigger_workflow_event(event: str, data: Dict[str, Any], project_id: Optional[int] = None):
+def trigger_workflow_event(
+    event: str, data: Dict[str, Any], project_id: Optional[int] = None
+):
     """
     Convenience function to trigger workflow automation.
 

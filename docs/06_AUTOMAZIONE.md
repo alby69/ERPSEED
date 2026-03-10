@@ -305,4 +305,30 @@ FlaskERP include un builder visivo per creare workflow senza codice.
 
 ---
 
-*Documento aggiornato: Febbraio 2026*
+## Implementazione
+
+L'EventBus è implementato in `backend/shared/events/event_bus.py`:
+
+```python
+from backend.shared.events import get_event_bus, DomainEvent
+
+event_bus = get_event_bus()
+
+# Pubblicazione
+event_bus.publish(DomainEvent(
+    event_type="order.created",
+    payload={"order_id": 123, "total": 1500.00}
+))
+
+# Sottoscrizione
+def handle_order_created(event):
+    print(f"Ordine creato: {event.payload}")
+
+event_bus.subscribe("order.created", handle_order_created)
+```
+
+Vedi anche [12_ROADMAP.md](12_ROADMAP.md) per dettagli sul refactoring.
+
+---
+
+*Documento aggiornato: Marzo 2026*

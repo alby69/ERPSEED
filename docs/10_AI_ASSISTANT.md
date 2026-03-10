@@ -61,6 +61,11 @@ L'AI genera:
 |------------|-------|------|
 | Architettura base | ✅ Completo | Service + API |
 | Integrazione LLM (OpenRouter) | ✅ Completo | DeepSeek V3 |
+| **Nuova Architettura (Ports & Adapters)** | ✅ Completo | `backend/ai_service/` |
+| **LLMPort Interface** | ✅ Completo | Astrazione provider |
+| **Adapter OpenRouter** | ✅ Completo | In ai_service/ |
+| **Adapter Anthropic** | ✅ Completo | Claude support |
+| **Adapter Ollama** | ✅ Completo | Local LLM |
 | RAG Context Injection | ✅ Completo | Context from project schema |
 | Tool Calling (CRUD) | ✅ Completo | list/create/get/update/delete su modelli |
 | Tool Calling (Business Logic) | ✅ Completo | Workflow, Hooks, Scheduled Tasks |
@@ -75,6 +80,8 @@ L'AI genera:
 | Feedback Loop (Learning) | ✅ Completo | Salva conversazioni in DB |
 | Cronologia conversazioni | ✅ Completo | UI con history panel |
 | Autenticazione JWT | ✅ Abilitata | Protegge tutti gli endpoint |
+
+*Nota*: La nuova architettura AI Service (`backend/ai_service/`) è disponibile per refactoring. Il modulo legacy (`backend/ai/`) rimane per retrocompatibilità.
 
 ---
 
