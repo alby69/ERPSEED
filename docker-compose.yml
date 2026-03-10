@@ -45,7 +45,7 @@ services:
       - FLASK_DEBUG=1
       - DATABASE_URL=postgresql://postgres:password@db:5432/flaskerp
       - SECRET_KEY=dev-secret-key-change-in-prod
-      - JWT_SECRET=dev-jwt-secret-change-in-prod
+      - JWT_SECRET_KEY=a-very-secure-and-long-jwt-secret-key-for-dev-env-a-very-secure-and-long-jwt-secret-key-for-dev-env
     depends_on:
       db:
         condition: service_healthy

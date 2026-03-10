@@ -1,23 +1,10 @@
 """
-Events Package - Event-driven communication infrastructure.
+Events package for the shared infrastructure layer.
+Exports the main DomainEvent and EventBus classes.
 """
-
-from .event import (
-    DomainEvent,
-    EntityCreatedEvent,
-    EntityUpdatedEvent,
-    EntityDeletedEvent,
-)
-from .event import UserCreatedEvent, UserLoggedInEvent
+from .event import DomainEvent
 from .event_bus import EventBus, get_event_bus
 
 __all__ = [
-    "DomainEvent",
-    "EntityCreatedEvent",
-    "EntityUpdatedEvent",
-    "EntityDeletedEvent",
-    "UserCreatedEvent",
-    "UserLoggedInEvent",
-    "EventBus",
-    "get_event_bus",
+    "DomainEvent", "EventBus", "get_event_bus"
 ]

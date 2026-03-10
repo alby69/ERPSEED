@@ -1,11 +1,11 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
-from .models import User
+from .models import User, Project
 from .extensions import db
 from .schemas import UserLoginSchema, UserDisplaySchema, AuthResponseSchema, PasswordChangeSchema, RefreshResponseSchema
 
-auth_bp = Blueprint('auth', __name__, description="Authentication Operations")
+auth_bp = Blueprint('legacy_auth', __name__, description="Legacy Authentication Operations")
 
 @auth_bp.route('/login')
 class Login(MethodView):
@@ -24,13 +24,17 @@ class Login(MethodView):
         if not user.is_active:
             abort(403, message="Account is disabled.")
 
-        access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role})
-        refresh_token = create_refresh_token(identity=str(user.id))
+        access_token = create_access_token(identity=user.id, additional_claims={"role": user.role})
+        refresh_token = create_refresh_token(identity=user.id)
+
+        # Includi i progetti a cui l'utente ha accesso per il frontend
+        user_projects = user.projects.all()
 
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "user": user
+            "user": user,
+            "projects": user_projects
         }
 
 @auth_bp.route('/me')
@@ -59,7 +63,7 @@ class Refresh(MethodView):
         if not user or not user.is_active:
             abort(401, message="User not found or inactive.")
 
-        new_access_token = create_access_token(identity=str(user.id), additional_claims={"role": user.role})
+        new_access_token = create_access_token(identity=user.id, additional_claims={"role": user.role})
         return {"access_token": new_access_token}
 
 @auth_bp.route('/me/password')

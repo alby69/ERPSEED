@@ -4,97 +4,47 @@ Example Plugin - Example implementation using the new plugin system.
 This demonstrates how to create a plugin using the new standardized interface.
 """
 
-from backend.plugin_system.interfaces import Plugin, PluginMetadata
+from backend.plugin_system.interfaces import Plugin
 from typing import List, Dict, Any
+from flask import Flask
+from backend.container import ServiceContainer
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ExamplePlugin(Plugin):
     """
-    Example plugin demonstrating the new plugin interface.
+    Example plugin demonstrating the new, simplified plugin interface.
     """
 
-    metadata = PluginMetadata(
-        name="example",
-        version="1.0.0",
-        description="An example plugin for FlaskERP",
-        author="FlaskERP Team",
-        icon="star",
-        category="examples",
-        tags=["example", "demo"],
-        dependencies=[],
-        core_version_min="1.0.0",
-    )
+    @property
+    def name(self) -> str:
+        return "example"
 
-    def __init__(self, app=None, db=None, api=None):
-        super().__init__(app, db, api)
-        self._config = {}
+    @property
+    def version(self) -> str:
+        return "1.0.0"
 
-    def install(self, app, db) -> None:
-        """Install the plugin."""
-        logger = (
-            app.logger
-            if hasattr(app, "logger")
-            else __import__("logging").getLogger(__name__)
-        )
-        logger.info(f"Installing {self.name} plugin")
+    def register(self, app: Flask, container: ServiceContainer):
+        """
+        Called when the plugin is loaded.
+        Use this to register blueprints, services, event handlers, etc.
+        """
+        logger.info(f"Registering {self.name} plugin v{self.version}")
+        
+        # Example: subscribe to an event
+        event_bus = container.get('event_bus')
+        if event_bus:
+            event_bus.subscribe("user.created", self.on_user_created)
 
-        self._initialized = True
+    def unregister(self, app: Flask):
+        """
+        Called when the plugin is unloaded.
+        Use this to clean up resources.
+        """
+        logger.info(f"Unregistering {self.name} plugin")
 
-    def uninstall(self) -> None:
-        """Uninstall the plugin."""
-        logger = __import__("logging").getLogger(__name__)
-        logger.info(f"Uninstalling {self.name} plugin")
-
-        self._enabled = False
-        self._initialized = False
-
-    def configure(self, config: Dict[str, Any]) -> None:
-        """Configure the plugin."""
-        self._config = config
-
-    def get_routes(self) -> List[Dict[str, Any]]:
-        """Get API routes."""
-        return [
-            {
-                "path": "/example",
-                "name": "example_bp",
-                "description": "Example plugin endpoint",
-            }
-        ]
-
-    def get_menu_items(self) -> List[Dict[str, Any]]:
-        """Get menu items."""
-        return [
-            {
-                "id": "example",
-                "label": "Example",
-                "icon": "star",
-                "path": "/example",
-                "menu_position": 999,
-            }
-        ]
-
-    def on_event(self, event_type: str, event_data: Dict[str, Any]) -> None:
-        """Handle domain events."""
-        logger = __import__("logging").getLogger(__name__)
-        logger.info(f"{self.name} received event: {event_type}")
-
-    def subscribe_to_events(self) -> List[tuple]:
-        """Subscribe to events."""
-        return [
-            ("user.created", self._on_user_created),
-            ("record.created", self._on_record_created),
-        ]
-
-    def _on_user_created(self, event):
+    def on_user_created(self, event):
         """Handle user created event."""
-        pass
-
-    def _on_record_created(self, event):
-        """Handle record created event."""
-        pass
-
-
-# Per registrazione automatica
-def get_plugin_class():
-    return ExamplePlugin
+        logger.info(f"ExamplePlugin received event: {event.event_type} with payload: {event.payload}")

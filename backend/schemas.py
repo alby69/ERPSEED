@@ -106,6 +106,7 @@ class AuthResponseSchema(ma.Schema):
     access_token = mm_fields.Str()
     refresh_token = mm_fields.Str()
     user = mm_fields.Nested(UserDisplaySchema)
+    projects = mm_fields.List(mm_fields.Nested("ProjectSchema"), dump_only=True)
 
 
 class RefreshResponseSchema(ma.Schema):

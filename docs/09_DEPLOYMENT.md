@@ -9,6 +9,7 @@ FlaskERP può essere deployato in diversi modi a seconda delle tue esigenze.
 Il metodo più semplice e supportato. Docker permette di avere un ambiente consistente tra sviluppo e produzione.
 
 **Requisiti:**
+
 - Docker
 - Docker Compose
 - PostgreSQL 14+
@@ -26,7 +27,14 @@ docker compose up -d
 # Esegui le migrazioni
 docker compose exec backend flask db upgrade
 
+# Esegui lo script di setup per creare l'utente admin, il progetto di default e i dati di sistema
+docker compose exec backend python -m backend.setup_database
+
 # Accedi
+# Le credenziali di default create dallo script sono:
+# Email: admin@erpseed.org
+# Password: admin123
+#
 # Frontend: http://localhost:5173
 # Backend API: http://localhost:5000
 ```
@@ -36,6 +44,7 @@ docker compose exec backend flask db upgrade
 Se preferisci non usare Docker:
 
 **Backend:**
+
 ```bash
 # Crea ambiente virtuale
 python -m venv venv
@@ -53,6 +62,7 @@ gunicorn -w 4 -b 0.0.0.0:5000 "backend:create_app()"
 ```
 
 **Frontend:**
+
 ```bash
 cd frontend
 npm install
@@ -66,12 +76,12 @@ npm run build
 
 ### Variabili Ambiente
 
-| Variabile | Descrizione | Default |
-|-----------|-------------|---------|
-| FLASK_ENV | Ambiente | development |
-| DATABASE_URL | Connection string DB | - |
-| SECRET_KEY | Chiave per sessioni | - |
-| JWT_SECRET_KEY | Chiave per JWT | - |
+| Variabile      | Descrizione          | Default     |
+| -------------- | -------------------- | ----------- |
+| FLASK_ENV      | Ambiente             | development |
+| DATABASE_URL   | Connection string DB | -           |
+| SECRET_KEY     | Chiave per sessioni  | -           |
+| JWT_SECRET_KEY | Chiave per JWT       | -           |
 
 ### Database
 
@@ -252,4 +262,4 @@ cache = Cache(app, config={'CACHE_TYPE': 'RedisCache', 'CACHE_REDIS_URL': 'redis
 
 ---
 
-*Documento aggiornato: Febbraio 2026*
+_Documento aggiornato: Febbraio 2026_

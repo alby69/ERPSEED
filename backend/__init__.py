@@ -13,6 +13,11 @@ from .extensions import db, socketio, api, jwt, ma, migrate
 from .core.middleware.tenant_middleware import TenantMiddleware
 from .core.services.query_filter import TenantQueryFilter, SoftDeleteFilter
 
+# Import new architectural components
+from .container import ServiceContainer
+from .shared.events.event_bus import EventBus
+from .plugin_system.manager import PluginManager
+
 # Import Blueprints
 from .auth import auth_bp
 from .users import blp as users_bp
@@ -26,12 +31,6 @@ from .analytics import blp as analytics_bp
 from .dynamic_api import blp as dynamic_api_bp
 from .webhook_routes import blp as webhooks_bp
 from .workflow_routes import blp as workflows_bp
-
-# Import plugins
-from .plugins import ModuleRegistry, PluginRegistry
-from .plugins.accounting.plugin import get_plugin as get_accounting_plugin
-from .plugins.hr.plugin import get_plugin as get_hr_plugin
-from .plugins.inventory.plugin import get_plugin as get_inventory_plugin
 
 # Import Core API blueprints
 from .core.api.auth import auth_bp as core_auth_bp
@@ -107,7 +106,7 @@ def create_app(db_url=None):
         else:
             display_name = cls_name
 
-        # Nome unico: Classe + Modulo (es. AuthResponse_auth)
+        # Nome unico: Classe + Modulo (es. AuthResponse_auth), truncate to avoid exceeding the limit
         return f"{display_name}_{module_name}"
 
     app = Flask(__name__)
@@ -121,13 +120,14 @@ def create_app(db_url=None):
     app.config["OPENAPI_SWAGGER_UI_URL"] = (
         "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     )
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv(
-        "DATABASE_URL", "sqlite:///data.db"
-    )
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
+    jwt_secret_key = os.getenv("JWT_SECRET_KEY")
+    if not jwt_secret_key or len(jwt_secret_key) < 32:
+        raise ValueError("JWT_SECRET_KEY must be set and be at least 32 characters long")
+
     app.config["PROPAGATE_EXCEPTIONS"] = True
     app.config["JWT_SECRET_KEY"] = os.getenv(
-        "JWT_SECRET_KEY", "a-silly-default-secret-key-for-dev"
+        "JWT_SECRET_KEY"
     )
     app.config["JWT_TOKEN_LOCATION"] = ["headers"]
 
@@ -135,9 +135,49 @@ def create_app(db_url=None):
     app.json_provider_class = CustomJSONProvider
     app.json = app.json_provider_class(app)
 
+    # --- CORS Configuration ---
+    # Initialize CORS before other extensions that might handle requests,
+    # to ensure it can properly handle preflight OPTIONS requests.
+    CORS(
+        app,
+        resources={
+            r"/*": {
+                "origins": [
+                    "http://localhost:5173",
+                    "http://127.0.0.1:5173",
+                    "http://0.0.0.0:5173",
+                ],
+
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "X-Tenant-ID"],
+                "expose_headers": [
+                    "X-Total-Count",
+                    "X-Pages",
+                    "X-Current-Page",
+                    "X-Per-Page",
+                    "Content-Range",
+                ],
+                "supports_credentials": True,
+            }
+        },
+    )
+
     # --- Initialize Extensions ---
     db.init_app(app)
     migrate.init_app(app, db)
+
+    # --- Initialize Core Services & New Plugin System ---
+    container = ServiceContainer()
+    app.container = container  # Attach to app for global access
+
+    event_bus = EventBus()
+    container.register('event_bus', lambda: event_bus, singleton=True)
+    container.register('db', lambda: db, singleton=True)
+
+    plugin_manager = PluginManager(app=app, container=container)
+    container.register('plugin_manager', lambda: plugin_manager, singleton=True)
+    # --- End New System Init ---
+
 
     api.init_app(app)
 
@@ -233,30 +273,6 @@ def create_app(db_url=None):
 
     socketio.init_app(app, cors_allowed_origins="*")
 
-    # --- CORS Configuration ---
-    CORS(
-        app,
-        resources={
-            r"/*": {
-                "origins": [
-                    "http://localhost:5173",
-                    "http://127.0.0.1:5173",
-                    "http://0.0.0.0:5173",
-                ],
-                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-                "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
-                "expose_headers": [
-                    "X-Total-Count",
-                    "X-Pages",
-                    "X-Current-Page",
-                    "X-Per-Page",
-                    "Content-Range",
-                ],
-                "supports_credentials": True,
-            }
-        },
-    )
-
 
     # --- Global Error Handler ---
     @app.errorhandler(Exception)
@@ -284,7 +300,7 @@ def create_app(db_url=None):
     api.register_blueprint(test_runner_bp)
 
     # Vecchi blueprint per retrocompatibilità frontend - rinominati per evitare conflitti
-    api.register_blueprint(auth_bp, name="legacy_auth")  # /login, /me, etc.
+    # api.register_blueprint(auth_bp)  # /login, /me, etc.
     api.register_blueprint(users_bp)
     api.register_blueprint(products_bp)
     api.register_blueprint(projects_bp)
@@ -315,23 +331,9 @@ def create_app(db_url=None):
     api.register_blueprint(geografico_blp)
     api.register_blueprint(comuni_blp)
 
-    # --- Initialize Plugins ---
-    _init_plugins(app, api, db)
+    # --- Load Plugins using the new PluginManager ---
+    with app.app_context():
+        print("Loading plugins via PluginManager...")
+        plugin_manager.load_and_register_plugins()
 
     return app
-
-
-def _init_plugins(app, api, db):
-    """Initialize and register plugins."""
-    # Register plugins
-    ModuleRegistry.register(get_accounting_plugin())
-    ModuleRegistry.register(get_hr_plugin())
-    ModuleRegistry.register(get_inventory_plugin())
-
-    # Enable plugins
-    try:
-        ModuleRegistry.enable("accounting", app=app, db=db, api=api)
-        ModuleRegistry.enable("hr", app=app, db=db, api=api)
-        ModuleRegistry.enable("inventory", app=app, db=db, api=api)
-    except Exception as e:
-        print(f"Warning: Could not enable some plugins: {e}")

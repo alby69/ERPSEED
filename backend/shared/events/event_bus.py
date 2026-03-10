@@ -1,117 +1,70 @@
-"""
-Event Bus - In-memory event dispatcher for domain events.
-"""
-
-from typing import Callable, Dict, List, Any
 from collections import defaultdict
+from typing import Callable, List, Dict
 import logging
-import threading
 
 from .event import DomainEvent
 
 logger = logging.getLogger(__name__)
 
-
 class EventBus:
-    """In-memory event bus for publishing and subscribing to domain events."""
-
-    _instance = None
-    _lock = threading.Lock()
-
-    def __new__(cls):
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
-                    cls._instance._initialized = False
-        return cls._instance
+    """
+    Bus di eventi in-memory per la comunicazione asincrona disaccoppiata
+    tra i diversi moduli del sistema.
+    """
 
     def __init__(self):
-        if self._initialized:
-            return
         self._handlers: Dict[str, List[Callable]] = defaultdict(list)
-        self._global_handlers: List[Callable] = []
-        self._initialized = True
-        logger.info("EventBus initialized")
+        logger.info("EventBus initialized.")
 
-    def subscribe(self, event_type: str, handler: Callable) -> None:
-        """Subscribe a handler to a specific event type.
+    def subscribe(self, event_type: str, handler: Callable):
+        """
+        Sottoscrive un handler a un tipo di evento specifico.
 
         Args:
-            event_type: The type of event to listen for
-            handler: Callback function to execute when event is published
+            event_type: Il tipo di evento a cui sottoscrivere (es. "order.created").
+            handler: La funzione da chiamare quando l'evento viene pubblicato.
         """
         self._handlers[event_type].append(handler)
-        logger.debug(f"Handler subscribed to {event_type}")
+        logger.debug(f"Handler {handler.__name__} subscribed to event '{event_type}'")
 
-    def unsubscribe(self, event_type: str, handler: Callable) -> None:
-        """Unsubscribe a handler from an event type.
-
-        Args:
-            event_type: The event type
-            handler: The handler to remove
+    def publish(self, event: DomainEvent):
         """
-        if event_type in self._handlers:
-            try:
-                self._handlers[event_type].remove(handler)
-                logger.debug(f"Handler unsubscribed from {event_type}")
-            except ValueError:
-                pass
-
-    def subscribe_global(self, handler: Callable) -> None:
-        """Subscribe a handler to all events.
+        Pubblica un evento, notificando tutti gli handler sottoscritti.
 
         Args:
-            handler: Callback function executed for every event
-        """
-        self._global_handlers.append(handler)
-
-    def publish(self, event: DomainEvent) -> None:
-        """Publish an event to all subscribed handlers.
-
-        Args:
-            event: The domain event to publish
+            event: L'oggetto DomainEvent da pubblicare.
         """
         event_type = event.event_type
+        logger.debug(f"Publishing event '{event_type}' with payload: {event.payload}")
+        if event_type in self._handlers:
+            for handler in self._handlers[event_type]:
+                try:
+                    handler(event)
+                    logger.debug(f"Handler {handler.__name__} executed for event '{event_type}'")
+                except Exception as e:
+                    logger.error(
+                        f"Error executing handler {handler.__name__} for event {event_type}: {e}",
+                        exc_info=True
+                    )
 
-        logger.debug(f"Publishing event: {event_type}")
-
-        for handler in self._handlers.get(event_type, []):
-            try:
-                handler(event)
-            except Exception as e:
-                logger.error(f"Error in event handler for {event_type}: {e}")
-
-        for handler in self._global_handlers:
-            try:
-                handler(event)
-            except Exception as e:
-                logger.error(f"Error in global event handler: {e}")
-
-    def clear(self) -> None:
-        """Clear all subscriptions."""
-        self._handlers.clear()
-        self._global_handlers.clear()
-        logger.info("All event subscriptions cleared")
-
-    def get_subscribers(self, event_type: str) -> List[Callable]:
-        """Get list of subscribers for an event type.
+    def unsubscribe(self, event_type: str, handler: Callable):
+        """
+        Rimuove la sottoscrizione di un handler da un tipo di evento.
 
         Args:
-            event_type: The event type
-
-        Returns:
-            List of handler functions
+            event_type: Il tipo di evento.
+            handler: L'handler da rimuovere.
         """
-        return self._handlers.get(event_type, [])
+        if event_type in self._handlers and handler in self._handlers[event_type]:
+            self._handlers[event_type].remove(handler)
+            logger.debug(f"Handler {handler.__name__} unsubscribed from event '{event_type}'")
 
-
-_event_bus = None
-
+# Istanza globale per semplicità, gestita tramite DI container nell'app
+_event_bus = EventBus()
 
 def get_event_bus() -> EventBus:
-    """Get the global EventBus instance."""
-    global _event_bus
-    if _event_bus is None:
-        _event_bus = EventBus()
+    """
+    Factory function per ottenere l'istanza globale dell'EventBus.
+    Nell'applicazione reale, questo verrebbe gestito dal container DI.
+    """
     return _event_bus

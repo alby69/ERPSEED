@@ -14,7 +14,7 @@ def reset_db():
         db.create_all()
         
         print("Seeding admin user...")
-        create_admin('admin@example.com', 'admin123', app=app)
+        create_admin('admin@erpseed.org', 'admin123', app=app)
         
         print("Seeding KPIs...")
         seed_kpi(app=app)
