@@ -159,7 +159,7 @@ class ProjectMemberResource(MethodView):
 class ProjectExport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
-    @blp.response(200, schema={"type": "object"}, content_type="application/json")
+    @blp.response(200, content_type="application/json")
     def get(self, project_id):
         """Export project as JSON template"""
         project_service.get_by_id(project_id, get_jwt_identity())
@@ -177,7 +177,7 @@ class ProjectImport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
     @blp.arguments(FileUploadSchema, location="files")
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def post(self, files):
         """Import project from JSON template (Create or Update)"""
         file = files["file"]

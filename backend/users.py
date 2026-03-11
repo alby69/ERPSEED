@@ -69,7 +69,7 @@ class AdminUserPasswordReset(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
     @blp.arguments(AdminPasswordResetSchema)
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def put(self, data, user_id):
         """Reset a user's password (Admins only)"""
         return {"message": user_service.reset_password(user_id, data['new_password'])}

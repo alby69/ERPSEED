@@ -14,7 +14,7 @@ function ForgotPassword() {
 
     try {
       // Usiamo fetch diretto perché apiFetch potrebbe aggiungere header auth non voluti o gestire 401
-      const response = await fetch(`${BASE_URL}/forgot-password`, {
+      const response = await fetch(`${BASE_URL}/api/v1/auth/password/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

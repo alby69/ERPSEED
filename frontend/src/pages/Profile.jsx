@@ -53,7 +53,7 @@ function Profile() {
     }
 
     try {
-      const res = await apiFetch('/me', { method: 'PUT', body: formData });
+      const res = await apiFetch('/api/v1/auth/me', { method: 'PUT', body: formData });
       if (res.ok) {
         setMessage({ type: 'success', text: 'Profile updated!' });
         if (refreshUser) refreshUser();
@@ -70,7 +70,7 @@ function Profile() {
     setMessage({ type: '', text: '' });
 
     try {
-      const res = await apiFetch('/me/password', {
+      const res = await apiFetch('/api/v1/auth/me/password', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

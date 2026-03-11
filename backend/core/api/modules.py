@@ -34,7 +34,7 @@ class ModuleConfigSchema(Schema):
 
 @blp.route('/')
 class ModuleList(MethodView):
-    @blp.response(200, schema={"type": "array", "items": {"type": "object"}})
+    @blp.response(200)
     @jwt_required()
     def get(self):
         """
@@ -46,7 +46,7 @@ class ModuleList(MethodView):
 
 @blp.route('/categories')
 class ModuleCategories(MethodView):
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     @jwt_required()
     def get(self):
         """
@@ -61,7 +61,7 @@ class ModuleCategories(MethodView):
 
 @blp.route('/enabled')
 class TenantModules(MethodView):
-    @blp.response(200, schema={"type": "array", "items": {"type": "object"}})
+    @blp.response(200)
     @jwt_required()
     def get(self):
         """
@@ -74,7 +74,7 @@ class TenantModules(MethodView):
         return [tm.to_dict() for tm in enabled]
     
     @blp.arguments(ModuleEnableSchema)
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     @jwt_required()
     def post(self, args):
         """
@@ -112,7 +112,7 @@ class TenantModules(MethodView):
 
 @blp.route('/<string:module_id>')
 class ModuleDetail(MethodView):
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     @jwt_required()
     def get(self, module_id):
         """
@@ -150,7 +150,7 @@ class ModuleDetail(MethodView):
 
 @blp.route('/<string:module_id>/config')
 class ModuleConfig(MethodView):
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     @jwt_required()
     def get(self, module_id):
         """
@@ -161,7 +161,7 @@ class ModuleConfig(MethodView):
         return {'config': config}
     
     @blp.arguments(ModuleConfigSchema)
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     @jwt_required()
     def put(self, args, module_id):
         """

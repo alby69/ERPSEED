@@ -623,4 +623,214 @@ Quando implementi una nuova funzionalità:
 
 ---
 
-_Ultimo aggiornamento: 9 Marzo 2026_
+_Ultimo aggiornamento: 11 Marzo 2026 (Refactoring JWT/Tenant COMPLETATO - Fasi 1-5)_
+
+---
+
+# PARTE 5: Refactoring Autenticazione JWT e Tenant (Marzo 2026)
+
+## 5.1 Problemi Identificati
+
+### Classi Duplicate (RISOLTO)
+
+| File | Classe | Stato |
+|------|--------|-------|
+| `backend/models.py:83` | `User` | ✅ Principale |
+| `backend/core/models/user.py` | `User` | ✅ Eliminato |
+| `backend/models.py` | `UserRole` | ✅ Spostato da user.py |
+| `backend/models.py:345` | `AuditLog` (commentato) | ✅ Già commentato |
+
+### Bug Critici (RISOLTI)
+
+- ✅ **`tenant_service.py:201-204`**: Codice irraggiungibile - CORRETTO
+- ✅ **`conftest.py:231`**: Usa endpoint `/login` legacy - CORRETTO
+- ⚠️ **Test login**: Richiede test per validare
+- ✅ **Due sistemi di autenticazione**: Unificato - ELIMINATO legacy
+
+### Migrazioni Alembic (RISOLTO)
+
+- ✅ Aggiunto `script_location` in `alembic.ini`
+
+### Architettura Frammentata
+
+- `TenantContext` usa `flask.g` (request-scoped) - fragile
+- Query filter separati dal context
+- Middleware duplica logica di estrazione tenant
+
+---
+
+## 5.2 Piano di Implementazione
+
+### FASE 1: Pulizia Classi Duplicate ✅ PRIORITÀ ALTA
+
+| Task | Descrizione | Stato |
+|------|-------------|-------|
+| T5.1.1 | Eliminare `backend/core/models/user.py` | ✅ Completato |
+| T5.1.2 | Verificare imports in tutto il codebase | ✅ Completato |
+| T5.1.3 | Rimuovere commenti AuditLog in `backend/models.py` | ✅ Spostato UserRole |
+
+### FASE 2: Fix Bug Immediati ✅ PRIORITÀ ALTA
+
+| Task | Descrizione | Stato |
+|------|-------------|-------|
+| T5.2.1 | Rimuovere codice irraggiungibile `tenant_service.py:201-204` | ✅ Completato |
+| T5.2.2 | Correggere fixture `conftest.py` per `/api/v1/auth/login` | ✅ Completato |
+| T5.2.3 | Aggiungere `script_location` a `alembic.ini` | ✅ Completato |
+
+### FASE 3: Unificare Autenticazione ✅ PRIORITÀ MEDIA
+
+| Task | Descrizione | Stato |
+|------|-------------|-------|
+| T5.3.1 | Mantenere SOLO `backend/core/api/auth.py` | ✅ Completato |
+| T5.3.2 | Eliminare `backend/auth.py` completamente | ✅ Completato |
+| T5.3.3 | Aggiornare endpoint frontend | ⏳ Da fare |
+
+### FASE 4: Refactoring Tenant Isolation (Struttura DRY)
+
+```
+backend/core/services/
+├── auth/
+│   ├── auth_service.py      # Login, register, token
+│   ├── jwt_service.py      # Gestione token JWT (NUOVO)
+│   └── permission_service.py
+├── tenant/
+│   ├── tenant_service.py   # CRUD tenant
+│   ├── tenant_context.py   # Request context
+│   └── tenant_filter.py   # Query filtering
+└── __init__.py
+```
+
+| Task | Descrizione | Stato |
+|------|-------------|-------|
+| T5.4.1 | Creare sottostruttura `backend/core/services/auth/` | ✅ Completato |
+| T5.4.2 | Creare `jwt_service.py` dedicato | ✅ Completato |
+| T5.4.3 | Unificare tenant_context + tenant_filter | ✅ Completato |
+| T5.4.4 | Aggiornare container per nuovi servizi | ✅ Completato |
+
+### FASE 5: Testabilità
+
+| Task | Descrizione | Stato |
+|------|-------------|-------|
+| T5.5.1 | Creare interfacce per ogni servizio | ✅ Completato |
+| T5.5.2 | Mock del TenantContext nei test | ✅ Completato |
+| T5.5.3 | Test unitari per ogni servizio | ✅ Completato |
+
+---
+
+## 5.3 Pro e Contro
+
+| Aspetto | Pro | Contro |
+|---------|-----|--------|
+| Eliminazione duplicati | Codice pulito, nessuna confusione | Rischio breaking se qualcosa dipende dalle classi duplicate |
+| JWT unificato | Debug più semplice, un solo flusso | Richiede aggiornamento frontend |
+| Tenant isolation centralizzata | Facile da testare e mantenere | Richiede riscrittura middleware |
+| Service container | DI corretta, testabilità | Curva di apprendimento iniziale |
+
+---
+
+## 5.4 Principi KISS e DRY Applicati
+
+- **KISS**: Ogni servizio fa una cosa sola
+- **DRY**: Logica di autenticazione in un posto solo
+- **Testability**: Ogni componente testabile separatamente
+- **Incrementale**: Una fase rilasciabile alla volta
+
+---
+
+_Refactoring JWT/Tenant aggiunto: 11 Marzo 2026_
+
+---
+
+## 5.5 Sessione Corrente (11 Marzo 2026)
+
+### Lavoro Completato
+
+| Task | Descrizione | Stato |
+|------|-------------|-------|
+| T5.5.1 | Creare interfacce per ogni servizio | ✅ Completato |
+| T5.5.2 | Mock del TenantContext nei test | ✅ Completato |
+| T5.5.3 | Test unitari per ogni servizio | ✅ Completato (32 test) |
+| T5.5.4 | Aggiornare endpoint frontend `/api/v1/auth/*` | ✅ Completato |
+| T5.5.5 | Aggiungere breadcrumb labels per admin pages | ✅ Completato |
+| T5.5.6 | Fix WorkflowsPage.jsx - aggiunto AppHeader | ✅ Completato |
+
+### Errori 500 Rimanenti
+
+| Endpoint | Problema | Possibile Causa | Stato |
+|----------|----------|-----------------|-------|
+| `/api/v1/modules` | 500 - `'dict' object has no attribute 'dump'` | `@blp.response` schema incompatible | ✅ Fixato |
+| `/workflows/step-types` | 500 - `'dict' object has no attribute 'dump'` | Stessa causa | ✅ Fixato |
+| `/api/v1/system/modules-info` | 500 | `@blp.response` schema mancante | ⚠️ Da verificare |
+
+### Problemi Frontend
+
+| Pagina | Problema | Possibile Causa |
+|--------|----------|-----------------|
+| Builder | Breadcrumb non visibile | Componente breadcrumb non renderizzato |
+| BusinessRules | `projectId` = undefined (CORS) | Routing/navigation prop mancante |
+| CustomModules | Internal Server Error | Da debuggare lato backend |
+
+---
+
+## 5.6 Analisi Problemi e Possibili Soluzioni
+
+### Problema 1: Error 500 `'dict' object has no attribute 'dump'`
+
+**Causa radice**: Quando un endpoint REST ritorna un dizionario (`{}`) ma il decorator `@blp.response(200, SchemaModel)` definisce uno schema che si aspetta un oggetto con metodo `.dump()`, si ottiene questo errore.
+
+**Soluzione**: Rimuovere il parametro `schema` dal decorator `@blp.response` quando l'endpoint ritorna un dizionario plain.
+
+```python
+# SBAGLIATO
+@blp.response(200, schema={"type": "object"})
+def get_modules():
+    return {"modules": [...]}
+
+# CORRETTO
+@blp.response(200)
+def get_modules():
+    return {"modules": [...]}
+```
+
+**File da verificare**:
+- `backend/core/api/modules.py` - endpoint `/api/v1/modules`
+- `backend/core/api/workflows.py` - endpoint `/workflows/step-types`
+
+### Problema 2: Builder Breadcrumb
+
+**Possibili cause**:
+1. Il componente `Breadcrumb` non è incluso nel layout della pagina Builder
+2. Il `projectId` non viene passato correttamente al breadcrumb
+3. Lo stile CSS nasconde il breadcrumb
+
+**Soluzione**: Verificare che `BuilderPage.jsx` includa il componente `AppHeader` con breadcrumb.
+
+### Problema 3: BusinessRules `projectId` undefined
+
+**Causa**: La pagina BusinessRules riceve `projectId` dalla URL params ma il routing non lo passa correttamente.
+
+**Soluzione**: Verificare la configurazione delle route in `App.jsx` o `routes.js`.
+
+### Problema 4: CustomModules Internal Server Error
+
+**Causa**: Potrebbe essere un errore nel backend nella gestione del modulo custom.
+
+**Soluzione**: Verificare i log del server e l'endpoint `/api/v1/modules`.
+
+---
+
+## 5.7 Prossimi Passi Consigliati
+
+1. **Immediato**: Fix errori 500 sugli endpoint (10 minuti)
+   - Verificare e correggere `@blp.response` in `modules.py` e `workflows.py`
+
+2. **Breve termine**: Debug frontend
+   - Verificare breadcrumb in BuilderPage
+   - Correggere passaggio `projectId` in BusinessRules
+
+3. **Medio termine**: CustomModules
+   - Aggiungere logging per identificare l'errore esatto
+
+---
+
+_Analisi e piano: 11 Marzo 2026_

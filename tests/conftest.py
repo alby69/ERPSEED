@@ -12,11 +12,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 def app():
     """Create application for testing."""
     os.environ['FLASK_ENV'] = 'testing'
+    os.environ['JWT_SECRET_KEY'] = 'test-secret-key-that-is-at-least-32-chars'
     from backend import create_app
     app = create_app()
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['JWT_SECRET_KEY'] = 'test-secret-key'
     app.config['WTF_CSRF_ENABLED'] = False
     return app
 
@@ -26,7 +26,7 @@ def db(app):
     """Create database for testing."""
     from backend.extensions import db as _db
     from backend.core.models import Tenant, AuditLog
-    from backend.models import User, Product, SalesOrder
+    from backend.models import User, UserRole, Product, SalesOrder
     from backend.entities.soggetto import Soggetto
     
     with app.app_context():
@@ -228,7 +228,7 @@ def product2(db, session, tenant2):
 @pytest.fixture
 def auth_headers(client, admin_user):
     """Get authentication headers for admin user."""
-    response = client.post('/login', json={
+    response = client.post('/api/v1/auth/login', json={
         'email': 'admin@test.com',
         'password': 'admin123'
     })
@@ -242,7 +242,7 @@ def auth_headers(client, admin_user):
 @pytest.fixture
 def user_auth_headers(client, regular_user):
     """Get authentication headers for regular user."""
-    response = client.post('/login', json={
+    response = client.post('/api/v1/auth/login', json={
         'email': 'user@test.com',
         'password': 'user123'
     })

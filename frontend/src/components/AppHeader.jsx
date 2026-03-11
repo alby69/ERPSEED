@@ -113,6 +113,13 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
       else if (path === 'admin') label = 'Admin';
       else if (path === 'settings') label = 'Impostazioni';
       else if (path === 'members') label = 'Membri';
+      else if (path === 'builder') label = 'Builder';
+      else if (path === 'custom-modules') label = 'Moduli Personalizzati';
+      else if (path === 'workflows') label = 'Workflows';
+      else if (path === 'audit-logs') label = 'Audit Logs';
+      else if (path === 'bi-builder') label = 'BI Builder';
+      else if (path === 'project-import-export') label = 'Import/Export';
+      else if (path === 'system') label = 'Sistema';
       else if (!isNaN(path)) label = `#${path}`;
       
       crumbs.push({

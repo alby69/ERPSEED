@@ -257,8 +257,10 @@ const WorkflowsPage = () => {
     ];
 
     return (
-        <div style={{ padding: '24px' }}>
-            <h1>Workflow Automation</h1>
+        <div>
+            <AppHeader breadcrumbs={breadcrumbs} />
+            <div style={{ padding: '24px' }}>
+                <h1>Workflow Automation</h1>
             <Alert
                 message="Workflows allow you to automate actions based on events. Create a workflow and add steps to define automation logic."
                 type="info"
@@ -379,6 +381,7 @@ const WorkflowsPage = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+            </div>
         </div>
     );
 };

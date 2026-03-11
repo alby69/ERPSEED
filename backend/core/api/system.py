@@ -17,7 +17,6 @@ blp = Blueprint("system", __name__, url_prefix="/api/v1/system")
 
 @blp.route("/modules-info")
 class SystemModulesInfo(MethodView):
-    @blp.response(200, schema={"type": "object"})
     @jwt_required()
     def get(self):
         """
@@ -81,7 +80,6 @@ class SystemModulesInfo(MethodView):
 
 @blp.route("/check-module/<string:module_id>")
 class CheckModule(MethodView):
-    @blp.response(200, schema={"type": "object"})
     @jwt_required()
     def get(self, module_id):
         """

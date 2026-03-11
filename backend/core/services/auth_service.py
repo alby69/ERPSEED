@@ -77,7 +77,8 @@ class AuthService:
         return {
             'access_token': access_token,
             'refresh_token': refresh_token,
-            'user': user.to_dict()
+            'user': user.to_dict(),
+            'force_password_change': user.force_password_change
         }
     
     @staticmethod

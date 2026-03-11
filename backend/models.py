@@ -117,6 +117,8 @@ class User(BaseModel):
     tenant = db.relationship(
         "Tenant", backref=db.backref("tenant_users", lazy="dynamic")
     )
+    # Note: custom_role_id temporarily disabled until migration is applied
+    # custom_role_id = db.Column(db.Integer, db.ForeignKey("user_roles.id", ondelete="SET NULL"))
     projects = db.relationship(
         "Project", secondary=project_members, back_populates="members", lazy="dynamic"
     )
@@ -163,6 +165,13 @@ class User(BaseModel):
 
     def to_dict(self, include_email=True):
         """Serialize user."""
+        def format_datetime(value):
+            if value is None:
+                return None
+            if isinstance(value, str):
+                return value
+            return value.isoformat()
+        
         result = {
             "id": self.id,
             "email": self.email,
@@ -173,8 +182,8 @@ class User(BaseModel):
             "is_active": self.is_active,
             "is_primary": self.is_primary,
             "tenant_id": self.tenant_id,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "created_at": format_datetime(self.created_at),
+            "updated_at": format_datetime(self.updated_at),
         }
         if not include_email:
             result.pop("email", None)
@@ -757,3 +766,30 @@ class SysModelVersion(BaseModel):
 
     def __repr__(self):
         return f"<SysModelVersion {self.model_id} v{self.version_number}>"
+
+
+class UserRole(BaseModel):
+    """
+    Custom roles for tenant with specific permissions.
+    Stored in backend/models.py (moved from backend/core/models/user.py).
+    """
+    __tablename__ = 'user_roles'
+    
+    tenant_id = db.Column(
+        db.Integer, 
+        db.ForeignKey('tenants.id'), 
+        nullable=False,
+        index=True
+    )
+    
+    name = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(255))
+    permissions = db.Column(db.Text, comment="JSON array of permissions")
+    is_default = db.Column(db.Boolean, default=False)
+    
+    tenant = db.relationship('Tenant')
+    # users relationship defined in User model to avoid conflicts
+    
+    __table_args__ = (
+        db.UniqueConstraint('tenant_id', 'name', name='uix_tenant_role_name'),
+    )

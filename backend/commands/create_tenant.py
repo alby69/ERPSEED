@@ -3,7 +3,8 @@ Create initial tenant and admin user.
 """
 import click
 from backend.extensions import db
-from backend.core.models import Tenant, User
+from backend.core.models import Tenant
+from backend.models import User
 
 
 @click.command('create-tenant')

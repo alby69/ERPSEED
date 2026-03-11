@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    apiFetch('/me')
+    apiFetch('/api/v1/auth/me')
       .then(async (res) => {
         if (res.ok) {
           setUser(await res.json());
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
 
     // Aggiorna immediatamente lo stato utente
     try {
-      const res = await apiFetch('/me');
+      const res = await apiFetch('/api/v1/auth/me');
       if (res.ok) setUser(await res.json());
     } catch (e) {
       console.error("Error retrieving user after login", e);

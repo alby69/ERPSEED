@@ -88,7 +88,7 @@ class TestPermissionService:
     def test_custom_role_permissions(self, app, db, session, tenant):
         """Test custom role with specific permissions."""
         with app.app_context():
-            from backend.core.models.user import UserRole
+            from backend.models import UserRole
             
             # Create custom role
             custom_role = UserRole(

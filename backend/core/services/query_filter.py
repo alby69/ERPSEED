@@ -1,10 +1,12 @@
 """
 Tenant query filters - automatic multi-tenant filtering for SQLAlchemy queries.
+
+NOTA: Questo file è deprecato. Usare backend/core/services/tenant/tenant_filter.py
 """
 from flask import g
 from sqlalchemy import event
 from sqlalchemy.orm import Query
-from backend.core.services.tenant_context import TenantContext
+from backend.core.services.tenant import TenantContext
 
 
 class TenantQueryFilter:

@@ -4,7 +4,7 @@ Tenant middleware - extracts and sets tenant context for each request.
 from flask import request, g
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from backend.core.models import Tenant
-from backend.core.services.tenant_context import TenantContext
+from backend.core.services.tenant import TenantContext
 
 
 class TenantMiddleware:

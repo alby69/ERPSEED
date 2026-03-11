@@ -82,5 +82,5 @@ class UserSchema(Schema):
     is_active = fields.Boolean()
     is_primary = fields.Boolean()
     tenant_id = fields.Integer(allow_none=True)
-    created_at = fields.DateTime(allow_none=True)
-    updated_at = fields.DateTime(allow_none=True)
+    created_at = fields.String(allow_none=True)
+    updated_at = fields.String(allow_none=True)

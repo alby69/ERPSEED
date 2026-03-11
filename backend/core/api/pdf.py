@@ -22,7 +22,6 @@ class SalesOrderPDF(MethodView):
         Genera PDF per ordine di vendita.
         """
         user_id = get_jwt_identity()
-        from backend.core.models.user import User
         user = User.query.get(user_id)
         
         if not user:
@@ -52,7 +51,6 @@ class InvoicePDF(MethodView):
         Genera PDF per fattura.
         """
         user_id = get_jwt_identity()
-        from backend.core.models.user import User
         user = User.query.get(user_id)
         
         if not user:
@@ -82,7 +80,6 @@ class QuotePDF(MethodView):
         Genera PDF per preventivo.
         """
         user_id = get_jwt_identity()
-        from backend.core.models.user import User
         user = User.query.get(user_id)
         
         if not user:

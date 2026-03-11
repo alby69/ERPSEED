@@ -18,8 +18,8 @@ from .container import ServiceContainer
 from .shared.events.event_bus import EventBus
 from .plugin_system.manager import PluginManager
 
-# Import Blueprints
-from .auth import auth_bp
+# Import Core API blueprints
+from .core.api.auth import auth_bp as core_auth_bp
 from .users import blp as users_bp
 from .products import blp as products_bp
 from .projects import blp as projects_bp
@@ -32,8 +32,7 @@ from .dynamic_api import blp as dynamic_api_bp
 from .webhook_routes import blp as webhooks_bp
 from .workflow_routes import blp as workflows_bp
 
-# Import Core API blueprints
-from .core.api.auth import auth_bp as core_auth_bp
+# Import Core API blueprints (additional)
 from .core.api.tenant import tenant_bp
 from .core.api.modules import blp as modules_bp
 from .core.api.system import blp as system_bp

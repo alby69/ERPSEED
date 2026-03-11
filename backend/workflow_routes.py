@@ -318,7 +318,7 @@ class WorkflowStepTypes(MethodView):
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, fields.Dict())
+    @blp.response(200)
     def get(self):
         """Get list of available step types."""
         return WorkflowService.get_step_types()

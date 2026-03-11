@@ -27,7 +27,7 @@ blp = Blueprint("import_export", __name__, url_prefix="/api/v1/import-export")
 class SysModelExportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, model_id):
         """Esporta configurazione SysModel."""
         from backend.models import SysModel
@@ -46,7 +46,7 @@ class SysModelExportConfig(MethodView):
 class SysModelExportData(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, model_id):
         """Esporta dati SysModel."""
         from backend.models import SysModel
@@ -65,7 +65,7 @@ class SysModelExportData(MethodView):
 class SysModelImportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(201, schema={"type": "object"})
+    @blp.response(201)
     def post(self, project_id):
         """Importa configurazione SysModel."""
         data = request.get_json()
@@ -83,7 +83,7 @@ class SysModelImportConfig(MethodView):
 class SysModelImportData(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(201, schema={"type": "object"})
+    @blp.response(201)
     def post(self, project_id):
         """Importa dati SysModel."""
         data = request.get_json()
@@ -104,7 +104,7 @@ class SysModelImportData(MethodView):
 class BlockExportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, block_id):
         """Esporta configurazione Block."""
         from backend.builder.models import Block
@@ -123,7 +123,7 @@ class BlockExportConfig(MethodView):
 class BlockImportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(201, schema={"type": "object"})
+    @blp.response(201)
     def post(self, project_id):
         """Importa configurazione Block."""
         data = request.get_json()
@@ -144,7 +144,7 @@ class BlockImportConfig(MethodView):
 class WorkflowExportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, workflow_id):
         """Esporta configurazione Workflow."""
         from backend.workflows import Workflow
@@ -163,7 +163,7 @@ class WorkflowExportConfig(MethodView):
 class WorkflowImportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(201, schema={"type": "object"})
+    @blp.response(201)
     def post(self, project_id):
         """Importa configurazione Workflow."""
         data = request.get_json()
@@ -184,7 +184,7 @@ class WorkflowImportConfig(MethodView):
 class ModuleExportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, module_id):
         """Esporta configurazione Module."""
         from backend.core.models.module import Module
@@ -203,7 +203,7 @@ class ModuleExportConfig(MethodView):
 class ModuleExportData(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, module_id):
         """Esporta dati Module."""
         from backend.core.models.module import Module
@@ -223,7 +223,7 @@ class ModuleExportData(MethodView):
 class ModuleImportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(201, schema={"type": "object"})
+    @blp.response(201)
     def post(self, project_id):
         """Importa configurazione Module."""
         data = request.get_json()
@@ -244,7 +244,7 @@ class ModuleImportConfig(MethodView):
 class SysModelsProjectExportAll(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, project_id):
         """Esporta tutti i SysModel di un progetto."""
         service = ImportExportService()
@@ -257,7 +257,7 @@ class SysModelsProjectExportAll(MethodView):
 class ProjectExportFull(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, project_id):
         """Esporta intero progetto."""
         service = ImportExportService()
@@ -270,7 +270,7 @@ class ProjectExportFull(MethodView):
 class ProjectImportFull(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(201, schema={"type": "object"})
+    @blp.response(201)
     def post(self, project_id):
         """Importa intero progetto."""
         data = request.get_json()

@@ -31,7 +31,7 @@ class TenantService:
         Returns:
             Created tenant
         """
-        tenant = Tenant(name=name, slug=slug, schema_name=f"tenant_{slug}", **kwargs)
+        tenant = Tenant(name=name, slug=slug, **kwargs)
         db.session.add(tenant)
         db.session.commit()
 
@@ -39,7 +39,7 @@ class TenantService:
         try:
             TenantService.create_schema(tenant.schema_name)
         except Exception as e:
-            logger.warning(f"Could not create schema for tenant {slug}: {e}")
+            logger.warning(f"Could not create schema for tenant {tenant.slug}: {e}")
 
         return tenant
 
