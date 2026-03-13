@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import AIAssistant from '@/components/ui/AIAssistant';
+import AIAssistant from '../components/ui/AIAssistant';
 
 const AIAssistantPage = () => {
   const { projectId } = useParams();

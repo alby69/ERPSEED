@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Select, Switch, Tag, Space, message, Tabs, Alert } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, ApiOutlined, BuildOutlined } from '@ant-design/icons';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { apiFetch } from '@/utils';
-import AppHeader from '@/components/AppHeader';
+import { apiFetch } from '../utils';
+import AppHeader from '../components/AppHeader';
 
 const { TextArea } = Input;
 

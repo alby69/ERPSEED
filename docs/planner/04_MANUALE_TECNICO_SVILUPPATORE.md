@@ -20,12 +20,18 @@ ERPSeed è un ecosistema low-code "Living Code" basato su Flask (Backend) e Reac
 Puoi creare modelli direttamente tramite il `BuilderService`.
 
 ```python
-from backend.services.builder_service import BuilderService
+from backend.builder_service.services.model_service import ModelService
+from backend.builder_service.infrastructure.persistence.sqlalchemy_repository import ModelSqlAlchemyRepository
+from backend.extensions import db
 
-builder_service = BuilderService()
+# Setup repository
+repository = ModelSqlAlchemyRepository(db)
+
+# Crea il servizio
+model_service = ModelService(repository)
 
 # 1. Crea il modello
-nuovo_modello = builder_service.create_model(
+nuovo_modello = model_service.create_model(
     project_id=1,
     name="ordini_speciali",
     title="Ordini Speciali",
@@ -33,19 +39,19 @@ nuovo_modello = builder_service.create_model(
 )
 
 # 2. Aggiungi i campi
-builder_service.create_field(
-    model_id=nuovo_modello.id,
+model_service.add_field(
+    model_id=nuovo_modello["id"],
     name="codice",
     field_type="string",
-    title="Codice Ordine",
+    label="Codice Ordine",
     required=True
 )
 
-builder_service.create_field(
-    model_id=nuovo_modello.id,
+model_service.add_field(
+    model_id=nuovo_modello["id"],
     name="note_tecniche",
     field_type="text",
-    title="Note Tecniche"
+    label="Note Tecniche"
 )
 ```
 

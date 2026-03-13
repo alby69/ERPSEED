@@ -2,10 +2,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { List, Avatar, Button, Typography, Spin, Alert, Modal, Input, Select, Radio, Row, Col, Card, message } from 'antd';
 import { PlusOutlined, ProjectOutlined, AppstoreOutlined, UnorderedListOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons';
-import { apiFetch } from '@/utils';
-import { useAuth } from '@/context';
-import ProjectForm from '@/components/ProjectForm';
-import ImportProjectButton from '@/components/ImportProjectButton';
+import { apiFetch } from '../utils';
+import { useAuth } from '../context';
+import ProjectForm from '../components/ProjectForm';
+import ImportProjectButton from '../components/ImportProjectButton';
 
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;

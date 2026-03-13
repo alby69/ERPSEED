@@ -34,15 +34,14 @@ with open('/tmp/comuni_utf8.csv', 'r', encoding='utf-8') as f:
                 skipped += 1
                 continue
             
-            comune = Comune(
-                codice_istat=cod_istat,
-                nome=nome,
-                codice_regione=cod_regione,
-                codice_provincia=prog_provincia,
-                cap=cap,
-                source='ISTAT',
-                is_manuale=False
-            )
+            comune = Comune()
+            comune.codice_istat = cod_istat
+            comune.nome = nome
+            comune.codice_regione = cod_regione
+            comune.codice_provincia = prog_provincia
+            comune.cap = cap
+            comune.source = 'ISTAT'
+            comune.is_manuale = False
             db.session.add(comune)
             count += 1
             

@@ -21,6 +21,7 @@ import {
   Empty,
   message,
   Spin,
+  Select,
 } from 'antd';
 import AppHeader from '@/components/AppHeader';
 import { 
@@ -30,10 +31,10 @@ import {
   BlockOutlined,
 } from '@ant-design/icons';
 
-import { apiFetch } from '@/utils';
+import { apiFetch } from '../utils';
 import VisualBuilder from './VisualBuilder';
-import ImportExportToolbar from '@/components/ui/ImportExportToolbar';
-import ImportExportContextMenu from '@/components/ui/ImportExportContextMenu';
+import ImportExportToolbar from '../components/ui/ImportExportToolbar';
+import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -42,22 +43,33 @@ function BlockBuilder() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [blocks, setBlocks] = useState([]);
+  const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [editingBlockId, setEditingBlockId] = useState(null);
   const [editingBlockData, setEditingBlockData] = useState(null);
   const [form] = Form.useForm();
+  const [templateForm] = Form.useForm();
 
   useEffect(() => {
-    loadData();
+    if (projectId) {
+      loadData();
+    }
   }, [projectId]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      // Load regular blocks
       const res = await apiFetch(`/api/projects/${projectId}/blocks`);
       if (res.ok) {
         setBlocks(await res.json());
+      }
+      // Load templates (blocks with is_template=true)
+      const templateRes = await apiFetch(`/api/projects/${projectId}/blocks?is_template=true`);
+      if (templateRes.ok) {
+        setTemplates(await templateRes.json());
       }
     } catch (error) {
       message.error('Error loading blocks');
@@ -106,6 +118,48 @@ function BlockBuilder() {
       }
     } catch (error) {
       message.error('Error creating block');
+    }
+  };
+
+  const handleCreateFromTemplate = async (values) => {
+    try {
+      const res = await apiFetch(`/api/projects/${projectId}/blocks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...values,
+          template_id: values.template_id,
+          params_override: values.params_override || {},
+        }),
+      });
+      
+      if (res.ok) {
+        const newBlock = await res.json();
+        message.success('Block created from template');
+        setShowTemplateModal(false);
+        templateForm.resetFields();
+        loadBlockForEdit(newBlock.id);
+        loadData();
+      }
+    } catch (error) {
+      message.error('Error creating block from template');
+    }
+  };
+
+  const handleConvertToTemplate = async (blockId) => {
+    try {
+      const res = await apiFetch(`/api/blocks/${blockId}/convert-to-template`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      
+      if (res.ok) {
+        message.success('Block converted to template');
+        loadData();
+      }
+    } catch (error) {
+      message.error('Error converting block to template');
     }
   };
 
@@ -308,6 +362,9 @@ function BlockBuilder() {
             showImport={true}
             importConfigLabel="Importa Block"
           />
+          <Button icon={<BlockOutlined />} onClick={() => setShowTemplateModal(true)}>
+            New from Template
+          </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowModal(true)}>
             New Block
           </Button>
@@ -336,6 +393,11 @@ function BlockBuilder() {
                     <Button type="text" icon={<EditOutlined />} onClick={() => loadBlockForEdit(block.id)}>
                       Edit
                     </Button>,
+                    !block.is_template && block.status === 'published' && (
+                      <Button type="text" icon={<BlockOutlined />} onClick={() => handleConvertToTemplate(block.id)}>
+                        Make Template
+                      </Button>
+                    ),
                     <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDeleteBlock(block.id)}>
                       Delete
                     </Button>,
@@ -378,6 +440,40 @@ function BlockBuilder() {
           <Form.Item>
             <Button type="primary" htmlType="submit" block>
               Create Block
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Create from Template Modal */}
+      <Modal
+        title="Create Block from Template"
+        open={showTemplateModal}
+        onCancel={() => { setShowTemplateModal(false); templateForm.resetFields(); }}
+        footer={null}
+      >
+        <Form form={templateForm} layout="vertical" onFinish={handleCreateFromTemplate}>
+          <Form.Item name="template_id" label="Select Template" rules={[{ required: true }]}>
+            <Select placeholder="Choose a template">
+              {templates.map(t => (
+                <Select.Option key={t.id} value={t.id}>
+                  {t.name} {t.is_template && <Tag color="blue">Template</Tag>}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item name="name" label="Block Name" rules={[{ required: true }]}>
+            <Input placeholder="e.g., My Custom Card" />
+          </Form.Item>
+          <Form.Item name="description" label="Description">
+            <TextArea rows={2} placeholder="Optional description..." />
+          </Form.Item>
+          <Form.Item name="params_override" label="Parameters Override (JSON)">
+            <TextArea rows={3} placeholder='{"title": "Custom Title", "model_id": 5}' />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              Create from Template
             </Button>
           </Form.Item>
         </Form>

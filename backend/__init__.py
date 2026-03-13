@@ -21,10 +21,10 @@ from .plugin_system.manager import PluginManager
 # Import Core API blueprints
 from .core.api.auth import auth_bp as core_auth_bp
 from .users import blp as users_bp
-from .products import blp as products_bp
+# from .products import blp as products_bp  # Replaced by products_service.rest_api
 from .projects import blp as projects_bp
-from .sales import blp as sales_bp
-from .purchases import blp as purchases_bp
+# from .sales import blp as sales_bp  # Replaced by sales_service.rest_api
+from .purchases import blp as purchases_bp  # TODO: Refactor this one too
 from .dashboard import blp as dashboard_bp
 from .builder import blp as builder_bp
 from .analytics import blp as analytics_bp
@@ -41,6 +41,10 @@ from .core.api.test_runner import blp as test_runner_bp
 from .core.api.custom_modules import blp as custom_modules_bp
 from .core.api.module_api import blp as module_api_bp
 from .core.api.import_export import blp as import_export_bp
+
+# Import new service-based REST APIs
+from .products_service.rest_api import blp as products_api_bp
+from .sales_service.rest_api import blp as sales_api_bp
 
 # Import Entities (Vision Archetypes)
 from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
@@ -301,10 +305,10 @@ def create_app(db_url=None):
     # Vecchi blueprint per retrocompatibilità frontend - rinominati per evitare conflitti
     # api.register_blueprint(auth_bp)  # /login, /me, etc.
     api.register_blueprint(users_bp)
-    api.register_blueprint(products_bp)
+    # api.register_blueprint(products_bp) # Replaced
     api.register_blueprint(projects_bp)
-    api.register_blueprint(sales_bp)
-    api.register_blueprint(purchases_bp)
+    # api.register_blueprint(sales_bp) # Replaced
+    api.register_blueprint(purchases_bp) 
     api.register_blueprint(dashboard_bp)
     api.register_blueprint(builder_bp)
     api.register_blueprint(analytics_bp)
@@ -321,6 +325,10 @@ def create_app(db_url=None):
     api.register_blueprint(custom_modules_bp)
     api.register_blueprint(module_api_bp)
     api.register_blueprint(import_export_bp)
+    
+    # Register new service-based APIs
+    api.register_blueprint(products_api_bp)
+    api.register_blueprint(sales_api_bp)
 
     # Vision Entities (Archetypes)
     api.register_blueprint(soggetto_blp, url_prefix="/api/v1")

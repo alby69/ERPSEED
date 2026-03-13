@@ -1,22 +1,13 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
-from .models import SalesOrder, SalesOrderLine
-from backend.entities.soggetto import Soggetto
-from .extensions import db, ma
+from .extensions import db
 from .decorators import tenant_required
 from .schemas import SalesOrderSchema, BaseSchema
-from .utils import apply_filters, paginate, apply_sorting, apply_date_filters
-from .core.services.tenant_context import TenantContext
-from .services.generic_service import generic_service
+from backend.sales_service import get_sales_service
 
 blp = Blueprint("sales", __name__, description="Operations on sales orders")
 
-class SalesOrderUpdateSchema(BaseSchema):
-    class Meta(BaseSchema.Meta):
-        model = SalesOrder
-        load_instance = False
-        exclude = BaseSchema.Meta.exclude + ("date",)
 
 @blp.route("/sales-orders")
 class SalesOrderList(MethodView):
@@ -26,12 +17,16 @@ class SalesOrderList(MethodView):
     @blp.response(200, SalesOrderSchema(many=True))
     def get(self, tenant_id):
         """List sales orders"""
-        query = SalesOrder.query.filter_by(tenant_id=tenant_id)
-        query = apply_filters(query, SalesOrder, ['number'])
-        query = apply_date_filters(query, SalesOrder, 'date')
-        query = apply_sorting(query, SalesOrder)
-        items, headers = paginate(query)
-        return items, 200, headers
+        service = get_sales_service()
+        result = service.execute({
+            "command": "ListSalesOrders",
+            "tenant_id": tenant_id
+        })
+        
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to list orders"))
+        
+        return result["data"]["items"]
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -40,17 +35,33 @@ class SalesOrderList(MethodView):
     @blp.response(201, SalesOrderSchema)
     def post(self, order_data, tenant_id):
         """Create a new order"""
-        order_data.tenant_id = tenant_id
+        service = get_sales_service()
         
-        if not Soggetto.query.filter_by(id=order_data.customer_id, tenant_id=tenant_id).first():
-            abort(404, message="Customer not found")
+        lines = []
+        if hasattr(order_data, 'lines'):
+            for line in order_data.lines:
+                lines.append({
+                    "product_id": line.product_id if hasattr(line, 'product_id') else line.get('product_id'),
+                    "description": line.description if hasattr(line, 'description') else line.get('description', ''),
+                    "quantity": line.quantity if hasattr(line, 'quantity') else line.get('quantity', 1),
+                    "unit_price": line.unit_price if hasattr(line, 'unit_price') else line.get('unit_price', 0)
+                })
+        
+        result = service.execute({
+            "command": "CreateSalesOrder",
+            "tenant_id": tenant_id,
+            "number": order_data.number if hasattr(order_data, 'number') else order_data.get('number'),
+            "date": order_data.date.isoformat() if hasattr(order_data, 'date') else str(order_data.get('date', '')),
+            "customer_id": order_data.customer_id if hasattr(order_data, 'customer_id') else order_data.get('customer_id'),
+            "notes": order_data.notes if hasattr(order_data, 'notes') else order_data.get('notes', ''),
+            "lines": lines
+        })
+        
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to create order"))
+        
+        return result["data"], 201
 
-        for line in order_data.lines:
-            line.tenant_id = tenant_id
-            
-        db.session.add(order_data)
-        db.session.commit()
-        return order_data
 
 @blp.route("/sales-orders/<int:order_id>")
 class SalesOrderResource(MethodView):
@@ -60,29 +71,48 @@ class SalesOrderResource(MethodView):
     @blp.response(200, SalesOrderSchema)
     def get(self, order_id, tenant_id):
         """Get sales order by ID"""
-        return generic_service.get_tenant_resource(
-            SalesOrder, order_id, tenant_id, not_found_message="Sales order not found"
-        )
+        service = get_sales_service()
+        result = service.execute({
+            "command": "GetSalesOrder",
+            "tenant_id": tenant_id,
+            "entity_id": order_id
+        })
+        
+        if not result.get("success"):
+            abort(404, message=result.get("error", "Sales order not found"))
+        
+        return result["data"]
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.arguments(SalesOrderUpdateSchema(partial=True))
+    @blp.arguments(BaseSchema)
     @blp.response(200, SalesOrderSchema)
     def put(self, order_data, order_id, tenant_id):
         """Update a sales order"""
-        order = SalesOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
-        if not order:
-            abort(404, message="Sales order not found")
+        service = get_sales_service()
         
-        for key, value in order_data.items():
-            if key == 'lines':
-                continue
-            if hasattr(order, key):
-                setattr(order, key, value)
+        payload = {}
+        if hasattr(order_data, 'items'):
+            for key, value in order_data.items():
+                if key != 'lines':
+                    payload[key] = value
+        else:
+            for key, value in order_data.items():
+                if key != 'lines':
+                    payload[key] = value
         
-        db.session.commit()
-        return order
+        result = service.execute({
+            "command": "UpdateSalesOrder",
+            "tenant_id": tenant_id,
+            "entity_id": order_id,
+            **payload
+        })
+        
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to update order"))
+        
+        return result["data"]
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -90,15 +120,16 @@ class SalesOrderResource(MethodView):
     @blp.response(204)
     def delete(self, order_id, tenant_id):
         """Delete a sales order"""
-        def check_status(order):
-            if order.status not in ['draft', 'cancelled']:
-                abort(400, message="Only draft or cancelled orders can be deleted.")
-
-        generic_service.delete_tenant_resource(
-            SalesOrder, order_id, tenant_id,
-            pre_delete_check=check_status,
-            not_found_message="Sales order not found"
-        )
+        service = get_sales_service()
+        result = service.execute({
+            "command": "DeleteSalesOrder",
+            "tenant_id": tenant_id,
+            "entity_id": order_id
+        })
+        
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to delete order"))
+        
         return '', 204
 
 
@@ -110,16 +141,17 @@ class SalesOrderConfirm(MethodView):
     @blp.response(200, SalesOrderSchema)
     def post(self, order_id, tenant_id):
         """Confirm a sales order"""
-        order = SalesOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
-        if not order:
-            abort(404, message="Sales order not found")
+        service = get_sales_service()
+        result = service.execute({
+            "command": "ConfirmSalesOrder",
+            "tenant_id": tenant_id,
+            "entity_id": order_id
+        })
         
-        if order.status != 'draft':
-            abort(400, message="Only draft orders can be confirmed")
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to confirm order"))
         
-        order.status = 'confirmed'
-        db.session.commit()
-        return order
+        return result["data"]
 
 
 @blp.route("/sales-orders/<int:order_id>/cancel")
@@ -130,13 +162,14 @@ class SalesOrderCancel(MethodView):
     @blp.response(200, SalesOrderSchema)
     def post(self, order_id, tenant_id):
         """Cancel a sales order"""
-        order = SalesOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
-        if not order:
-            abort(404, message="Sales order not found")
+        service = get_sales_service()
+        result = service.execute({
+            "command": "CancelSalesOrder",
+            "tenant_id": tenant_id,
+            "entity_id": order_id
+        })
         
-        if order.status in ['completed', 'cancelled']:
-            abort(400, message="Order cannot be cancelled in current status")
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to cancel order"))
         
-        order.status = 'cancelled'
-        db.session.commit()
-        return order
+        return result["data"]

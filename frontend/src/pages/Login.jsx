@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { BASE_URL } from '@/utils';
-import LanguageSelector from '@/components/LanguageSelector';
+import { apiFetch } from '../utils';
+import LanguageSelector from '../components/LanguageSelector';
 import { useTranslation } from 'react-i18next';
-import { useAuth, useTheme } from '@/context';
+import { useAuth, useTheme } from '../context';
 import { Button } from 'antd';
 
 function Login() {
@@ -21,27 +21,21 @@ function Login() {
     setError('');
 
     try {
-      const response = await fetch(`${BASE_URL}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await apiFetch('/api/v1/auth/login', {
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        await login(data.access_token, data.refresh_token, rememberMe);
-        
-        if (data.force_password_change) {
-          navigate('/profile?force=true');
-        } else {
-          navigate('/projects');
-        }
+      await login(data.access_token, data.refresh_token, rememberMe);
+      
+      if (data.force_password_change) {
+        navigate('/profile?force=true');
       } else {
-        setError(data.message || 'Login error');
+        navigate('/projects');
       }
     } catch (err) {
-      setError('Server connection error');
+      setError(err.data?.message || err.message || 'Server connection error');
     }
   };
 

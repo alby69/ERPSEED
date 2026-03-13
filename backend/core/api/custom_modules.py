@@ -122,7 +122,7 @@ class ModuleList(MethodView):
         # Filter by project
         project_id = request.args.get("project_id", type=int)
         if project_id:
-            query = query.join(Module.projects).filter(Project.id == project_id) # type: ignore
+            query = query.filter(Module.projects.any(Project.id == project_id))
 
         # Filter by assigned to project
         assigned = request.args.get("assigned")

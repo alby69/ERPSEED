@@ -157,19 +157,38 @@ Un **Block** è una collezione di Component con relazioni.
 
 ### Cos'è un Block
 
-Mentre un SysModel definisce i **dati**, un Block definisce l'**interfaccia**. Un Block può contenere:
+Mentre un SysModel definisce i **dati**, un Block definisce l'**interfaccia**. 
+Un Block può contenere:
 - Una tabella per visualizzare dati
 - Un form per modificare dati
 - Un chart per statistiche
 - Relazioni tra questi componenti
 
-### Creare un Block
+### Creare un Block (via UI)
 
-1. **Vai su Builder → Blocchi**
-2. **Clicca "Nuovo Block"**
+1. **Vai su Builder → Blocchi** (nel menu laterale)
+2. **Clicca "New Block"**
 3. **Assegna un nome** e descrizione
-4. **Aggiungi Component** selezionando gli Archetypi
-5. **Definisci le relazioni** tra i component
+4. Si aprirà il **Visual Builder** dove potrai:
+   - Aggiungere Component dalla palette
+   - Trascinare e posizionare i componenti
+   - Configurare ogni componente
+   - Definire relazioni tra componenti
+5. **Salva** il Block
+
+### Creare un Block (via API)
+
+```bash
+# Crea un nuovo Block
+curl -X POST "http://localhost:5000/api/projects/1/blocks" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Card Cliente",
+    "description": "Scheda completa cliente",
+    "component_ids": [1, 2, 3]
+  }'
+```
 
 ### Esempio Pratico: Card Cliente
 
@@ -179,6 +198,132 @@ Crea un Block "Card Cliente" che contiene:
 - **Component 3**: Chart (andamento acquisti)
 
 Le relazioni collegano i component: selezionando un cliente nel form, la tabella mostra i suoi ordini.
+
+### Ciclo di Vita di un Block
+
+```
+draft → testing → published
+```
+
+1. **Draft**: Block in fase di sviluppo
+2. **Testing**: Block in test (puoi eseguire i test)
+3. **Published**: Block pronto per l'uso
+
+---
+
+## Block Template (Block Riutilizzabili)
+
+I **Block Template** permettono di creare Block parametrici che possono essere riutilizzati in più Moduli o Progetti con personalizzazioni diverse.
+
+### Cos'è un Block Template
+
+Un Block Template è un Block pubblicato che può essere usato come base per creare altre istanze. Ogni istanza può avere **parametri diversi** senza dover duplicare la definizione.
+
+### Parametri Supportati
+
+| Parametro | Descrizione | Esempio |
+|-----------|-------------|---------|
+| `title` | Titolo visualizzato | "Scheda Cliente" |
+| `model_id` | ID del modello dati | 5 |
+| `fields` | Campi da mostrare | ["nome", "email"] |
+| `style` | Stile grafico | "compact" |
+| `permissions` | Visibilità | { "view": ["admin"] } |
+
+### Creare un Block Template
+
+**Passaggi:**
+
+1. **Crea un Block** normale (vedi sezione precedente)
+2. **Aggiungi i Component** necessari nel Visual Builder
+3. **Pubblica il Block** (esegui i test e certifica)
+4. **Converti in Template**: clicca "Make Template" nella lista Blocchi
+
+**Via API:**
+```bash
+# Pubblica e certifica un block
+curl -X POST "http://localhost:5000/api/blocks/1/certify" \
+  -H "Authorization: Bearer <token>"
+
+# Converti in template
+curl -X POST "http://localhost:5000/api/blocks/1/convert-to-template" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Usare un Block Template
+
+Dopo aver creato un Template, puoi creare istanze con parametri personalizzati:
+
+**Via UI:**
+1. Vai su **Builder → Blocchi**
+2. Clicca **"New from Template"**
+3. Seleziona il Template desiderato
+4. Inserisci i parametri override in JSON
+5. Crea l'istanza
+
+**Via API:**
+```bash
+# Crea un'istanza da template
+curl -X POST "http://localhost:5000/api/projects/1/blocks" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": 5,
+    "name": "Card Fornitore",
+    "description": "Scheda personalizzata per fornitori",
+    "params_override": {
+      "title": "Scheda Fornitore",
+      "model_id": 10,
+      "fields": ["ragione_sociale", "partita_iva", "telefono"]
+    }
+  }'
+```
+
+### Vantaggi dei Block Template
+
+1. **Riutilizzo**: Uno stesso template può essere usato in contesti diversi
+2. **Manutenzione centrale**: Modifiche al template si propagano (se desiderato)
+3. **Personalizzazione**: Ogni istanza può avere parametri diversi
+4. **Standardizzazione**: Crea librerie di block standard per l'organizzazione
+
+### Esempio Pratico
+
+**Template: "Card Dati Base"**
+```json
+{
+  "name": "Card Dati Base",
+  "params_override": {
+    "title": "Dati",
+    "fields": ["name", "email"],
+    "style": "default"
+  }
+}
+```
+
+**Istanza 1: "Scheda Cliente"**
+```json
+{
+  "template_id": 1,
+  "name": "Scheda Cliente",
+  "params_override": {
+    "title": "Scheda Cliente",
+    "model_id": 5,
+    "fields": ["nome", "cognome", "email", "telefono"]
+  }
+}
+```
+
+**Istanza 2: "Scheda Fornitore"**
+```json
+{
+  "template_id": 1,
+  "name": "Scheda Fornitore", 
+  "params_override": {
+    "title": "Scheda Fornitore",
+    "model_id": 10,
+    "fields": ["ragione_sociale", "partita_iva", "indirizzo"]
+  }
+}
+```
 
 ---
 

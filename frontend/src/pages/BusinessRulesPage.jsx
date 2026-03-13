@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Select, Switch, Tag, Space, message, Tabs, Alert, Badge } from 'antd';
 import { PlusOutlined, DeleteOutlined, ApiOutlined, SettingOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
-import { apiFetch } from '@/utils';
+import { apiFetch } from '../utils';
 
 const { TextArea } = Input;
 

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Avatar, Tag } from 'antd';
 import { DeleteOutlined, UserAddOutlined, UserOutlined, MailOutlined } from '@ant-design/icons';
-import { apiFetch } from '@/utils';
-import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '../utils';
+import { useAuth } from '../context/AuthContext';
 
 const { Option } = Select;
 

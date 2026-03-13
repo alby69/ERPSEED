@@ -31,6 +31,19 @@ Questo documento raccoglie lo stato delle funzionalità, il piano di refactoring
 | Validazioni                  | ✅ Completo | 2024     | required, unique, regex                |
 | Import/Export                | ✅ Completo | Feb 2026 | Toolbar, context menu, backup completo |
 | Sync schema                  | ✅ Completo | 2024     | ALTER TABLE automatico                 |
+| Block Builder (UI)          | ✅ Completo | Feb 2026 | Creazione Blocchi con VisualBuilder    |
+| **Block Template**           | ✅ Completo | Mar 2026 | Block parametrici riutilizzabili       |
+
+---
+
+### 📋 Block Template - Opzioni Future
+
+Se市场需求 (market requirements) lo richiede, queste opzioni estendono i Block Template:
+
+| Opzione | Descrizione | Complessità |
+| ------- | ----------- | ------------|
+| **Opzione 2: Block Composition** | Lo stesso Block con config diverse nello stesso Modulo (slot-based) | Media |
+| **Opzione 3: Marketplace-first** | Block pubblicati = Template globali disponibili per tutti i progetti | Bassa |
 
 ---
 

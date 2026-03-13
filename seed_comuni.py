@@ -246,11 +246,11 @@ def seed_comuni():
         # Seed province
         for p in PROVINCE:
             if not Provincia.query.filter_by(codice=p["codice"]).first():
-                db.session.add(Provincia(
-                    codice=p["codice"],
-                    nome=p["nome"],
-                    codice_regione=p["regione"]
-                ))
+                prov = Provincia()
+                prov.codice = p["codice"]
+                prov.nome = p["nome"]
+                prov.codice_regione = p["regione"]
+                db.session.add(prov)
         db.session.commit()
         print(f"✅ Inserite {len(PROVINCE)} province")
         
@@ -258,17 +258,17 @@ def seed_comuni():
         count = 0
         for c in COMUNI:
             if not Comune.query.filter_by(codice_istat=c["codice"]).first():
-                db.session.add(Comune(
-                    codice_istat=c["codice"],
-                    nome=c["nome"],
-                    codice_provincia=c["provincia"],
-                    codice_regione=c["regione"],
-                    cap=c["cap"],
-                    latitudine=c["lat"],
-                    longitudine=c["lon"],
-                    source='ISTAT',
-                    is_manuale=False
-                ))
+                comune = Comune()
+                comune.codice_istat = c["codice"]
+                comune.nome = c["nome"]
+                comune.codice_provincia = c["provincia"]
+                comune.codice_regione = c["regione"]
+                comune.cap = c["cap"]
+                comune.latitudine = c["lat"]
+                comune.longitudine = c["lon"]
+                comune.source = 'ISTAT'
+                comune.is_manuale = False
+                db.session.add(comune)
                 count += 1
         db.session.commit()
         print(f"✅ Inseriti {count} comuni")

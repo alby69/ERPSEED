@@ -3,10 +3,10 @@ import {
   Card, Table, Button, Modal, Form, Input, Select, Tag, Space, message, Popconfirm, Row, Col, InputNumber, Divider, AutoComplete
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, SearchOutlined, AimOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
-import { apiFetch } from '@/utils';
-import { useTableSort } from '@/hooks/useTableSort';
-import TableSearch from '@/components/TableSearch';
-import Layout from '@/components/Layout';
+import { apiFetch } from '../utils';
+import { useTableSort } from '../hooks/useTableSort';
+import TableSearch from '../components/TableSearch';
+import Layout from '../components/Layout';
 
 const { Option } = Select;
 

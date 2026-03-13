@@ -12,10 +12,16 @@ from .utils import get_table_object
 from .services import DynamicApiService
 from .services.generic_service import generic_service
 from .utils import paginate, serialize_value
+from backend.analytics_service import get_analytics_service
 
 dynamic_service = DynamicApiService()
 
 blp = Blueprint("analytics", __name__, description="BI & Analytics Operations")
+
+
+def get_analytics_svc():
+    from backend.analytics_service.api import AnalyticsService
+    return AnalyticsService()
 
 
 # --- CRUD per Chart Libraries ---
@@ -26,9 +32,10 @@ class ChartLibraryList(MethodView):
     @blp.response(200, ChartLibraryConfigSchema(many=True))
     def get(self):
         """Lista tutte le librerie grafiche configurate."""
-        query = ChartLibraryConfig.query
-        items, headers = paginate(query)
-        return items, 200, headers
+        result = get_analytics_svc().execute({"command": "ListChartLibraries"})
+        if not result.get("success"):
+            return []
+        return result["data"]["items"]
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -36,18 +43,16 @@ class ChartLibraryList(MethodView):
     @blp.response(201, ChartLibraryConfigSchema)
     def post(self, library_data):
         """Crea o aggiorna configurazione libreria."""
-        existing = ChartLibraryConfig.query.filter_by(
-            library_name=library_data["library_name"]
-        ).first()
-        if existing:
-            for key, value in library_data.items():
-                setattr(existing, key, value)
-            db.session.commit()
-            return existing
-        library = ChartLibraryConfig(**library_data)
-        db.session.add(library)
-        db.session.commit()
-        return library
+        payload = dict(library_data) if hasattr(library_data, 'items') else library_data
+        result = get_analytics_svc().execute({
+            "command": "CreateChartLibrary",
+            **payload
+        })
+        
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to create chart library"))
+        
+        return result["data"], 201
 
 
 @blp.route("/chart-libraries/<int:library_id>")
@@ -56,25 +61,33 @@ class ChartLibraryResource(MethodView):
     @jwt_required()
     @blp.response(200, ChartLibraryConfigSchema)
     def get(self, library_id):
-        return generic_service.get_resource(
-            ChartLibraryConfig, library_id, not_found_message="Chart library not found"
-        )
+        result = get_analytics_svc().execute({"command": "GetChartLibrary", "entity_id": library_id})
+        if not result.get("success"):
+            abort(404, message=result.get("error", "Chart library not found"))
+        return result["data"]
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(ChartLibraryConfigSchema)
     @blp.response(200, ChartLibraryConfigSchema)
     def put(self, library_data, library_id):
-        return generic_service.update_resource(
-            ChartLibraryConfig, library_id, library_data, not_found_message="Chart library not found"
-        )
+        payload = dict(library_data) if hasattr(library_data, 'items') else library_data
+        result = get_analytics_svc().execute({
+            "command": "UpdateChartLibrary",
+            "entity_id": library_id,
+            **payload
+        })
+        if not result.get("success"):
+            abort(404, message=result.get("error", "Chart library not found"))
+        return result["data"]
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
     def delete(self, library_id):
-        generic_service.delete_resource(
-            ChartLibraryConfig, library_id, not_found_message="Chart library not found")
+        result = get_analytics_svc().execute({"command": "DeleteChartLibrary", "entity_id": library_id})
+        if not result.get("success"):
+            abort(404, message=result.get("error", "Chart library not found"))
         return ""
 
 
@@ -98,16 +111,26 @@ class SysChartList(MethodView):
     @jwt_required()
     @blp.response(200, SysChartSchema(many=True))
     def get(self):
-        query = SysChart.query
-        items, headers = paginate(query)
-        return items, 200, headers
+        result = get_analytics_svc().execute({"command": "ListCharts"})
+        if not result.get("success"):
+            return []
+        return result["data"]["items"]
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(SysChartSchema)
     @blp.response(201, SysChartSchema)
     def post(self, chart_data):
-        return generic_service.create_resource(SysChart, chart_data)
+        payload = dict(chart_data) if hasattr(chart_data, 'items') else chart_data
+        result = get_analytics_svc().execute({
+            "command": "CreateChart",
+            **payload
+        })
+        
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to create chart"))
+        
+        return result["data"], 201
 
 
 @blp.route("/sys-charts/<int:chart_id>")
@@ -116,25 +139,33 @@ class SysChartResource(MethodView):
     @jwt_required()
     @blp.response(200, SysChartSchema)
     def get(self, chart_id):
-        return generic_service.get_resource(
-            SysChart, chart_id, not_found_message="Chart not found"
-        )
+        result = get_analytics_svc().execute({"command": "GetChart", "entity_id": chart_id})
+        if not result.get("success"):
+            abort(404, message=result.get("error", "Chart not found"))
+        return result["data"]
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(SysChartSchema)
     @blp.response(200, SysChartSchema)
     def put(self, chart_data, chart_id):
-        return generic_service.update_resource(
-            SysChart, chart_id, chart_data, not_found_message="Chart not found"
-        )
+        payload = dict(chart_data) if hasattr(chart_data, 'items') else chart_data
+        result = get_analytics_svc().execute({
+            "command": "UpdateChart",
+            "entity_id": chart_id,
+            **payload
+        })
+        if not result.get("success"):
+            abort(404, message=result.get("error", "Chart not found"))
+        return result["data"]
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
     def delete(self, chart_id):
-        generic_service.delete_resource(
-            SysChart, chart_id, not_found_message="Chart not found")
+        result = get_analytics_svc().execute({"command": "DeleteChart", "entity_id": chart_id})
+        if not result.get("success"):
+            abort(404, message=result.get("error", "Chart not found"))
         return ""
 
 

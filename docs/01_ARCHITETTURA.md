@@ -17,66 +17,141 @@ ERPSeed ha completato un importante refactoring architetturale seguendo i patter
 ```
 backend/
 ├── shared/              # Infrastruttura condivisa
-│   ├── orm/           # Definizioni campi
-│   ├── utils/         # Pagination, filtri, audit
-│   ├── exceptions/    # Eccezioni custom
-│   ├── interfaces/   # Interfacce servizi
-│   └── events/       # EventBus + eventi dominio
-├── ai_service/        # AI Service (Ports & Adapters)
-│   ├── domain/       # Modelli, porte, servizi
-│   └── adapters/    # Adapter LLM
-├── builder_service/  # Builder Service (CQRS)
-│   ├── domain/       # Entità, repository, eventi
-│   ├── application/  # Comandi e query
-│   └── infrastructure/
-├── plugin_system/    # Sistema plugin
-│   ├── interfaces.py
-│   └── manager.py
-├── container.py      # Dependency Injection Container
-├── builder/         # Modulo builder (legacy)
-├── ai/              # Modulo AI (legacy)
-└── plugins/         # Implementazioni plugin
+│   ├── orm/             # Definizioni campi
+│   ├── utils/           # Pagination, filtri, audit
+│   ├── exceptions/      # Eccezioni custom
+│   ├── interfaces/      # Interfacce servizi
+│   ├── events/          # EventBus + eventi dominio
+│   ├── commands/        # Base classes per Command pattern
+│   └── handlers/       # Base classes per Handler pattern
+│
+├── core_modules/        # Moduli Core (predefiniti, non eliminabili)
+│   ├── anagrafiche/    # Soggetti, Indirizzi, Contatti, Comuni
+│   ├── ruoli/          # Gestione Ruoli e Permessi
+│   └── auth/           # Autenticazione e Autorizzazione
+│
+├── services/           # Servizi Business (Command Handler Pattern)
+│   ├── products_service/    # Gestione Prodotti
+│   ├── sales_service/       # Gestione Vendite
+│   ├── purchases_service/   # Gestione Acquisti
+│   ├── analytics_service/   # Grafici e Dashboard
+│   ├── builder_service/     # Motore No-Code Builder
+│   └── ai_service/         # Assistente AI
+│
+├── builder/            # [LEGACY] Blueprint REST (mantenuto per compatibilità)
+├── ai/                # [LEGACY] AI con adapters diversi (mantenuto per compatibilità)
+├── plugin_system/     # Sistema plugin
+├── container.py       # Dependency Injection Container
+└── plugins/          # Implementazioni plugin
 ```
+
+### Servizi Moderni (JSON-based)
+
+Ogni nuovo servizio segue il pattern **Command Handler** con interfaccia JSON:
+
+```python
+from backend.products_service import execute
+
+# Input JSON
+result = execute({
+    "command": "CreateProduct",
+    "tenant_id": 1,
+    "name": "Prodotto Test",
+    "code": "PROD-001",
+    "unit_price": 100.00
+})
+
+# Output JSON
+# {
+#   "success": true,
+#   "data": {...},
+#   "events": [...]
+# }
+```
+
+Questo permette:
+- **Testabilità**: ogni handler testabile con dict in/out
+- **CLI**: eseguibile da terminale
+- **Disaccoppiamento**: comunicazione solo tramite JSON
 
 ### Pattern Implementati
 
 | Pattern                  | Componente                | Scopo                     |
 | ------------------------ | ------------------------- | ------------------------- |
-| **Ports & Adapters**     | `ai_service/`             | Astrazione provider LLM   |
-| **CQRS**                 | `builder_service/`        | Separazione Command/Query |
-| **Repository**           | `builder_service/domain/` | Astrazione accesso dati   |
-| **Event-Driven**         | `shared/events/`          | Comunicazione decoupled   |
-| **Dependency Injection** | `container.py`            | Gestione servizi          |
-| **Plugin**               | `plugin_system/`          | Estensibilità             |
+| **Ports & Adapters**     | `ai_service/`            | Astrazione provider LLM   |
+| **CQRS**                | `builder_service/`       | Separazione Command/Query |
+| **Command Handler**      | `products/sales/purchases/analytics_service/` | Input/Output JSON |
+| **Repository**          | `*/infrastructure/`      | Astrazione accesso dati   |
+| **Event-Driven**        | `shared/events/`         | Comunicazione decoupled  |
+| **Dependency Injection**| `container.py`           | Gestione servizi          |
+| **Plugin**              | `plugin_system/`         | Estensibilità             |
 
 ---
 
-## Livelli Architetturali
+## Mapping: Servizi ↔ Moduli
 
-ERPSeed è organizzato in livelli crescenti di astrazione:
+Ogni servizio tecnico implementa uno o più **Moduli Concettuali**:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      APPLICAZIONE ERPSEED                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │              LIVELLO FUNZIONALE (Module)                │    │
-│  │  Module = SysModel + Block + Hook + API                 │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│                              │                                  │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │              LIVELLO UI (Block)                         │    │
-│  │  Block = Component + Relazioni                          │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│                              │                                  │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │              LIVELLO DATI (SysModel)                    │    │
-│  │  SysModel + SysField = Entità + Campi                   │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────┬─────────────────────────────────────────────────────────┐
+│ Servizio            │ Implementa (Modulo Concettuale)                         │
+├──────────────────────┼─────────────────────────────────────────────────────────┤
+│ core_modules/       │ Moduli Core Predefiniti                                 │
+│   ├─ anagrafiche   │   Soggetto, Indirizzo, Contatto, Comune                │
+│   ├─ ruoli         │   Ruolo, Permesso                                       │
+│   └─ auth          │   User, Session                                          │
+├──────────────────────┼─────────────────────────────────────────────────────────┤
+│ products_service    │ Products (Prodotto, Categoria, Fornitore)              │
+│ sales_service       │ Sales (Ordine, RigaOrdine, Pagamento)                   │
+│ purchases_service   │ Purchases (OrdineAcquisto, RigaAcquisto)                │
+│ analytics_service   │ Analytics (SysChart, SysDashboard, Block)              │
+│ builder_service   │ Builder (SysModel, SysField, Block, Component, Archetype)│
+│ ai_service         │ AI Assistant (Conversation, Tool, VectorStore)           │
+└──────────────────────┴─────────────────────────────────────────────────────────┘
 ```
+
+### Relazione Livelli Architetturali
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    APPLICAZIONE ERPSEED                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │             LIVELLO FUNZIONALE (Module)                              │    │
+│  │  Module = Servizio + SysModel + Block + Hook + API                  │    │
+│  │                                                                     │    │
+│  │  Esempio: "Modulo Vendite" = sales_service + SalesOrder +           │    │
+│  │           OrderBlock + on_order_created + /api/orders               │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                    │                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │             LIVELLO UI (Block/Component)                            │    │
+│  │  Block = Collection di Component                                    │    │
+│  │  Component = Istanza di Archetype (table, form, chart, kanban)    │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                    │                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │             LIVELLO DATI (SysModel)                                 │    │
+│  │  SysModel = Tabella dinamica nel database                          │    │
+│  │  SysField = Definizione colonne                                    │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+│                                    │                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │             LIVELLO TECNICO (Service Implementation)               │    │
+│  │  Service = domain/ + application/ + infrastructure/               │    │
+│  │  (Command Handler Pattern con input/output JSON)                  │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Livelli Architetturali (Dettaglio)
+
+Per i dettagli sui livelli architetturali vedere la sezione "Mapping: Servizi ↔ Moduli" qui sopra.
 
 ---
 
@@ -122,6 +197,15 @@ Un **Block** è una collezione di Component con relazioni tra loro. È l'unità 
 
 **Esempio**: "Card Cliente" = table (lista ordini) + form (dati anagi) + chartrafic (storico acquisti)
 
+#### Block Template
+
+I Block supportano anche i **Template** per riutilizzo parametrico:
+- Un Block pubblicato può diventare **Template** (`is_template=True`)
+- Da un Template si possono creare **Istanze** con `params_override` diversi
+- Questo permette di creare librerie di block configurabili
+
+Vedi [02_BUILDER.md](02_BUILDER.md) per dettagli completi.
+
 ### 5. Module (Modulo)
 
 Un **Module** è l'unità funzionale completa che combina:
@@ -142,42 +226,43 @@ Quando un modulo viene pubblicato nel Marketplace, acquisisce una **Dashboard Ap
 
 ---
 
-## Core Block di un ERP
+## Core Modules (ERP Foundation)
 
-Ogni ERP necessita di questi **modelli fondamentali** predefiniti:
+I **Core Modules** sono i moduli fondamentali predefiniti in `backend/core_modules/`:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     CORE BLOCK (ERP Foundation)                 │
+│                     CORE MODULES                                │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  ┌─────────────────┐    ┌─────────────────┐                     │
-│  │     SOGGETTO    │    │      RUOLO      │                     │
-│  │   (Party)       │◄───│ (Cliente, Forn., │                    │
-│  │                 │    │  Dipendente...) │                     │
-│  └────────┬────────┘    └─────────────────┘                     │
-│           │                                                     │
-│     ┌─────┴─────┐                                               │
-│     ▼           ▼                                               │
-│ ┌─────────┐ ┌─────────┐                                         │
-│ │INDIRIZZO│ │CONTATTO │  (multipli per soggetto)                │
-│ │(Address)│ │(Contact)│                                         │
-│ └─────────┘ └─────────┘                                         │
+│  ┌─────────────────────┐    ┌─────────────────────┐            │
+│  │    ANAGRAFICHE      │    │       RUOLI         │            │
+│  │  (Soggetto,         │◄───│  (Ruolo, Permesso, │            │
+│  │   Indirizzo,        │    │   Gruppo)           │            │
+│  │   Contatto, Comune) │    └─────────────────────┘            │
+│  └─────────────────────┘                                        │
 │                                                                 │
-│  ┌─────────────────┐    ┌─────────────────┐                     │
-│  │    PRODOTTO     │    │    Ubicazione   │                     │
-│  │   (Product)     │    │  (Warehouse)    │                     │
-│  └─────────────────┘    └─────────────────┘                     │
+│  ┌─────────────────────┐    ┌─────────────────────┐            │
+│  │        AUTH          │    │      BUILDER        │            │
+│  │  (User, Session,     │    │  (SysModel, Block,  │            │
+│  │   Token, Invitation)│    │   Component, Arch.)│            │
+│  └─────────────────────┘    └─────────────────────┘            │
 │                                                                 │
-│  ┌─────────────────┐    ┌─────────────────┐                     │
-│  │    UTENTE       │    │    PROGETTO     │                     │
-│  │   (User)        │    │   (Project)     │                     │
-│  └─────────────────┘    └─────────────────┘                     │
+│  ┌─────────────────────┐    ┌─────────────────────┐            │
+│  │      PRODUCTS       │    │       SALES         │            │
+│  │  (Prodotto,         │    │  (Ordine,           │            │
+│  │   Categoria)        │    │   RigaOrdine)       │            │
+│  └─────────────────────┘    └─────────────────────┘            │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-Questi Core Block sono preinstallati e non eliminabili.
+I Core Modules sono preinstallati e non eliminabili. Sono accessibili anche come servizi:
+- `core_modules/anagrafiche/` → Soggetto, Indirizzo, Contatto, Comune
+- `core_modules/ruoli/` → Ruolo, Permesso  
+- `core_modules/auth/` → User, Session
+- `products_service/` → Products
+- `sales_service/` → Sales
 
 ---
 

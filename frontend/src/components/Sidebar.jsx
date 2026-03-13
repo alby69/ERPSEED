@@ -32,7 +32,15 @@ const Sidebar = ({ projectMenuItems = [] }) => {
 
     // Static menu items for the administration section
     const adminItems = [
-        { key: '/admin/builder', label: 'Builder', icon: <BuildOutlined /> },
+        { 
+            key: 'builder-sub', 
+            label: 'Builder', 
+            icon: <BuildOutlined />,
+            children: [
+                { key: '/admin/builder', label: 'Modelli (SysModel)' },
+                { key: '/builder/blocks', label: 'Blocchi (Block)' },
+            ]
+        },
         { 
             key: 'modules-section', 
             label: 'Moduli', 

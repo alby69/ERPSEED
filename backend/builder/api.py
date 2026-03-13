@@ -57,6 +57,14 @@ class BlockCreateSchema(Schema):
     name = fields.String(required=True)
     description = fields.String()
     config = fields.Dict()
+    component_ids = fields.List(fields.Integer())
+    relationships = fields.Dict()
+    api_endpoints = fields.List(fields.Dict())
+    version = fields.String()
+    # Block Template fields
+    is_template = fields.Boolean()
+    template_id = fields.Integer()
+    params_override = fields.Dict()
 
 
 class BlockRelationshipSchema(Schema):
@@ -251,8 +259,14 @@ class BlockList(MethodView):
     @jwt_required()
     @blp.response(200)
     def get(self, project_id):
-        """List all blocks in a project"""
-        blocks = Block.query.filter_by(project_id=project_id).all()
+        """List all blocks in a project, optionally filtered by is_template"""
+        is_template = request.args.get("is_template", "").lower() == "true"
+        
+        query = Block.query.filter_by(project_id=project_id)
+        if is_template:
+            query = query.filter_by(is_template=True)
+        
+        blocks = query.all()
         return [
             {
                 "id": b.id,
@@ -262,6 +276,8 @@ class BlockList(MethodView):
                 "status": b.status,
                 "quality_score": b.quality_score,
                 "is_certified": b.is_certified,
+                "is_template": b.is_template,
+                "template_id": b.template_id,
                 "component_count": len(b.component_ids) if b.component_ids else 0,
                 "created_at": b.created_at.isoformat() if b.created_at else None,
             }
@@ -273,7 +289,7 @@ class BlockList(MethodView):
     @blp.arguments(BlockCreateSchema)
     @blp.response(201)
     def post(self, project_id, block_data):
-        """Create a new block"""
+        """Create a new block, optionally from a template"""
         user_id = get_jwt_identity()
 
         block = Block(
@@ -286,6 +302,10 @@ class BlockList(MethodView):
             api_endpoints=block_data.get("api_endpoints", []),
             version=block_data.get("version", "1.0.0"),
             status="draft",
+            # Block Template fields
+            is_template=block_data.get("is_template", False),
+            template_id=block_data.get("template_id"),
+            params_override=block_data.get("params_override", {}),
         )
         db.session.add(block)
         db.session.commit()
@@ -565,6 +585,53 @@ class BlockCertify(MethodView):
         db.session.commit()
 
         return {"message": "Certification revoked"}
+
+
+# === BLOCK TEMPLATE ENDPOINTS ===
+
+@blp.route("/blocks/<int:block_id>/convert-to-template")
+class BlockConvertToTemplate(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200)
+    def post(self, block_id):
+        """Convert a published block to a reusable template"""
+        block = Block.query.get_or_404(block_id)
+        
+        if block.status != "published":
+            return {"error": "Only published blocks can be converted to templates"}, 400
+        
+        block.is_template = True
+        db.session.commit()
+        
+        return {
+            "message": "Block converted to template successfully",
+            "block_id": block.id,
+            "is_template": block.is_template,
+        }
+
+
+@blp.route("/blocks/<int:block_id>/instances")
+class BlockInstances(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200)
+    def get(self, block_id):
+        """Get all instances of a template block"""
+        block = Block.query.get_or_404(block_id)
+        
+        instances = Block.query.filter_by(template_id=block_id).all()
+        
+        return [
+            {
+                "id": b.id,
+                "name": b.name,
+                "project_id": b.project_id,
+                "params_override": b.params_override,
+                "created_at": b.created_at.isoformat() if b.created_at else None,
+            }
+            for b in instances
+        ]
 
 
 # === INIT SYSTEM ARCHETYPES ===

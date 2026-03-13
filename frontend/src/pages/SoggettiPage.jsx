@@ -8,10 +8,10 @@ import {
   PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined,
   UserOutlined, HomeOutlined, PhoneOutlined, MailOutlined, CaretUpOutlined, CaretDownOutlined
 } from '@ant-design/icons';
-import { apiFetch } from '@/utils';
-import { useTableSort } from '@/hooks/useTableSort';
-import TableSearch from '@/components/TableSearch';
-import Layout from '@/components/Layout';
+import { apiFetch } from '../utils';
+import { useTableSort } from '../hooks/useTableSort';
+import TableSearch from '../components/TableSearch';
+import Layout from '../components/Layout';
 
 const { Title, Text } = Typography;
 const { Option } = Select;

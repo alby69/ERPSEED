@@ -5,9 +5,9 @@ Model Service - Domain service for Builder operations.
 import logging
 from typing import List, Dict, Any, Optional
 
-from .domain.entities.model_definition import ModelDefinition, FieldDefinition
-from .domain.repositories.model_repository import ModelRepository
-from .application.commands.create_model import (
+from ..domain.entities.model_definition import ModelDefinition, FieldDefinition
+from ..domain.repositories.model_repository import ModelRepository
+from ..application.commands.create_model import (
     CommandHandler,
     CreateModelCommand,
     AddFieldCommand,
@@ -17,7 +17,7 @@ from .application.commands.create_model import (
     DeleteModelCommand,
     SyncSchemaCommand,
 )
-from .application.queries.get_model import (
+from ..application.queries.get_model import (
     QueryHandler,
     GetModelQuery,
     ListModelsQuery,
