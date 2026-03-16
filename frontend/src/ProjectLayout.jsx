@@ -34,12 +34,22 @@ const ProjectLayout = () => {
                     // Add published modules (App-like entries)
                     const modules = modulesData.modules || [];
                     modules.forEach(module => {
-                        menuItems.push({
-                            key: `module-${module.name}`,
-                            label: module.title || module.name,
-                            path: `/projects/${projectId}/app/${module.name}`,
-                            isModule: true
-                        });
+                        // Special handling for GDO Reconciliation module
+                        if (module.name === 'gdo_reconciliation') {
+                            menuItems.push({
+                                key: `module-gdo`,
+                                label: module.title || module.name,
+                                path: `/projects/${projectId}/gdo-reconciliation`,
+                                isModule: true
+                            });
+                        } else {
+                            menuItems.push({
+                                key: `module-${module.name}`,
+                                label: module.title || module.name,
+                                path: `/projects/${projectId}/app/${module.name}`,
+                                isModule: true
+                            });
+                        }
                     });
                     
                     // Add individual models (for direct access)

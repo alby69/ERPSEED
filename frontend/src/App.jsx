@@ -20,6 +20,7 @@ import CustomModulesPage from './pages/CustomModulesPage';
 import AIAssistantPage from './pages/AIAssistantPage';
 import ModuleAppPage from './pages/ModuleAppPage';
 import ProjectImportExportPage from './pages/ProjectImportExportPage';
+import GDOReconciliationTool from './pages/GDOReconciliationTool';
 
 
 // Helper component to load project theme
@@ -101,6 +102,7 @@ return (
             <Route path="settings" element={<ProjectSettingsPage />} />
             {/* The route for dynamic models, now nested */}
             <Route path="data/:modelName" element={<DynamicModelPage />} /> 
+            <Route path="gdo-reconciliation" element={<GDOReconciliationTool />} />
             {/* Module App Dashboard - App-like experience */}
             <Route path="app/:moduleName" element={<ModuleAppPage />} />
             {/* You can add more project-specific routes here */}

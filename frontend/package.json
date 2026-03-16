@@ -19,6 +19,7 @@
     "@tanstack/react-virtual": "^3.13.18",
     "@xyflow/react": "^12.10.1",
     "antd": "^5.19.3",
+    "@ant-design/charts": "^2.1.1",
     "apexcharts": "^5.6.0",
     "bootstrap": "^5.3.8",
     "chart.js": "^4.5.1",
