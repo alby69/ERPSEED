@@ -8,10 +8,9 @@ import io
 
 from .services.gdo_reconciliation_service import GDOReconciliationService
 from .services.gdo_excel_reporter import GDOExcelReporter
-from .extensions import db
 
 blp = Blueprint("gdo_reconciliation", __name__, url_prefix="/api/gdo", description="GDO Reconciliation API")
-reconciliation_service = GDOReconciliationService(db=db)
+reconciliation_service = GDOReconciliationService()
 
 @blp.route("/process")
 class GDOReconciliationProcess(MethodView):
@@ -65,9 +64,4 @@ class GDOReconciliationExport(MethodView):
         data = request.get_json()
         reporter = GDOExcelReporter()
         output = reporter.generate_report(data)
-        return send_file(
-            output,
-            download_name="Riconciliazione_GDO.xlsx",
-            as_attachment=True,
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        return send_file(output, download_name="Riconciliazione_GDO.xlsx", as_attachment=True)

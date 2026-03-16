@@ -5,16 +5,15 @@ from datetime import datetime, timedelta
 def create_simulation_data():
     base_date = datetime(2024, 1, 1)
 
-    # Cash movements (Debits) using Italian headers and formatting
+    # Cash movements (Debits)
     debits = []
     for i in range(30):
         # 3 movements per day
         date = base_date + timedelta(days=i//3)
-        val = np.random.randint(500, 2000) + 0.50
         debits.append({
-            "Data": date.strftime("%d/%m/%Y"),
-            "Dare": f"{val:.2f} €".replace(".", ","),
-            "Avere": "0,00",
+            "Date": date.strftime("%d/%m/%Y"),
+            "Debit": np.random.randint(500, 2000) + 0.50,
+            "Credit": 0,
             "Note": f"Incasso Pos {i}"
         })
 
@@ -24,12 +23,12 @@ def create_simulation_data():
     for i in range(0, 30, 6):
         date = base_date + timedelta(days=i//3 + 2)
         # Sum of previous 6 debits
-        total_debit = sum(float(d["Dare"].replace(" €", "").replace(",", ".")) for d in debits[i:i+6])
+        total_debit = sum(d["Debit"] for d in debits[i:i+6])
         credits.append({
-            "Data": date.strftime("%d/%m/%Y"),
+            "Date": date.strftime("%d/%m/%Y"),
             "Data Valuta": (date + timedelta(days=1)).strftime("%d/%m/%Y"),
-            "Dare": "0,00",
-            "Avere": f"{total_debit:.2f}".replace(".", ","),
+            "Debit": 0,
+            "Credit": total_debit,
             "Note": f"Versamento Bancario {i//6}"
         })
 

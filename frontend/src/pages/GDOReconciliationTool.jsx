@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Upload, Button, Table, Space, Typography, Form, InputNumber, Select, Switch, message, Tabs, Statistic, Row, Col } from 'antd';
+import { Card, Upload, Button, Table, Space, Typography, Form, InputNumber, Select, message, Tabs, Statistic, Row, Col } from 'antd';
 import { UploadOutlined, PlayCircleOutlined, DownloadOutlined, SaveOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { useParams } from 'react-router-dom';
@@ -16,10 +16,6 @@ const GDOReconciliationTool = () => {
     algorithm: 'progressive_balance',
     tolerance: 0.5,
     days_window: 5,
-    search_direction: 'past_only',
-    enable_best_fit: true,
-    enable_residual_recovery: true,
-    valuta_date_column: 'Data Valuta',
     column_mapping: {
       'Date': 'Data',
       'Debit': 'Dare',
@@ -28,8 +24,8 @@ const GDOReconciliationTool = () => {
     }
   });
 
-  const handleUpload = (file) => {
-    setFile(file);
+  const handleUpload = (info) => {
+    setFile(info.file);
     return false; // Prevent auto-upload
   };
 
@@ -132,15 +128,7 @@ const GDOReconciliationTool = () => {
               <Form.Item name="algorithm" label="Algoritmo">
                 <Select options={[
                   { label: 'Progressive Balance', value: 'progressive_balance' },
-                  { label: 'Subset Sum', value: 'subset_sum' },
-                  { label: 'Greedy Amount First', value: 'greedy_amount_first' }
-                ]} />
-              </Form.Item>
-              <Form.Item name="search_direction" label="Direzione Ricerca">
-                <Select options={[
-                  { label: 'Solo Passato (D prima di A)', value: 'past_only' },
-                  { label: 'Solo Futuro (A prima di D)', value: 'future_only' },
-                  { label: 'Entrambe', value: 'both' }
+                  { label: 'Subset Sum', value: 'subset_sum' }
                 ]} />
               </Form.Item>
               <Form.Item name="tolerance" label="Tolleranza (€)">
@@ -148,12 +136,6 @@ const GDOReconciliationTool = () => {
               </Form.Item>
               <Form.Item name="days_window" label="Finestra Temporale (Giorni)">
                 <InputNumber min={1} style={{ width: '100%' }} />
-              </Form.Item>
-              <Form.Item name="enable_best_fit" label="Abilita Best Fit (Splitting)" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-              <Form.Item name="enable_residual_recovery" label="Recupero Residui Intelligente" valuePropName="checked">
-                <Switch />
               </Form.Item>
               <Space>
                 <Upload beforeUpload={handleUpload} maxCount={1} showUploadList={!!file}>

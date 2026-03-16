@@ -6,26 +6,22 @@ def simulate_reconciliation():
     # Load simulation data
     df = pd.read_csv("simulation_data.csv", sep=";")
 
-    # Configure with Italian headers mapping
+    # Configure
     config = {
         "algorithm": "progressive_balance",
         "tolerance": 0.5,
         "days_window": 5,
         "column_mapping": {
-            "Date": "Data",
-            "Debit": "Dare",
-            "Credit": "Avere",
+            "Date": "Date",
+            "Debit": "Debit",
+            "Credit": "Credit",
             "Data Valuta": "Data Valuta"
         }
     }
 
-    # Run Service - Progressive
+    # Run Service
     service = GDOReconciliationService()
     results = service.process_data(df, config)
-
-    # Run Service - Subset Sum
-    config["algorithm"] = "subset_sum"
-    results_ss = service.process_data(df, config)
 
     # Verify Stats
     stats = results["stats"]
@@ -33,7 +29,6 @@ def simulate_reconciliation():
     print(f"Coverage Credit: {stats['credit_coverage_perc']:.1f}%")
     print(f"Total Matches: {len(results['matches'])}")
     print(f"Total Anomalies: {stats['total_anomalies']}")
-    print(f"Subset Sum Coverage: {results_ss['stats']['debit_coverage_perc']:.1f}%")
 
 if __name__ == "__main__":
     simulate_reconciliation()

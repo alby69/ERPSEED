@@ -40,24 +40,14 @@ class FileProcessingService:
     def clean_numeric(df: pd.DataFrame, columns: List[str], to_cents: bool = False) -> pd.DataFrame:
         """
         Cleans numeric columns from strings with Italian/European formatting.
-        Handles symbols like €, extra spaces, and different separators.
         """
         df = df.copy()
-
-        def robust_parser(value):
-            if isinstance(value, (int, float)): return value
-            if not isinstance(value, str): return 0
-
-            cleaned = value.strip().replace('€', '').replace(' ', '')
-            if '.' in cleaned and ',' in cleaned:
-                cleaned = cleaned.replace('.', '').replace(',', '.')
-            elif ',' in cleaned:
-                cleaned = cleaned.replace(',', '.')
-            return cleaned
-
         for col in columns:
             if col in df.columns:
-                series = df[col].apply(robust_parser)
+                # Convert to string first to handle mixed types
+                series = df[col].astype(str)
+                # Remove thousands separator (dot) and replace decimal separator (comma) with dot
+                series = series.str.replace('.', '', regex=False).str.replace(',', '.', regex=False)
                 df[col] = pd.to_numeric(series, errors='coerce').fillna(0)
 
                 if to_cents:
