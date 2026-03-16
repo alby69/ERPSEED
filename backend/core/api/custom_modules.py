@@ -72,7 +72,6 @@ class ModuleUpdateSchema(Schema):
 class ModuleList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
     def get(self):
         """Get all modules with filters."""
         from backend.models import User, Project
@@ -205,7 +204,7 @@ class ModuleList(MethodView):
 class ModuleDetail(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, module_id):
         """Get module details."""
         module = db.session.get(Module, module_id)
@@ -217,7 +216,7 @@ class ModuleDetail(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(ModuleUpdateSchema)
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def put(self, data, module_id):
         """Update module."""
         module = db.session.get(Module, module_id)
@@ -269,7 +268,7 @@ class ModuleDetail(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def delete(self, module_id):
         """Delete module with mandatory backup."""
         from backend.models import User
@@ -315,7 +314,7 @@ class ModuleDetail(MethodView):
 class ModuleBackup(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, module_id):
         """Export module data as JSON for backup before deletion."""
         from backend.models import User
@@ -405,7 +404,7 @@ class ModuleBackup(MethodView):
 class ModuleProjects(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def get(self, module_id):
         """Get projects assigned to module."""
         module = db.session.get(Module, module_id)
@@ -416,7 +415,7 @@ class ModuleProjects(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def post(self, module_id):
         """Assign module to a project."""
         data = request.json or {}
@@ -446,7 +445,7 @@ class ModuleProjects(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def delete(self, module_id):
         """Remove module from a project."""
         data = request.json or {}
@@ -476,7 +475,7 @@ class ModuleProjects(MethodView):
 class ModuleStatus(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.response(200, schema={"type": "object"})
+    @blp.response(200)
     def post(self, module_id):
         """Change module status."""
         data = request.json or {}

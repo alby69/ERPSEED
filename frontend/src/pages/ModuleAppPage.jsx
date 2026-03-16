@@ -4,6 +4,7 @@ import { Card, Row, Col, Spin, message, Typography, Button, Menu, Tabs, Empty } 
 import { ArrowLeftOutlined, AppstoreOutlined, TableOutlined, FormOutlined, BarChartOutlined, HomeOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useTheme } from '../context';
+import { StaticBlockRenderer } from '../components/BlockRenderer';
 
 const { Title, Text } = Typography;
 
@@ -15,6 +16,7 @@ function ModuleAppPage() {
   const [module, setModule] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [models, setModels] = useState([]);
   const [blocks, setBlocks] = useState([]);
 
   useEffect(() => {
@@ -43,7 +45,27 @@ function ModuleAppPage() {
         const detailData = await detailResponse.json();
         
         // Get models from the module (as blocks)
-        setBlocks(detailData.contained_models || detailData.models || []);
+        setModels(detailData.contained_models || detailData.models || []);
+        
+        // Also fetch blocks with their full details (including visual_builder_config)
+        if (detailData.blocks && detailData.blocks.length > 0) {
+          const blocksWithDetails = await Promise.all(
+            detailData.blocks.map(async (block) => {
+              try {
+                const blockResponse = await apiFetch(`/api/blocks/${block.id}`);
+                if (blockResponse.ok) {
+                  return await blockResponse.json();
+                }
+              } catch (err) {
+                console.error('Error fetching block details:', err);
+              }
+              return block;
+            })
+          );
+          setBlocks(blocksWithDetails);
+        } else {
+          setBlocks([]);
+        }
       } else {
         message.error('Modulo non trovato');
         navigate(`/projects/${projectId}`);
@@ -64,15 +86,15 @@ function ModuleAppPage() {
             <Card bordered={false} style={{ background: themeConfig.primaryColor || '#1890ff', color: '#fff' }}>
               <div style={{ textAlign: 'center' }}>
                 <Title level={2} style={{ color: '#fff', margin: 0 }}>{blocks.length}</Title>
-                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Block Configurati</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Blocchi Layout</Text>
               </div>
             </Card>
           </Col>
           <Col xs={24} sm={8}>
             <Card bordered={false} style={{ background: '#52c41a', color: '#fff' }}>
               <div style={{ textAlign: 'center' }}>
-                <Title level={2} style={{ color: '#fff', margin: 0 }}>Attivo</Title>
-                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Stato Modulo</Text>
+                <Title level={2} style={{ color: '#fff', margin: 0 }}>{models.length}</Title>
+                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>Modelli Dati</Text>
               </div>
             </Card>
           </Col>
@@ -91,7 +113,7 @@ function ModuleAppPage() {
         </Card>
         
         {blocks.length > 0 ? (
-          <Card title="Componenti del Modulo" style={{ marginTop: 20 }}>
+          <Card title="Blocchi Layout" style={{ marginTop: 20 }}>
             <Row gutter={[16, 16]}>
               {blocks.map((block) => (
                 <Col xs={24} sm={12} md={8} key={block.id}>
@@ -104,7 +126,7 @@ function ModuleAppPage() {
                     <Card.Meta
                       avatar={<AppstoreOutlined style={{ fontSize: 24, color: themeConfig.primaryColor }} />}
                       title={block.title || block.name}
-                      description={block.description || 'Block del modulo'}
+                      description={block.description || (block.visual_builder_config ? 'Layout Visuale' : 'Block del modulo')}
                     />
                   </Card>
                 </Col>
@@ -116,12 +138,68 @@ function ModuleAppPage() {
             <Empty description="Nessun block configurato per questo modulo" />
           </Card>
         )}
+
+        {models.length > 0 ? (
+          <Card title="Modelli Dati" style={{ marginTop: 20 }}>
+            <Row gutter={[16, 16]}>
+              {models.map((model) => (
+                <Col xs={24} sm={12} md={8} key={model.id}>
+                  <Card 
+                    size="small" 
+                    hoverable
+                    onClick={() => setActiveTab(`model-${model.id}`)}
+                    style={{ borderColor: '#52c41a' }}
+                  >
+                    <Card.Meta
+                      avatar={<TableOutlined style={{ fontSize: 24, color: '#52c41a' }} />}
+                      title={model.title || model.name}
+                      description={model.description || 'Modello dati'}
+                    />
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Card>
+        ) : null}
       </div>
     );
   };
 
   const renderBlockContent = (block) => {
-    // Redirect to the actual block/model page
+    // Check if block has VisualBuilder config
+    if (block.visual_builder_config && block.visual_builder_config.length > 0) {
+      return (
+        <div style={{ padding: '20px', height: '100%' }}>
+          <StaticBlockRenderer 
+            components={block.visual_builder_config} 
+            data={{}}
+            projectId={projectId}
+            onAction={(action, config, data) => {
+              console.log('Block action:', action, config);
+              message.info(`Azione: ${action}`);
+            }}
+          />
+        </div>
+      );
+    }
+    
+    // Check if block has component IDs (legacy)
+    if (block.components && block.components.length > 0) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <Card title="Componenti">
+            {block.components.map(comp => (
+              <Card key={comp.id} size="small" style={{ marginBottom: 8 }}>
+                <strong>{comp.name}</strong>
+                <p>{comp.archetype_name}</p>
+              </Card>
+            ))}
+          </Card>
+        </div>
+      );
+    }
+    
+    // Default: show placeholder
     return (
       <div style={{ padding: '20px' }}>
         <Card title={block.title || block.name}>
@@ -160,6 +238,11 @@ function ModuleAppPage() {
       key: `block-${block.id}`,
       icon: <AppstoreOutlined />,
       label: block.title || block.name,
+    })),
+    ...models.map(model => ({
+      key: `model-${model.id}`,
+      icon: <TableOutlined />,
+      label: model.title || model.name,
     }))
   ];
 
@@ -223,9 +306,27 @@ function ModuleAppPage() {
         {/* Contenuto principale */}
         <div style={{ flex: 1, overflow: 'auto' }}>
           {activeTab === 'overview' ? renderOverview() : (
-            blocks.map(block => 
-              activeTab === `block-${block.id}` ? renderBlockContent(block) : null
-            )
+            <>
+              {blocks.map(block => 
+                activeTab === `block-${block.id}` ? renderBlockContent(block) : null
+              )}
+              {models.map(model => 
+                activeTab === `model-${model.id}` ? (
+                  <div key={model.id} style={{ padding: '20px' }}>
+                    <Card title={model.title || model.name}>
+                      <p>Accedi a questo modello dati.</p>
+                      <Button 
+                        type="primary" 
+                        icon={<TableOutlined />}
+                        onClick={() => navigate(`/projects/${projectId}/data/${model.name}`)}
+                      >
+                        Apri {model.title || model.name}
+                      </Button>
+                    </Card>
+                  </div>
+                ) : null
+              )}
+            </>
           )}
         </div>
       </div>

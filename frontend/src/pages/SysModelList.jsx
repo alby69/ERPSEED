@@ -13,6 +13,8 @@ function SysModelList() {
   const [newModel, setNewModel] = useState({ name: '', title: '', description: '' });
   const [dateFilters, setDateFilters] = useState({ from: '', to: '' });
 
+  const projectId = localStorage.getItem('currentProjectId') || 1;
+
   const fetchModels = async () => {
     try {
       const params = new URLSearchParams();
@@ -40,10 +42,14 @@ function SysModelList() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
+      const modelData = {
+        ...newModel,
+        project_id: parseInt(projectId)
+      };
       const response = await apiFetch('/sys-models', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newModel)
+        body: JSON.stringify(modelData)
       });
       if (response.ok) {
         setShowCreateModal(false);

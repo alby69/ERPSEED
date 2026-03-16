@@ -44,11 +44,16 @@ class FileProcessingService:
         df = df.copy()
         for col in columns:
             if col in df.columns:
-                # Convert to string first to handle mixed types
-                series = df[col].astype(str)
-                # Remove thousands separator (dot) and replace decimal separator (comma) with dot
-                series = series.str.replace('.', '', regex=False).str.replace(',', '.', regex=False)
-                df[col] = pd.to_numeric(series, errors='coerce').fillna(0)
+                # Check if already numeric (float/int) - no processing needed
+                if df[col].dtype in ['float64', 'int64', 'float32', 'int32']:
+                    # Already numeric - just convert to float if needed
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                else:
+                    # Convert to string first to handle mixed types
+                    series = df[col].astype(str)
+                    # Remove thousands separator (dot) and replace decimal separator (comma) with dot
+                    series = series.str.replace('.', '', regex=False).str.replace(',', '.', regex=False)
+                    df[col] = pd.to_numeric(series, errors='coerce').fillna(0)
 
                 if to_cents:
                     df[col] = (df[col] * 100).round().astype(int)

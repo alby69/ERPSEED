@@ -112,6 +112,55 @@ Gestione inventari.
 
 ---
 
+## Moduli Builtin
+
+Inclusi nell'installazione standard:
+
+- **Anagrafica**: Gestione Soggetti, Ruoli, Indirizzi, Contatti
+- **Prodotti**: Catalogo prodotti e servizi
+- **Vendite**: Ciclo di vendita completo
+- **Acquisti**: Ciclo di approvvigionamento
+- **Magazzino**: Inventari e movimentazioni
+- **GDO Reconciliation**: Riconciliazione automatica incassi GDO
+
+---
+
+## Modulo GDO Reconciliation
+
+Il modulo **GDO Reconciliation** (Grande Distribuzione Organizzata) permette la riconciliazione automatica degli incassi di cassa con i versamenti bancari.
+
+### Caratteristiche
+
+- **Upload Excel**: Caricamento file estratti dal software cassa
+- **Elaborazione automatica**: Algoritmo di matching progressive balance
+- **Statistiche**: Totalizzazioni Dare/Avere, grafici
+- **Export Excel**: Esportazione risultati riconciliazione
+
+### Utilizzo
+
+1. Carica il file Excel dal software cassa
+2. Configura i parametri (algoritmo, tolleranza, finestra giorni)
+3. Esegui la riconciliazione
+4. Visualizza i risultati e le statistiche
+5. Esporta o salva i dati
+
+### Formato File Excel
+
+Il file deve contenere le seguenti colonne (italiano):
+
+| Colonna | Descrizione |
+|---------|-------------|
+| **Data** | Data operazione |
+| **Dare** | Importo dare (incasso) |
+| **Avere** | Importo avere (versamento) |
+| **Data Valuta** | Data valuta (opzionale) |
+
+### Integrazione con Block
+
+Il modulo GDO può essere arricchito con Block layout creati tramite VisualBuilder. I Block vengono visualizzati nella dashboard App-like del modulo.
+
+---
+
 ## Gestire i Moduli
 
 ### Attivare un Modulo
@@ -174,7 +223,38 @@ draft ──► testing ──► published ──► deprecated
 - **Published**: Installabile
 - **Deprecated**: Non più consigliato
 
-### Pubblicare un Modulo
+### Associare Block ai Moduli
+
+Ogni modulo custom può avere uno o più Block associati che definiscono il layout dell'interfaccia.
+
+**Via UI (CustomModulesPage)**:
+1. Crea o modifica un modulo
+2. Seleziona i Block desiderati nel campo "Blocchi Layout"
+3. Salva il modulo
+
+**Via API**:
+```bash
+# Aggiungi un block al modulo
+curl -X POST "/api/v1/modules/{module_id}/blocks/{block_id}" \
+  -H "Authorization: Bearer <token>"
+
+# Rimuovi un block dal modulo
+curl -X DELETE "/api/v1/modules/{module_id}/blocks/{block_id}" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Creare Block dalla Pagina Moduli
+
+Dalla pagina **CustomModulesPage** è possibile creare nuovi Block direttamente:
+
+1. Crea o modifica un modulo
+2. Clicca **"Crea Nuovo Block"**
+3. Si apre il **VisualBuilder** per disegnare il layout
+4. Salva il Block - viene automaticamente associato al modulo
+
+---
+
+## Pubblicare un Modulo
 
 Per pubblicare nel Marketplace:
 1. Porta il modulo in stato "testing"
@@ -253,9 +333,37 @@ Quando un modulo viene pubblicato, diventa accessibile come **applicazione stand
 ```
 
 - **Header App-like**: Titolo, versione, breadcrumb
-- **Sidebar interna**: Navigazione tra Panoramica e Block
-- **Panoramica**: Statistiche, descrizione, lista Block
-- **Blocco coordinati**: Accesso rapido ai componenti del modulo
+- **Sidebar interna**: Navigazione tra Panoramica, Blocchi Layout e Modelli Dati
+- **Panoramica**: Statistiche, descrizione, lista Blocchi e Modelli
+- **Blocchi Layout**: I block VisualBuilder vengono renderizzati con BlockRenderer
+- **Modelli Dati**: Accesso ai modelli dati del modulo
+
+#### Renderizzazione Blocchi
+
+I Block associati al modulo vengono renderizzati automaticamente nella dashboard:
+
+1. **VisualBuilder Config**: Se il Block ha una configurazione VisualBuilder (`visual_builder_config`), viene renderizzato usando `StaticBlockRenderer`
+2. **Componenti Legacy**: Se il Block ha solo ID dei componenti, mostra la lista dei componenti
+3. **Navigazione**: I pulsanti supportano azioni `navigate` con placeholder `{projectId}`
+
+**Esempio Block GDO**:
+```json
+{
+  "id": "gdo-card-1",
+  "type": "card",
+  "config": { "title": "Riconciliazione GDO" },
+  "children": [
+    {
+      "type": "button",
+      "config": {
+        "label": "Apri Modulo",
+        "action": "navigate",
+        "path": "/projects/{projectId}/app/gdo_reconciliation"
+      }
+    }
+  ]
+}
+```
 
 ### Sistema API Ibrido
 

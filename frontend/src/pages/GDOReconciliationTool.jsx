@@ -24,8 +24,8 @@ const GDOReconciliationTool = () => {
     }
   });
 
-  const handleUpload = (info) => {
-    setFile(info.file);
+  const handleUpload = (file) => {
+    setFile(file);
     return false; // Prevent auto-upload
   };
 
@@ -44,11 +44,7 @@ const GDOReconciliationTool = () => {
       const response = await apiFetch('/api/gdo/process', {
         method: 'POST',
         body: formData,
-        // Remove default JSON headers for multipart
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      }, true); // true to skip default JSON body stringify
+      });
 
       const data = await response.json();
       setResults(data);
@@ -104,17 +100,47 @@ const GDOReconciliationTool = () => {
     }
   };
 
-  const matchColumns = [
-    { title: 'Data Versamento', dataIndex: ['credit', 'analysis_date'], key: 'date' },
-    { title: 'Importo Versato', dataIndex: ['credit', 'Credit'], key: 'credit', render: (val) => `€ ${(val / 100).toFixed(2)}` },
-    { title: 'Numero Incassi', dataIndex: 'debits', key: 'debits_count', render: (debits) => debits.length },
-    { title: 'Differenza', dataIndex: 'difference', key: 'diff', render: (val) => `€ ${(val / 100).toFixed(2)}` },
+  // Format amount with thousands separator (point) and 2 decimal places (comma)
+  const formatCurrency = (val) => {
+    if (val == null || isNaN(val)) return '0,00';
+    return val.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const formatCurrencyWithSymbol = (val) => {
+    return `€ ${formatCurrency(val)}`;
+  };
+
+  const formatNumber = (val) => {
+    if (val == null || isNaN(val)) return '0';
+    return val.toLocaleString('it-IT');
+  };
+
+  const getDebitAmount = (record) => {
+    const val = record?.Debit ?? record?.Dare;
+    return formatCurrencyWithSymbol(val);
+  };
+
+  const getCreditAmountSimple = (record) => {
+    const val = record?.Credit ?? record?.Avere;
+    return formatCurrencyWithSymbol(val);
+  };
+
+  // Helper to get date (handles both Date and Data column names)
+  const getDateValue = (record) => {
+    return record?.Date ?? record?.Data ?? '-';
+  };
+
+  const getMatchColumns = [
+    { title: 'Data Versamento', key: 'date', render: (_, record) => getDateValue(record?.credit) },
+    { title: 'Importo Versato', key: 'credit', render: (_, record) => getCreditAmountSimple(record?.credit) },
+    { title: 'Numero Incassi', dataIndex: 'debits', key: 'debits_count', render: (debits) => debits?.length || 0 },
+    { title: 'Differenza', key: 'diff', render: (_, record) => formatCurrencyWithSymbol(record?.difference) },
     { title: 'Tipo', dataIndex: 'match_type', key: 'type' },
   ];
 
   const trendData = results?.stats?.monthly_trend?.flatMap(item => [
-    { month: item.month, value: item.debit, type: 'Incassi (Dare)' },
-    { month: item.month, value: item.credit, type: 'Versamenti (Avere)' }
+    { month: item.month, value: item.debit || 0, type: 'Incassi (Dare)' },
+    { month: item.month, value: item.credit || 0, type: 'Versamenti (Avere)' }
   ]) || [];
 
   return (
@@ -152,21 +178,49 @@ const GDOReconciliationTool = () => {
         {results && (
           <Col span={16}>
             <Row gutter={[16, 16]}>
-              <Col span={6}>
-                <Card><Statistic title="Copertura Incassi" value={results.stats.debit_coverage_perc} precision={1} suffix="%" /></Card>
-              </Col>
-              <Col span={6}>
-                <Card><Statistic title="Copertura Versamenti" value={results.stats.credit_coverage_perc} precision={1} suffix="%" /></Card>
-              </Col>
-              <Col span={6}>
-                <Card><Statistic title="Anomalie" value={results.stats.total_anomalies} valueStyle={{ color: results.stats.total_anomalies > 0 ? '#cf1322' : '#3f9142' }} /></Card>
-              </Col>
-              <Col span={6}>
+              <Col span={8}>
                 <Card>
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                        <Button block icon={<DownloadOutlined />} onClick={downloadExcel}>Export Excel</Button>
-                        <Button block type="dashed" icon={<SaveOutlined />} onClick={saveResults} loading={loading}>Salva</Button>
-                    </Space>
+                  <Statistic 
+                    title="Incassi (€)" 
+                    value={results.stats.total_debit || 0} 
+                    precision={2} 
+                    valueStyle={{ fontSize: '1.2em' }}
+                    formatter={() => formatCurrencyWithSymbol(results.stats.total_debit)}
+                  />
+                  <div style={{ marginTop: 8, textAlign: 'center', color: '#888' }}>
+                    Num: {formatNumber(results.stats.count_debit || 0)}
+                  </div>
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card>
+                  <Statistic 
+                    title="Versamenti (€)" 
+                    value={results.stats.total_credit || 0} 
+                    precision={2} 
+                    valueStyle={{ fontSize: '1.2em' }}
+                    formatter={() => formatCurrencyWithSymbol(results.stats.total_credit)}
+                  />
+                  <div style={{ marginTop: 8, textAlign: 'center', color: '#888' }}>
+                    Num: {formatNumber(results.stats.count_credit || 0)}
+                  </div>
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card>
+                  <Statistic 
+                    title="Delta (€)" 
+                    value={results.stats.total_difference || 0} 
+                    precision={2} 
+                    valueStyle={{ 
+                      fontSize: '1.2em',
+                      color: (results.stats.total_difference || 0) >= 0 ? '#3f9142' : '#cf1322'
+                    }}
+                    formatter={() => formatCurrencyWithSymbol(results.stats.total_difference)}
+                  />
+                  <div style={{ marginTop: 8, textAlign: 'center', color: '#888' }}>
+                    Delta Num: {formatNumber((results.stats.count_debit || 0) - (results.stats.count_credit || 0))}
+                  </div>
                 </Card>
               </Col>
             </Row>
@@ -175,64 +229,100 @@ const GDOReconciliationTool = () => {
       </Row>
 
       {results && (
-        <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-            <Col span={12}>
-                <Card title="Trend Mensile Incassi vs Versamenti">
-                    <Line
-                        data={trendData}
-                        xField="month"
-                        yField="value"
-                        seriesField="type"
-                        smooth
-                        legend={{ position: 'top' }}
-                    />
-                </Card>
-            </Col>
-            <Col span={12}>
-                <Card title="Distribuzione Match">
-                    <Pie
-                        data={results.matches.reduce((acc, curr) => {
-                            const type = curr.match_type;
-                            const existing = acc.find(i => i.type === type);
-                            if (existing) existing.value++;
-                            else acc.push({ type, value: 1 });
-                            return acc;
-                        }, [])}
-                        angleField="value"
-                        colorField="type"
-                        radius={0.8}
-                        label={{ type: 'outer' }}
-                    />
-                </Card>
-            </Col>
-        </Row>
-      )}
-
-      {results && (
         <div style={{ marginTop: 24 }}>
           <Tabs defaultActiveKey="1" items={[
             {
               key: '1',
-              label: 'Quadrature Trovate',
-              children: <Table dataSource={results.matches} columns={matchColumns} rowKey={(record) => record.credit.orig_index} size="small" />
+              label: 'Riconciliati',
+              children: (
+                <Row gutter={[16, 16]}>
+                  <Col span={24}>
+                    <Card title="Grafici">
+                      <Row gutter={[16, 16]}>
+                        <Col span={12}>
+                          <Card title="Trend Mensile Incassi vs Versamenti" size="small">
+                            <Line
+                              data={trendData}
+                              xField="month"
+                              yField="value"
+                              seriesField="type"
+                              smooth
+                              legend={{ position: 'top' }}
+                            />
+                          </Card>
+                        </Col>
+                        <Col span={12}>
+                          <Card title="Distribuzione Match" size="small">
+                            <Pie
+                              data={results.matches.reduce((acc, curr) => {
+                                const type = curr.match_type;
+                                const existing = acc.find(i => i.type === type);
+                                if (existing) existing.value++;
+                                else acc.push({ type, value: 1 });
+                                return acc;
+                              }, [])}
+                              angleField="value"
+                              colorField="type"
+                              radius={0.8}
+                              label={false}
+                              legend={{ position: 'bottom' }}
+                            />
+                          </Card>
+                        </Col>
+                      </Row>
+                    </Card>
+                  </Col>
+                  <Col span={24}>
+                    <Card title="Quadrature Trovate" style={{ marginTop: 16 }}>
+                      <Table 
+                        dataSource={results.matches} 
+                        columns={getMatchColumns} 
+                        rowKey={(record) => record.credit?.orig_index} 
+                        pagination={{ pageSize: 10 }} 
+                        size="small" 
+                      />
+                    </Card>
+                  </Col>
+                </Row>
+              )
             },
             {
               key: '2',
-              label: 'Incassi Non Riconciliati',
-              children: <Table dataSource={results.unreconciled_debit} columns={[
-                { title: 'Data', dataIndex: 'Date', key: 'date' },
-                { title: 'Importo', dataIndex: 'Debit', key: 'amt', render: (val) => `€ ${(val / 100).toFixed(2)}` }
-              ]} size="small" />
-            },
-            {
-                key: '3',
-                label: 'Versamenti Non Riconciliati',
-                children: <Table dataSource={results.unreconciled_credit} columns={[
-                  { title: 'Data', dataIndex: 'Date', key: 'date' },
-                  { title: 'Data Valuta', dataIndex: 'Data Valuta', key: 'valuta' },
-                  { title: 'Importo', dataIndex: 'Credit', key: 'amt', render: (val) => `€ ${(val / 100).toFixed(2)}` }
-                ]} size="small" />
-              }
+              label: 'Non Riconciliati',
+              children: (
+                <Row gutter={[16, 16]}>
+                  <Col span={12}>
+                    <Card title="Incassi Non Riconciliati">
+                      <Table 
+                        dataSource={results.unreconciled_debit} 
+                        columns={[
+                          { title: 'Data', key: 'date', render: (_, record) => getDateValue(record) },
+                          { title: 'Importo', key: 'amt', render: (_, record) => getDebitAmount(record) }
+                        ]} 
+                        rowKey={(record) => record.orig_index} 
+                        pagination={{ pageSize: 10 }} 
+                        size="small" 
+                      />
+                    </Card>
+                  </Col>
+                  <Col span={12}>
+                    <Card title="Versamenti Non Riconciliati">
+                      <Table 
+                        dataSource={results.unreconciled_credit} 
+                        columns={[
+                          { title: 'Data', key: 'date', render: (_, record) => getDateValue(record) },
+                          { title: 'Data Valuta', key: 'valuta', render: (_, record) => record?.['Data Valuta'] ?? '-' },
+                          { title: 'Importo', key: 'amt', render: (_, record) => getCreditAmountSimple(record) }
+                        ]} 
+                        rowKey={(record) => record.orig_index} 
+                        pagination={{ pageSize: 10 }} 
+                        size="small" 
+                      />
+                    </Card>
+                  </Col>
+                </Row>
+              )
+            }
           ]} />
         </div>
       )}

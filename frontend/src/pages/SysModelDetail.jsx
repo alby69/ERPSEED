@@ -57,8 +57,11 @@ function SysModelDetail() {
         throw new Error('Failed to fetch model details');
       }
       const data = await response.json();
+      // Handle both 'fields' and 'model_fields' from API
+      const fields = data.model_fields || data.fields || [];
       // Ordina i campi per 'order' se presente, altrimenti per ID
-      if (data.fields) data.fields.sort((a, b) => (a.order || 0) - (b.order || 0));
+      if (fields.length > 0) fields.sort((a, b) => (a.order || 0) - (b.order || 0));
+      data.fields = fields;
       setModel(data);
     } catch (err) {
       setError(err.message);

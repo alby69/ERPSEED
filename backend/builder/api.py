@@ -321,34 +321,46 @@ class BlockDetail(MethodView):
         """Get block details with components"""
         block = Block.query.get_or_404(block_id)
 
-        # Get components
+        # Get components - handle both Component IDs and VisualBuilder config
         components = []
+        visual_builder_config = []
+        
         if block.component_ids:
-            for comp_id in block.component_ids:
-                comp = Component.query.get(comp_id)
-                if comp:
-                    components.append(
-                        {
-                            "id": comp.id,
-                            "name": comp.name,
-                            "archetype_id": comp.archetype_id,
-                            "archetype_name": comp.archetype.name
-                            if comp.archetype
-                            else None,
-                            "config": comp.config,
-                        }
-                    )
+            # Check if it's VisualBuilder config (list of dicts) or Component IDs (list of ints)
+            first_item = block.component_ids[0] if block.component_ids else None
+            
+            if isinstance(first_item, dict):
+                # It's VisualBuilder config - use directly
+                visual_builder_config = block.component_ids
+            elif isinstance(first_item, int):
+                # It's Component IDs - fetch from database
+                for comp_id in block.component_ids:
+                    comp = Component.query.get(comp_id)
+                    if comp:
+                        components.append(
+                            {
+                                "id": comp.id,
+                                "name": comp.name,
+                                "archetype_id": comp.archetype_id,
+                                "archetype_name": comp.archetype.name
+                                if comp.archetype
+                                else None,
+                                "config": comp.config,
+                            }
+                        )
 
         return {
             "id": block.id,
             "project_id": block.project_id,
             "name": block.name,
+            "title": block.description.split('\n')[0] if block.description else block.name,
             "description": block.description,
             "version": block.version,
             "status": block.status,
             "quality_score": block.quality_score,
             "is_certified": block.is_certified,
             "component_ids": block.component_ids,
+            "visual_builder_config": visual_builder_config,
             "relationships": block.relationships,
             "api_endpoints": block.api_endpoints,
             "components": components,

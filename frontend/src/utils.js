@@ -17,8 +17,13 @@ export const apiFetch = async (endpoint, options = {}) => {
   let token = getToken('access_token');
   const headers = { ...options.headers };
 
-  if (token) {
+  if (token && !headers['Authorization']) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Don't set Content-Type for FormData - browser will set it with boundary
+  if (options.body && !(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
   }
 
   const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;

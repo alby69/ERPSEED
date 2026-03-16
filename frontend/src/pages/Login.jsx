@@ -22,6 +22,7 @@ function Login() {
 
     try {
       const response = await apiFetch('/api/v1/auth/login', {
+        method: 'POST',
         body: JSON.stringify({ email, password }),
       });
 

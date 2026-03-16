@@ -327,6 +327,83 @@ curl -X POST "http://localhost:5000/api/projects/1/blocks" \
 
 ---
 
+## Visual Builder
+
+Il **Visual Builder** è uno strumento integrato che permette di creare interfacce utente trascinando e rilasciando componenti sulla canvas.
+
+### Accedere al Visual Builder
+
+1. **Da Builder → Blocchi**: Crea un nuovo Block o modifica uno esistente
+2. **Da CustomModulesPage**: Crea un Block direttamente dalla pagina dei moduli
+
+### Componenti Disponibili
+
+| Componente | Descrizione |
+|------------|-------------|
+| **Card** | Contenitore con titolo |
+| **Statistic** | Card per statistiche con valore numerico |
+| **Row** | Riga del grid system |
+| **Col** | Colonna del grid system |
+| **Button** | Pulsante con azione |
+| **Text** | Testo semplice |
+| **Title** | Titolo con livello |
+| **Space** | Spaziatura tra elementi |
+| **Table** | Tabella per visualizzare dati |
+| **Div** | Contenitore generico |
+
+### Configurazione Componenti
+
+Ogni componente può essere configurato con:
+- **x, y**: Posizione sulla canvas
+- **w, h**: Larghezza e altezza
+- **config**: Oggetto di configurazione specifico per tipo
+- **children**: Componenti nidificati
+
+### Azioni dei Pulsanti
+
+I pulsanti possono eseguire diverse azioni:
+
+| Azione | Descrizione |
+|--------|-------------|
+| `navigate` | Naviga a un percorso |
+| `navigate_external` | Apre URL esterno |
+| Custom | Callback personalizzato |
+
+**Esempio di configurazione button**:
+```json
+{
+  "type": "button",
+  "config": {
+    "label": "Apri Modulo",
+    "type": "primary",
+    "action": "navigate",
+    "path": "/projects/{projectId}/app/gdo_reconciliation"
+  }
+}
+```
+
+Il placeholder `{projectId}` viene sostituito automaticamente.
+
+### BlockRenderer
+
+Il **BlockRenderer** è il componente React che renderizza dinamicamente i Block basati sulla loro configurazione VisualBuilder.
+
+**Usage**:
+```jsx
+import { StaticBlockRenderer } from '@/components/BlockRenderer';
+
+<StaticBlockRenderer 
+  components={block.visual_builder_config}
+  data={{}}
+  projectId={projectId}
+  onAction={(action, config, data) => {
+    console.log('Azione:', action);
+  }}
+/>
+```
+
+---
+
 ## Sistema di Validazione
 
 ### Validazione Built-in

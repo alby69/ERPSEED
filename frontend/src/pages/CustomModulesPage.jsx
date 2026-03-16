@@ -2,21 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Tag, Modal, Form, Input, Select, message, Spin, Alert, Space, Badge, Dropdown } from 'antd';
 import { apiFetch } from '../utils';
 import { Layout } from '../components';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import ImportExportToolbar from '../components/ui/ImportExportToolbar';
 import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
+import VisualBuilder from './VisualBuilder';
 
 const { TextArea } = Input;
 
 function CustomModulesPage() {
     const { projectId } = useParams();
+    const navigate = useNavigate();
     const [modules, setModules] = useState([]);
+    const [blocks, setBlocks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingModule, setEditingModule] = useState(null);
     const [form] = Form.useForm();
     const [submitting, setSubmitting] = useState(false);
+    const [showBlockBuilder, setShowBlockBuilder] = useState(false);
+    const [selectedBlockId, setSelectedBlockId] = useState(null);
 
     const fetchModules = async () => {
         setLoading(true);
@@ -35,8 +40,21 @@ function CustomModulesPage() {
         }
     };
 
+    const fetchBlocks = async () => {
+        try {
+            const response = await apiFetch(`/api/projects/${projectId || 1}/blocks`);
+            if (response.ok) {
+                const data = await response.json();
+                setBlocks(data || []);
+            }
+        } catch (err) {
+            console.error('Error loading blocks:', err);
+        }
+    };
+
     useEffect(() => {
         fetchModules();
+        fetchBlocks();
     }, [projectId]);
 
     const handleCreate = async (values) => {
@@ -291,6 +309,7 @@ function CustomModulesPage() {
                         setEditingModule(null);
                     }}
                     footer={null}
+                    width={600}
                 >
                     <Form
                         form={form}
@@ -334,9 +353,32 @@ function CustomModulesPage() {
                                 <Select.Option value="chart">Statistiche</Select.Option>
                             </Select>
                         </Form.Item>
-                        
+
+                        <Form.Item
+                            name="block_ids"
+                            label="Blocchi Layout"
+                        >
+                            <Select 
+                                mode="multiple" 
+                                placeholder="Seleziona blocchi per il layout"
+                                allowClear
+                            >
+                                {blocks.map(block => (
+                                    <Select.Option key={block.id} value={block.id}>
+                                        {block.title || block.name}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+
                         <Form.Item>
                             <Space>
+                                <Button 
+                                    type="default"
+                                    onClick={() => setShowBlockBuilder(true)}
+                                >
+                                    Crea Nuovo Block
+                                </Button>
                                 <Button type="primary" htmlType="submit" loading={submitting}>
                                     {editingModule ? 'Salva' : 'Crea'}
                                 </Button>
@@ -350,6 +392,52 @@ function CustomModulesPage() {
                             </Space>
                         </Form.Item>
                     </Form>
+                </Modal>
+                <Modal
+                    title="Crea Nuovo Block"
+                    open={showBlockBuilder}
+                    onCancel={() => setShowBlockBuilder(false)}
+                    footer={null}
+                    width="90%"
+                    style={{ top: 20 }}
+                >
+                    <VisualBuilder
+                        title="Crea Layout Block"
+                        projectId={projectId || 1}
+                        initialComponents={[]}
+                        onSave={async (components) => {
+                            try {
+                                const blockName = `block_${Date.now()}`;
+                                const response = await apiFetch(`/api/projects/${projectId || 1}/blocks`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        name: blockName,
+                                        title: 'Nuovo Block Layout',
+                                        description: 'Block creato da VisualBuilder',
+                                        component_ids: components.map(c => ({
+                                            id: c.id,
+                                            type: c.type,
+                                            config: c.config,
+                                            x: c.x,
+                                            y: c.y,
+                                            w: c.w,
+                                            h: c.h
+                                        }))
+                                    })
+                                });
+                                if (response.ok) {
+                                    const newBlock = await response.json();
+                                    message.success('Block creato!');
+                                    fetchBlocks();
+                                    setShowBlockBuilder(false);
+                                }
+                            } catch (err) {
+                                message.error('Errore creazione block');
+                            }
+                        }}
+                        onBack={() => setShowBlockBuilder(false)}
+                    />
                 </Modal>
             </div>
         </Layout>

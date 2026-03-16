@@ -34,14 +34,23 @@ class GDOReconciliationService(BaseService):
         mapping = config.get("column_mapping", {})
         df = FileProcessingService.apply_mapping(df, mapping)
 
-        # Ensure Date
-        date_col = "Date" if "Date" in df.columns else df.columns[0]
-        df = FileProcessingService.standardize_dates(df, [date_col, "Data Valuta"])
+        # Find date column (check both Italian and English)
+        date_col = "Date" if "Date" in df.columns else ("Data" if "Data" in df.columns else df.columns[0])
+        
+        # Find date valuta column
+        date_valuta_col = "Data Valuta" if "Data Valuta" in df.columns else None
+        cols_to_standardize = [date_col]
+        if date_valuta_col:
+            cols_to_standardize.append(date_valuta_col)
+        
+        df = FileProcessingService.standardize_dates(df, cols_to_standardize)
 
-        # Ensure Dare/Avere (to cents)
-        debit_col = "Debit" if "Debit" in df.columns else "Dare"
-        credit_col = "Credit" if "Credit" in df.columns else "Avere"
-        df = FileProcessingService.clean_numeric(df, [debit_col, credit_col], to_cents=True)
+        # Find debit/credit columns (check both Italian and English)
+        debit_col = "Debit" if "Debit" in df.columns else ("Dare" if "Dare" in df.columns else None)
+        credit_col = "Credit" if "Credit" in df.columns else ("Avere" if "Avere" in df.columns else None)
+        
+        if debit_col and credit_col:
+            df = FileProcessingService.clean_numeric(df, [debit_col, credit_col], to_cents=True)
 
         df["orig_index"] = df.index
 
@@ -58,11 +67,71 @@ class GDOReconciliationService(BaseService):
         # Stats
         stats = self._calculate_stats(debit_df, credit_df, matches)
 
+        # Clean stats for JSON serialization
+        def clean_value(v):
+            if pd.isna(v):
+                return None
+            if isinstance(v, (pd.Timestamp, pd.Timedelta)):
+                return str(v)
+            if isinstance(v, (np.integer, np.floating)):
+                return v.item() if hasattr(v, 'item') else float(v)
+            return v
+
+        def clean_stats(s):
+            result = {}
+            for k, v in s.items():
+                if isinstance(v, dict):
+                    result[k] = clean_stats(v)
+                elif isinstance(v, list):
+                    result[k] = [clean_stats(i) if isinstance(i, dict) else clean_value(i) for i in v]
+                else:
+                    result[k] = clean_value(v)
+            return result
+
+        # Convert NaT to None for JSON serialization
+        def clean_for_json(value):
+            if value is None:
+                return value
+            try:
+                if pd.isna(value):
+                    return None
+            except (ValueError, TypeError):
+                pass
+            if isinstance(value, (pd.Timestamp, pd.Timedelta)):
+                return value.strftime('%d/%m/%Y') if isinstance(value, pd.Timestamp) else str(value)
+            if isinstance(value, (np.integer, np.floating)):
+                return float(value) if isinstance(value, np.floating) else int(value)
+            if isinstance(value, (list, tuple)):
+                return [clean_for_json(v) for v in value]
+            if isinstance(value, dict):
+                return {k: clean_for_json(v) for k, v in value.items()}
+            return value
+
+        def clean_records(records):
+            result = []
+            for record in records:
+                cleaned = {}
+                for k, v in record.items():
+                    cleaned[k] = clean_for_json(v)
+                result.append(cleaned)
+            return result
+
+        stats = clean_stats(stats)
+
+        # Clean matches as well
+        def clean_match_record(record):
+            cleaned = {}
+            for k, v in record.items():
+                cleaned[k] = clean_for_json(v)
+            return cleaned
+        
+        cleaned_matches = [clean_match_record(m) for m in matches]
+
         return {
-            "matches": matches,
+            "matches": cleaned_matches,
             "stats": stats,
-            "unreconciled_debit": debit_df[~debit_df["used"]].to_dict("records"),
-            "unreconciled_credit": credit_df[~credit_df["used"]].to_dict("records")
+            "unreconciled_debit": clean_records(debit_df[~debit_df["used"]].to_dict("records")),
+            "unreconciled_credit": clean_records(credit_df[~credit_df["used"]].to_dict("records"))
         }
 
     def _reconcile_subset_sum(self, debit_df, credit_df):
@@ -76,8 +145,11 @@ class GDOReconciliationService(BaseService):
         debit_rows = debit_df.to_dict("records")
         credit_rows = credit_df.to_dict("records")
 
-        debit_col = "Debit" if "Debit" in debit_df.columns else "Dare"
-        credit_col = "Credit" if "Credit" in credit_df.columns else "Avere"
+        debit_col = "Debit" if "Debit" in debit_df.columns else ("Dare" if "Dare" in debit_df.columns else None)
+        credit_col = "Credit" if "Credit" in credit_df.columns else ("Avere" if "Avere" in credit_df.columns else None)
+
+        if not debit_col or not credit_col:
+            raise ValueError("Could not find debit/credit columns in separated data")
 
         for c_idx, c_row in enumerate(credit_rows):
             target = c_row[credit_col]
@@ -128,9 +200,12 @@ class GDOReconciliationService(BaseService):
         return matches
 
     def _separate_movements(self, df: pd.DataFrame):
-        # We assume clean_numeric renamed or we use the resolved names
-        debit_col = "Debit" if "Debit" in df.columns else "Dare"
-        credit_col = "Credit" if "Credit" in df.columns else "Avere"
+        # Find debit/credit columns (check both Italian and English)
+        debit_col = "Debit" if "Debit" in df.columns else ("Dare" if "Dare" in df.columns else None)
+        credit_col = "Credit" if "Credit" in df.columns else ("Avere" if "Avere" in df.columns else None)
+        
+        if not debit_col or not credit_col:
+            raise ValueError(f"Could not find debit/credit columns. Available: {list(df.columns)}")
 
         debit_df = df[df[debit_col] > 0].copy()
         credit_df = df[df[credit_col] > 0].copy()
@@ -139,12 +214,14 @@ class GDOReconciliationService(BaseService):
         credit_df["used"] = False
 
         # Data Valuta handling
+        date_col = "Date" if "Date" in credit_df.columns else credit_df.columns[0]
         if "Data Valuta" in credit_df.columns:
-             credit_df["analysis_date"] = credit_df["Data Valuta"].combine_first(credit_df["Date"])
+             credit_df["analysis_date"] = credit_df["Data Valuta"].combine_first(credit_df[date_col])
         else:
-             credit_df["analysis_date"] = credit_df["Date"]
+             credit_df["analysis_date"] = credit_df[date_col]
 
-        debit_df["analysis_date"] = debit_df["Date"]
+        debit_date_col = "Date" if "Date" in debit_df.columns else debit_df.columns[0]
+        debit_df["analysis_date"] = debit_df[debit_date_col]
 
         return debit_df.sort_values("analysis_date"), credit_df.sort_values("analysis_date")
 
@@ -155,8 +232,11 @@ class GDOReconciliationService(BaseService):
         debit_rows = debit_df.to_dict("records")
         credit_rows = credit_df.to_dict("records")
 
-        debit_col = "Debit" if "Debit" in debit_df.columns else "Dare"
-        credit_col = "Credit" if "Credit" in credit_df.columns else "Avere"
+        debit_col = "Debit" if "Debit" in debit_df.columns else ("Dare" if "Dare" in debit_df.columns else None)
+        credit_col = "Credit" if "Credit" in credit_df.columns else ("Avere" if "Avere" in credit_df.columns else None)
+
+        if not debit_col or not credit_col:
+            raise ValueError("Could not find debit/credit columns in separated data")
 
         for c_idx, c_row in enumerate(credit_rows):
             credit_amount = c_row[credit_col]
@@ -294,8 +374,17 @@ class GDOReconciliationService(BaseService):
         return session_id
 
     def _calculate_stats(self, debit_df, credit_df, matches):
-        debit_col = "Debit" if "Debit" in debit_df.columns else "Dare"
-        credit_col = "Credit" if "Credit" in credit_df.columns else "Avere"
+        debit_col = "Debit" if "Debit" in debit_df.columns else ("Dare" if "Dare" in debit_df.columns else None)
+        credit_col = "Credit" if "Credit" in credit_df.columns else ("Avere" if "Avere" in credit_df.columns else None)
+
+        if not debit_col or not credit_col:
+            return {
+                "debit_coverage_perc": 0,
+                "credit_coverage_perc": 0,
+                "total_anomalies": 0,
+                "total_difference": 0,
+                "monthly_trend": []
+            }
 
         tot_debit = debit_df[debit_col].sum()
         used_debit = debit_df[debit_df["used"]][debit_col].sum()
@@ -305,11 +394,14 @@ class GDOReconciliationService(BaseService):
 
         # Monthly trend
         monthly_trend = []
+        debit_date_col = "Date" if "Date" in debit_df.columns else ("Data" if "Data" in debit_df.columns else debit_df.columns[0])
+        credit_date_col = "Date" if "Date" in credit_df.columns else ("Data" if "Data" in credit_df.columns else credit_df.columns[0])
+        
         if not debit_df.empty or not credit_df.empty:
-            debit_df['month'] = debit_df['Date'].dt.to_period('M').astype(str)
+            debit_df['month'] = debit_df[debit_date_col].dt.to_period('M').astype(str)
             monthly_debit = debit_df.groupby('month')[debit_col].sum()
 
-            credit_df['month'] = credit_df['Date'].dt.to_period('M').astype(str)
+            credit_df['month'] = credit_df[credit_date_col].dt.to_period('M').astype(str)
             monthly_credit = credit_df.groupby('month')[credit_col].sum()
 
             all_months = sorted(list(set(monthly_debit.index) | set(monthly_credit.index)))
@@ -324,6 +416,14 @@ class GDOReconciliationService(BaseService):
             "debit_coverage_perc": (used_debit / tot_debit * 100) if tot_debit > 0 else 0,
             "credit_coverage_perc": (used_credit / tot_credit * 100) if tot_credit > 0 else 0,
             "total_anomalies": sum(1 for m in matches if abs(m["difference"]) > self.tolerance),
-            "total_difference": (used_debit - used_credit) / 100,
+            "total_difference": (tot_debit - tot_credit) / 100,
+            "total_debit": tot_debit / 100,
+            "total_credit": tot_credit / 100,
+            "matched_debit": used_debit / 100,
+            "matched_credit": used_credit / 100,
+            "count_debit": len(debit_df),
+            "count_credit": len(credit_df),
+            "count_matched_debit": len(debit_df[debit_df["used"]]),
+            "count_matched_credit": len(credit_df[credit_df["used"]]),
             "monthly_trend": monthly_trend
         }

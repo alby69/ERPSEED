@@ -18,6 +18,7 @@ Benvenuto nella documentazione di ERPSeed. Qui trovi tutto quello che ti serve p
 | [10_AI_ASSISTANT.md](10_AI_ASSISTANT.md) | AI Assistant | Guida all'agente AI |
 | [11_ROADMAP.md](11_ROADMAP.md) | Roadmap Completa | Stato, piano di refactoring e funzionalità future |
 | [13_ARCHITETTURA_DISTRIBUITA.md](13_ARCHITETTURA_DISTRIBUITA.md) | Futuro Distribuito | Analisi P2P e DAO |
+| **TUTORIAL_GDO.md** | **Tutorial GDO** | **Configurazione modulo GDO con Aziende e Punti Vendita** |
 
 ## 📚 Biblioteca del Progetto (Planner)
 

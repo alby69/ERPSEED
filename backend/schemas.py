@@ -156,11 +156,12 @@ class SysModelSchema(BaseSchema):
 
 
 class SysModelCreateSchema(BaseSchema):
+    project_id = mm_fields.Integer(required=True)
     model_fields = mm_fields.List(mm_fields.Nested(SysFieldSchema), attribute="fields") # type: ignore
 
     class Meta(BaseSchema.Meta):
         model = SysModel
-        exclude = BaseSchema.Meta.exclude + ("project_id", "project",)
+        exclude = BaseSchema.Meta.exclude + ("project",)
 
 
 class AuditLogSchema(BaseSchema):

@@ -56,10 +56,15 @@ class BuilderService(BaseService):
             model_id: ID of the model.
             
         Returns:
-            SysModel instance.
+            SysModel instance with fields loaded.
         """
         from ..models import SysModel
-        return self.db.session.get(SysModel, model_id)
+        from sqlalchemy.orm import joinedload
+        
+        # Eagerly load the fields relationship
+        return self.db.session.query(SysModel).options(
+            joinedload(SysModel.fields)
+        ).get(model_id)
     
     def create_model(self, project_id, name, title, description=None, permissions=None, technical_name=None, table_name=None):
         """

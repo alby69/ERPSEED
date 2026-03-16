@@ -7,6 +7,7 @@ from sqlalchemy import text, select, desc
 from ..extensions import db
 from ..schemas import (
     SysModelSchema,
+    SysModelCreateSchema,
     SysFieldSchema,
     AuditLogSchema,
     SysViewSchema,
@@ -49,18 +50,23 @@ class SysModelList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SysModelSchema)
-    @blp.response(201, SysModelSchema)
-    def post(self, model_data):
+    def post(self):
         """Create a new system model"""
-        data = model_data.__dict__ if hasattr(model_data, "__dict__") else model_data
+        # Get raw JSON data directly instead of using schema validation
+        from flask import request
+        data = request.get_json()
+        print(f"DEBUG: Received raw data: {data}")
 
-        if "project_id" not in data:
+        if not data:
+            abort(400, message="No data provided")
+            
+        project_id = data.get("project_id")
+        if not project_id:
             abort(400, message="project_id is required to create a model.")
 
         return builder_service.create_model(
-            project_id=data["project_id"],
-            name=data["name"],
+            project_id=project_id,
+            name=data.get("name"),
             title=data.get("title"),
             description=data.get("description"),
             permissions=data.get("permissions"),
@@ -78,12 +84,11 @@ class SysModelResource(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SysModelSchema)
-    @blp.response(200, SysModelSchema)
-    def put(self, model_data, model_id):
+    def put(self, model_id):
         """Update system model"""
-        data = model_data.__dict__ if hasattr(model_data, "__dict__") else model_data
-        return builder_service.update_model(model_id, data)
+        from flask import request
+        data = request.get_json()
+        return builder_service.update_model(model_id, data or {})
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -98,19 +103,21 @@ class SysModelResource(MethodView):
 class SysFieldList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SysFieldSchema)
-    @blp.response(201, SysFieldSchema)
-    def post(self, field_data):
+    def post(self):
         """Add a field to a system model"""
-        data = field_data.__dict__ if hasattr(field_data, "__dict__") else field_data
-
+        from flask import request
+        data = request.get_json()
+        
+        if not data:
+            abort(400, message="No data provided")
+            
         if "model_id" not in data:
             abort(400, message="model_id is required")
 
         return builder_service.create_field(
             model_id=data["model_id"],
-            name=data["name"],
-            field_type=data["type"],
+            name=data.get("name"),
+            field_type=data.get("type"),
             title=data.get("title"),
             required=data.get("required"),
             is_unique=data.get("is_unique"),
@@ -128,12 +135,11 @@ class SysFieldList(MethodView):
 class SysFieldResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SysFieldSchema)
-    @blp.response(200, SysFieldSchema)
-    def put(self, field_data, field_id):
+    def put(self, field_id):
         """Update a system field"""
-        data = field_data.__dict__ if hasattr(field_data, "__dict__") else field_data
-        return builder_service.update_field(field_id, data)
+        from flask import request
+        data = request.get_json()
+        return builder_service.update_field(field_id, data or {})
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -422,11 +428,10 @@ class SysViewList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SysViewCreateSchema)
-    @blp.response(201, SysViewSchema)
-    def post(self, view_data):
+    def post(self):
         """Create a new system view"""
-        data = view_data.__dict__ if hasattr(view_data, "__dict__") else view_data
+        from flask import request
+        data = request.get_json()
         from ..models import SysView
 
         view = SysView()
@@ -459,16 +464,15 @@ class SysViewResource(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SysViewCreateSchema)
-    @blp.response(200, SysViewSchema)
-    def put(self, view_data, view_id):
+    def put(self, view_id):
         """Update system view"""
+        from flask import request
+        data = request.get_json()
         from ..models import SysView
 
         view = SysView.query.get_or_404(view_id)
-        data = view_data.__dict__ if hasattr(view_data, "__dict__") else view_data
 
-        for key, value in data.items():
+        for key, value in (data or {}).items():
             if hasattr(view, key) and key not in ("id", "created_at"):
                 setattr(view, key, value)
 
@@ -501,15 +505,10 @@ class SysComponentList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SysComponentCreateSchema)
-    @blp.response(201, SysComponentSchema)
-    def post(self, component_data):
+    def post(self):
         """Create a new system component"""
-        data = (
-            component_data.__dict__
-            if hasattr(component_data, "__dict__")
-            else component_data
-        )
+        from flask import request
+        data = request.get_json()
         from ..models import SysComponent
 
         component = SysComponent()
@@ -544,20 +543,15 @@ class SysComponentResource(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SysComponentCreateSchema)
-    @blp.response(200, SysComponentSchema)
-    def put(self, component_data, component_id):
+    def put(self, component_id):
         """Update system component"""
+        from flask import request
+        data = request.get_json()
         from ..models import SysComponent
 
         component = SysComponent.query.get_or_404(component_id)
-        data = (
-            component_data.__dict__
-            if hasattr(component_data, "__dict__")
-            else component_data
-        )
 
-        for key, value in data.items():
+        for key, value in (data or {}).items():
             if hasattr(component, key) and key not in ("id", "created_at"):
                 setattr(component, key, value)
 
@@ -599,11 +593,10 @@ class SysActionList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SysActionCreateSchema)
-    @blp.response(201, SysActionSchema)
-    def post(self, action_data):
+    def post(self):
         """Create a new system action"""
-        data = action_data.__dict__ if hasattr(action_data, "__dict__") else action_data
+        from flask import request
+        data = request.get_json()
         from ..models import SysAction
 
         action = SysAction()
@@ -641,16 +634,15 @@ class SysActionResource(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(SysActionCreateSchema)
-    @blp.response(200, SysActionSchema)
-    def put(self, action_data, action_id):
+    def put(self, action_id):
         """Update system action"""
+        from flask import request
+        data = request.get_json()
         from ..models import SysAction
 
         action = SysAction.query.get_or_404(action_id)
-        data = action_data.__dict__ if hasattr(action_data, "__dict__") else action_data
 
-        for key, value in data.items():
+        for key, value in (data or {}).items():
             if hasattr(action, key) and key not in ("id", "created_at"):
                 setattr(action, key, value)
 

@@ -128,6 +128,23 @@ Se市场需求 (market requirements) lo richiede, queste opzioni estendono i Blo
 | FK tra moduli                          | ✅ Completo | Feb 2026 | Campo relation con target_table   |
 | Menu Builder > Moduli                  | ✅ Completo | Feb 2026 | Administration > Modules          |
 | Migrazione/Backup dati                 | ✅ Completo | Feb 2026 | /backup endpoint                  |
+| **Associazione Block-Module**          | ✅ Completo | Mar 2026 | Block selezionabili nei moduli    |
+| **VisualBuilder in CustomModulesPage** | ✅ Completo | Mar 2026 | Crea Block direttamente           |
+| **BlockRenderer per layout**           | ✅ Completo | Mar 2026 | Renderizza block VisualBuilder    |
+| **Dashboard App-Like con Block**       | ✅ Completo | Mar 2026 | Renderizzazione layout block      |
+
+---
+
+## ✅ Moduli Builtin
+
+| Modulo                         | Stato       | Data     | Note                                    |
+| ------------------------------ | ----------- | -------- | --------------------------------------- |
+| **GDO Reconciliation**          | ✅ Completo | Mar 2026 | Riconciliazione automatica incassi GDO  |
+| Anagrafica                     | ✅ Completo | 2024     | Soggetti, Ruoli, Indirizzi, Contatti  |
+| Prodotti                       | ✅ Completo | 2024     | Catalogo prodotti e servizi            |
+| Vendite                        | ✅ Completo | 2024     | Ciclo vendita completo                 |
+| Acquisti                       | ✅ Completo | 2024     | Ciclo approvvigionamento               |
+| Magazzino                      | ✅ Completo | 2024     | Inventari e movimentazioni             |
 
 ---
 
@@ -154,6 +171,19 @@ Se市场需求 (market requirements) lo richiede, queste opzioni estendono i Blo
 ---
 
 ## ✅ Moduli ERP
+
+### GDO Reconciliation ✅
+
+**Stato**: 100%
+
+- [x] Upload file Excel
+- [x] Elaborazione automatica (algoritmo progressive balance)
+- [x] Statistiche (SUM Dare/Avere, COUNT)
+- [x] Formattazione valuta italiana (€ 1.234.567,89)
+- [x] Export Excel risultati
+- [x] Salvataggio dati nel DB
+- [x] Integrazione Block layout (VisualBuilder)
+- [x] Dashboard App-Like
 
 ### Contabilità 🟡
 
