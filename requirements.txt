@@ -23,6 +23,9 @@ pytz
 marshmallow
 requests
 aiohttp
+pandas
+xlsxwriter
+openpyxl
 
 # PDF Generation
 xhtml2pdf>=0.2.11

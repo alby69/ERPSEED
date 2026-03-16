@@ -84,6 +84,7 @@ from .visual_builder_api import blp as visual_builder_bp
 
 # Import Template API
 from .template_api import blp as template_bp
+from .gdo_reconciliation_api import blp as gdo_reconciliation_bp
 
 
 class CustomJSONProvider(DefaultJSONProvider):
@@ -320,6 +321,7 @@ def create_app(db_url=None):
     api.register_blueprint(ai_bp)
     api.register_blueprint(visual_builder_bp)
     api.register_blueprint(template_bp)
+    api.register_blueprint(gdo_reconciliation_bp)
     # api.register_blueprint(versioning_bp) # Assuming these are not ready yet
     # api.register_blueprint(debugging_bp)
     api.register_blueprint(custom_modules_bp)
