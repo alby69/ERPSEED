@@ -1,0 +1,86 @@
+{
+  "name": "GDO Reconciliation",
+  "id": "gdo_reconciliation",
+  "description": "Modulo per la riconciliazione delle casse nella Grande Distribuzione Organizzata.",
+  "category": "Accounting",
+  "models": [
+    {
+      "name": "gdo_company",
+      "title": "Azienda GDO",
+      "table": "gdo_companies",
+      "fields": [
+        {"name": "name", "title": "Ragione Sociale", "type": "string", "required": true},
+        {"name": "vat_number", "title": "Partita IVA", "type": "string"},
+        {"name": "address", "title": "Indirizzo", "type": "string"}
+      ]
+    },
+    {
+      "name": "gdo_store",
+      "title": "Punto Vendita",
+      "table": "gdo_stores",
+      "fields": [
+        {"name": "company_id", "title": "Azienda", "type": "many2one", "relation_model": "gdo_companies", "required": true},
+        {"name": "name", "title": "Nome Punto Vendita", "type": "string", "required": true},
+        {"name": "code", "title": "Codice Negozio", "type": "string", "required": true}
+      ]
+    },
+    {
+      "name": "gdo_movement",
+      "title": "Movimento Cassa",
+      "table": "gdo_movements",
+      "fields": [
+        {"name": "store_id", "title": "Punto Vendita", "type": "many2one", "relation_model": "gdo_stores", "required": true},
+        {"name": "date", "title": "Data Registrazione", "type": "date", "required": true},
+        {"name": "debit", "title": "Dare (Incasso)", "type": "float", "default_value": "0"},
+        {"name": "credit", "title": "Avere (Versamento)", "type": "float", "default_value": "0"},
+        {"name": "valuta_date", "title": "Data Valuta", "type": "date"},
+        {"name": "description", "title": "Descrizione", "type": "string"},
+        {"name": "session_id", "title": "Sessione Riconciliazione", "type": "many2one", "relation_model": "gdo_sessions"},
+        {"name": "match_id", "title": "ID Quadratura", "type": "many2one", "relation_model": "gdo_matches"}
+      ]
+    },
+    {
+      "name": "gdo_session",
+      "title": "Sessione Riconciliazione",
+      "table": "gdo_sessions",
+      "fields": [
+        {"name": "company_id", "title": "Azienda", "type": "many2one", "relation_model": "gdo_companies", "required": true},
+        {"name": "date", "title": "Data Esecuzione", "type": "datetime", "required": true},
+        {"name": "algorithm", "title": "Algoritmo", "type": "string"},
+        {"name": "params", "title": "Parametri", "type": "json"},
+        {"name": "stats", "title": "Statistiche", "type": "json"}
+      ]
+    },
+    {
+      "name": "gdo_match",
+      "title": "Quadratura",
+      "table": "gdo_matches",
+      "fields": [
+        {"name": "session_id", "title": "Sessione", "type": "many2one", "relation_model": "gdo_sessions", "required": true},
+        {"name": "match_type", "title": "Tipo Match", "type": "string"},
+        {"name": "difference", "title": "Differenza", "type": "float"},
+        {"name": "notes", "title": "Note", "type": "text"}
+      ]
+    }
+  ],
+  "views": [
+    {
+      "name": "gdo_company_list",
+      "model": "gdo_company",
+      "type": "list",
+      "title": "Elenco Aziende"
+    },
+    {
+      "name": "gdo_store_list",
+      "model": "gdo_store",
+      "type": "list",
+      "title": "Punti Vendita"
+    },
+    {
+      "name": "gdo_movement_list",
+      "model": "gdo_movement",
+      "type": "list",
+      "title": "Movimenti Cassa"
+    }
+  ]
+}
