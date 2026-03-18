@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://erpseed.io/schemas/workflow.json",
+  "title": "Workflow Schema",
+  "description": "Schema for defining workflows in ERPSEED",
+  "type": "object",
+  "required": ["name", "technical_name", "model", "states", "initial_state"],
+  "properties": {
+    "name": {"type": "string"},
+    "technical_name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "model": {"type": "string", "description": "Associated model technical name"},
+    "title": {"type": "string"},
+    "description": {"type": "string"},
+    "states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {"type": "string"},
+          "type": {"type": "string", "enum": ["active", "done", "cancelled"]},
+          "permissions": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "initial_state": {"type": "string"},
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from_state", "to_state"],
+        "properties": {
+          "from_state": {"type": "string"},
+          "to_state": {"type": "string"},
+          "action": {"type": "string"},
+          "condition": {"type": "string"},
+          "trigger": {"type": "string", "enum": ["manual", "on_create", "on_save", "on_delete"]}
+        }
+      }
+    },
+    "settings": {"type": "object"}
+  }
+}

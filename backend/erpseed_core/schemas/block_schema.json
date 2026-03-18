@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://erpseed.io/schemas/block.json",
+  "title": "Block Schema",
+  "description": "Schema for defining UI blocks in ERPSEED",
+  "type": "object",
+  "required": ["name", "technical_name", "type"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the block"
+    },
+    "technical_name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["form", "list", "tree", "kanban", "calendar", "graph", "dashboard", "search"],
+      "description": "Block type"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string",
+      "description": "Associated model technical name"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/blockField"
+      }
+    },
+    "permissions": {
+      "type": "object"
+    },
+    "settings": {
+      "type": "object"
+    }
+  },
+  "definitions": {
+    "blockField": {
+      "type": "object",
+      "required": ["model_field"],
+      "properties": {
+        "model_field": {
+          "type": "string",
+          "description": "Name of the model field"
+        },
+        "widget": {
+          "type": "string",
+          "default": "text"
+        },
+        "order": {
+          "type": "integer",
+          "default": 0
+        },
+        "col_span": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "default": 12
+        },
+        "label": {
+          "type": "string"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "visible": {
+          "type": "boolean",
+          "default": true
+        },
+        "editable": {
+          "type": "boolean",
+          "default": true
+        },
+        "readonly": {
+          "type": "boolean",
+          "default": false
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "help_text": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
