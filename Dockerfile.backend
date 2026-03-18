@@ -10,7 +10,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y git curl && rm -rf /var/lib/apt/lists/*
 
 # Download specific files from the branch using GitHub archive
-RUN curl -sL "https://github.com/alby69/ERPSEED/archive/refs/heads/${BRANCH}.tar.gz" | tar -xz && \
+RUN BRANCH_ESCAPED=$(echo ${BRANCH} | sed 's/\//%2F/g') && \
+    curl -sL "https://github.com/alby69/ERPSEED/archive/refs/heads/${BRANCH_ESCAPED}.tar.gz" | tar -xz && \
     mv ERPSEED-* erpseed_src && \
     cp -r erpseed_src/backend/* /app/ && \
     cp erpseed_src/run.py /app/ && \
