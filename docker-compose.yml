@@ -32,7 +32,7 @@ services:
   backend:
     container_name: erpseed_backend
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     volumes:
       - ./backend:/app
@@ -81,7 +81,7 @@ services:
   init-db:
     container_name: erpseed_init
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     volumes:
       - ./backend:/app
