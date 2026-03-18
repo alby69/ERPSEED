@@ -9,11 +9,16 @@ WORKDIR /app
 # Install git and curl
 RUN apk add --no-cache git curl
 
-# Clone the repository
-RUN git clone https://github.com/alby69/ERPSEED.git /tmp/repo
+# Disable git prompt and use shallow clone
+ENV GIT_TERMINAL_PROMPT=0
+ENV GIT_CLONE_PROTECTION_ACTIVE=false
 
-# Checkout the specific branch
-RUN cd /tmp/repo && git fetch origin ${BRANCH} && git checkout ${BRANCH}
+# Clone with depth 1 and no checkout first, then fetch and checkout
+RUN git init /tmp/repo && \
+    cd /tmp/repo && \
+    git remote add origin https://github.com/alby69/ERPSEED.git && \
+    git fetch --depth 1 origin ${BRANCH} && \
+    git checkout FETCH_HEAD
 
 # Copy frontend folder content to /app
 RUN cp -r /tmp/repo/frontend/* /app/
