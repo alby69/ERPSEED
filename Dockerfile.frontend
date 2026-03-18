@@ -10,9 +10,11 @@ WORKDIR /app
 RUN apk add --no-cache git
 
 # Clone the specified branch
-RUN git clone --branch ${BRANCH} --depth 1 https://github.com/alby69/ERPSEED.git /tmp/repo && \
-    mv /tmp/repo/frontend/* /app/ && \
-    rm -rf /tmp/repo
+RUN git clone --branch ${BRANCH} --depth 1 https://github.com/alby69/ERPSEED.git /tmp/repo
+
+# Copy frontend folder content to /app
+COPY --from=0 /tmp/repo/frontend/* /app/
+COPY --from=0 /tmp/repo/frontend/package*.json /app/
 
 # Install dependencies
 RUN npm install
