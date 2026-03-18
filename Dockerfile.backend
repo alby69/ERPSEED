@@ -13,9 +13,9 @@ RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 RUN git clone --branch ${BRANCH} --depth 1 https://github.com/alby69/ERPSEED.git /tmp/repo
 
 # Copy backend folder content to /app
-COPY --from=0 /tmp/repo/backend/* /app/
-COPY --from=0 /tmp/repo/run.py /app/run.py
-COPY --from=0 /tmp/repo/requirements.txt /app/requirements.txt
+COPY /tmp/repo/backend/ /app/
+COPY /tmp/repo/run.py /app/run.py
+COPY /tmp/repo/requirements.txt /app/requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r /app/requirements.txt
@@ -27,4 +27,4 @@ RUN mkdir -p /app/instance
 EXPOSE 5000
 
 # Default command - Flask app is in /app, run from there
-CMD ["sh", "-c", "cd /app && flask run --host 0.0.0.0 --port 5000"]
+CMD ["sh", "-c", "cd /app && python run.py"]
