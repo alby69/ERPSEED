@@ -1,0 +1,24 @@
+# Build stage for ERPSEED Frontend
+FROM node:20-alpine
+
+ARG BRANCH=erpseed/frontend
+ENV BRANCH=${BRANCH}
+
+WORKDIR /app
+
+# Install git
+RUN apk add --no-cache git
+
+# Clone the specified branch
+RUN git clone --branch ${BRANCH} --depth 1 https://github.com/alby69/ERPSEED.git /tmp/repo && \
+    mv /tmp/repo/frontend/* /app/ && \
+    rm -rf /tmp/repo
+
+# Install dependencies
+RUN npm install
+
+# Expose port
+EXPOSE 5173
+
+# Default command
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

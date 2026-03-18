@@ -1,22 +1,59 @@
 # ERPSEED - Low-Code ERP Platform
 
-[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-
 ## Project Structure
 
-This repository contains multiple branches for the ERPSEED project:
+This repository uses a multi-branch strategy:
 
 | Branch | Description |
 |--------|-------------|
-| `main` | This branch (placeholder) |
-| [erpseed/backend](https://github.com/alby69/ERPSEED/tree/erpseed/backend) | Backend-only ERPSEED Core with CLI, API, and Builder |
+| `main` | Docker deployment configuration |
+| [erpseed/backend](https://github.com/alby69/ERPSEED/tree/erpseed/backend) | Backend-only ERPSEED Core |
 | [erpseed/frontend](https://github.com/alby69/ERPSEED/tree/erpseed/frontend) | React frontend application |
 
-## Quick Links
+## Quick Start with Docker
 
-- **Backend Documentation**: See `docs/core/` in the `erpseed/backend` branch
-- **Frontend**: See `erpseed/frontend` branch
+```bash
+# Clone the repository
+git clone https://github.com/alby69/ERPSEED.git
+cd ERPSEED
+
+# Start all services with Docker
+docker-compose up -d
+
+# Access the application
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:5002
+```
+
+## Docker Services
+
+- **db**: PostgreSQL 15
+- **redis**: Redis 7
+- **backend**: Flask API (builds from `erpseed/backend` branch)
+- **frontend**: React/Vite (builds from `erpseed/frontend` branch)
+
+## Customizing Build Branch
+
+To use a different branch for backend or frontend, edit `docker-compose.yml`:
+
+```yaml
+args:
+  - BRANCH=your-branch-name
+```
+
+## Development
+
+To develop locally:
+
+```bash
+# Backend
+git checkout erpseed/backend
+# ... make changes ...
+
+# Frontend  
+git checkout erpseed/frontend
+# ... make changes ...
+```
 
 ## License
 

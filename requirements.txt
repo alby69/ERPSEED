@@ -1,0 +1,42 @@
+# ERPSeed Dependencies
+# Core
+flask
+flask-cors
+flask-sqlalchemy
+flask-jwt-extended
+Flask-Migrate
+flask-socketio
+flask-smorest
+flask-babel
+flask-mail
+flask-marshmallow
+marshmallow-sqlalchemy
+
+# Database
+psycopg2-binary
+sqlalchemy
+
+# Utilities
+python-dotenv
+werkzeug
+pytz
+marshmallow
+requests
+aiohttp
+pandas
+xlsxwriter
+openpyxl
+
+# PDF Generation
+xhtml2pdf>=0.2.11
+
+# Server
+gunicorn
+eventlet
+
+# Development
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-flask>=1.2.0
+faker>=18.0.0
+playwright

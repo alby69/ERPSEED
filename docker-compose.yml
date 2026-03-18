@@ -1,0 +1,86 @@
+services:
+  # Database PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: erpseed_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=erpseed
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    networks:
+      - erpseed_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis per cache e code
+  redis:
+    image: redis:7-alpine
+    container_name: erpseed_redis
+    ports:
+      - "6380:6379"
+    networks:
+      - erpseed_net
+
+  # Backend Flask - build from erpseed/backend branch
+  backend:
+    container_name: erpseed_backend
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        - BRANCH=erpseed/backend
+    command: sh -c "pip install -e . && flask --app backend run --host 0.0.0.0 --port 5000"
+    volumes:
+      - ./backend:/app/backend
+    ports:
+      - "5002:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - DATABASE_URL=postgresql://postgres:password@db:5432/erpseed
+      - SECRET_KEY=dev-secret-key-change-in-prod
+      - JWT_SECRET_KEY=a-very-secure-and-long-jwt-secret-key-for-dev-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - erpseed_net
+    stdin_open: true
+    tty: true
+
+  # Frontend React/Vite - build from erpseed/frontend branch
+  frontend:
+    container_name: erpseed_frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - BRANCH=erpseed/frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5002
+    depends_on:
+      - backend
+    networks:
+      - erpseed_net
+
+networks:
+  erpseed_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

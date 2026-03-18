@@ -1,0 +1,28 @@
+# Build stage for ERPSEED Backend
+FROM python:3.12-slim
+
+ARG BRANCH=erpseed/backend
+ENV BRANCH=${BRANCH}
+
+WORKDIR /app
+
+# Install git
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# Clone the specified branch
+RUN git clone --branch ${BRANCH} --depth 1 https://github.com/alby69/ERPSEED.git /tmp/repo && \
+    mv /tmp/repo/backend/* /app/ && \
+    rm -rf /tmp/repo
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Create instance folder
+RUN mkdir -p /app/instance
+
+# Expose port
+EXPOSE 5000
+
+# Default command - can be overridden
+CMD ["flask", "--app", "backend", "run", "--host", "0.0.0.0", "--port", "5000"]
