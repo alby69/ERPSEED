@@ -28,14 +28,13 @@ services:
     networks:
       - erpseed_net
 
-  # Backend Flask - build from erpseed/backend branch
+  # Backend Flask - uses local files via volume
   backend:
     container_name: erpseed_backend
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-      args:
-        - BRANCH=erpseed/backend
+    image: python:3.12-slim
+    working_dir: /app
+    volumes:
+      - ./backend:/app:ro
     ports:
       - "5002:5000"
     environment:
@@ -45,29 +44,27 @@ services:
       - DATABASE_URL=postgresql://postgres:password@db:5432/flaskerp
       - SECRET_KEY=dev-secret-key-change-in-prod
       - JWT_SECRET_KEY=a-very-secure-and-long-jwt-secret-key-for-dev-env
-      - SQLALCHEMY_DATABASE_URI=${DATABASE_URL:-postgresql://postgres:password@db:5432/flaskerp}
+    command: sh -c "pip install -r requirements.txt && flask run --host 0.0.0.0 --port 5000"
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_started
     networks:
       - erpseed_net
     stdin_open: true
     tty: true
 
-  # Frontend React/Vite - build from erpseed/frontend branch
+  # Frontend React/Vite - uses local files via volume
   frontend:
     container_name: erpseed_frontend
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-      args:
-        - BRANCH=erpseed/frontend
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app:ro
     ports:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:5002
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     depends_on:
       - backend
     networks:
