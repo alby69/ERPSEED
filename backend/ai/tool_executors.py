@@ -542,7 +542,7 @@ class ScheduledTaskToolExecutor:
             }
 
         try:
-            from backend.workflows import ScheduledTask
+            from backend.models.workflow import ScheduledTask
             from backend.extensions import db
 
             project_id = context.get("project_id", args.get("project_id"))
@@ -575,7 +575,7 @@ class ScheduledTaskToolExecutor:
     def delete_scheduled_task(self, args: Dict, context: Dict) -> Dict:
         """Elimina un task programmato."""
         try:
-            from backend.workflows import ScheduledTask
+            from backend.models.workflow import ScheduledTask
             from backend.extensions import db
 
             task_id = args.get("task_id")

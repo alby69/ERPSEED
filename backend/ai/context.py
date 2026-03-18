@@ -8,7 +8,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from backend.models import db, Project, SysModel, SysField
 from backend.builder.models import Block as BlockModel
-from backend.workflows import Workflow
+from backend.models.workflow import Workflow
 
 logger = logging.getLogger(__name__)
 

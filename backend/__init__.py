@@ -16,21 +16,47 @@ from .core.services.query_filter import TenantQueryFilter, SoftDeleteFilter
 # Import new architectural components
 from .container import ServiceContainer
 from .shared.events.event_bus import EventBus
-from .plugin_system.manager import PluginManager
+from .plugins.registry import PluginRegistry, create_plugin_manager
+
+# Import Models from organized models package
+from .models import (
+    User,
+    Project,
+    Product,
+    ProductStock,
+    SalesOrder,
+    SalesOrderLine,
+    PurchaseOrder,
+    PurchaseOrderLine,
+    AIConversation,
+    ChartLibraryConfig,
+    UserRole,
+    SysModel,
+    SysField,
+    SysView,
+    SysComponent,
+    SysAction,
+    SysChart,
+    SysDashboard,
+    SysModelVersion,
+    Tenant,
+    TenantMember,
+    Soggetto,
+)
 
 # Import Core API blueprints
 from .core.api.auth import auth_bp as core_auth_bp
 from .users import blp as users_bp
-# from .products import blp as products_bp  # Replaced by products_service.rest_api
-from .projects import blp as projects_bp
-# from .sales import blp as sales_bp  # Replaced by sales_service.rest_api
-from .purchases import blp as purchases_bp  # TODO: Refactor this one too
-from .dashboard import blp as dashboard_bp
+from .routes.projects import blp as projects_bp
+from .routes.dashboard import blp as dashboard_bp
+from .routes.analytics import blp as analytics_bp
+from .routes.dynamic import blp as dynamic_api_bp
+from .routes.webhooks import blp as webhooks_bp
+from .routes.workflows import blp as workflows_bp
+
+# Import purchases and builder APIs
+from .purchases import blp as purchases_bp
 from .builder import blp as builder_bp
-from .analytics import blp as analytics_bp
-from .dynamic_api import blp as dynamic_api_bp
-from .webhook_routes import blp as webhooks_bp
-from .workflow_routes import blp as workflows_bp
 
 # Import Core API blueprints (additional)
 from .core.api.tenant import tenant_bp
@@ -80,11 +106,11 @@ from .marketplace.api import blp as marketplace_api_blp
 from .ai.api import blp as ai_bp
 
 # Import Visual Builder API
-from .visual_builder_api import blp as visual_builder_bp
+from .routes.visual_builder import blp as visual_builder_bp
 
 # Import Template API
-from .template_api import blp as template_bp
-from .gdo_reconciliation_api import blp as gdo_reconciliation_bp
+from .routes.templates import blp as template_bp
+from .routes.gdo import blp as gdo_reconciliation_bp
 
 
 class CustomJSONProvider(DefaultJSONProvider):
@@ -178,7 +204,7 @@ def create_app(db_url=None):
     container.register('event_bus', lambda: event_bus, singleton=True)
     container.register('db', lambda: db, singleton=True)
 
-    plugin_manager = PluginManager(app=app, container=container)
+    plugin_manager = create_plugin_manager(app=app, container=container)
     container.register('plugin_manager', lambda: plugin_manager, singleton=True)
     # --- End New System Init ---
 
@@ -340,9 +366,5 @@ def create_app(db_url=None):
     api.register_blueprint(geografico_blp)
     api.register_blueprint(comuni_blp)
 
-    # --- Load Plugins using the new PluginManager ---
-    with app.app_context():
-        print("Loading plugins via PluginManager...")
-        plugin_manager.load_and_register_plugins()
-
+    # --- Plugins loaded via create_plugin_manager in app initialization ---
     return app
