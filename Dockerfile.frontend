@@ -6,15 +6,14 @@ ENV BRANCH=${BRANCH}
 
 WORKDIR /app
 
-# Install git
-RUN apk add --no-cache git
+# Install curl
+RUN apk add --no-cache curl
 
-# Clone the specified branch and verify
-RUN git clone --branch ${BRANCH} --depth 1 https://github.com/alby69/ERPSEED.git /tmp/repo && \
-    ls -la /tmp/repo/
-
-# Copy frontend folder content to /app
-COPY /tmp/repo/frontend/ /app/
+# Download specific files from the branch using GitHub archive
+RUN curl -sL "https://github.com/alby69/ERPSEED/archive/refs/heads/${BRANCH}.tar.gz" | tar -xz && \
+    mv ERPSEED-* erpseed_src && \
+    cp -r erpseed_src/frontend/* /app/ && \
+    rm -rf erpseed_src
 
 # Install dependencies
 RUN npm install
