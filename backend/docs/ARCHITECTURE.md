@@ -6,7 +6,7 @@ ERPSEED è un sistema ERP modulare costruito con Flask. Utilizza un'architettura
 - Creazione dinamica di modelli dati (No-Code Builder)
 - Workflow automation
 - Sistema webhook event-driven
-- AI Assistant integrato
+- AI Assistant integrato con CQRS
 
 ## Stack Tecnologico
 
@@ -25,137 +25,278 @@ ERPSEED è un sistema ERP modulare costruito con Flask. Utilizza un'architettura
 
 ```
 backend/
-├── __init__.py           # App factory (create_app)
-├── extensions.py         # Inizializzazione estensioni Flask
-├── run.py                # Entry point
+├── __init__.py              # App factory (create_app)
+├── extensions.py            # Flask extensions initialization
+├── schemas.py               # Marshmallow schemas
+├── container.py            # Dependency Injection container
+├── run.py                   # Entry point
 │
-├── core/                 # CORE: Autenticazione, Tenant, Permessi
-│   ├── api/             # API endpoints core
-│   │   ├── auth.py      # Login, Register, JWT
-│   │   ├── tenant.py    # Gestione tenant
-│   │   ├── modules.py   # Moduli sistema
-│   │   ├── system.py    # Configurazioni sistema
-│   │   └── pdf.py      # Generazione PDF
-│   ├── models/          # Modelli core
-│   │   ├── base.py      # BaseModel con soft delete
-│   │   ├── tenant.py    # Tenant, User, Role
-│   │   ├── test_models.py
-│   │   └── sys_*.py    # Modelli di sistema
-│   ├── services/        # Servizi core
+├── models/                  # DATABASE MODELS (spacchettato)
+│   ├── __init__.py
+│   ├── base.py             # BaseModel con soft delete
+│   ├── user.py             # User model
+│   ├── project.py          # Project model
+│   ├── product.py          # Product model
+│   ├── sales.py            # SalesOrder, SalesOrderLine
+│   ├── purchase.py         # PurchaseOrder, PurchaseOrderLine
+│   ├── ai.py              # AIConversation
+│   ├── chart.py            # ChartLibraryConfig
+│   ├── user_role.py       # UserRole
+│   ├── workflow.py        # Workflow, WorkflowStep, WorkflowExecution
+│   ├── webhook.py         # WebhookEndpoint, WebhookDelivery, WebhookEvent
+│   └── system/            # System models
+│       ├── sys_model.py   # SysModel
+│       ├── sys_field.py   # SysField
+│       ├── sys_view.py    # SysView
+│       ├── sys_component.py
+│       ├── sys_action.py
+│       ├── sys_chart.py
+│       ├── sys_dashboard.py
+│       └── sys_model_version.py
+│
+├── routes/                  # API ROUTES
+│   ├── __init__.py
+│   ├── projects.py
+│   ├── dashboard.py
+│   ├── analytics.py
+│   ├── dynamic.py          # Dynamic CRUD API
+│   ├── workflows.py
+│   ├── webhooks.py
+│   ├── templates.py
+│   ├── visual_builder.py
+│   ├── versioning.py
+│   ├── debugging.py
+│   └── gdo.py             # GDO Reconciliation
+│
+├── services/                # BUSINESS LOGIC
+│   ├── __init__.py
+│   ├── base.py            # BaseService
+│   ├── workflow_service.py
+│   ├── webhook_service.py
+│   ├── workflow_executor.py
+│   ├── dynamic_api_service.py
+│   ├── project_service.py
+│   ├── user_service.py
+│   ├── template_service.py
+│   ├── versioning_service.py
+│   ├── file_processing_service.py
+│   ├── gdo_reconciliation_service.py
+│   ├── gdo_excel_reporter.py
+│   └── generic_service.py
+│
+├── cli/                     # CLI SCRIPTS
+│   ├── create_admin.py
+│   ├── create_default_project.py
+│   ├── setup_database.py
+│   ├── reset_db.py
+│   ├── register_gdo_module.py
+│   ├── test_container.py
+│   └── create_tenant.py
+│
+├── seeds/                   # DATABASE SEEDS
+│   ├── initial.py          # Admin user + tenant
+│   ├── comuni.py          # Italian geographic data
+│   ├── metadata.py         # SysComponent, SysAction
+│   ├── kpi.py             # Dashboard KPI
+│   └── gdo_models.py       # GDO template
+│
+├── core/                    # CORE SYSTEM
+│   ├── api/               # Core API endpoints
+│   │   ├── auth.py        # Login, Register, JWT
+│   │   ├── tenant.py       # Tenant management
+│   │   ├── modules.py     # Module system
+│   │   ├── system.py      # System config
+│   │   ├── pdf.py         # PDF generation
+│   │   ├── test_runner.py  # Test execution
+│   │   ├── custom_modules.py
+│   │   ├── module_api.py
+│   │   └── import_export.py
+│   ├── models/            # Core models
+│   │   ├── base.py
+│   │   ├── tenant.py
+│   │   ├── tenant_member.py
+│   │   ├── audit.py
+│   │   ├── module.py
+│   │   ├── module_definition.py
+│   │   ├── modulo.py
+│   │   ├── tenant_module.py
+│   │   └── test_models.py
+│   ├── services/          # Core services
 │   │   ├── auth_service.py
+│   │   ├── auth/
 │   │   ├── tenant_service.py
-│   │   └── query_filter.py
-│   └── middleware/      # Middleware tenant
+│   │   ├── tenant/
+│   │   ├── module_service.py
+│   │   ├── permission_service.py
+│   │   ├── query_filter.py
+│   │   ├── import_export_service.py
+│   │   ├── pdf_service.py
+│   │   └── test_engine.py
+│   └── middleware/         # Middleware
+│       ├── tenant_middleware.py
+│       └── module_middleware.py
 │
-├── services/             # BUSINESS LOGIC
-│   ├── base.py           # BaseService (pattern base)
-│   ├── products_service/ # DDD: Products module
-│   │   ├── models.py
-│   │   ├── service.py
-│   │   └── rest_api.py
-│   ├── sales_service/    # DDD: Sales module
-│   │   ├── models.py
-│   │   ├── service.py
-│   │   └── rest_api.py
-│   └── dynamic_api_service.py  # Dynamic CRUD (945 lines - DA SPLITTARE)
-│
-├── builder/              # NO-CODE BUILDER
-│   ├── models.py         # Archetype, Component, Block
-│   ├── api.py           # Builder API
-│   └── generator.py    # Code generation
-│
-├── entities/             # VISION ARCHETYPES
-│   ├── soggetto.py      # Soggetto (Cliente/Fornitore)
-│   ├── ruolo.py         # Ruolo
-│   ├── indirizzo.py     # Indirizzo
-│   └── contatto.py      # Contatto
-│
-├── webhook_*/             # WEBHOOK SYSTEM
-│   ├── routes.py         # API endpoints
-│   ├── service.py       # Logica business
-│   └── models.py        # Webhook, Delivery
-│
-├── workflow_*/           # WORKFLOW ENGINE
+├── entities/               # VISION ARCHETYPES
+│   ├── __init__.py
+│   ├── soggetto.py        # Soggetto (Cliente/Fornitore)
+│   ├── ruolo.py
+│   ├── indirizzo.py
+│   ├── indirizzo_geografico.py
+│   ├── contatto.py
 │   ├── routes.py
-│   ├── service.py
-│   ├── executor.py      # Step execution
-│   └── models.py
+│   ├── comuni_routes.py
+│   └── schemas.py
 │
-├── shared/               # SHARED UTILITIES
-│   ├── events/          # Event bus
-│   └── utils.py         # Helpers (log_audit, etc.)
-│
-├── plugin_system/        # PLUGIN ARCHITECTURE
-│   ├── manager.py        # PluginManager
-│   └── plugins/         # Plugin samples
-│
-├── ai/                   # AI ASSISTANT
-│   └── api.py
-│
-├── marketplace/          # MARKETPLACE
-│   └── api.py
-│
-├── analytics/            # ANALYTICS & DASHBOARD
+├── ai/                     # AI ASSISTANT (Legacy)
+│   ├── __init__.py
+│   ├── service.py         # AIService (800+ lines)
 │   ├── api.py
-│   └── dashboard.py
+│   ├── context.py
+│   ├── tool_registry.py
+│   ├── tool_executors.py
+│   ├── test_generator.py
+│   └── adapters/
 │
-├── commands/             # CLI COMMANDS
-│   ├── seed_*.py        # Database seeding
-│   └── setup_*.py      # Setup utilities
+├── ai_service/             # AI SERVICE (CQRS Pattern)
+│   ├── __init__.py
+│   ├── application/       # CQRS Application Layer
+│   │   ├── commands.py     # Command definitions
+│   │   ├── queries.py     # Query definitions
+│   │   ├── handlers.py    # Command handlers
+│   │   └── query_handlers.py
+│   ├── domain/            # Domain Layer
+│   │   ├── services/
+│   │   │   ├── chat_service.py   # ChatService
+│   │   │   └── tool_service.py   # ToolService
+│   │   └── ports/
+│   │       ├── llm_port.py
+│   │       └── vectorstore_port.py
+│   └── infrastructure/    # Infrastructure Layer
+│       ├── adapters/
+│       │   ├── base_adapter.py
+│       │   ├── openai_adapter.py
+│       │   ├── anthropic_adapter.py
+│       │   ├── ollama_adapter.py
+│       │   └── openrouter_adapter.py
+│       └── factory.py     # AdapterFactory
 │
-└── tests/                # TEST SUITE
+├── builder_service/        # BUILDER (CQRS Pattern)
+│   ├── __init__.py
+│   ├── api.py
+│   ├── container.py
+│   ├── application/
+│   │   ├── commands/
+│   │   └── handlers/
+│   ├── domain/
+│   │   └── models/
+│   └── infrastructure/
+│       ├── persistence/
+│       └── repositories/
+│
+├── products_service/       # PRODUCTS (CQRS)
+├── sales_service/          # SALES (CQRS)
+├── purchases_service/       # PURCHASES (CQRS)
+├── analytics_service/       # ANALYTICS (CQRS)
+│
+├── builder/                # LEGACY BUILDER (deprecated)
+│   ├── models.py
+│   ├── api.py
+│   ├── cli.py
+│   └── generator.py
+│
+├── marketplace/            # MARKETPLACE
+│   ├── models.py
+│   └── api.py
+│
+├── plugins/                # PLUGIN SYSTEM
+│   ├── base.py
+│   ├── registry.py
+│   ├── accounting/
+│   ├── hr/
+│   └── inventory/
+│
+├── shared/                 # SHARED UTILITIES
+│   ├── events/
+│   │   ├── event_bus.py
+│   │   ├── event.py
+│   │   └── system_events.py
+│   ├── utils/
+│   │   ├── audit.py
+│   │   ├── filters.py
+│   │   └── pagination.py
+│   ├── interfaces/
+│   └── exceptions/
+│
+├── composition/            # COMPOSITION SYSTEM
+├── orm/                    # ORM ENHANCEMENTS
+├── view_renderer/          # VIEW RENDERING
+│
+├── docs/                   # DOCUMENTATION
+├── tests/                  # TEST SUITE
+└── translations/           # i18n
 ```
 
 ## Pattern Architetturali
 
-### 1. Service Layer Pattern (Nuovo - Consigliato)
+### 1. CQRS Pattern (Consigliato per nuovi moduli)
+
+```
+Command/Query → Handler → Service → Repository → Database
+```
 
 ```python
-# services/products_service/service.py
-class ProductService(BaseService):
+# ai_service/application/commands.py
+@dataclass
+class SendMessageCommand:
+    project_id: int
+    user_id: int
+    message: str
+
+# ai_service/application/handlers.py
+class SendMessageHandler:
+    def handle(self, command: SendMessageCommand):
+        # Process command
+        return result
+```
+
+### 2. Service Layer Pattern
+
+```python
+# services/base.py
+class BaseService:
     def __init__(self, db):
-        super().__init__(db)
-        self.model = Product
+        self.db = db
     
     def create(self, data):
-        # Logica business
-        return super().create(data)
-    
-    def calculate_price(self, product_id):
-        # Logica specifica
+        # Business logic
         pass
 ```
 
-### 2. Blueprint + Marshmallow (API REST)
+### 3. Blueprint + Marshmallow (API REST)
 
 ```python
-# routes.py
-from flask_smorest import Blueprint, abort
-from flask_jwt_extended import jwt_required
-
-blp = Blueprint('products', __name__, url_prefix='/products')
+# routes/projects.py
+blp = Blueprint('projects', __name__, url_prefix='/projects')
 
 @blp.route('/')
-@blp.arguments(ProductSchema)
-@blp.response(ProductSchema)
 @jwt_required()
-def create_product(data):
-    return product_service.create(data)
+def list_projects():
+    return project_service.get_all()
 ```
 
-### 3. Dynamic API Pattern
+### 4. Dynamic API Pattern
 
 Per il No-Code Builder, i modelli vengono creati runtime:
 
 ```python
-# models.py (builder)
+# models/system/sys_model.py
 class SysModel(db.Model):
     name = db.Column(db.String(100))
     fields = db.relationship('SysField', back_populates='model')
 
 class SysField(db.Model):
     name = db.Column(db.String(100))
-    type = db.Column(db.String(50))  # string, integer, select, relation, etc.
+    type = db.Column(db.String(50))
 ```
 
 ## Multi-Tenancy
@@ -163,19 +304,15 @@ class SysField(db.Model):
 ### Schema Isolation
 
 ```
-┌─────────────────────────────────────┐
-│           PostgreSQL                │
-├─────────────────────────────────────┤
-│  schema: tenant_1                   │
-│  ├── users                          │
-│  ├── projects                       │
-│  └── sys_models_*                   │
-├─────────────────────────────────────┤
-│  schema: tenant_2                   │
-│  ├── users                          │
-│  ├── projects                       │
-│  └── sys_models_*                   │
-└─────────────────────────────────────┘
+PostgreSQL
+├── schema: tenant_1
+│   ├── users
+│   ├── projects
+│   └── sys_models_*
+└── schema: tenant_2
+    ├── users
+    ├── projects
+    └── sys_models_*
 ```
 
 ### Middleware Flow
@@ -184,31 +321,12 @@ class SysField(db.Model):
 Request → TenantMiddleware → Extract Tenant ID → Set Context → Route Handler
 ```
 
-```python
-# core/middleware/tenant_middleware.py
-class TenantMiddleware:
-    @staticmethod
-    def process_request():
-        tenant_id = request.headers.get('X-Tenant-ID')
-        if tenant_id:
-            set_current_tenant(tenant_id)
-```
-
 ## Autenticazione JWT
 
 ```
-┌──────────┐    ┌──────────┐    ┌──────────┐
-│  Login   │───▶│  JWT     │───▶│  Access  │
-│  POST    │    │  Token   │    │  Resource│
-└──────────┘    └──────────┘    └──────────┘
-   /api/v1/auth/login
+Login → JWT Token → Access Resource
+  POST    15min expiry    /api/*
 ```
-
-### Token Flow
-
-1. **Access Token**: Scade in 15 minuti
-2. **Refresh Token**: Scade in 7 giorni
-3. **Header**: `Authorization: Bearer <token>`
 
 ## Event System
 
@@ -221,31 +339,21 @@ class EventBus:
     
     def subscribe(self, event_name, handler):
         self._handlers[event_name].append(handler)
-
-# Usage
-event_bus.publish('user.created', {'user_id': 123})
 ```
 
 ## Plugin System
 
-```
-plugins/
-├── my_plugin/
-│   ├── __init__.py
-│   ├── routes.py      # Blueprint routes
-│   └── services.py    # Business logic
-└── plugin.yml          # Metadata
-```
-
-```yaml
-# plugin.yml
-name: my_plugin
-version: 1.0.0
-routes:
-  - /custom-endpoint
-permissions:
-  - read:users
-  - write:projects
+```python
+# plugins/base.py
+class BasePlugin:
+    name: str
+    enabled: bool = False
+    
+    def install(self):
+        pass
+    
+    def uninstall(self):
+        pass
 ```
 
 ## Workflow Engine
@@ -253,16 +361,9 @@ permissions:
 ```
 Trigger (event/time) → Workflow Definition → Steps Execution
                                               ├── Step 1
-                                              ├── Step 2 (depends on 1)
+                                              ├── Step 2
                                               └── Step 3
 ```
-
-### Step Types
-
-- **HTTP Request**: Chiamate a servizi esterni
-- **Condition**: Branch logico
-- **Notification**: Email/SMS/Webhook
-- **Code**: Python custom logic
 
 ## Dynamic Builder (No-Code)
 
@@ -291,42 +392,13 @@ DATABASE_URL=postgresql://user:pass@host:5432/dbname
 JWT_SECRET_KEY=your-secret-key-min-32-chars
 SECRET_KEY=flask-secret-key
 FLASK_ENV=development
-FLASK_DEBUG=1
+LLM_PROVIDER=openrouter  # Per AI
 ```
 
-### Database Connection
+## Commit History
 
-```python
-# PostgreSQL (Produzione)
-DATABASE_URL=postgresql://postgres:password@localhost:5432/erpseed
-
-# SQLite (Sviluppo)
-DATABASE_URL=sqlite:///data.db
-```
-
-## Error Handling
-
-```python
-# Standard error response
-{
-    "code": 404,
-    "name": "Not Found",
-    "description": "Resource not found"
-}
-
-# Validation error
-{
-    "message": "Validation error",
-    "errors": {"field": ["Error message"]}
-}
-```
-
-## Performance Considerations
-
-1. **Pagination**: Tutti gli endpoint listano con paginazione
-2. **Soft Delete**: Record eliminati non vengono rimossi fisicamente
-3. **Caching**: Redis per sessioni e cache query
-4. **Index**: Indici su campi foreign key e frequently queried
+- `696fcf4` - refactor: Complete backend structure reorganization
+- `2938e52` - feat: Add CQRS architecture to AI service
 
 ---
 
