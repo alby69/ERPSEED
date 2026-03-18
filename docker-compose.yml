@@ -49,8 +49,8 @@ services:
       - PYTHONPATH=/app
     command: >
       sh -c "pip install -r requirements.txt && 
-             python -m cli.create_admin &&
-             python -m seeds.initial &&
+             cd /app && python cli/create_admin.py &&
+             cd /app && python seeds/initial.py &&
              gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:5000 --reload backend.wsgi:app"
     depends_on:
       db:
@@ -91,10 +91,10 @@ services:
       - PYTHONPATH=/app
     command: >
       sh -c "pip install -r requirements.txt &&
-             python -m cli.create_admin &&
-             python -m seeds.initial &&
-             python -m seeds.metadata &&
-             python -m seeds.comuni"
+             cd /app && python cli/create_admin.py &&
+             cd /app && python seeds/initial.py &&
+             cd /app && python seeds/metadata.py &&
+             cd /app && python seeds/comuni.py"
     depends_on:
       db:
         condition: service_healthy
