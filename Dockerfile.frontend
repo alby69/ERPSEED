@@ -9,8 +9,9 @@ WORKDIR /app
 # Install git
 RUN apk add --no-cache git
 
-# Clone the specified branch
-RUN git clone --branch ${BRANCH} --depth 1 https://github.com/alby69/ERPSEED.git /tmp/repo
+# Clone the specified branch and verify
+RUN git clone --branch ${BRANCH} --depth 1 https://github.com/alby69/ERPSEED.git /tmp/repo && \
+    ls -la /tmp/repo/
 
 # Copy frontend folder content to /app
 COPY /tmp/repo/frontend/ /app/
