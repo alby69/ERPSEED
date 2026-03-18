@@ -6,7 +6,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=flaskerp
+      - POSTGRES_DB=erpseed
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:
@@ -28,24 +28,30 @@ services:
     networks:
       - erpseed_net
 
-  # Backend Flask - uses local files via volume
+  # Backend Flask
   backend:
     container_name: erpseed_backend
-    image: python:3.12-slim
-    working_dir: /app
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - ./backend:/app
-      - ./requirements.txt:/app/requirements.txt:ro
     ports:
-      - "5002:5000"
+      - "5000:5000"
     environment:
       - FLASK_APP=backend
       - FLASK_ENV=development
       - FLASK_DEBUG=1
-      - DATABASE_URL=postgresql://postgres:password@db:5432/flaskerp
+      - DATABASE_URL=postgresql://postgres:password@db:5432/erpseed
+      - REDIS_URL=redis://redis:6379
       - SECRET_KEY=dev-secret-key-change-in-prod
       - JWT_SECRET_KEY=a-very-secure-and-long-jwt-secret-key-for-dev-env
-    command: sh -c "pip install -r requirements.txt && flask run --host 0.0.0.0 --port 5000"
+      - PYTHONPATH=/app
+    command: >
+      sh -c "pip install -r requirements.txt && 
+             python -m cli.create_admin &&
+             python -m seeds.initial &&
+             gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:5000 --reload backend.wsgi:app"
     depends_on:
       db:
         condition: service_healthy
@@ -54,7 +60,7 @@ services:
     stdin_open: true
     tty: true
 
-  # Frontend React/Vite - uses local files via volume
+  # Frontend React/Vite
   frontend:
     container_name: erpseed_frontend
     image: node:20-alpine
@@ -64,12 +70,37 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:5002
+      - VITE_API_URL=http://localhost:5000
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     depends_on:
       - backend
     networks:
       - erpseed_net
+
+  # Inizializzazione database (run once)
+  init-db:
+    container_name: erpseed_init
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/erpseed
+      - JWT_SECRET_KEY=a-very-secure-and-long-jwt-secret-key-for-dev-env
+      - PYTHONPATH=/app
+    command: >
+      sh -c "pip install -r requirements.txt &&
+             python -m cli.create_admin &&
+             python -m seeds.initial &&
+             python -m seeds.metadata &&
+             python -m seeds.comuni"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - erpseed_net
+    restart: "no"
 
 networks:
   erpseed_net:
