@@ -71,10 +71,11 @@ from .core.api.custom_modules import blp as custom_modules_bp
 from .core.api.module_api import blp as module_api_bp
 from .core.api.import_export import blp as import_export_bp
 
-# Import Entities (Vision Archetypes)
-from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
-from .entities.indirizzo_geografico import geografico_blp
-from .entities.comuni_routes import comuni_blp
+# Import Entities API (CQRS)
+from .endpoints.entities import entities_bp
+
+# Import Geographic API (new CQRS endpoint)
+from .endpoints.geographic import geographic_bp
 
 # Import Builder Models (Archetype, Component, Block) from SQLAlchemy persistence layer
 from .infrastructure.builder.models import (
@@ -99,9 +100,6 @@ from .marketplace.models import (
 
 # Import Marketplace API (CQRS)
 from .endpoints.marketplace import blp as marketplace_bp
-
-# Import Entities API (CQRS)
-from .endpoints.entities import entities_bp
 
 # Import Visual Builder API
 from .endpoints.visual_builder import blp as visual_builder_bp
@@ -354,15 +352,9 @@ def create_app(db_url=None):
     # Register service-based APIs (CQRS)
     api.register_blueprint(products_bp)
     api.register_blueprint(sales_bp)
-    app.register_blueprint(entities_bp)
 
-    # Vision Entities (Archetypes)
-    api.register_blueprint(soggetto_blp, url_prefix="/api/v1")
-    api.register_blueprint(ruolo_blp, url_prefix="/api/v1")
-    api.register_blueprint(indirizzo_blp, url_prefix="/api/v1")
-    api.register_blueprint(contatto_blp, url_prefix="/api/v1")
-    api.register_blueprint(geografico_blp)
-    api.register_blueprint(comuni_blp)
+    # Geographic data endpoints (new)
+    app.register_blueprint(geographic_bp)
 
     # --- Plugins loaded via create_plugin_manager in app initialization ---
     return app

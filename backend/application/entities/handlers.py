@@ -257,3 +257,83 @@ class SoggettoRuoloCommandHandler:
     def handle_revoca(self, command: RevocaRuoloCommand) -> None:
         self.repository.delete(command.soggetto_id, command.ruolo_id)
         db.session.commit()
+
+
+class IndirizzoCommandHandler:
+    def __init__(self):
+        self.repository = IndirizzoRepository()
+
+    def handle_create(self, indirizzo_data: IndirizzoData, tenant_id: int):
+        indirizzo = self.repository.create(indirizzo_data, tenant_id)
+        db.session.commit()
+        return indirizzo
+
+    def handle_update(self, indirizzo_id: int, indirizzo_data: IndirizzoData, tenant_id: int):
+        existing = self.repository.get_by_id(indirizzo_id)
+        if not existing:
+            raise ValueError(f"Indirizzo {indirizzo_id} not found")
+
+        indirizzo = self.repository.update(indirizzo_id, indirizzo_data)
+        db.session.commit()
+        return indirizzo
+
+    def handle_delete(self, indirizzo_id: int, tenant_id: int):
+        existing = self.repository.get_by_id(indirizzo_id)
+        if not existing:
+            raise ValueError(f"Indirizzo {indirizzo_id} not found")
+        self.repository.delete(indirizzo_id)
+        db.session.commit()
+
+
+class IndirizzoQueryHandler:
+    def __init__(self):
+        self.repository = IndirizzoRepository()
+
+    def handle_get_by_id(self, indirizzo_id: int, tenant_id: int):
+        indirizzo = self.repository.get_by_id(indirizzo_id)
+        if indirizzo and indirizzo.tenant_id != tenant_id:
+            return None
+        return indirizzo
+
+    def handle_get_all(self, tenant_id: int, skip: int = 0, limit: int = 100):
+        return self.repository.get_by_tenant(tenant_id, skip, limit)
+
+
+class ContattoCommandHandler:
+    def __init__(self):
+        self.repository = ContattoRepository()
+
+    def handle_create(self, contatto_data: ContattoData, tenant_id: int):
+        contatto = self.repository.create(contatto_data, tenant_id)
+        db.session.commit()
+        return contatto
+
+    def handle_update(self, contatto_id: int, contatto_data: ContattoData, tenant_id: int):
+        existing = self.repository.get_by_id(contatto_id)
+        if not existing:
+            raise ValueError(f"Contatto {contatto_id} not found")
+
+        contatto = self.repository.update(contatto_id, contatto_data)
+        db.session.commit()
+        return contatto
+
+    def handle_delete(self, contatto_id: int, tenant_id: int):
+        existing = self.repository.get_by_id(contatto_id)
+        if not existing:
+            raise ValueError(f"Contatto {contatto_id} not found")
+        self.repository.delete(contatto_id)
+        db.session.commit()
+
+
+class ContattoQueryHandler:
+    def __init__(self):
+        self.repository = ContattoRepository()
+
+    def handle_get_by_id(self, contatto_id: int, tenant_id: int):
+        contatto = self.repository.get_by_id(contatto_id)
+        if contatto and contatto.tenant_id != tenant_id:
+            return None
+        return contatto
+
+    def handle_get_all(self, tenant_id: int, skip: int = 0, limit: int = 100):
+        return self.repository.get_by_tenant(tenant_id, skip, limit)

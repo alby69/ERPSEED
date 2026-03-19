@@ -19,6 +19,10 @@ from .handlers import (
     RuoloCommandHandler,
     RuoloQueryHandler,
     SoggettoRuoloCommandHandler,
+    IndirizzoCommandHandler,
+    IndirizzoQueryHandler,
+    ContattoCommandHandler,
+    ContattoQueryHandler,
 )
 
 __all__ = [
@@ -40,4 +44,8 @@ __all__ = [
     'RuoloCommandHandler',
     'RuoloQueryHandler',
     'SoggettoRuoloCommandHandler',
+    'IndirizzoCommandHandler',
+    'IndirizzoQueryHandler',
+    'ContattoCommandHandler',
+    'ContattoQueryHandler',
 ]

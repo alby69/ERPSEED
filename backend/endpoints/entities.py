@@ -4,6 +4,8 @@ from backend.application.entities import (
     SoggettoCommandHandler, SoggettoQueryHandler,
     RuoloCommandHandler, RuoloQueryHandler,
     SoggettoRuoloCommandHandler,
+    IndirizzoCommandHandler, IndirizzoQueryHandler,
+    ContattoCommandHandler, ContattoQueryHandler,
     CreateSoggettoCommand, UpdateSoggettoCommand, DeleteSoggettoCommand,
     CreateRuoloCommand, UpdateRuoloCommand, DeleteRuoloCommand,
     AssegnaRuoloCommand, RevocaRuoloCommand,
@@ -308,3 +310,172 @@ entities_bp.add_url_rule('/soggetti/<int:soggetto_id>', view_func=SoggettoDetail
 entities_bp.add_url_rule('/soggetti/<int:soggetto_id>/ruoli', view_func=SoggettoRuoliView.as_view('soggetto_ruoli'))
 entities_bp.add_url_rule('/ruoli', view_func=RuoloListView.as_view('ruolo_list'))
 entities_bp.add_url_rule('/ruoli/<int:ruolo_id>', view_func=RuoloDetailView.as_view('ruolo_detail'))
+
+
+def _indirizzo_to_dict(indirizzo):
+    if not indirizzo:
+        return None
+    return {
+        'id': indirizzo.id,
+        'denominazione': indirizzo.denominazione,
+        'numero_civico': indirizzo.numero_civico,
+        'CAP': indirizzo.CAP,
+        'città': indirizzo.città,
+        'provincia': indirizzo.provincia,
+        'regione': indirizzo.regione,
+        'nazione': indirizzo.nazione,
+        'latitudine': indirizzo.latitudine,
+        'longitudine': indirizzo.longitudine,
+        'tipo': indirizzo.tipo,
+        'created_at': indirizzo.created_at.isoformat() if indirizzo.created_at else None,
+        'updated_at': indirizzo.updated_at.isoformat() if indirizzo.updated_at else None,
+    }
+
+
+def _contatto_to_dict(contatto):
+    if not contatto:
+        return None
+    return {
+        'id': contatto.id,
+        'canale': contatto.canale,
+        'valore': contatto.valore,
+        'tipo_utilizzo': contatto.tipo_utilizzo,
+        'is_verified': contatto.is_verified,
+        'is_preferred': contatto.is_preferred,
+        'created_at': contatto.created_at.isoformat() if contatto.created_at else None,
+        'updated_at': contatto.updated_at.isoformat() if contatto.updated_at else None,
+    }
+
+
+class IndirizzoListView(MethodView):
+    def get(self):
+        tenant_id = _get_tenant_id()
+        skip = request.args.get('skip', 0, type=int)
+        limit = request.args.get('limit', 100, type=int)
+        
+        handler = IndirizzoQueryHandler()
+        indirizzi = handler.handle_get_all(tenant_id, skip, limit)
+        return jsonify([_indirizzo_to_dict(i) for i in indirizzi])
+
+    def post(self):
+        tenant_id = _get_tenant_id()
+        data = request.get_json()
+        
+        indirizzo_data = IndirizzoData(
+            denominazione=data.get('denominazione'),
+            numero_civico=data.get('numero_civico'),
+            CAP=data.get('CAP'),
+            città=data.get('città', ''),
+            provincia=data.get('provincia'),
+            regione=data.get('regione'),
+            nazione=data.get('nazione', 'IT'),
+            latitudine=data.get('latitudine'),
+            longitudine=data.get('longitudine'),
+            tipo=data.get('tipo'),
+        )
+        
+        handler = IndirizzoCommandHandler()
+        indirizzo = handler.handle_create(indirizzo_data, tenant_id)
+        return jsonify(_indirizzo_to_dict(indirizzo)), 201
+
+
+class IndirizzoDetailView(MethodView):
+    def get(self, indirizzo_id):
+        tenant_id = _get_tenant_id()
+        handler = IndirizzoQueryHandler()
+        indirizzo = handler.handle_get_by_id(indirizzo_id, tenant_id)
+        if not indirizzo:
+            return jsonify({'error': 'Indirizzo not found'}), 404
+        return jsonify(_indirizzo_to_dict(indirizzo))
+
+    def put(self, indirizzo_id):
+        tenant_id = _get_tenant_id()
+        data = request.get_json()
+        
+        indirizzo_data = IndirizzoData(
+            denominazione=data.get('denominazione'),
+            numero_civico=data.get('numero_civico'),
+            CAP=data.get('CAP'),
+            città=data.get('città', ''),
+            provincia=data.get('provincia'),
+            regione=data.get('regione'),
+            nazione=data.get('nazione', 'IT'),
+            latitudine=data.get('latitudine'),
+            longitudine=data.get('longitudine'),
+            tipo=data.get('tipo'),
+        )
+        
+        handler = IndirizzoCommandHandler()
+        indirizzo = handler.handle_update(indirizzo_id, indirizzo_data, tenant_id)
+        return jsonify(_indirizzo_to_dict(indirizzo))
+
+    def delete(self, indirizzo_id):
+        tenant_id = _get_tenant_id()
+        handler = IndirizzoCommandHandler()
+        handler.handle_delete(indirizzo_id, tenant_id)
+        return '', 204
+
+
+class ContattoListView(MethodView):
+    def get(self):
+        tenant_id = _get_tenant_id()
+        skip = request.args.get('skip', 0, type=int)
+        limit = request.args.get('limit', 100, type=int)
+        
+        handler = ContattoQueryHandler()
+        contatti = handler.handle_get_all(tenant_id, skip, limit)
+        return jsonify([_contatto_to_dict(c) for c in contatti])
+
+    def post(self):
+        tenant_id = _get_tenant_id()
+        data = request.get_json()
+        
+        contatto_data = ContattoData(
+            canale=data.get('canale', ''),
+            valore=data.get('valore', ''),
+            tipo_utilizzo=data.get('tipo_utilizzo'),
+            is_verified=data.get('is_verified', False),
+            is_preferred=data.get('is_preferred', False),
+        )
+        
+        handler = ContattoCommandHandler()
+        contatto = handler.handle_create(contatto_data, tenant_id)
+        return jsonify(_contatto_to_dict(contatto)), 201
+
+
+class ContattoDetailView(MethodView):
+    def get(self, contatto_id):
+        tenant_id = _get_tenant_id()
+        handler = ContattoQueryHandler()
+        contatto = handler.handle_get_by_id(contatto_id, tenant_id)
+        if not contatto:
+            return jsonify({'error': 'Contatto not found'}), 404
+        return jsonify(_contatto_to_dict(contatto))
+
+    def put(self, contatto_id):
+        tenant_id = _get_tenant_id()
+        data = request.get_json()
+        
+        contatto_data = ContattoData(
+            canale=data.get('canale', ''),
+            valore=data.get('valore', ''),
+            tipo_utilizzo=data.get('tipo_utilizzo'),
+            is_verified=data.get('is_verified', False),
+            is_preferred=data.get('is_preferred', False),
+        )
+        
+        handler = ContattoCommandHandler()
+        contatto = handler.handle_update(contatto_id, contatto_data, tenant_id)
+        return jsonify(_contatto_to_dict(contatto))
+
+    def delete(self, contatto_id):
+        tenant_id = _get_tenant_id()
+        handler = ContattoCommandHandler()
+        handler.handle_delete(contatto_id, tenant_id)
+        return '', 204
+
+
+entities_bp.add_url_rule('/indirizzi', view_func=IndirizzoListView.as_view('indirizzo_list'))
+entities_bp.add_url_rule('/indirizzi/<int:indirizzo_id>', view_func=IndirizzoDetailView.as_view('indirizzo_detail'))
+entities_bp.add_url_rule('/contatti', view_func=ContattoListView.as_view('contatto_list'))
+entities_bp.add_url_rule('/contatti/<int:contatto_id>', view_func=ContattoDetailView.as_view('contatto_detail'))

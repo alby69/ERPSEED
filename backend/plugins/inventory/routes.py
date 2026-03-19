@@ -14,7 +14,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 import datetime
 from marshmallow import fields
 
-from .models import InventoryLocation, ProductStock, StockMovement, InventoryCount, InventoryCountLine
+from .models import InventoryLocation, LocationStock, StockMovement, InventoryCount, InventoryCountLine
 from backend.core.services.tenant_context import TenantContext
 from backend.extensions import db, ma
 from backend.schemas import BaseSchema
@@ -33,14 +33,14 @@ class InventoryLocationUpdateSchema(BaseSchema):
         model = InventoryLocation
         load_instance = False
 
-class ProductStockSchema(BaseSchema):
+class LocationStockSchema(BaseSchema):
     available_quantity = fields.Function(lambda obj: obj.available_quantity, dump_only=True)
     class Meta(BaseSchema.Meta):
-        model = ProductStock
+        model = LocationStock
 
-class ProductStockUpdateSchema(BaseSchema):
+class LocationStockUpdateSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
-        model = ProductStock
+        model = LocationStock
         load_instance = False
 
 class StockMovementSchema(BaseSchema):
@@ -130,9 +130,9 @@ class LocationResource(MethodView):
             abort(404, message="Location not found")
 
         # Check if there is any stock at this location
-        stock_at_location = ProductStock.query.filter(
-            ProductStock.location_id == location_id,
-            ProductStock.quantity != 0
+        stock_at_location = LocationStock.query.filter(
+            LocationStock.location_id == location_id,
+            LocationStock.quantity != 0
         ).first()
         if stock_at_location:
             abort(409, message="Cannot deactivate a location that has stock. Please move or adjust stock first.")
@@ -149,29 +149,29 @@ class StockList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.response(200, ProductStockSchema(many=True))
+    @blp.response(200, LocationStockSchema(many=True))
     def get(self, tenant_id):
         """List stock levels (optionally filtered by product or location)."""
-        query = ProductStock.query.filter_by(tenant_id=tenant_id)
+        query = LocationStock.query.filter_by(tenant_id=tenant_id)
         
         if request.args.get('product_id'):
             query = query.filter_by(product_id=request.args.get('product_id'))
         if request.args.get('location_id'):
             query = query.filter_by(location_id=request.args.get('location_id'))
         
-        query = apply_sorting(query, ProductStock)
+        query = apply_sorting(query, LocationStock)
         items, headers = paginate(query)
         return items, 200, headers
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.arguments(ProductStockSchema)
-    @blp.response(201, ProductStockSchema)
+    @blp.arguments(LocationStockSchema)
+    @blp.response(201, LocationStockSchema)
     def post(self, stock_instance, tenant_id):
         """Set initial stock level for a product at a location."""
         return generic_service.create_tenant_resource(
-            ProductStock, stock_instance, tenant_id,
+            LocationStock, stock_instance, tenant_id,
             unique_fields=['product_id', 'location_id']
         )
 
@@ -183,22 +183,22 @@ class StockResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.response(200, ProductStockSchema)
+    @blp.response(200, LocationStockSchema)
     def get(self, stock_id, tenant_id):
         """Get stock level."""
         return generic_service.get_tenant_resource(
-            ProductStock, stock_id, tenant_id, not_found_message="Stock record not found"
+            LocationStock, stock_id, tenant_id, not_found_message="Stock record not found"
         )
     
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.arguments(ProductStockUpdateSchema(partial=True))
-    @blp.response(200, ProductStockSchema)
+    @blp.arguments(LocationStockUpdateSchema(partial=True))
+    @blp.response(200, LocationStockSchema)
     def put(self, data, stock_id, tenant_id):
         """Update stock level."""
         return generic_service.update_tenant_resource(
-            ProductStock, stock_id, tenant_id, data, not_found_message="Stock record not found"
+            LocationStock, stock_id, tenant_id, data, not_found_message="Stock record not found"
         )
 
 
@@ -254,12 +254,12 @@ class StockMovementList(MethodView):
         db.session.add(movement_instance)
         
         # Update stock levels
-        stock = ProductStock.query.filter_by(
+        stock = LocationStock.query.filter_by(
             tenant_id=tenant_id, product_id=product_id, location_id=location_id
         ).first()
         
         if not stock:
-            stock = ProductStock()
+            stock = LocationStock()
             stock.tenant_id=tenant_id
             stock.product_id=product_id
             stock.location_id=location_id
@@ -348,7 +348,7 @@ class InventoryCountList(MethodView):
         db.session.flush()
         
         # Create count lines with current stock levels
-        stock_levels = ProductStock.query.filter_by(
+        stock_levels = LocationStock.query.filter_by(
             tenant_id=tenant_id, location_id=count_instance.location_id
         ).all()
         
@@ -416,7 +416,7 @@ class InventoryCountResource(MethodView):
                 
                 # Update stock if there's a variance
                 if line.variance != 0:
-                    stock = ProductStock.query.filter_by(
+                    stock = LocationStock.query.filter_by(
                         tenant_id=tenant_id,
                         product_id=line.product_id,
                         location_id=count.location_id
@@ -498,12 +498,12 @@ class StockSummary(MethodView):
             Product.id,
             Product.name,
             Product.code,
-            func.sum(ProductStock.quantity).label('total_quantity'),
-            func.sum(ProductStock.reserved_quantity).label('total_reserved')
+            func.sum(LocationStock.quantity).label('total_quantity'),
+            func.sum(LocationStock.reserved_quantity).label('total_reserved')
         ).join(
-            ProductStock, Product.id == ProductStock.product_id
+            LocationStock, Product.id == LocationStock.product_id
         ).filter(
-            ProductStock.tenant_id == tenant_id
+            LocationStock.tenant_id == tenant_id
         ).group_by(Product.id).all()
         
         summary = []
@@ -539,15 +539,15 @@ class LowStockReport(MethodView):
             Product.id,
             Product.name,
             Product.code,
-            func.sum(ProductStock.quantity).label('total_quantity'),
-            func.sum(ProductStock.reserved_quantity).label('total_reserved'),
-            func.max(ProductStock.reorder_level).label('reorder_level')
+            func.sum(LocationStock.quantity).label('total_quantity'),
+            func.sum(LocationStock.reserved_quantity).label('total_reserved'),
+            func.max(LocationStock.reorder_level).label('reorder_level')
         ).join(
-            ProductStock, Product.id == ProductStock.product_id
+            LocationStock, Product.id == LocationStock.product_id
         ).filter(
-            ProductStock.tenant_id == tenant_id
+            LocationStock.tenant_id == tenant_id
         ).group_by(Product.id).having(
-            (func.sum(ProductStock.quantity) - func.coalesce(func.sum(ProductStock.reserved_quantity), 0)) <= func.max(ProductStock.reorder_level)
+            (func.sum(LocationStock.quantity) - func.coalesce(func.sum(LocationStock.reserved_quantity), 0)) <= func.max(LocationStock.reorder_level)
         ).all()
         
         low_stock = []

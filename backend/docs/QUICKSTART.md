@@ -1,106 +1,44 @@
 # ERPSeed - Quick Start Guide
 
-## 🚀 Quick Start con Docker
+## 🚀 Quick Start
 
 ### 1. Clona il Repository
 
 ```bash
-git clone https://github.com/your-repo/erpseed.git
-cd erpseed
+git clone https://github.com/alby69/ERPSEED.git
+cd ERPSEED
 ```
 
-### 2. Avvia con Docker Compose
+### 2. Setup Backend
 
 ```bash
-# Costruisce le immagini e avvia tutti i servizi
-docker-compose up -d --build
+cd backend
 
-# Oppure usa Make (se installato)
-make up
+# Crea virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# Installa dipendenze
+pip install -r requirements.txt
+
+# Crea file .env
+cat > .env << 'EOF'
+DATABASE_URL=sqlite:///data.db
+JWT_SECRET_KEY=your-super-secret-key-at-least-32-chars-long
+SECRET_KEY=flask-secret-key
+FLASK_ENV=development
+EOF
+
+# Avvia il server
+python run.py
 ```
 
-### 3. Attendi l'Inizializzazione
-
-Il container `init-db` eseguirà automaticamente:
-- Installazione dipendenze
-- Creazione utente admin (`admin@erpseed.org`)
-- Seed del database
-
-### 4. Accedi all'Applicazione
+### 3. Accedi all'Applicazione
 
 | Servizio | URL |
 |----------|-----|
 | **Backend API** | http://localhost:5000 |
 | **Swagger UI** | http://localhost:5000/swagger-ui |
-| **Frontend** | http://localhost:5173 |
-
-### 5. Login
-
-- **Email**: `admin@erpseed.org`
-- **Password**: `admin123` (cambiala subito!)
-
----
-
-## 🛠️ Comandi Docker
-
-### Gestione Servizi
-
-```bash
-# Avvia tutti i servizi
-docker-compose up -d
-
-# Ferma tutti i servizi
-docker-compose down
-
-# Riavvia
-docker-compose restart
-
-# Vedi i log
-docker-compose logs -f
-
-# Vedi solo i log del backend
-docker-compose logs -f backend
-```
-
-### Makefile
-
-```bash
-make up         # Avvia (equivale a docker-compose up -d)
-make down       # Ferma
-make build      # Ricostruisce le immagini
-make logs       # Vedi i log
-make restart    # Riavvia
-make ps         # Status servizi
-make init       # Reinizializza il database
-make db-reset   # Reset completo database
-```
-
-### Accesso ai Container
-
-```bash
-# Shell nel backend
-docker-compose exec backend /bin/bash
-
-# Shell nel database PostgreSQL
-docker-compose exec db psql -U postgres -d erpseed
-
-# Database Redis
-docker-compose exec redis redis-cli
-```
-
-### Database
-
-```bash
-# Backup del database
-docker-compose exec db pg_dump -U postgres erpseed > backup_$(date +%Y%m%d).sql
-
-# Restore del database
-cat backup.sql | docker-compose exec -T db psql -U postgres -d erpseed
-
-# Reset completo (cancella tutto!)
-docker-compose down -v
-docker-compose up -d --build
-```
 
 ---
 
@@ -108,146 +46,128 @@ docker-compose up -d --build
 
 ### Variabili d'Ambiente
 
-Il `docker-compose.yml` usa queste variabili di default:
-
-```yaml
-DATABASE_URL: postgresql://postgres:password@db:5432/erpseed
-JWT_SECRET_KEY: a-very-secure-and-long-jwt-secret-key-for-dev-env
-REDIS_URL: redis://redis:6379
-FLASK_ENV: development
-FLASK_DEBUG: 1
-```
-
-Per modifiche, crea un file `.env` nella root:
-
 ```bash
-cat > .env << 'EOF'
-POSTGRES_PASSWORD=my-secret-password
-JWT_SECRET_KEY=my-super-secret-jwt-key-at-least-32-chars
-EOF
-```
+# Database
+DATABASE_URL=sqlite:///data.db
+# oppure PostgreSQL
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
 
-### Configurazione AI
+# JWT (obbligatorio, min 32 caratteri)
+JWT_SECRET_KEY=your-super-secret-key-at-least-32-chars-long
 
-Per abilitare l'AI Assistant, aggiungi al `.env`:
+# Flask
+FLASK_ENV=development
+FLASK_DEBUG=1
 
-```bash
+# AI (opzionale)
 LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=sk-...
 ```
-
-### Porte
-
-| Servizio | Porta Interna | Porta Esterna |
-|----------|---------------|---------------|
-| Backend | 5000 | 5000 |
-| Frontend | 5173 | 5173 |
-| PostgreSQL | 5432 | 5432 |
-| Redis | 6379 | 6380 |
 
 ---
 
 ## 📡 API Endpoints
 
-### Autenticazione
-
-```bash
-# Login
-curl -X POST http://localhost:5000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@erpseed.org", "password": "admin123"}'
-```
-
-### Endpoints Principali
+### Endpoints CQRS
 
 | Risorsa | Endpoint | Descrizione |
 |---------|----------|-------------|
-| Progetti | `/projects` | CRUD progetti |
-| Workflows | `/workflows` | Gestione workflow |
-| Webhooks | `/webhooks` | Gestione webhook |
-| AI Chat | `/ai/chat` | Chat con AI |
-| Dynamic CRUD | `/projects/<id>/data/<model>` | CRUD dinamico |
+| Soggetti | `/api/entities/soggetti` | Clienti/Fornitori |
+| Ruoli | `/api/entities/ruoli` | Ruoli soggetti |
+| Indirizzi | `/api/entities/indirizzi` | Indirizzi |
+| Contatti | `/api/entities/contatti` | Contatti |
+| Marketplace | `/api/marketplace` | Marketplace blocks |
+| Geographic | `/api/geographic` | Dati geografici Italia |
+| AI Chat | `/api/ai/chat` | Chat con AI |
+
+### Headers Necessari
+
+```bash
+# Per tutte le richieste (tranne autenticazione)
+curl -X GET http://localhost:5000/api/entities/soggetti \
+  -H "Authorization: Bearer <jwt_token>" \
+  -H "X-Tenant-ID: 1"
+```
+
+---
+
+## 📁 Struttura Backend
+
+```
+backend/
+├── domain/                  # Modelli puri (dataclass)
+│   ├── entities/          # Soggetto, Ruolo
+│   └── marketplace/       # Category, BlockListing
+│
+├── application/           # CQRS Commands/Handlers
+│   ├── entities/
+│   └── marketplace/
+│
+├── infrastructure/        # SQLAlchemy Models + Repositories
+│   ├── entities/
+│   ├── marketplace/
+│   └── builder/
+│
+├── endpoints/            # REST API Endpoints
+│   ├── entities.py       # Soggetto, Ruolo, Indirizzo, Contatto
+│   ├── marketplace.py
+│   ├── geographic.py     # Regioni, Province, Comuni
+│   ├── products.py
+│   ├── sales.py
+│   └── purchases.py
+│
+├── core/                 # Sistema Core
+│   ├── api/             # Auth, Tenant, Modules
+│   └── models/         # BaseModel, Tenant
+│
+├── shared/              # Utilities condivise
+│   ├── events/          # EventBus
+│   ├── decorators/      # @tenant_required
+│   └── utils/          # Helper functions
+│
+├── plugins/             # Plugin System
+│   ├── inventory/       # Gestione magazzino
+│   ├── accounting/      # Contabilità
+│   └── hr/             # Risorse Umane
+│
+└── tests/              # Test Suite
+```
 
 ---
 
 ## 🧪 Testing
 
 ```bash
-# Esegui i test nel container
-docker-compose exec backend pytest
+# Esegui tutti i test
+pytest
+
+# Test specifico
+pytest tests/test_entities_cqrs.py -v
 
 # Con coverage
-docker-compose exec backend pytest --cov=. --cov-report=html
-```
-
----
-
-## 📁 Struttura
-
-```
-erpseed/
-├── backend/                    # API Backend
-│   ├── models/               # Modelli Database
-│   ├── routes/               # API Endpoints
-│   ├── services/             # Logica Business
-│   ├── cli/                 # Script CLI
-│   ├── seeds/                # Database Seeds
-│   ├── ai_service/           # AI CQRS
-│   ├── builder_service/      # Builder CQRS
-│   ├── docs/                 # Documentazione
-│   │   ├── ARCHITECTURE.md
-│   │   └── QUICKSTART.md
-│   ├── Dockerfile            # Container backend
-│   └── requirements.txt
-│
-├── frontend/                  # React Frontend
-├── docker-compose.yml        # Orchestrazione servizi
-└── Makefile                 # Comandi utili
-```
-
----
-
-## 🔒 Sicurezza
-
-**⚠️ Cambio password admin:**
-```bash
-docker-compose exec backend python -m cli.create_admin
+pytest --cov=backend --cov-report=html
 ```
 
 ---
 
 ## 🐛 Risoluzione Problemi
 
-### Container non parte
+### ModuleNotFoundError
 
 ```bash
-# Verifica i log
-docker-compose logs
-
-# Ricostruisci da zero
-docker-compose down -v --rmi local
-docker-compose up -d --build
+# Verifica PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+python run.py
 ```
 
-### Database connection error
+### Database locked
 
 ```bash
-# Verifica che PostgreSQL sia pronto
-docker-compose ps db
-
-# Attendi healthcheck
-docker-compose up -d db
-docker-compose wait db
-docker-compose up -d
-```
-
-### Permessi cartelle
-
-```bash
-# Su Linux/Mac
-sudo chown -R $USER:$USER backend frontend
+# Riavvia o usa PostgreSQL
+rm data.db
+flask db upgrade
 ```
 
 ---
 
-*Ultimo aggiornamento: 2026-03-18*
+*Ultimo aggiornamento: 2026-03-19*

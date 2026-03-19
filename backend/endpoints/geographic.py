@@ -1,47 +1,11 @@
-"""
-Endpoint per dati geografici italiani e geocodifica.
-"""
+from flask import Blueprint, request, jsonify
 from flask.views import MethodView
-from flask_smorest import Blueprint
-from flask import request, jsonify
-import requests
+from flask_jwt_extended import jwt_required
+from datetime import datetime
 
-# Blueprint per dati geografici - SENZA autenticazione (dati pubblici)
-geografico_blp = Blueprint("geografico", __name__, url_prefix="/api/v1", description="Dati geografici italiani")
+geographic_bp = Blueprint('geographic', __name__, url_prefix='/api/geographic')
 
 
-# Cache per comuni dal database
-_comuni_cache = None
-
-def get_comuni_from_db():
-    """Ottieni comuni dal database."""
-    global _comuni_cache
-    if _comuni_cache is not None:
-        return _comuni_cache
-    
-    try:
-        from backend.infrastructure.entities.models import Comune
-        from backend.extensions import db
-        
-        comuni = Comune.query.filter(
-            Comune.latitudine.isnot(None),
-            Comune.longitudine.isnot(None)
-        ).all()
-        _comuni_cache = [{
-            'nome': c.nome.upper(),
-            'latitudine': c.latitudine,
-            'longitudine': c.longitudine,
-            'provincia': c.codice_provincia,
-            'regione': c.codice_regione,
-            'cap': c.cap
-        } for c in comuni]
-        return _comuni_cache
-    except Exception as e:
-        print(f"Error loading comuni from DB: {e}")
-        return []
-
-
-# Fallback hardcoded
 REGIONI = [
     {"codice": "01", "nome": "Abruzzo"},
     {"codice": "02", "nome": "Basilicata"},
@@ -174,7 +138,6 @@ PROVINCE = [
     {"codice": "VV", "nome": "Vibo Valentia", "regione": "03"},
 ]
 
-# Alcuni comuni italiani con CAP e coordinate (fallback)
 COMUNI = [
     {"codice": "001001", "nome": "Roma", "CAP": "00100", "provincia": "RM", "regione": "Lazio", "latitudine": 41.9028, "longitudine": 12.4964},
     {"codice": "015001", "nome": "Milano", "CAP": "20100", "provincia": "MI", "regione": "Lombardia", "latitudine": 45.4642, "longitudine": 9.1900},
@@ -218,113 +181,76 @@ COMUNI = [
     {"codice": "065002", "nome": "L'Aquila", "CAP": "67100", "provincia": "AQ", "regione": "Abruzzo", "latitudine": 42.3570, "longitudine": 13.3980},
     {"codice": "044001", "nome": "Siena", "CAP": "53100", "provincia": "SI", "regione": "Toscana", "latitudine": 43.3188, "longitudine": 11.3308},
     {"codice": "051001", "nome": "Arezzo", "CAP": "52100", "provincia": "AR", "regione": "Toscana", "latitudine": 43.4631, "longitudine": 11.8793},
-    {"codice": "075001", "nome": "Galatina", "CAP": "73013", "provincia": "LE", "regione": "Puglia", "latitudine": 40.1752, "longitudine": 18.1703},
-    {"codice": "075002", "nome": "Gallipoli", "CAP": "73014", "provincia": "LE", "regione": "Puglia", "latitudine": 40.0547, "longitudine": 17.9936},
-    {"codice": "075003", "nome": "Nardò", "CAP": "73048", "provincia": "LE", "regione": "Puglia", "latitudine": 40.1714, "longitudine": 18.0314},
-    {"codice": "075004", "nome": "Otranto", "CAP": "73028", "provincia": "LE", "regione": "Puglia", "latitudine": 40.1474, "longitudine": 18.4864},
-    {"codice": "075005", "nome": "Lecce", "CAP": "73100", "provincia": "LE", "regione": "Puglia", "latitudine": 40.3510, "longitudine": 18.1717},
-    {"codice": "075006", "nome": "Brindisi", "CAP": "72100", "provincia": "BR", "regione": "Puglia", "latitudine": 40.6327, "longitudine": 17.9398},
-    {"codice": "075007", "nome": "Taranto", "CAP": "74100", "provincia": "TA", "regione": "Puglia", "latitudine": 40.4643, "longitudine": 17.2471},
-    {"codice": "075008", "nome": "Bari", "CAP": "70100", "provincia": "BA", "regione": "Puglia", "latitudine": 41.1171, "longitudine": 16.8543},
-    {"codice": "075009", "nome": "Barletta", "CAP": "76121", "provincia": "BT", "regione": "Puglia", "latitudine": 41.3144, "longitudine": 16.2817},
-    {"codice": "075010", "nome": "Andria", "CAP": "76123", "provincia": "BT", "regione": "Puglia", "latitudine": 41.2276, "longitudine": 16.2903},
-    {"codice": "075011", "nome": "Foggia", "CAP": "71100", "provincia": "FG", "regione": "Puglia", "latitudine": 41.4644, "longitudine": 15.5469},
-    {"codice": "075012", "nome": "Manfredonia", "CAP": "71043", "provincia": "FG", "regione": "Puglia", "latitudine": 41.6275, "longitudine": 15.9104},
-    {"codice": "001005", "nome": "Velletri", "CAP": "00049", "provincia": "RM", "regione": "Lazio", "latitudine": 41.6867, "longitudine": 12.7761},
-    {"codice": "001006", "nome": "Aprilia", "CAP": "04011", "provincia": "LT", "regione": "Lazio", "latitudine": 41.5951, "longitudine": 12.6556},
-    {"codice": "001007", "nome": "Pomezia", "CAP": "00040", "provincia": "RM", "regione": "Lazio", "latitudine": 41.6687, "longitudine": 12.5012},
-    {"codice": "001008", "nome": "Tivoli", "CAP": "00019", "provincia": "RM", "regione": "Lazio", "latitudine": 41.9594, "longitudine": 12.7966},
-    {"codice": "015002", "nome": "Bergamo", "CAP": "24100", "provincia": "BG", "regione": "Lombardia", "latitudine": 45.6983, "longitudine": 9.6772},
-    {"codice": "015003", "nome": "Brescia", "CAP": "25100", "provincia": "BS", "regione": "Lombardia", "latitudine": 45.5416, "longitudine": 10.2118},
-    {"codice": "015004", "nome": "Monza", "CAP": "20900", "provincia": "MB", "regione": "Lombardia", "latitudine": 45.5801, "longitudine": 9.2724},
-    {"codice": "015005", "nome": "Varese", "CAP": "21100", "provincia": "VA", "regione": "Lombardia", "latitudine": 45.8206, "longitudine": 8.8252},
-    {"codice": "015006", "nome": "Como", "CAP": "22100", "provincia": "CO", "regione": "Lombardia", "latitudine": 45.8080, "longitudine": 9.0852},
-    {"codice": "015007", "nome": "Mantova", "CAP": "46100", "provincia": "MN", "regione": "Lombardia", "latitudine": 45.1564, "longitudine": 10.7914},
-    {"codice": "015008", "nome": "Cremona", "CAP": "26100", "provincia": "CR", "regione": "Lombardia", "latitudine": 45.1333, "longitudine": 10.0333},
-    {"codice": "015009", "nome": "Lecco", "CAP": "23900", "provincia": "LC", "regione": "Lombardia", "latitudine": 45.8566, "longitudine": 9.3972},
-    {"codice": "048002", "nome": "Novara", "CAP": "28100", "provincia": "NO", "regione": "Piemonte", "latitudine": 45.4469, "longitudine": 8.6222},
-    {"codice": "048003", "nome": "Alessandria", "CAP": "15100", "provincia": "AL", "regione": "Piemonte", "latitudine": 44.9111, "longitudine": 8.6161},
-    {"codice": "048004", "nome": "Asti", "CAP": "14100", "provincia": "AT", "regione": "Piemonte", "latitudine": 44.9007, "longitudine": 8.2065},
-    {"codice": "048005", "nome": "Cuneo", "CAP": "12100", "provincia": "CN", "regione": "Piemonte", "latitudine": 44.3845, "longitudine": 7.5428},
-    {"codice": "063002", "nome": "Salerno", "CAP": "84100", "provincia": "SA", "regione": "Campania", "latitudine": 40.6825, "longitudine": 14.7576},
-    {"codice": "063003", "nome": "Avellino", "CAP": "83100", "provincia": "AV", "regione": "Campania", "latitudine": 40.9141, "longitudine": 14.7968},
-    {"codice": "063004", "nome": "Benevento", "CAP": "82100", "provincia": "BN", "regione": "Campania", "latitudine": 41.1335, "longitudine": 14.7811},
-    {"codice": "063005", "nome": "Caserta", "CAP": "81100", "provincia": "CE", "regione": "Campania", "latitudine": 41.0746, "longitudine": 14.3325},
-    {"codice": "025002", "nome": "Modena", "CAP": "41100", "provincia": "MO", "regione": "Emilia-Romagna", "latitudine": 44.6471, "longitudine": 10.9254},
-    {"codice": "025003", "nome": "Parma", "CAP": "43100", "provincia": "PR", "regione": "Emilia-Romagna", "latitudine": 44.8015, "longitudine": 10.3279},
-    {"codice": "025004", "nome": "Reggio Emilia", "CAP": "42100", "provincia": "RE", "regione": "Emilia-Romagna", "latitudine": 44.6989, "longitudine": 10.6314},
-    {"codice": "025005", "nome": "Rimini", "CAP": "47900", "provincia": "RN", "regione": "Emilia-Romagna", "latitudine": 44.0593, "longitudine": 12.5686},
-    {"codice": "025006", "nome": "Ravenna", "CAP": "48100", "provincia": "RA", "regione": "Emilia-Romagna", "latitudine": 44.4184, "longitudine": 12.2037},
-    {"codice": "033002", "nome": "Pistoia", "CAP": "51100", "provincia": "PT", "regione": "Toscana", "latitudine": 43.9148, "longitudine": 10.9046},
-    {"codice": "033003", "nome": "Lucca", "CAP": "55100", "provincia": "LU", "regione": "Toscana", "latitudine": 43.8427, "longitudine": 10.5028},
-    {"codice": "033004", "nome": "Massa", "CAP": "54100", "provincia": "MS", "regione": "Toscana", "latitudine": 44.0862, "longitudine": 10.1614},
-    {"codice": "033005", "nome": "Carrara", "CAP": "54033", "provincia": "MS", "regione": "Toscana", "latitudine": 44.0782, "longitudine": 10.1036},
-    {"codice": "021002", "nome": "Crotone", "CAP": "88900", "provincia": "KR", "regione": "Calabria", "latitudine": 39.0803, "longitudine": 17.1271},
-    {"codice": "021003", "nome": "Cosenza", "CAP": "87100", "provincia": "CS", "regione": "Calabria", "latitudine": 39.3106, "longitudine": 16.2396},
-    {"codice": "021004", "nome": "Reggio Calabria", "CAP": "89100", "provincia": "RC", "regione": "Calabria", "latitudine": 38.1036, "longitudine": 15.6462},
-    {"codice": "021005", "nome": "Vibo Valentia", "CAP": "89900", "provincia": "VV", "regione": "Calabria", "latitudine": 38.6756, "longitudine": 16.1026},
-    {"codice": "056003", "nome": "Olbia", "CAP": "07026", "provincia": "SS", "regione": "Sardegna", "latitudine": 40.9225, "longitudine": 9.4960},
-    {"codice": "056004", "nome": "Tempio Pausania", "CAP": "07029", "provincia": "SS", "regione": "Sardegna", "latitudine": 40.8994, "longitudine": 9.1058},
-    {"codice": "056005", "nome": "Oristano", "CAP": "09170", "provincia": "OR", "regione": "Sardegna", "latitudine": 39.9043, "longitudine": 8.5913},
-    {"codice": "102002", "nome": "Merano", "CAP": "39012", "provincia": "BZ", "regione": "Trentino-Alto Adige", "latitudine": 46.6705, "longitudine": 11.1530},
-    {"codice": "102003", "nome": "Trento", "CAP": "38100", "provincia": "TN", "regione": "Trentino-Alto Adige", "latitudine": 46.0748, "longitudine": 11.1211},
-    {"codice": "101002", "nome": "Rovereto", "CAP": "38068", "provincia": "TN", "regione": "Trentino-Alto Adige", "latitudine": 45.8904, "longitudine": 11.0360},
 ]
 
+_comuni_cache = None
 
-@geografico_blp.route("/indirizzi/regioni")
-class Regioni(MethodView):
+
+def get_comuni_from_db():
+    global _comuni_cache
+    if _comuni_cache is not None:
+        return _comuni_cache
+    
+    try:
+        from backend.infrastructure.entities.models import Comune
+        comuni = Comune.query.filter(
+            Comune.latitudine.isnot(None),
+            Comune.longitudine.isnot(None)
+        ).all()
+        _comuni_cache = [{
+            'nome': c.nome.upper(),
+            'latitudine': c.latitudine,
+            'longitudine': c.longitudine,
+            'provincia': c.codice_provincia,
+            'regione': c.codice_regione,
+            'cap': c.cap
+        } for c in comuni]
+        return _comuni_cache
+    except Exception:
+        return []
+
+
+class RegioniView(MethodView):
     def get(self):
-        """Lista di tutte le regioni italiane"""
-        # Usa il database se disponibile, altrimenti ritorna hardcoded
         try:
             from backend.infrastructure.entities.models import Regione
-            from backend.extensions import db
-            
             regioni = Regione.query.order_by(Regione.nome).all()
             return jsonify([{"codice": r.codice, "nome": r.nome} for r in regioni])
-        except:
+        except Exception:
             return jsonify(REGIONI)
 
 
-@geografico_blp.route("/indirizzi/province")
-class Province(MethodView):
+class ProvinceView(MethodView):
     def get(self):
-        """Lista province italiane, filtrate per regione"""
         regione = request.args.get("regione", "")
         
         try:
             from backend.infrastructure.entities.models import Provincia
-            
             query = Provincia.query
             if regione:
                 query = query.filter_by(codice_regione=regione)
             province = query.order_by(Provincia.nome).all()
             return jsonify([{"codice": p.codice, "nome": p.nome, "regione": p.codice_regione} for p in province])
-        except:
+        except Exception:
             if regione:
                 province = [p for p in PROVINCE if p["regione"] == regione]
                 return jsonify(province)
             return jsonify(PROVINCE)
 
 
-@geografico_blp.route("/indirizzi/comuni")
-class Comuni(MethodView):
+class ComuniView(MethodView):
     def get(self):
-        """Lista comuni italiani, filtrati per provincia"""
         provincia = request.args.get("provincia", "")
         
         if provincia:
             comuni = [c for c in COMUNI if c["provincia"] == provincia]
             return jsonify(comuni)
         
-        return jsonify(COMUNI[:50])  # Ritorna solo i primi 50 se nessun filtro
+        return jsonify(COMUNI[:50])
 
 
-@geografico_blp.route("/indirizzi/cerca")
-class CercaIndirizzo(MethodView):
+class CercaIndirizzoView(MethodView):
     def get(self):
-        """Cerca comune per nome"""
         q = request.args.get("q", "")
         
         if not q or len(q) < 2:
@@ -351,10 +277,9 @@ class CercaIndirizzo(MethodView):
         ])
 
 
-@geografico_blp.route("/indirizzi/geocodifica")
-class Geocodifica(MethodView):
+class GeocodificaView(MethodView):
     def get(self):
-        """Geocodifica: converte indirizzo in coordinate lat/lon"""
+        import requests
         indirizzo = request.args.get("indirizzo", "")
         
         if not indirizzo:
@@ -362,8 +287,6 @@ class Geocodifica(MethodView):
         
         indirizzo_lower = indirizzo.lower().strip()
         
-        # 1. Se c'è una via specifica (via, viale, piazza, etc.), usa direttamente Nominatim
-        # perché l'utente vuole l'indirizzo preciso, non solo il comune
         has_street = any(word in indirizzo_lower for word in ['via ', 'viale ', 'piazza ', 'corso ', 'strada ', 'largo '])
         
         if has_street:
@@ -375,9 +298,7 @@ class Geocodifica(MethodView):
                 "addressdetails": 1,
                 "countrycodes": "it"
             }
-            headers = {
-                "User-Agent": "ERPSeed/1.0"
-            }
+            headers = {"User-Agent": "ERPSeed/1.0"}
             
             try:
                 response = requests.get(nominatim_url, params=params, headers=headers, timeout=10)
@@ -393,13 +314,11 @@ class Geocodifica(MethodView):
                         "qualita": result.get("importance", 0),
                         "fonte": "nominatim"
                     })
-            except Exception as e:
-                pass  # Fallback to DB search
+            except Exception:
+                pass
         
-        # 2. Altrimenti cerca prima nel database comuni (7900+ comuni con coordinate)
         comuni_db = get_comuni_from_db()
         
-        # Cerca prima match esatto (case insensitive)
         for c in comuni_db:
             if c['nome'].lower() == indirizzo_lower:
                 return jsonify({
@@ -410,12 +329,9 @@ class Geocodifica(MethodView):
                     "fonte": "db"
                 })
         
-        # Poi cerca match dove il nome del comune è una parola intera nell'indirizzo
-        # (non una sottostringa)
         words = indirizzo_lower.replace(',', ' ').split()
         for c in comuni_db:
             nome_lower = c['nome'].lower()
-            # Verifica che il nome sia una parola intera nell'indirizzo
             if nome_lower in words:
                 return jsonify({
                     "latitudine": c['latitudine'],
@@ -424,36 +340,7 @@ class Geocodifica(MethodView):
                     "qualita": 0.9,
                     "fonte": "db"
                 })
-            nominatim_url = "https://nominatim.openstreetmap.org/search"
-            params = {
-                "q": indirizzo + ", Italia",
-                "format": "json",
-                "limit": 1,
-                "addressdetails": 1,
-                "countrycodes": "it"
-            }
-            headers = {
-                "User-Agent": "ERPSeed/1.0"
-            }
-            
-            try:
-                response = requests.get(nominatim_url, params=params, headers=headers, timeout=10)
-                response.raise_for_status()
-                data = response.json()
-                
-                if data:
-                    result = data[0]
-                    return jsonify({
-                        "latitudine": float(result.get("lat", 0)),
-                        "longitudine": float(result.get("lon", 0)),
-                        "indirizzo_formattato": result.get("display_name", ""),
-                        "qualita": result.get("importance", 0),
-                        "fonte": "nominatim"
-                    })
-            except Exception as e:
-                pass
         
-        # 3. Se non trovato, prova nei comuni hardcoded come ultimo fallback
         for c in COMUNI:
             if q_lower in c["nome"].lower():
                 return jsonify({
@@ -467,17 +354,15 @@ class Geocodifica(MethodView):
         return jsonify({"error": "Indirizzo non trovato"}), 404
 
 
-@geografico_blp.route("/indirizzi/geocodifica-inversa")
-class GeocodificaInversa(MethodView):
+class GeocodificaInversaView(MethodView):
     def get(self):
-        """Reverse geocodifica: converte coordinate lat/lon in indirizzo"""
+        import requests
         lat = request.args.get("lat")
         lon = request.args.get("lon")
         
         if not lat or not lon:
             return jsonify({"error": "Coordinate richieste"}), 400
         
-        # Trova il comune più vicino
         lat_float = float(lat)
         lon_float = float(lon)
         
@@ -502,7 +387,6 @@ class GeocodificaInversa(MethodView):
                 "nazione": "IT"
             })
         
-        # Fallback a Nominatim
         nominatim_url = "https://nominatim.openstreetmap.org/reverse"
         params = {
             "lat": lat,
@@ -511,9 +395,7 @@ class GeocodificaInversa(MethodView):
             "addressdetails": 1,
             "zoom": 18
         }
-        headers = {
-            "User-Agent": "ERPSeed/1.0"
-        }
+        headers = {"User-Agent": "ERPSeed/1.0"}
         
         try:
             response = requests.get(nominatim_url, params=params, headers=headers, timeout=10)
@@ -536,3 +418,11 @@ class GeocodificaInversa(MethodView):
             })
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+
+geographic_bp.add_url_rule('/regioni', view_func=RegioniView.as_view('regioni'))
+geographic_bp.add_url_rule('/province', view_func=ProvinceView.as_view('province'))
+geographic_bp.add_url_rule('/comuni', view_func=ComuniView.as_view('comuni'))
+geographic_bp.add_url_rule('/cerca', view_func=CercaIndirizzoView.as_view('cerca'))
+geographic_bp.add_url_rule('/geocodifica', view_func=GeocodificaView.as_view('geocodifica'))
+geographic_bp.add_url_rule('/geocodifica-inversa', view_func=GeocodificaInversaView.as_view('geocodifica_inversa'))
