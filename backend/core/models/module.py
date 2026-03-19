@@ -16,6 +16,7 @@ Tipi:
 
 from backend.core.models.base import BaseModel
 from backend.extensions import db
+from backend.builder_service.infrastructure.persistence.builder_models import Block  # noqa: F401 - needed for SQLAlchemy relationship
 
 module_models = db.Table(
     "module_models",

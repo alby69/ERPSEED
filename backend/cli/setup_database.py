@@ -11,7 +11,7 @@ try:
     from backend.utils import generate_create_table_sql
     # Le funzioni di seeding per altri moduli.
     # NOTA: L'associazione utente-progetto viene gestita tramite la relazione 'members' del modello Project.
-    from backend.builder.models import create_system_archetypes
+    from backend.domain.builder.models import create_system_archetypes
     from backend.marketplace.models import create_default_categories
 except ImportError as e:
     print(f"ERRORE: Impossibile importare i modelli necessari. Dettagli: {e}")

@@ -13,7 +13,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import Schema, fields
 
 # Import Block first to ensure it's registered in SQLAlchemy
-from backend.builder.models import Block  # noqa: F401
+from backend.domain.builder.models import Block  # noqa: F401
 from backend.core.models.module import Module
 from backend.extensions import db
 

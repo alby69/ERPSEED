@@ -1,8 +1,16 @@
 """
 Builder Service API - Main entry point for Builder Service with Block/Component/Archetype.
+
+This module provides both the service class and Flask-Smorest Blueprint for REST API.
 """
 import logging
 from typing import Dict, Any, Optional
+from flask.views import MethodView
+from flask import request
+from flask_smorest import Blueprint, abort
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from marshmallow import Schema, fields
+
 from backend.shared.handlers import CommandResult
 from backend.builder_service.application.commands.block_components import (
     CreateArchetypeCommand, UpdateArchetypeCommand, DeleteArchetypeCommand, GetArchetypeCommand, ListArchetypesCommand,
@@ -18,6 +26,8 @@ from backend.builder_service.container import get_builder_container
 from backend.shared.events.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
+
+blp = Blueprint("builder", __name__, url_prefix="/api/builder", description="Builder Service API")
 
 
 class BuilderService:

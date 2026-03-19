@@ -54,9 +54,11 @@ from .routes.dynamic import blp as dynamic_api_bp
 from .routes.webhooks import blp as webhooks_bp
 from .routes.workflows import blp as workflows_bp
 
-# Import purchases and builder APIs
-from .purchases import blp as purchases_bp
-from .builder import blp as builder_bp
+# Import new CQRS service-based REST APIs (replaces legacy purchases, builder, ai)
+from .products_service.rest_api import blp as products_api_bp
+from .sales_service.rest_api import blp as sales_api_bp
+from .builder_service.api import blp as builder_bp
+from .ai_service.api import blp as ai_bp
 
 # Import Core API blueprints (additional)
 from .core.api.tenant import tenant_bp
@@ -77,14 +79,16 @@ from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_bl
 from .entities.indirizzo_geografico import geografico_blp
 from .entities.comuni_routes import comuni_blp
 
-# Import Builder Models (Archetype, Component, Block)
-from .builder.models import (
+# Import Builder Models (Archetype, Component, Block) from SQLAlchemy persistence layer
+from .builder_service.infrastructure.persistence.builder_models import (
     Archetype,
     Component,
     Block,
     BlockRelationship,
-    create_system_archetypes,
 )
+
+# Import create_system_archetypes from builder models
+from .builder_service.infrastructure.persistence.builder_models import create_system_archetypes
 
 # Import Marketplace Models
 from .marketplace.models import (
@@ -96,14 +100,14 @@ from .marketplace.models import (
     create_default_categories,
 )
 
-# Import Builder API
-from .builder.api import blp as builder_api_blp
+# Import Builder API from CQRS service
+from .builder_service.api import blp as builder_api_blp
 
 # Import Marketplace API
 from .marketplace.api import blp as marketplace_api_blp
 
 # Import AI Assistant API
-from .ai.api import blp as ai_bp
+from .ai_service.api import blp as ai_bp
 
 # Import Visual Builder API
 from .routes.visual_builder import blp as visual_builder_bp

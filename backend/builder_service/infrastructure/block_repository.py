@@ -12,7 +12,7 @@ class ArchetypeRepository:
         self.db = db
     
     def _get_class(self):
-        from backend.builder.models import Archetype
+        from backend.domain.builder.models import Archetype
         return Archetype
     
     def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -66,7 +66,7 @@ class ComponentRepository:
         self.db = db
     
     def _get_class(self):
-        from backend.builder.models import Component
+        from backend.domain.builder.models import Component
         return Component
     
     def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -122,7 +122,7 @@ class BlockRepository:
         self.db = db
     
     def _get_class(self):
-        from backend.builder.models import Block
+        from backend.domain.builder.models import Block
         return Block
     
     def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
