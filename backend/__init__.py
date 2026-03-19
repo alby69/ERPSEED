@@ -14,7 +14,7 @@ from .core.middleware.tenant_middleware import TenantMiddleware
 from .core.services.query_filter import TenantQueryFilter, SoftDeleteFilter
 
 # Import new architectural components
-from .container import ServiceContainer
+from .infrastructure.container import ServiceContainer
 from .shared.events.event_bus import EventBus
 from .plugins.registry import PluginRegistry, create_plugin_manager
 
@@ -46,21 +46,22 @@ from .models import (
 
 # Import Core API blueprints
 from .core.api.auth import auth_bp as core_auth_bp
-from .users import blp as users_bp
-from .routes.projects import blp as projects_bp
-from .routes.dashboard import blp as dashboard_bp
-from .routes.analytics import blp as analytics_bp
-from .routes.dynamic import blp as dynamic_api_bp
-from .routes.webhooks import blp as webhooks_bp
-from .routes.workflows import blp as workflows_bp
+from .endpoints.users import blp as users_bp
+from .endpoints.projects import blp as projects_bp
+from .endpoints.dashboard import blp as dashboard_bp
+from .endpoints.analytics import blp as analytics_bp
+from .endpoints.dynamic import blp as dynamic_api_bp
+from .endpoints.webhooks import blp as webhooks_bp
+from .endpoints.workflows import blp as workflows_bp
 
-# Import new CQRS service-based REST APIs (replaces legacy purchases, builder, ai)
-from .products_service.rest_api import blp as products_api_bp
-from .sales_service.rest_api import blp as sales_api_bp
-from .builder_service.api import blp as builder_bp
-from .ai_service.api import blp as ai_bp
+# Import REST APIs from new endpoints/ directory (CQRS)
+from .endpoints.builder import blp as builder_bp
+from .endpoints.ai import blp as ai_bp
+from .endpoints.products import blp as products_bp
+from .endpoints.sales import blp as sales_bp
+from .endpoints.purchases import blp as purchases_bp
 
-# Import Core API blueprints (additional)
+# Import Core API blueprints
 from .core.api.tenant import tenant_bp
 from .core.api.modules import blp as modules_bp
 from .core.api.system import blp as system_bp
@@ -70,17 +71,13 @@ from .core.api.custom_modules import blp as custom_modules_bp
 from .core.api.module_api import blp as module_api_bp
 from .core.api.import_export import blp as import_export_bp
 
-# Import new service-based REST APIs
-from .products_service.rest_api import blp as products_api_bp
-from .sales_service.rest_api import blp as sales_api_bp
-
 # Import Entities (Vision Archetypes)
 from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
 from .entities.indirizzo_geografico import geografico_blp
 from .entities.comuni_routes import comuni_blp
 
 # Import Builder Models (Archetype, Component, Block) from SQLAlchemy persistence layer
-from .builder_service.infrastructure.persistence.builder_models import (
+from .infrastructure.builder.models import (
     Archetype,
     Component,
     Block,
@@ -88,7 +85,7 @@ from .builder_service.infrastructure.persistence.builder_models import (
 )
 
 # Import create_system_archetypes from builder models
-from .builder_service.infrastructure.persistence.builder_models import create_system_archetypes
+from .infrastructure.builder.models import create_system_archetypes
 
 # Import Marketplace Models
 from .marketplace.models import (
@@ -100,21 +97,18 @@ from .marketplace.models import (
     create_default_categories,
 )
 
-# Import Builder API from CQRS service
-from .builder_service.api import blp as builder_api_blp
+# Import Marketplace API (CQRS)
+from .endpoints.marketplace import blp as marketplace_bp
 
-# Import Marketplace API
-from .marketplace.api import blp as marketplace_api_blp
-
-# Import AI Assistant API
-from .ai_service.api import blp as ai_bp
+# Import Entities API (CQRS)
+from .endpoints.entities import entities_bp
 
 # Import Visual Builder API
-from .routes.visual_builder import blp as visual_builder_bp
+from .endpoints.visual_builder import blp as visual_builder_bp
 
 # Import Template API
-from .routes.templates import blp as template_bp
-from .routes.gdo import blp as gdo_reconciliation_bp
+from .endpoints.templates import blp as template_bp
+from .endpoints.gdo import blp as gdo_reconciliation_bp
 
 
 class CustomJSONProvider(DefaultJSONProvider):
@@ -346,8 +340,7 @@ def create_app(db_url=None):
     api.register_blueprint(dynamic_api_bp)
     api.register_blueprint(webhooks_bp)
     api.register_blueprint(workflows_bp)
-    api.register_blueprint(builder_api_blp)
-    api.register_blueprint(marketplace_api_blp)
+    api.register_blueprint(marketplace_bp)
     api.register_blueprint(ai_bp)
     api.register_blueprint(visual_builder_bp)
     api.register_blueprint(template_bp)
@@ -358,9 +351,10 @@ def create_app(db_url=None):
     api.register_blueprint(module_api_bp)
     api.register_blueprint(import_export_bp)
     
-    # Register new service-based APIs
-    api.register_blueprint(products_api_bp)
-    api.register_blueprint(sales_api_bp)
+    # Register service-based APIs (CQRS)
+    api.register_blueprint(products_bp)
+    api.register_blueprint(sales_bp)
+    app.register_blueprint(entities_bp)
 
     # Vision Entities (Archetypes)
     api.register_blueprint(soggetto_blp, url_prefix="/api/v1")

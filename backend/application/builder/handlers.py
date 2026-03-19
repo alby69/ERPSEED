@@ -8,9 +8,9 @@ from backend.shared.commands import Command
 from backend.application.builder.commands import (
     CreateModelCommand, UpdateModelCommand, DeleteModelCommand, AddFieldCommand, DeleteFieldCommand,
     GetModelCommand, ListModelsCommand, GenerateCodeCommand,
-    CreateArchetypeCommand, GetArchetypeCommand, ListArchetypesCommand,
-    CreateComponentCommand, ListComponentsCommand,
-    CreateBlockCommand, GetBlockCommand, ListBlocksCommand, ConvertToTemplateCommand,
+    CreateArchetypeCommand, UpdateArchetypeCommand, DeleteArchetypeCommand, GetArchetypeCommand, ListArchetypesCommand,
+    CreateComponentCommand, UpdateComponentCommand, DeleteComponentCommand, GetComponentCommand, ListComponentsCommand,
+    CreateBlockCommand, UpdateBlockCommand, DeleteBlockCommand, GetBlockCommand, ListBlocksCommand, ConvertToTemplateCommand,
 )
 from backend.domain.builder import (
     generate_model, generate_api, generate_crud_service, generate_module,
@@ -95,6 +95,24 @@ class AddFieldHandler(CommandHandler):
         except Exception as e:
             logger.error(f"Error adding field: {e}")
             return CommandResult.error(f"Failed to add field: {str(e)}")
+
+
+class DeleteFieldHandler(CommandHandler):
+    def __init__(self, repository: ModelRepository, event_bus=None):
+        self.repository = repository; self.event_bus = event_bus
+    
+    @property
+    def command_type(self) -> str: return "DeleteField"
+    
+    def handle(self, command: Command) -> CommandResult:
+        if not isinstance(command, DeleteFieldCommand): return CommandResult.error(f"Invalid command type: {type(command)}")
+        if not command.field_id: return CommandResult.error("Field ID is required")
+        try:
+            result = self.repository.delete_field(command.field_id)
+            return CommandResult.ok(result)
+        except Exception as e:
+            logger.error(f"Error deleting field: {e}")
+            return CommandResult.error(f"Failed to delete field: {str(e)}")
 
 
 class GetModelHandler(QueryHandler):
@@ -187,6 +205,59 @@ class ListArchetypesHandler(QueryHandler):
             return CommandResult.error(f"Failed to list archetypes: {str(e)}")
 
 
+class GetArchetypeHandler(QueryHandler):
+    def __init__(self, repository: ArchetypeRepository, event_bus=None):
+        self.repository = repository; self.event_bus = event_bus
+    
+    @property
+    def command_type(self) -> str: return "GetArchetype"
+    
+    def handle(self, command: Command) -> CommandResult:
+        if not isinstance(command, GetArchetypeCommand): return CommandResult.error(f"Invalid command type: {type(command)}")
+        if not command.entity_id: return CommandResult.error("Archetype ID is required")
+        result = self.repository.find_by_id(command.entity_id)
+        if not result: return CommandResult.error(f"Archetype not found: {command.entity_id}")
+        return CommandResult.ok(result)
+
+
+class UpdateArchetypeHandler(UpdateHandler):
+    def __init__(self, repository: ArchetypeRepository, event_bus=None):
+        self.repository = repository; self.event_bus = event_bus
+    
+    @property
+    def command_type(self) -> str: return "UpdateArchetype"
+    
+    def handle(self, command: Command) -> CommandResult:
+        if not isinstance(command, UpdateArchetypeCommand): return CommandResult.error(f"Invalid command type: {type(command)}")
+        if not command.entity_id: return CommandResult.error("Archetype ID is required")
+        try:
+            result = self.repository.update(command.entity_id, command.to_payload())
+            if not result: return CommandResult.error(f"Archetype not found: {command.entity_id}")
+            return CommandResult.ok(result)
+        except Exception as e:
+            logger.error(f"Error updating archetype: {e}")
+            return CommandResult.error(f"Failed to update archetype: {str(e)}")
+
+
+class DeleteArchetypeHandler(CommandHandler):
+    def __init__(self, repository: ArchetypeRepository, event_bus=None):
+        self.repository = repository; self.event_bus = event_bus
+    
+    @property
+    def command_type(self) -> str: return "DeleteArchetype"
+    
+    def handle(self, command: Command) -> CommandResult:
+        if not isinstance(command, DeleteArchetypeCommand): return CommandResult.error(f"Invalid command type: {type(command)}")
+        if not command.entity_id: return CommandResult.error("Archetype ID is required")
+        try:
+            result = self.repository.delete(command.entity_id)
+            if not result: return CommandResult.error(f"Archetype not found: {command.entity_id}")
+            return CommandResult.ok(result)
+        except Exception as e:
+            logger.error(f"Error deleting archetype: {e}")
+            return CommandResult.error(f"Failed to delete archetype: {str(e)}")
+
+
 class CreateComponentHandler(CreateHandler):
     def __init__(self, repository: ComponentRepository, event_bus=None):
         self.repository = repository; self.event_bus = event_bus
@@ -219,6 +290,59 @@ class ListComponentsHandler(QueryHandler):
         except Exception as e:
             logger.error(f"Error listing components: {e}")
             return CommandResult.error(f"Failed to list components: {str(e)}")
+
+
+class GetComponentHandler(QueryHandler):
+    def __init__(self, repository: ComponentRepository, event_bus=None):
+        self.repository = repository; self.event_bus = event_bus
+    
+    @property
+    def command_type(self) -> str: return "GetComponent"
+    
+    def handle(self, command: Command) -> CommandResult:
+        if not isinstance(command, GetComponentCommand): return CommandResult.error(f"Invalid command type: {type(command)}")
+        if not command.entity_id: return CommandResult.error("Component ID is required")
+        result = self.repository.find_by_id(command.entity_id)
+        if not result: return CommandResult.error(f"Component not found: {command.entity_id}")
+        return CommandResult.ok(result)
+
+
+class UpdateComponentHandler(UpdateHandler):
+    def __init__(self, repository: ComponentRepository, event_bus=None):
+        self.repository = repository; self.event_bus = event_bus
+    
+    @property
+    def command_type(self) -> str: return "UpdateComponent"
+    
+    def handle(self, command: Command) -> CommandResult:
+        if not isinstance(command, UpdateComponentCommand): return CommandResult.error(f"Invalid command type: {type(command)}")
+        if not command.entity_id: return CommandResult.error("Component ID is required")
+        try:
+            result = self.repository.update(command.entity_id, command.to_payload())
+            if not result: return CommandResult.error(f"Component not found: {command.entity_id}")
+            return CommandResult.ok(result)
+        except Exception as e:
+            logger.error(f"Error updating component: {e}")
+            return CommandResult.error(f"Failed to update component: {str(e)}")
+
+
+class DeleteComponentHandler(CommandHandler):
+    def __init__(self, repository: ComponentRepository, event_bus=None):
+        self.repository = repository; self.event_bus = event_bus
+    
+    @property
+    def command_type(self) -> str: return "DeleteComponent"
+    
+    def handle(self, command: Command) -> CommandResult:
+        if not isinstance(command, DeleteComponentCommand): return CommandResult.error(f"Invalid command type: {type(command)}")
+        if not command.entity_id: return CommandResult.error("Component ID is required")
+        try:
+            result = self.repository.delete(command.entity_id)
+            if not result: return CommandResult.error(f"Component not found: {command.entity_id}")
+            return CommandResult.ok(result)
+        except Exception as e:
+            logger.error(f"Error deleting component: {e}")
+            return CommandResult.error(f"Failed to delete component: {str(e)}")
 
 
 class CreateBlockHandler(CreateHandler):
@@ -270,6 +394,44 @@ class ListBlocksHandler(QueryHandler):
         except Exception as e:
             logger.error(f"Error listing blocks: {e}")
             return CommandResult.error(f"Failed to list blocks: {str(e)}")
+
+
+class UpdateBlockHandler(UpdateHandler):
+    def __init__(self, repository: BlockRepository, event_bus=None):
+        self.repository = repository; self.event_bus = event_bus
+    
+    @property
+    def command_type(self) -> str: return "UpdateBlock"
+    
+    def handle(self, command: Command) -> CommandResult:
+        if not isinstance(command, UpdateBlockCommand): return CommandResult.error(f"Invalid command type: {type(command)}")
+        if not command.entity_id: return CommandResult.error("Block ID is required")
+        try:
+            result = self.repository.update(command.entity_id, command.to_payload())
+            if not result: return CommandResult.error(f"Block not found: {command.entity_id}")
+            return CommandResult.ok(result)
+        except Exception as e:
+            logger.error(f"Error updating block: {e}")
+            return CommandResult.error(f"Failed to update block: {str(e)}")
+
+
+class DeleteBlockHandler(CommandHandler):
+    def __init__(self, repository: BlockRepository, event_bus=None):
+        self.repository = repository; self.event_bus = event_bus
+    
+    @property
+    def command_type(self) -> str: return "DeleteBlock"
+    
+    def handle(self, command: Command) -> CommandResult:
+        if not isinstance(command, DeleteBlockCommand): return CommandResult.error(f"Invalid command type: {type(command)}")
+        if not command.entity_id: return CommandResult.error("Block ID is required")
+        try:
+            result = self.repository.delete(command.entity_id)
+            if not result: return CommandResult.error(f"Block not found: {command.entity_id}")
+            return CommandResult.ok(result)
+        except Exception as e:
+            logger.error(f"Error deleting block: {e}")
+            return CommandResult.error(f"Failed to delete block: {str(e)}")
 
 
 class ConvertToTemplateHandler(UpdateHandler):

@@ -8,7 +8,7 @@ from sqlalchemy import text
 try:
     # I modelli User e Project sono definiti nel file models.py principale.
     from backend.models import User, Project, SysModel, SysField
-    from backend.utils import generate_create_table_sql
+    from backend.shared.utils.utils import generate_create_table_sql
     # Le funzioni di seeding per altri moduli.
     # NOTA: L'associazione utente-progetto viene gestita tramite la relazione 'members' del modello Project.
     from backend.domain.builder.models import create_system_archetypes

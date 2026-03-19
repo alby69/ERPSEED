@@ -1,0 +1,43 @@
+from .commands import (
+    CreateSoggettoCommand,
+    UpdateSoggettoCommand,
+    DeleteSoggettoCommand,
+    AssegnaRuoloCommand,
+    RevocaRuoloCommand,
+    CreateRuoloCommand,
+    UpdateRuoloCommand,
+    DeleteRuoloCommand,
+    AggiungiIndirizzoCommand,
+    AggiungiContattoCommand,
+    IndirizzoData,
+    ContattoData,
+    RuoloAssegnatoData,
+)
+from .handlers import (
+    SoggettoCommandHandler,
+    SoggettoQueryHandler,
+    RuoloCommandHandler,
+    RuoloQueryHandler,
+    SoggettoRuoloCommandHandler,
+)
+
+__all__ = [
+    'CreateSoggettoCommand',
+    'UpdateSoggettoCommand',
+    'DeleteSoggettoCommand',
+    'AssegnaRuoloCommand',
+    'RevocaRuoloCommand',
+    'CreateRuoloCommand',
+    'UpdateRuoloCommand',
+    'DeleteRuoloCommand',
+    'AggiungiIndirizzoCommand',
+    'AggiungiContattoCommand',
+    'IndirizzoData',
+    'ContattoData',
+    'RuoloAssegnatoData',
+    'SoggettoCommandHandler',
+    'SoggettoQueryHandler',
+    'RuoloCommandHandler',
+    'RuoloQueryHandler',
+    'SoggettoRuoloCommandHandler',
+]

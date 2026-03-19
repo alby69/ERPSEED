@@ -14,7 +14,7 @@ from backend.domain.sales import (
     SalesOrderCancelledEvent, SalesOrderDeletedEvent,
 )
 from backend.infrastructure.sales.repository import SalesOrderRepository
-from backend.entities.soggetto import Soggetto
+from backend.infrastructure.entities.models import Soggetto
 
 logger = logging.getLogger(__name__)
 

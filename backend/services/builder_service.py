@@ -1,5 +1,8 @@
 """
 Builder Service - Handles No-Code Builder business logic.
+
+DEPRECATED: Use backend.endpoints.builder for REST API or migrate to CQRS pattern.
+This service is kept for backward compatibility with TemplateService.
 """
 import os
 import csv

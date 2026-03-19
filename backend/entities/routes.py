@@ -19,8 +19,8 @@ from backend.entities.schemas import (
     ContattoSchema,
 )
 from backend.extensions import db, ma
-from backend.utils import paginate, apply_filters, apply_sorting
-from backend.decorators import tenant_required
+from backend.shared.utils.utils import paginate, apply_filters, apply_sorting
+from backend.shared.decorators import tenant_required
 from backend.services.generic_service import generic_service
 
 

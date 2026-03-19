@@ -1,5 +1,5 @@
 import pytest
-from backend.container import ServiceContainer
+from backend.infrastructure.container import ServiceContainer
 
 # --- Fixtures e Classi di Supporto ---
 

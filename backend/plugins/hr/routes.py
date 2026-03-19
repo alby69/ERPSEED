@@ -137,7 +137,7 @@ class EmployeeList(MethodView):
         db.session.commit()
         
         try:
-            from backend.webhook_triggers import on_employee_created
+            from backend.shared.events.webhook_triggers import on_employee_created
             on_employee_created(employee)
         except Exception:
             pass
@@ -280,7 +280,7 @@ class LeaveRequestList(MethodView):
         db.session.commit()
         
         try:
-            from backend.webhook_triggers import on_leave_requested
+            from backend.shared.events.webhook_triggers import on_leave_requested
             on_leave_requested(leave)
         except Exception:
             pass
@@ -312,7 +312,7 @@ class LeaveApproval(MethodView):
         
         if leave.status == 'approved':
             try:
-                from backend.webhook_triggers import on_leave_approved
+                from backend.shared.events.webhook_triggers import on_leave_approved
                 on_leave_approved(leave)
             except Exception:
                 pass

@@ -1,7 +1,7 @@
 from backend import create_app
 from backend.extensions import db
 from backend.models import SysModel, SysField, Project, User
-from backend.utils import generate_create_table_sql
+from backend.shared.utils.utils import generate_create_table_sql
 from sqlalchemy import text
 
 def seed_kpi(app=None):

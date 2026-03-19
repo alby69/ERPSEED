@@ -15,7 +15,7 @@ from backend.domain.purchases import (
     PurchaseOrderReceivedEvent, PurchaseOrderCancelledEvent,
 )
 from backend.infrastructure.purchases.repository import PurchaseOrderRepository
-from backend.entities.soggetto import Soggetto
+from backend.infrastructure.entities.models import Soggetto
 
 logger = logging.getLogger(__name__)
 

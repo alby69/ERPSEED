@@ -4,7 +4,7 @@ Esegue: flask seed-comuni
 """
 from backend import create_app
 from backend.extensions import db
-from backend.entities.comune import Comune, Regione, Provincia
+from backend.infrastructure.entities.models import Comune, Regione, Provincia
 
 # Dati base - 20 regioni
 REGIONI = [

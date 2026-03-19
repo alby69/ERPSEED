@@ -123,6 +123,32 @@ class GetArchetypeCommand(QueryCommand):
 
 
 @dataclass
+class UpdateArchetypeCommand(UpdateCommand):
+    name: Optional[str] = None; description: Optional[str] = None; default_config: Optional[Dict] = None
+    
+    def to_payload(self) -> Dict[str, Any]:
+        payload = {}
+        for f in ["name", "description", "default_config"]:
+            v = getattr(self, f, None)
+            if v is not None: payload[f] = v
+        return payload
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "UpdateArchetypeCommand":
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
+            entity_id=data.get("entity_id", data.get("id", 0)), name=data.get("name"), description=data.get("description"),
+            default_config=data.get("default_config"))
+
+
+@dataclass
+class DeleteArchetypeCommand(DeleteCommand):
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DeleteArchetypeCommand":
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
+            entity_id=data.get("entity_id", data.get("id", 0)))
+
+
+@dataclass
 class ListArchetypesCommand(QueryCommand):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ListArchetypesCommand":
@@ -145,6 +171,41 @@ class CreateComponentCommand(CreateCommand):
         return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
             project_id=data.get("project_id", 0), archetype_id=data.get("archetype_id", 0), name=data.get("name", ""),
             description=data.get("description", ""), config=data.get("config", {}), block_id=data.get("block_id"))
+
+
+@dataclass
+class GetComponentCommand(QueryCommand):
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "GetComponentCommand":
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
+            entity_id=data.get("entity_id", data.get("id", 0)))
+
+
+@dataclass
+class UpdateComponentCommand(UpdateCommand):
+    name: Optional[str] = None; config: Optional[Dict] = None
+    position_x: Optional[int] = None; position_y: Optional[int] = None
+    
+    def to_payload(self) -> Dict[str, Any]:
+        payload = {}
+        for f in ["name", "config", "position_x", "position_y"]:
+            v = getattr(self, f, None)
+            if v is not None: payload[f] = v
+        return payload
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "UpdateComponentCommand":
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
+            entity_id=data.get("entity_id", data.get("id", 0)), name=data.get("name"), config=data.get("config"),
+            position_x=data.get("position_x"), position_y=data.get("position_y"))
+
+
+@dataclass
+class DeleteComponentCommand(DeleteCommand):
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DeleteComponentCommand":
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
+            entity_id=data.get("entity_id", data.get("id", 0)))
 
 
 @dataclass
@@ -178,6 +239,33 @@ class CreateBlockCommand(CreateCommand):
 class GetBlockCommand(QueryCommand):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GetBlockCommand":
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
+            entity_id=data.get("entity_id", data.get("id", 0)))
+
+
+@dataclass
+class UpdateBlockCommand(UpdateCommand):
+    name: Optional[str] = None; description: Optional[str] = None
+    component_ids: Optional[list] = None; status: Optional[str] = None
+    
+    def to_payload(self) -> Dict[str, Any]:
+        payload = {}
+        for f in ["name", "description", "component_ids", "status"]:
+            v = getattr(self, f, None)
+            if v is not None: payload[f] = v
+        return payload
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "UpdateBlockCommand":
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
+            entity_id=data.get("entity_id", data.get("id", 0)), name=data.get("name"), description=data.get("description"),
+            component_ids=data.get("component_ids"), status=data.get("status"))
+
+
+@dataclass
+class DeleteBlockCommand(DeleteCommand):
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DeleteBlockCommand":
         return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
             entity_id=data.get("entity_id", data.get("id", 0)))
 

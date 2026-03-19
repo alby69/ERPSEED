@@ -16,11 +16,11 @@ from marshmallow import fields
 
 from .models import ChartOfAccounts, Account, JournalEntry, JournalEntryLine, Invoice, InvoiceLine
 from backend.core.services.tenant_context import TenantContext
-from backend.decorators import tenant_required
+from backend.shared.decorators import tenant_required
 from backend.extensions import db, ma
 from backend.schemas import BaseSchema
 from backend.services.generic_service import generic_service
-from backend.utils import paginate, apply_filters, apply_sorting
+from backend.shared.utils.utils import paginate, apply_filters, apply_sorting
 
 blp = Blueprint("accounting", __name__, url_prefix="/accounting", description="Accounting Operations")
 
@@ -229,7 +229,7 @@ class JournalEntryList(MethodView):
         db.session.commit()
         
         try:
-            from backend.webhook_triggers import on_journal_entry_created
+            from backend.shared.events.webhook_triggers import on_journal_entry_created
             on_journal_entry_created(entry_instance)
         except Exception:
             pass
@@ -349,7 +349,7 @@ class InvoiceList(MethodView):
         db.session.commit()
         
         try:
-            from backend.webhook_triggers import on_invoice_created
+            from backend.shared.events.webhook_triggers import on_invoice_created
             on_invoice_created(invoice_instance)
         except Exception:
             pass

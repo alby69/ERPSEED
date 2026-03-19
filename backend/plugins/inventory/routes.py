@@ -19,8 +19,8 @@ from backend.core.services.tenant_context import TenantContext
 from backend.extensions import db, ma
 from backend.schemas import BaseSchema
 from backend.services.generic_service import generic_service
-from backend.utils import paginate, apply_filters, apply_sorting
-from backend.decorators import tenant_required
+from backend.shared.utils.utils import paginate, apply_filters, apply_sorting
+from backend.shared.decorators import tenant_required
 
 blp = Blueprint("inventory", __name__, url_prefix="/inventory", description="Inventory Operations")
 

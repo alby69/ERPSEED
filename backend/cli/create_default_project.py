@@ -4,8 +4,7 @@ from backend import create_app, db
 # NOTA: Le importazioni dei modelli sono dedotte dalla struttura del progetto.
 # I percorsi reali potrebbero variare leggermente (es. backend.auth.models).
 try:
-    from backend.users.models import User, UserProjectAssociation
-    from backend.projects.models import Project
+    from backend.models import User, Project
 except ImportError:
     print("ERRORE: Impossibile trovare i modelli User, Project o UserProjectAssociation.")
     print("Assicurati che i modelli esistano e che i percorsi di importazione siano corretti.")

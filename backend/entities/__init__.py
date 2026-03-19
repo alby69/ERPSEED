@@ -1,24 +1,25 @@
 """
-Modelli archetipici per ERPE.
+Entities module - DEPRECATED.
 
-Questi sono i mattoncini base del sistema:
-- Soggetto: entità anagrafica principale
-- Ruolo: ruoli che un soggetto può avere (cliente, fornitore, etc.)
-- Indirizzo: informazioni geografiche
-- Contatto: canali di contatto
+Redirects all imports to the new infrastructure location.
 """
-
-from .soggetto import Soggetto
-from .ruolo import Ruolo, SoggettoRuolo
-from .indirizzo import Indirizzo, SoggettoIndirizzo
-from .contatto import Contatto, SoggettoContatto
+from backend.infrastructure.entities.models import (
+    Soggetto, Ruolo, SoggettoRuolo,
+    Indirizzo, SoggettoIndirizzo,
+    Contatto, SoggettoContatto,
+)
+from backend.infrastructure.entities.models import Soggetto as SoggettoModel
+from backend.infrastructure.entities.models import Ruolo as RuoloModel
+from backend.infrastructure.entities.models import Indirizzo as IndirizzoModel
+from backend.infrastructure.entities.models import Contatto as ContattoModel
+from backend.infrastructure.entities.models import SoggettoRuolo as SoggettoRuoloModel
+from backend.infrastructure.entities.models import SoggettoIndirizzo as SoggettoIndirizzoModel
+from backend.infrastructure.entities.models import SoggettoContatto as SoggettoContattoModel
 
 __all__ = [
-    'Soggetto',
-    'Ruolo',
-    'SoggettoRuolo',
-    'Indirizzo',
-    'SoggettoIndirizzo',
-    'Contatto',
-    'SoggettoContatto',
+    'Soggetto', 'Ruolo', 'SoggettoRuolo',
+    'Indirizzo', 'SoggettoIndirizzo',
+    'Contatto', 'SoggettoContatto',
+    'SoggettoModel', 'RuoloModel', 'IndirizzoModel', 'ContattoModel',
+    'SoggettoRuoloModel', 'SoggettoIndirizzoModel', 'SoggettoContattoModel',
 ]

@@ -1,7 +1,16 @@
 """
 Marketplace API
 REST API for browsing and managing marketplace blocks
+
+DEPRECATED: Use backend.endpoints.marketplace for the new CQRS REST API.
+This module is kept for reference only and is not registered.
 """
+import warnings
+warnings.warn(
+    "backend.marketplace.api is deprecated. Use backend.endpoints.marketplace instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 from flask.views import MethodView
 from flask import request
