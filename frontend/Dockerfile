@@ -1,15 +1,13 @@
 FROM node:20-alpine
 
-RUN apk add --no-cache git curl
-
 WORKDIR /app
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY package*.json ./
 
-ENV PROJECT_TYPE=frontend
-ENV GIT_REPO_URL=https://github.com/alby69/ERPSEED.git
-ENV GIT_BRANCH=erpseed/frontend
+RUN npm install
 
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["sh", "-c", "npm install && npm run dev -- --host"]
+COPY . .
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--host"]
