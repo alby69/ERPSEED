@@ -1,0 +1,60 @@
+# Translations template for FlaskERP.
+# Copyright (C) 2024 FlaskERP
+# This file is distributed under the same license as the FlaskERP package.
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: FlaskERP 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-01 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: backend/sales.py
+msgid "List sales orders"
+msgstr ""
+
+#: backend/sales.py
+msgid "Create a new order"
+msgstr ""
+
+#: backend/products.py
+msgid "List all products"
+msgstr ""
+
+#: backend/products.py
+msgid "Create a new product"
+msgstr ""
+
+#: backend/parties.py
+msgid "List all customers/suppliers"
+msgstr ""
+
+#: backend/parties.py
+msgid "Create a new customer/supplier"
+msgstr ""
+
+#: backend/parties.py
+msgid "Customer/supplier detail"
+msgstr ""
+
+#: backend/__init__.py
+msgid "The token has expired."
+msgstr ""
+
+#: backend/__init__.py
+msgid "Signature verification failed."
+msgstr ""
+
+#: backend/__init__.py
+msgid "Request does not contain an access token."
+msgstr ""
+
+#: backend/__init__.py
+msgid "Internal Server Error"
+msgstr ""

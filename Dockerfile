@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --upgrade pip
 
 # Copia il file delle dipendenze e crea i "wheels" (pacchetti pre-compilati)
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
 
 # Fase 2: Immagine finale - Leggera e pronta per l'esecuzione
@@ -34,12 +34,19 @@ COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 RUN pip install --no-cache /wheels/*
 
-# Copia il codice dell'applicazione (verrà sovrascritto dal volume in dev)
+# Copia il codice dell'applicazione
 COPY ./backend ./backend
+
+# Crea cartelle necessarie
+RUN mkdir -p /app/projects /app/data /app/logs
 
 # Imposta la variabile d'ambiente per Flask e per i log
 ENV FLASK_APP=backend
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
+# Espone porta
 EXPOSE 5000
+
+# Entry point per Gunicorn in produzione
+CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "--bind", "0.0.0.0:5000", "backend.wsgi:app"]
