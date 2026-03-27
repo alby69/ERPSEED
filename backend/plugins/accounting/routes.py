@@ -16,11 +16,11 @@ from marshmallow import fields
 
 from .models import ChartOfAccounts, Account, JournalEntry, JournalEntryLine, Invoice, InvoiceLine
 from backend.core.services.tenant_context import TenantContext
-from backend.decorators import tenant_required
+from backend.core.decorators.decorators import tenant_required
 from backend.extensions import db, ma
-from backend.schemas import BaseSchema
+from backend.core.schemas.schemas import BaseSchema
 from backend.services.generic_service import generic_service
-from backend.utils import paginate, apply_filters, apply_sorting
+from backend.core.utils.utils import paginate, apply_filters, apply_sorting
 
 blp = Blueprint("accounting", __name__, url_prefix="/accounting", description="Accounting Operations")
 

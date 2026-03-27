@@ -214,7 +214,7 @@ class ImportExportService:
         self, config: Dict[str, Any], project_id: int
     ) -> Dict[str, Any]:
         """Importa la configurazione di un Block."""
-        from backend.builder.models import Block, Component
+        from backend.modules.builder.models import Block, Component
         from backend.extensions import db
 
         data = config.get("config", config)
@@ -319,7 +319,7 @@ class ImportExportService:
 
     def export_module_config(self, module) -> Dict[str, Any]:
         """Esporta la configurazione completa di un Module."""
-        from backend.builder.models import Block
+        from backend.modules.builder.models import Block
 
         models = list(module.models) if hasattr(module, "models") else []
         blocks = list(module.blocks) if hasattr(module, "blocks") else []
@@ -430,7 +430,7 @@ class ImportExportService:
     def export_project_full(self, project_id: int) -> Dict[str, Any]:
         """Esporta l'intero progetto."""
         from backend.models import Project, SysModel, Workflow
-        from backend.builder.models import Block
+        from backend.modules.builder.models import Block
 
         project = Project.query.get(project_id)
         if not project:

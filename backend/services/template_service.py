@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 from backend.extensions import db
-from backend.services.builder_service import BuilderService
+from backend.modules.builder.service import get_builder_service as BuilderService
 from backend.models import SysView, SysModel, SysField
 
 class TemplateService:

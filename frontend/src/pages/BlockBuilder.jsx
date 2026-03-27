@@ -62,12 +62,12 @@ function BlockBuilder() {
     setLoading(true);
     try {
       // Load regular blocks
-      const res = await apiFetch(`/api/projects/${projectId}/blocks`);
+      const res = await apiFetch(`/api/v1/projects/${projectId}/blocks`);
       if (res.ok) {
         setBlocks(await res.json());
       }
       // Load templates (blocks with is_template=true)
-      const templateRes = await apiFetch(`/api/projects/${projectId}/blocks?is_template=true`);
+      const templateRes = await apiFetch(`/api/v1/projects/${projectId}/blocks?is_template=true`);
       if (templateRes.ok) {
         setTemplates(await templateRes.json());
       }
@@ -81,7 +81,7 @@ function BlockBuilder() {
   const loadBlockForEdit = async (blockId) => {
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/blocks/${blockId}`);
+      const res = await apiFetch(`/api/v1/builder/blocks/${blockId}`);
       if (res.ok) {
         const data = await res.json();
         // Convert components from backend format to VisualBuilder format if needed
@@ -103,7 +103,7 @@ function BlockBuilder() {
 
   const handleCreateBlock = async (values) => {
     try {
-      const res = await apiFetch(`/api/projects/${projectId}/blocks`, {
+      const res = await apiFetch(`/api/v1/projects/${projectId}/blocks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
@@ -123,7 +123,7 @@ function BlockBuilder() {
 
   const handleCreateFromTemplate = async (values) => {
     try {
-      const res = await apiFetch(`/api/projects/${projectId}/blocks`, {
+      const res = await apiFetch(`/api/v1/projects/${projectId}/blocks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -148,7 +148,7 @@ function BlockBuilder() {
 
   const handleConvertToTemplate = async (blockId) => {
     try {
-      const res = await apiFetch(`/api/blocks/${blockId}/convert-to-template`, {
+      const res = await apiFetch(`/api/v1/builder/blocks/${blockId}/convert-to-template`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -170,13 +170,13 @@ function BlockBuilder() {
         const isNew = typeof comp.id === 'string' && comp.id.startsWith('comp_');
         const method = isNew ? 'POST' : 'PUT';
         const url = isNew
-          ? `/api/projects/${projectId}/components`
-          : `/api/components/${comp.id}`;
+          ? `/api/v1/projects/${projectId}/components`
+          : `/api/v1/builder/components/${comp.id}`;
 
         // Find archetype ID for new components
         let archetype_id = comp.archetype_id;
         if (isNew) {
-           const archRes = await apiFetch('/api/archetypes');
+           const archRes = await apiFetch('/api/v1/builder/archetypes');
            const archetypes = await archRes.json();
            const arch = archetypes.find(a => a.component_type === comp.type);
            archetype_id = arch?.id;
@@ -201,7 +201,7 @@ function BlockBuilder() {
       const componentIds = await Promise.all(componentPromises);
 
       // 2. Update block with the list of component IDs
-      const res = await apiFetch(`/api/blocks/${editingBlockId}`, {
+      const res = await apiFetch(`/api/v1/builder/blocks/${editingBlockId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -225,7 +225,7 @@ function BlockBuilder() {
     if (!window.confirm('Delete this block?')) return;
     
     try {
-      const res = await apiFetch(`/api/blocks/${blockId}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/v1/builder/blocks/${blockId}`, { method: 'DELETE' });
       if (res.ok) {
         message.success('Block deleted');
         loadData();
@@ -250,7 +250,7 @@ function BlockBuilder() {
 
   const loadTestSuite = async (blockId) => {
     try {
-      const res = await apiFetch(`/api/blocks/${blockId}/test-suite`);
+      const res = await apiFetch(`/api/v1/builder/blocks/${blockId}/test-suite`);
       if (res.ok) {
         setTestSuite(await res.json());
       }
@@ -264,7 +264,7 @@ function BlockBuilder() {
     setRunningTests(true);
     setTestResults(null);
     try {
-      const res = await apiFetch(`/api/blocks/${editingBlockId}/run-tests`, { method: 'POST' });
+      const res = await apiFetch(`/api/v1/builder/blocks/${editingBlockId}/run-tests`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setTestResults(data);
@@ -281,7 +281,7 @@ function BlockBuilder() {
   const certifyBlock = async () => {
     if (!editingBlockId) return;
     try {
-      const res = await apiFetch(`/api/blocks/${editingBlockId}/certify`, { method: 'POST' });
+      const res = await apiFetch(`/api/v1/builder/blocks/${editingBlockId}/certify`, { method: 'POST' });
       if (res.ok) {
         setEditingBlockData(prev => ({ ...prev, is_certified: true, status: 'published' }));
         message.success('Block certified!');

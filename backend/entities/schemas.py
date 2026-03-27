@@ -1,6 +1,6 @@
 from marshmallow import fields as mm_fields
 from backend.extensions import ma
-from backend.schemas import BaseSchema
+from backend.core.schemas.schemas import BaseSchema
 from backend.entities import (
     Soggetto, Ruolo, SoggettoRuolo,
     Indirizzo, SoggettoIndirizzo,

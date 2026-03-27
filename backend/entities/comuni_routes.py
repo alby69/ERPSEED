@@ -9,7 +9,7 @@ from flask import request
 from datetime import datetime
 from backend.entities.comune import Comune, Regione, Provincia
 from backend.extensions import db, ma
-from backend.schemas import BaseSchema
+from backend.core.schemas.schemas import BaseSchema
 from backend.services.generic_service import generic_service
 from marshmallow import Schema, fields
 
@@ -55,7 +55,7 @@ class ComuniAPI(MethodView):
     @comuni_blp.response(200, ComuneSchema(many=True))
     def get(self):
         """Lista comuni con filtri, paginazione e ordinamento"""
-        from backend.utils import apply_filters, apply_sorting, paginate
+        from backend.core.utils.utils import apply_filters, apply_sorting, paginate
 
         query = Comune.query
 

@@ -19,7 +19,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from services.base import BaseService
+from .base import BaseService
 from backend.extensions import db
 from backend.models.webhook import WebhookEvent
 from backend.models.workflow import Workflow, WorkflowStep

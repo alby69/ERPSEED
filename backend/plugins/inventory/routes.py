@@ -17,10 +17,10 @@ from marshmallow import fields
 from .models import InventoryLocation, ProductStock, StockMovement, InventoryCount, InventoryCountLine
 from backend.core.services.tenant_context import TenantContext
 from backend.extensions import db, ma
-from backend.schemas import BaseSchema
+from backend.core.schemas.schemas import BaseSchema
 from backend.services.generic_service import generic_service
-from backend.utils import paginate, apply_filters, apply_sorting
-from backend.decorators import tenant_required
+from backend.core.utils.utils import paginate, apply_filters, apply_sorting
+from backend.core.decorators.decorators import tenant_required
 
 blp = Blueprint("inventory", __name__, url_prefix="/inventory", description="Inventory Operations")
 

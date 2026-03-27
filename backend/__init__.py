@@ -46,17 +46,17 @@ from .models import (
 
 # Import Core API blueprints
 from .core.api.auth import auth_bp as core_auth_bp
-from .users import blp as users_bp
-from .routes.projects import blp as projects_bp
-from .routes.dashboard import blp as dashboard_bp
-from .routes.analytics import blp as analytics_bp
-from .routes.dynamic import blp as dynamic_api_bp
-from .routes.webhooks import blp as webhooks_bp
-from .routes.workflows import blp as workflows_bp
+from .modules.users.api.rest_api import blp as users_bp
+from .modules.projects.api.rest_api import blp as projects_bp
+from .modules.analytics.api.dashboard_api import blp as dashboard_bp
+from .modules.analytics.api.rest_api import blp as analytics_bp
+from .modules.dynamic_api.api.rest_api import blp as dynamic_api_bp
+from .modules.automation.api.webhooks_api import blp as webhooks_bp
+from .modules.automation.api.workflows_api import blp as workflows_bp
 
 # Import purchases and builder APIs
-from .purchases import blp as purchases_bp
-from .builder import blp as builder_bp
+from .modules.purchases.api.rest_api import blp as purchases_bp
+from .modules.builder.api import blp as builder_bp
 
 # Import Core API blueprints (additional)
 from .core.api.tenant import tenant_bp
@@ -69,8 +69,8 @@ from .core.api.module_api import blp as module_api_bp
 from .core.api.import_export import blp as import_export_bp
 
 # Import new service-based REST APIs
-from .products_service.rest_api import blp as products_api_bp
-from .sales_service.rest_api import blp as sales_api_bp
+from .modules.products.api.rest_api import blp as products_api_bp
+from .modules.sales.api.rest_api import blp as sales_api_bp
 
 # Import Entities (Vision Archetypes)
 from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
@@ -78,7 +78,7 @@ from .entities.indirizzo_geografico import geografico_blp
 from .entities.comuni_routes import comuni_blp
 
 # Import Builder Models (Archetype, Component, Block)
-from .builder.models import (
+from .modules.builder.models import (
     Archetype,
     Component,
     Block,
@@ -97,20 +97,20 @@ from .marketplace.models import (
 )
 
 # Import Builder API
-from .builder.api import blp as builder_api_blp
+from .modules.builder.api import blp as builder_api_blp
 
 # Import Marketplace API
 from .marketplace.api import blp as marketplace_api_blp
 
 # Import AI Assistant API
-from .ai.api import blp as ai_bp
+from .modules.ai.api import blp as ai_bp
 
 # Import Visual Builder API
-from .routes.visual_builder import blp as visual_builder_bp
+from .modules.system_tools.api.visual_builder_api import blp as visual_builder_bp
 
 # Import Template API
-from .routes.templates import blp as template_bp
-from .routes.gdo import blp as gdo_reconciliation_bp
+from .modules.system_tools.api.templates_api import blp as template_bp
+from .modules.system_tools.api.gdo_api import blp as gdo_reconciliation_bp
 
 
 class CustomJSONProvider(DefaultJSONProvider):
@@ -201,6 +201,9 @@ def create_app(db_url=None):
     app.container = container  # Attach to app for global access
 
     event_bus = EventBus()
+    from .shared.events.handlers.read_model_handler import register_read_model_handlers
+    register_read_model_handlers(event_bus)
+
     container.register('event_bus', lambda: event_bus, singleton=True)
     container.register('db', lambda: db, singleton=True)
 
@@ -321,50 +324,50 @@ def create_app(db_url=None):
         return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
 
     # --- Register Blueprints ---
-    # Core API con Marshmallow (nuovo)
-    api.register_blueprint(core_auth_bp, url_prefix="/api/v1/auth")
-    api.register_blueprint(tenant_bp, url_prefix="/api/v1/tenant")
-    api.register_blueprint(modules_bp)
-    api.register_blueprint(system_bp)
-    api.register_blueprint(pdf_bp)
-    api.register_blueprint(test_runner_bp)
+    # Centralized API v1 prefix
+    API_V1_PREFIX = "/api/v1"
 
-    # Vecchi blueprint per retrocompatibilità frontend - rinominati per evitare conflitti
-    # api.register_blueprint(auth_bp)  # /login, /me, etc.
-    api.register_blueprint(users_bp)
-    # api.register_blueprint(products_bp) # Replaced
-    api.register_blueprint(projects_bp)
-    # api.register_blueprint(sales_bp) # Replaced
-    api.register_blueprint(purchases_bp) 
-    api.register_blueprint(dashboard_bp)
-    api.register_blueprint(builder_bp)
-    api.register_blueprint(analytics_bp)
-    api.register_blueprint(dynamic_api_bp)
-    api.register_blueprint(webhooks_bp)
-    api.register_blueprint(workflows_bp)
-    api.register_blueprint(builder_api_blp)
-    api.register_blueprint(marketplace_api_blp)
-    api.register_blueprint(ai_bp)
-    api.register_blueprint(visual_builder_bp)
-    api.register_blueprint(template_bp)
-    api.register_blueprint(gdo_reconciliation_bp)
-    # api.register_blueprint(versioning_bp) # Assuming these are not ready yet
-    # api.register_blueprint(debugging_bp)
-    api.register_blueprint(custom_modules_bp)
-    api.register_blueprint(module_api_bp)
-    api.register_blueprint(import_export_bp)
+    # Core API
+    api.register_blueprint(core_auth_bp, url_prefix=f"{API_V1_PREFIX}/auth")
+    api.register_blueprint(tenant_bp, url_prefix=f"{API_V1_PREFIX}/tenant")
+    api.register_blueprint(modules_bp, url_prefix=f"{API_V1_PREFIX}/modules")
+    api.register_blueprint(system_bp, url_prefix=f"{API_V1_PREFIX}/system")
+    api.register_blueprint(pdf_bp, url_prefix=f"{API_V1_PREFIX}/pdf")
+    api.register_blueprint(test_runner_bp, url_prefix=f"{API_V1_PREFIX}/tests")
+    api.register_blueprint(custom_modules_bp, url_prefix=f"{API_V1_PREFIX}/custom-modules")
+    api.register_blueprint(module_api_bp, url_prefix=f"{API_V1_PREFIX}/module-api")
+    api.register_blueprint(import_export_bp, url_prefix=f"{API_V1_PREFIX}/import-export")
+
+    # Module APIs
+    api.register_blueprint(users_bp, url_prefix=f"{API_V1_PREFIX}/users", name="api_users")
+    api.register_blueprint(projects_bp, url_prefix=f"{API_V1_PREFIX}/projects", name="api_projects")
+    api.register_blueprint(builder_bp, url_prefix=f"{API_V1_PREFIX}/builder", name="api_builder")
+    api.register_blueprint(ai_bp, url_prefix=f"{API_V1_PREFIX}/ai", name="api_ai")
+    api.register_blueprint(products_api_bp, url_prefix=f"{API_V1_PREFIX}/products", name="api_products")
+    api.register_blueprint(sales_api_bp, url_prefix=f"{API_V1_PREFIX}/sales", name="api_sales")
+    api.register_blueprint(purchases_bp, url_prefix=f"{API_V1_PREFIX}/purchases", name="api_purchases")
     
-    # Register new service-based APIs
-    api.register_blueprint(products_api_bp)
-    api.register_blueprint(sales_api_bp)
+    # Feature APIs
+    api.register_blueprint(dashboard_bp, url_prefix=f"{API_V1_PREFIX}/dashboards")
+    api.register_blueprint(analytics_bp, url_prefix=f"{API_V1_PREFIX}/analytics")
+    api.register_blueprint(dynamic_api_bp, url_prefix=f"{API_V1_PREFIX}/dynamic")
+    api.register_blueprint(webhooks_bp, url_prefix=f"{API_V1_PREFIX}/webhooks")
+    api.register_blueprint(workflows_bp, url_prefix=f"{API_V1_PREFIX}/workflows")
+    api.register_blueprint(visual_builder_bp, url_prefix=f"{API_V1_PREFIX}/visual-builder")
+    api.register_blueprint(template_bp, url_prefix=f"{API_V1_PREFIX}/templates")
+    api.register_blueprint(gdo_reconciliation_bp, url_prefix=f"{API_V1_PREFIX}/gdo")
+
+    # Marketplace
+    api.register_blueprint(builder_api_blp, url_prefix=f"{API_V1_PREFIX}/marketplace/builder", name="api_marketplace_builder")
+    api.register_blueprint(marketplace_api_blp, url_prefix=f"{API_V1_PREFIX}/marketplace", name="api_marketplace")
 
     # Vision Entities (Archetypes)
-    api.register_blueprint(soggetto_blp, url_prefix="/api/v1")
-    api.register_blueprint(ruolo_blp, url_prefix="/api/v1")
-    api.register_blueprint(indirizzo_blp, url_prefix="/api/v1")
-    api.register_blueprint(contatto_blp, url_prefix="/api/v1")
-    api.register_blueprint(geografico_blp)
-    api.register_blueprint(comuni_blp)
+    api.register_blueprint(soggetto_blp, url_prefix=f"{API_V1_PREFIX}/entities/soggetti")
+    api.register_blueprint(ruolo_blp, url_prefix=f"{API_V1_PREFIX}/entities/ruoli")
+    api.register_blueprint(indirizzo_blp, url_prefix=f"{API_V1_PREFIX}/entities/indirizzi")
+    api.register_blueprint(contatto_blp, url_prefix=f"{API_V1_PREFIX}/entities/contatti")
+    api.register_blueprint(geografico_blp, url_prefix=f"{API_V1_PREFIX}/entities/geografico")
+    api.register_blueprint(comuni_blp, url_prefix=f"{API_V1_PREFIX}/entities/comuni")
 
     # --- Plugins loaded via create_plugin_manager in app initialization ---
     return app
