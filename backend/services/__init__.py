@@ -5,17 +5,30 @@ This package contains service classes that encapsulate business logic,
 separating it from route handlers (controllers).
 
 Services:
-    - ProjectService: Project and multi-tenancy management
-    - BuilderService: No-Code Builder operations
     - DynamicApiService: Dynamic CRUD API operations
-    - UserService: User management
 """
 
-from .base import BaseService
-from .project_service import ProjectService
-from .builder_service import BuilderService
-from .dynamic_api_service import DynamicApiService
-from .user_service import UserService
+from backend.core.services.base import BaseService
+
+class DynamicApiService:
+    def __new__(cls, *args, **kwargs):
+        from backend.modules.dynamic_api.service import get_dynamic_api_service
+        return get_dynamic_api_service()
+
+class BuilderService:
+    def __new__(cls, *args, **kwargs):
+        from backend.modules.builder.service import get_builder_service
+        return get_builder_service()
+
+class ProjectService:
+    def __new__(cls, *args, **kwargs):
+        from backend.modules.projects.service import get_project_service
+        return get_project_service()
+
+class UserService:
+    def __new__(cls, *args, **kwargs):
+        from backend.modules.users.service import get_user_service
+        return get_user_service()
 
 __all__ = [
     'BaseService',

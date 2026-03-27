@@ -2,8 +2,8 @@ import unittest
 import json
 from backend import create_app
 from backend.extensions import db
-from backend.workflows import Workflow, WorkflowStep
-from backend.workflow_executor import WorkflowEngine
+from backend.models.workflow import Workflow, WorkflowStep
+from backend.modules.automation.services.workflow_executor import WorkflowEngine
 
 class WorkflowTestCase(unittest.TestCase):
     def setUp(self):
@@ -45,7 +45,7 @@ class WorkflowTestCase(unittest.TestCase):
         self.assertEqual(execution.status, "completed")
 
         # Check logs
-        from backend.workflows import WorkflowLog
+        from backend.models.workflow import WorkflowLog
         logs = WorkflowLog.query.filter_by(execution_id=execution.id).all()
         self.assertEqual(len(logs), 1)
         self.assertEqual(logs[0].status, "success")

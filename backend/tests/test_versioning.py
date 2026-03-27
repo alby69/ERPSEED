@@ -6,7 +6,7 @@ import json
 from backend import create_app
 from backend.extensions import db
 from backend.models import SysModel, SysField, User, Project, SysModelVersion
-from backend.services.versioning_service import ModelVersioningService
+from backend.modules.system_tools.services.versioning_service import ModelVersioningService
 
 @pytest.fixture
 def app():

@@ -3,7 +3,7 @@ import json
 from backend import create_app
 from backend.extensions import db
 from backend.models import Project, SysModel, SysField
-from backend.services.template_service import TemplateService
+from backend.modules.system_tools.services.template_service import TemplateService
 
 class TemplateTestCase(unittest.TestCase):
     def setUp(self):

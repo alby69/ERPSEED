@@ -7,7 +7,7 @@ from backend.extensions import db
 from .base import BaseModel
 from .user import User
 from .project import Project, project_members
-from .product import Product, ProductStock
+from .product import Product, ProductStockModel as ProductStock
 from .sales import SalesOrder, SalesOrderLine
 from .purchase import PurchaseOrder, PurchaseOrderLine
 from .ai import AIConversation
@@ -23,10 +23,11 @@ from .system import (
     SysChart,
     SysDashboard,
     SysModelVersion,
+    SysReadModel,
 )
 
-from backend.core.models import Tenant, TenantMember
-from backend.entities.soggetto import Soggetto
+from backend.core.models import Tenant, TenantMember, AuditLog
+from backend.modules.entities.soggetto import Soggetto
 
 __all__ = [
     "db",
@@ -51,6 +52,8 @@ __all__ = [
     "SysChart",
     "SysDashboard",
     "SysModelVersion",
+    "SysReadModel",
+    "AuditLog",
     "Tenant",
     "TenantMember",
     "Soggetto",

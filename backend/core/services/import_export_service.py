@@ -61,7 +61,7 @@ class ImportExportService:
 
     def export_sysmodel_data(self, sys_model, project_id: int) -> Dict[str, Any]:
         """Esporta i dati di un SysModel."""
-        from backend.services.dynamic_api_service import DynamicApiService
+        from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
         dynamic_api = DynamicApiService()
 
@@ -146,7 +146,7 @@ class ImportExportService:
         self, data_json: Dict[str, Any], project_id: int
     ) -> Dict[str, Any]:
         """Importa i dati in un SysModel."""
-        from backend.services.dynamic_api_service import DynamicApiService
+        from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
         model_name = data_json.get("model_name")
         records = data_json.get("data", [])
@@ -214,7 +214,7 @@ class ImportExportService:
         self, config: Dict[str, Any], project_id: int
     ) -> Dict[str, Any]:
         """Importa la configurazione di un Block."""
-        from backend.builder.models import Block, Component
+        from backend.modules.builder.models import Block, Component
         from backend.extensions import db
 
         data = config.get("config", config)
@@ -319,7 +319,7 @@ class ImportExportService:
 
     def export_module_config(self, module) -> Dict[str, Any]:
         """Esporta la configurazione completa di un Module."""
-        from backend.builder.models import Block
+        from backend.modules.builder.models import Block
 
         models = list(module.models) if hasattr(module, "models") else []
         blocks = list(module.blocks) if hasattr(module, "blocks") else []
@@ -344,7 +344,7 @@ class ImportExportService:
 
     def export_module_data(self, module, project_id: int) -> Dict[str, Any]:
         """Esporta tutti i dati del modulo."""
-        from backend.services.dynamic_api_service import DynamicApiService
+        from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
         dynamic_api = DynamicApiService()
         models = list(module.models) if hasattr(module, "models") else []
@@ -430,7 +430,7 @@ class ImportExportService:
     def export_project_full(self, project_id: int) -> Dict[str, Any]:
         """Esporta l'intero progetto."""
         from backend.models import Project, SysModel, Workflow
-        from backend.builder.models import Block
+        from backend.modules.builder.models import Block
 
         project = Project.query.get(project_id)
         if not project:
