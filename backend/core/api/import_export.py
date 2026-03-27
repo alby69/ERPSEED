@@ -107,7 +107,7 @@ class BlockExportConfig(MethodView):
     @blp.response(200)
     def get(self, block_id):
         """Esporta configurazione Block."""
-        from backend.builder.models import Block
+        from backend.modules.builder.models import Block
 
         block = db.session.get(Block, block_id)
         if not block:

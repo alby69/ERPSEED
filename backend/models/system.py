@@ -336,3 +336,33 @@ class SysModelVersion(BaseModel):
 
     def __repr__(self):
         return f"<SysModelVersion {self.model_id} v{self.version_number}>"
+
+
+from sqlalchemy.dialects.postgresql import JSONB
+
+class SysReadModel(BaseModel):
+    """Denormalized read model for high-performance queries."""
+
+    __tablename__ = "sys_read_models"
+
+    model_name = db.Column(db.String(80), nullable=False, index=True)
+    record_id = db.Column(db.Integer, nullable=False, index=True)
+    project_id = db.Column(db.Integer, nullable=False, index=True)
+
+    # The actual data in JSONB format for PostgreSQL performance
+    data = db.Column(db.JSON().with_variant(JSONB, "postgresql"), nullable=False)
+
+    @property
+    def json_data(self):
+        return self.data
+
+    # Metadata for filtering/versioning
+    version = db.Column(db.Integer, default=1)
+    last_sync = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
+
+    __table_args__ = (
+        db.UniqueConstraint("project_id", "model_name", "record_id", name="_project_record_uc"),
+    )
+
+    def __repr__(self):
+        return f"<SysReadModel {self.model_name}:{self.record_id} (Project {self.project_id})>"

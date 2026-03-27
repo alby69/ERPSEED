@@ -13,7 +13,7 @@ from flask_smorest import Blueprint, abort
 from marshmallow import fields
 
 from backend.extensions import db
-from backend.services.dynamic_api_service import DynamicApiService
+from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
 blp = Blueprint("module_api", __name__, url_prefix="/api/modules")
 

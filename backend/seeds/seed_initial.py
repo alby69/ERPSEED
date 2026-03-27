@@ -7,7 +7,7 @@ from backend.extensions import db
 from backend.models import User
 from backend.core.models import Tenant, TenantMember
 from backend.core.models.modulo import Modulo, ModuloAttivato
-from backend.entities import Soggetto, Ruolo, Indirizzo, Contatto
+from backend.modules.entities import Soggetto, Ruolo, Indirizzo, Contatto
 
 
 def init_db():

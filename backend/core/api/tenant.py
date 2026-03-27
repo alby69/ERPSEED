@@ -13,7 +13,7 @@ from backend.core.api.tenant_schemas import (
     UserCreateSchema,
     UserUpdateSchema,
 )
-from backend.schemas import UserDisplaySchema
+from backend.core.schemas.schemas import UserDisplaySchema
 from backend.extensions import db
 
 tenant_bp = Blueprint('tenant', __name__, description='Tenant Management')

@@ -1,0 +1,24 @@
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name TestSuite. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
+  name = get_unique_schema_name(self.spec.components, name)
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name TestCase. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
+  name = get_unique_schema_name(self.spec.components, name)
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name UserUpdate. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
+  name = get_unique_schema_name(self.spec.components, name)
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name UserDisplay. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
+  name = get_unique_schema_name(self.spec.components, name)
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name Project. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
+  name = get_unique_schema_name(self.spec.components, name)
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name WebhookEndpoint. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
+  name = get_unique_schema_name(self.spec.components, name)
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name AnyJson. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
+  name = get_unique_schema_name(self.spec.components, name)
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name Soggetto. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
+  name = get_unique_schema_name(self.spec.components, name)
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name Comune. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
+  name = get_unique_schema_name(self.spec.components, name)
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/apispec/ext/marshmallow/openapi.py:134: UserWarning: Multiple schemas resolved to the name FileUpload. The name has been modified. Either manually add each of the schemas with a different name or provide a custom schema_name_resolver.
+  name = get_unique_schema_name(self.spec.components, name)
+ * Serving Flask app 'backend'
+ * Debug mode: on
+Address already in use
+Port 5000 is in use by another program. Either identify and stop that program, or start the server with a different port.

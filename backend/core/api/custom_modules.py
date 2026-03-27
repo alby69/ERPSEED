@@ -13,7 +13,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import Schema, fields
 
 # Import Block first to ensure it's registered in SQLAlchemy
-from backend.builder.models import Block  # noqa: F401
+from backend.modules.builder.models import Block  # noqa: F401
 from backend.core.models.module import Module
 from backend.extensions import db
 
@@ -318,7 +318,7 @@ class ModuleBackup(MethodView):
     def get(self, module_id):
         """Export module data as JSON for backup before deletion."""
         from backend.models import User
-        from backend.services.dynamic_api_service import DynamicApiService
+        from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
         import json
 
         user_id = get_jwt_identity()
@@ -721,7 +721,7 @@ class ModuleTest(MethodView):
     def post(self, module_id):
         """Run advanced tests for a module and update results."""
         from backend.models import User
-        from backend.services.dynamic_api_service import DynamicApiService
+        from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
         import time
 
         user_id = get_jwt_identity()
