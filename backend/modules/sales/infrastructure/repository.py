@@ -23,7 +23,7 @@ class SalesOrderRepository:
         return SalesOrderLine
     
     def _get_soggetto_class(self):
-        from backend.entities.soggetto import Soggetto
+        from backend.modules.entities.soggetto import Soggetto
         return Soggetto
     
     def create(self, data: Dict[str, Any]) -> Dict[str, Any]:

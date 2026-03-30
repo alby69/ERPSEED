@@ -26,7 +26,7 @@ from werkzeug.exceptions import HTTPException
 from flask import request, current_app
 from flask_jwt_extended import get_jwt_identity
 
-from .base import BaseService
+from backend.core.services.base import BaseService
 
 
 class DynamicApiService(BaseService):

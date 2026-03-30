@@ -27,7 +27,7 @@ from .system import (
 )
 
 from backend.core.models import Tenant, TenantMember, AuditLog
-from backend.entities.soggetto import Soggetto
+from backend.modules.entities.soggetto import Soggetto
 
 __all__ = [
     "db",

@@ -20,7 +20,7 @@ def get_comuni_from_db():
         return _comuni_cache
     
     try:
-        from backend.entities.comune import Comune
+        from backend.modules.entities.comune import Comune
         from backend.extensions import db
         
         comuni = Comune.query.filter(
@@ -278,7 +278,7 @@ class Regioni(MethodView):
         """Lista di tutte le regioni italiane"""
         # Usa il database se disponibile, altrimenti ritorna hardcoded
         try:
-            from backend.entities.comune import Regione
+            from backend.modules.entities.comune import Regione
             from backend.extensions import db
             
             regioni = Regione.query.order_by(Regione.nome).all()
@@ -294,7 +294,7 @@ class Province(MethodView):
         regione = request.args.get("regione", "")
         
         try:
-            from backend.entities.comune import Provincia
+            from backend.modules.entities.comune import Provincia
             
             query = Provincia.query
             if regione:

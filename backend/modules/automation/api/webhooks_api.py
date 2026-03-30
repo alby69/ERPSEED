@@ -12,9 +12,9 @@ from marshmallow import Schema, fields, post_dump
 import json
 from datetime import datetime
 from backend.models.webhook import WebhookEndpoint, WebhookDelivery, WebhookEvent
-from backend.services.webhook_service import WebhookService
+from backend.core.services.webhook_service import WebhookService
 from backend.extensions import db
-from backend.services.generic_service import generic_service
+from backend.core.services.generic_service import generic_service
 
 blp = Blueprint("webhooks", __name__, url_prefix="/webhooks", description="Webhook Management")
 

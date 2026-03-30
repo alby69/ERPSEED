@@ -10,7 +10,7 @@ from flask import current_app
 
 from backend.extensions import db
 from backend.models.workflow import Workflow, WorkflowStep, WorkflowExecution, WorkflowLog
-from backend.services.dynamic_api_service import DynamicApiService
+from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
 logger = logging.getLogger(__name__)
 

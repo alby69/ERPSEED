@@ -23,7 +23,6 @@ from .models import (
 blp = Blueprint(
     "component_builder",
     __name__,
-    url_prefix="/api",
     description="Component Builder API",
 )
 

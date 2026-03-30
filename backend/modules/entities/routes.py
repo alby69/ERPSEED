@@ -2,7 +2,7 @@ from flask.views import MethodView
 from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
-from backend.entities import (
+from backend.modules.entities import (
     Soggetto,
     SoggettoRuolo,
     Indirizzo,
@@ -11,7 +11,7 @@ from backend.entities import (
     SoggettoContatto,
     Ruolo,
 )
-from backend.entities.schemas import (
+from backend.modules.entities.schemas import (
     SoggettoSchema,
     SoggettoCreateSchema,
     RuoloSchema,
@@ -21,7 +21,7 @@ from backend.entities.schemas import (
 from backend.extensions import db, ma
 from backend.core.utils.utils import paginate, apply_filters, apply_sorting
 from backend.core.decorators.decorators import tenant_required
-from backend.services.generic_service import generic_service
+from backend.core.services.generic_service import generic_service
 
 
 soggetto_blp = Blueprint("soggetti", __name__, description="Operazioni su Soggetti")

@@ -746,7 +746,7 @@ class NotificationToolExecutor:
 
             # Salva configurazione nelle impostazioni del progetto
             # Per ora salvare come JSON nel progetto
-            from backend.services.project_service import ProjectService
+            from backend.modules.projects.service import get_project_service as ProjectService
 
             project_service = ProjectService()
 

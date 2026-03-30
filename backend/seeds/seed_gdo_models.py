@@ -1,7 +1,7 @@
 import json
 from backend import create_app
 from backend.extensions import db
-from backend.services.template_service import TemplateService
+from backend.modules.system_tools.services.template_service import TemplateService
 
 def seed_gdo_models():
     app = create_app()

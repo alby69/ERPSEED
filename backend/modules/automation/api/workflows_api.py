@@ -10,12 +10,12 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from marshmallow import Schema, fields
 
 from backend.models.workflow import Workflow, WorkflowStep, WorkflowExecution, WorkflowLog
-from backend.services.workflow_service import WorkflowService
+from backend.modules.automation.services.workflow_service import WorkflowService
 from backend.extensions import db
-from backend.services.generic_service import generic_service
+from backend.core.services.generic_service import generic_service
 from backend.core.utils.utils import paginate
 from backend.models.webhook import WebhookEvent
-from backend.services.workflow_executor import WorkflowEngine
+from backend.modules.automation.services.workflow_executor import WorkflowEngine
 
 blp = Blueprint("workflows", __name__, url_prefix="/workflows", description="Workflow Automation")
 

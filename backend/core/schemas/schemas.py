@@ -26,7 +26,7 @@ except ImportError:
 
 # Import Soggetto (replaces Party)
 try:
-    from backend.entities.soggetto import Soggetto
+    from backend.modules.entities.soggetto import Soggetto
 except ImportError:
     pass
 

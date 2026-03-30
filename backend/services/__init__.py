@@ -8,7 +8,7 @@ Services:
     - DynamicApiService: Dynamic CRUD API operations
 """
 
-from .base import BaseService
+from backend.core.services.base import BaseService
 
 class DynamicApiService:
     def __new__(cls, *args, **kwargs):

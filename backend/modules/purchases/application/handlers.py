@@ -10,7 +10,7 @@ from backend.modules.purchases.application.commands import (CreatePurchaseOrderC
 from backend.modules.purchases.domain.events import (PurchaseOrderCreatedEvent, PurchaseOrderUpdatedEvent,
     PurchaseOrderConfirmedEvent, PurchaseOrderReceivedEvent, PurchaseOrderCancelledEvent)
 from backend.modules.purchases.infrastructure.repository import PurchaseOrderRepository
-from backend.entities.soggetto import Soggetto
+from backend.modules.entities.soggetto import Soggetto
 
 logger = logging.getLogger(__name__)
 

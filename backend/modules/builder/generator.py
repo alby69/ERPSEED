@@ -235,7 +235,7 @@ class AdaptiveBuilder:
     
     def build_from_template(self, template_data: Dict[str, Any]) -> Dict[str, str]:
         """Build da template JSON/dict."""
-        from backend.services.builder_service import BuilderService
+        from backend.modules.builder.service import get_builder_service as BuilderService
         
         if not self.app or not self.db:
             raise RuntimeError("App e DB devono essere inizializzati")

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from typing import Dict, List, Any, Optional
-from .base import BaseService
+from backend.core.services.base import BaseService
 from .file_processing_service import FileProcessingService
 
 class GDOReconciliationService(BaseService):

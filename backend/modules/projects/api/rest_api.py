@@ -17,7 +17,7 @@ from backend.core.schemas.schemas import (
 from backend.core.decorators.decorators import admin_required
 from backend.core.utils.utils import paginate
 from backend.modules.projects.service import get_project_service
-from backend.services.generic_service import generic_service
+from backend.core.services.generic_service import generic_service
 
 blp = Blueprint(
     "projects", "projects", url_prefix="/projects", description="Operations on projects"

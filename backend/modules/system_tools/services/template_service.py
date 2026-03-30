@@ -15,7 +15,7 @@ class TemplateService:
     """Service per caricare e installare template predefiniti."""
 
     def __init__(self):
-        self.templates_dir = Path(__file__).parent.parent / "templates" / "data"
+        self.templates_dir = Path(__file__).resolve().parent.parent.parent.parent / "templates" / "data"
         self.builder_service = BuilderService()
 
     def list_templates(self) -> List[Dict[str, Any]]:

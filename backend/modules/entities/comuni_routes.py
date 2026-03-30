@@ -7,10 +7,10 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
 from flask import request
 from datetime import datetime
-from backend.entities.comune import Comune, Regione, Provincia
+from backend.modules.entities.comune import Comune, Regione, Provincia
 from backend.extensions import db, ma
 from backend.core.schemas.schemas import BaseSchema
-from backend.services.generic_service import generic_service
+from backend.core.services.generic_service import generic_service
 from marshmallow import Schema, fields
 
 comuni_blp = Blueprint("comuni", __name__, url_prefix="/api/v1", description="Gestione Comuni Italiani")

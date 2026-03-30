@@ -96,7 +96,7 @@ def generate_code(model_id, api_prefix):
     """Generate code for an existing model."""
     from backend.modules.builder.generator import CodeGenerator, TemplateValidator
     from backend.extensions import create_app, db
-    from backend.services.builder_service import BuilderService
+    from backend.modules.builder.service import get_builder_service as BuilderService
     
     app = create_app()
     with app.app_context():

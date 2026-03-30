@@ -39,8 +39,8 @@ class DashboardKPI(MethodView):
     def get(self, tenant_id):
         """Get dashboard KPI summary"""
         from backend.models import Product, SalesOrder, PurchaseOrder
-        from backend.entities.soggetto import Soggetto
-        from backend.entities.ruolo import SoggettoRuolo, Ruolo
+        from backend.modules.entities.soggetto import Soggetto
+        from backend.modules.entities.ruolo import SoggettoRuolo, Ruolo
         
         # Count customers (soggetti with Cliente role)
         cliente_ruolo = Ruolo.query.filter_by(codice='Cliente', tenant_id=tenant_id).first()

@@ -14,7 +14,7 @@ from .core.middleware.tenant_middleware import TenantMiddleware
 from .core.services.query_filter import TenantQueryFilter, SoftDeleteFilter
 
 # Import new architectural components
-from .container import ServiceContainer
+from backend.core.container import ServiceContainer
 from .shared.events.event_bus import EventBus
 from .plugins.registry import PluginRegistry, create_plugin_manager
 
@@ -56,7 +56,6 @@ from .modules.automation.api.workflows_api import blp as workflows_bp
 
 # Import purchases and builder APIs
 from .modules.purchases.api.rest_api import blp as purchases_bp
-from .modules.builder.api import blp as builder_bp
 
 # Import Core API blueprints (additional)
 from .core.api.tenant import tenant_bp
@@ -73,9 +72,9 @@ from .modules.products.api.rest_api import blp as products_api_bp
 from .modules.sales.api.rest_api import blp as sales_api_bp
 
 # Import Entities (Vision Archetypes)
-from .entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
-from .entities.indirizzo_geografico import geografico_blp
-from .entities.comuni_routes import comuni_blp
+from .modules.entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
+from .modules.entities.indirizzo_geografico import geografico_blp
+from .modules.entities.comuni_routes import comuni_blp
 
 # Import Builder Models (Archetype, Component, Block)
 from .modules.builder.models import (
@@ -200,7 +199,8 @@ def create_app(db_url=None):
     container = ServiceContainer()
     app.container = container  # Attach to app for global access
 
-    event_bus = EventBus()
+    from .shared.events import get_event_bus
+    event_bus = get_event_bus()
     from .shared.events.handlers.read_model_handler import register_read_model_handlers
     register_read_model_handlers(event_bus)
 
@@ -341,7 +341,6 @@ def create_app(db_url=None):
     # Module APIs
     api.register_blueprint(users_bp, url_prefix=f"{API_V1_PREFIX}/users", name="api_users")
     api.register_blueprint(projects_bp, url_prefix=f"{API_V1_PREFIX}/projects", name="api_projects")
-    api.register_blueprint(builder_bp, url_prefix=f"{API_V1_PREFIX}/builder", name="api_builder")
     api.register_blueprint(ai_bp, url_prefix=f"{API_V1_PREFIX}/ai", name="api_ai")
     api.register_blueprint(products_api_bp, url_prefix=f"{API_V1_PREFIX}/products", name="api_products")
     api.register_blueprint(sales_api_bp, url_prefix=f"{API_V1_PREFIX}/sales", name="api_sales")

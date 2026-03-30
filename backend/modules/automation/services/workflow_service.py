@@ -19,7 +19,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from .base import BaseService
+from backend.core.services.base import BaseService
 from backend.extensions import db
 from backend.models.webhook import WebhookEvent
 from backend.models.workflow import Workflow, WorkflowStep
@@ -194,7 +194,7 @@ class WorkflowService(BaseService):
     ) -> Dict[str, Any]:
         """Esegue l'azione update_record usando DynamicApiService."""
         try:
-            from backend.services.dynamic_api_service import DynamicApiService
+            from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
             event = step.workflow.trigger_event
             model_name = config.get(
@@ -244,7 +244,7 @@ class WorkflowService(BaseService):
     ) -> Dict[str, Any]:
         """Esegue l'azione create_record usando DynamicApiService."""
         try:
-            from backend.services.dynamic_api_service import DynamicApiService
+            from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
             event = step.workflow.trigger_event
             model_name = config.get(

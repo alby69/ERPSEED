@@ -10,7 +10,7 @@ from backend.extensions import db
 from backend.core.schemas.schemas import SysChartSchema, SysDashboardSchema, ChartLibraryConfigSchema
 from backend.core.utils.utils import get_table_object
 from backend.services import DynamicApiService
-from backend.services.generic_service import generic_service
+from backend.core.services.generic_service import generic_service
 from backend.core.utils.utils import paginate, serialize_value
 from backend.modules.analytics.service import get_analytics_service
 

@@ -1,7 +1,7 @@
 """
 Container - Dependency Injection for Purchases Service.
 """
-from backend.container import get_container as get_global_container
+from backend.core.container import get_container as get_global_container
 from backend.modules.purchases.infrastructure.repository import PurchaseOrderRepository
 from backend.modules.purchases.service_api import PurchaseService
 

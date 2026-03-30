@@ -210,7 +210,7 @@ class AIApply(MethodView):
             project_id = data.get("project_id")
 
             # Import services
-            from backend.services.builder_service import BuilderService
+            from backend.modules.builder.service import get_builder_service as BuilderService
             from backend.extensions import db
             from backend.core.utils.utils import generate_create_table_sql
             from backend.models import Project

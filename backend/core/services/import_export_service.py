@@ -61,7 +61,7 @@ class ImportExportService:
 
     def export_sysmodel_data(self, sys_model, project_id: int) -> Dict[str, Any]:
         """Esporta i dati di un SysModel."""
-        from backend.services.dynamic_api_service import DynamicApiService
+        from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
         dynamic_api = DynamicApiService()
 
@@ -146,7 +146,7 @@ class ImportExportService:
         self, data_json: Dict[str, Any], project_id: int
     ) -> Dict[str, Any]:
         """Importa i dati in un SysModel."""
-        from backend.services.dynamic_api_service import DynamicApiService
+        from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
         model_name = data_json.get("model_name")
         records = data_json.get("data", [])
@@ -344,7 +344,7 @@ class ImportExportService:
 
     def export_module_data(self, module, project_id: int) -> Dict[str, Any]:
         """Esporta tutti i dati del modulo."""
-        from backend.services.dynamic_api_service import DynamicApiService
+        from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
         dynamic_api = DynamicApiService()
         models = list(module.models) if hasattr(module, "models") else []
