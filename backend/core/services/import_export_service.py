@@ -24,7 +24,6 @@ class ImportExportService:
     def __init__(self, db=None):
         self.db = db
 
-    # ==================== SYSMODEL ====================
 
     def export_sysmodel_config(self, sys_model) -> Dict[str, Any]:
         """Esporta la configurazione di un SysModel."""
@@ -171,7 +170,6 @@ class ImportExportService:
 
         return {"imported": imported_count, "total": len(records), "errors": errors}
 
-    # ==================== BLOCK ====================
 
     def export_block_config(self, block) -> Dict[str, Any]:
         """Esporta la configurazione di un Block."""
@@ -251,7 +249,6 @@ class ImportExportService:
             db.session.commit()
             return {"action": "created", "block": new_block.name}
 
-    # ==================== WORKFLOW ====================
 
     def export_workflow_config(self, workflow) -> Dict[str, Any]:
         """Esporta la configurazione di un Workflow."""
@@ -315,7 +312,6 @@ class ImportExportService:
             db.session.commit()
             return {"action": "created", "workflow": new_workflow.name}
 
-    # ==================== MODULE ====================
 
     def export_module_config(self, module) -> Dict[str, Any]:
         """Esporta la configurazione completa di un Module."""
@@ -411,7 +407,6 @@ class ImportExportService:
             db.session.commit()
             return {"action": "created", "module": new_module.name}
 
-    # ==================== PROJECT ====================
 
     def export_sysmodels_project(self, project_id: int) -> Dict[str, Any]:
         """Esporta tutti i SysModel di un progetto."""

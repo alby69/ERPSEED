@@ -13,7 +13,6 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import func
 import datetime
 from marshmallow import fields
-
 from .models import ChartOfAccounts, Account, JournalEntry, JournalEntryLine, Invoice, InvoiceLine
 from backend.core.services.tenant_context import TenantContext
 from backend.core.decorators.decorators import tenant_required
@@ -48,6 +47,7 @@ class JournalEntrySchema(BaseSchema):
     total_debit = fields.Function(lambda obj: obj.total_debit, dump_only=True)
     total_credit = fields.Function(lambda obj: obj.total_credit, dump_only=True)
     is_balanced = fields.Function(lambda obj: obj.is_balanced, dump_only=True)
+
     class Meta(BaseSchema.Meta):
         model = JournalEntry
         exclude = BaseSchema.Meta.exclude + ("date",)
@@ -58,12 +58,10 @@ class InvoiceLineSchema(BaseSchema):
         exclude = BaseSchema.Meta.exclude + ('invoice',)
 
 class InvoiceSchema(BaseSchema):
-    date = fields.Date(load_default=None)
     lines = fields.List(fields.Nested(InvoiceLineSchema))
+
     class Meta(BaseSchema.Meta):
         model = Invoice
-        exclude = BaseSchema.Meta.exclude + ("date",)
-
 
 @blp.route("/coa")
 class COAList(MethodView):
@@ -80,7 +78,7 @@ class COAList(MethodView):
         query = apply_sorting(query, ChartOfAccounts, default_sort_column='code')
         items, headers = paginate(query)
         return items, 200, headers
-    
+
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
@@ -91,7 +89,6 @@ class COAList(MethodView):
         return generic_service.create_tenant_resource(
             ChartOfAccounts, coa_instance, tenant_id, unique_fields=['code']
         )
-
 
 @blp.route("/coa/<int:coa_id>")
 class COAResource(MethodView):
@@ -106,7 +103,7 @@ class COAResource(MethodView):
         return generic_service.get_tenant_resource(
             ChartOfAccounts, coa_id, tenant_id, not_found_message="Account not found"
         )
-    
+
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
@@ -117,7 +114,7 @@ class COAResource(MethodView):
         return generic_service.update_tenant_resource(
             ChartOfAccounts, coa_id, tenant_id, data, not_found_message="Account not found"
         )
-    
+
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
@@ -138,10 +135,8 @@ class COAResource(MethodView):
 
         coa.is_active = False
         Account.query.filter_by(coa_id=coa.id).update({"is_active": False})
-
         db.session.commit()
         return '', 204
-
 
 @blp.route("/accounts")
 class AccountList(MethodView):
@@ -158,7 +153,7 @@ class AccountList(MethodView):
         query = apply_sorting(query, Account, default_sort_column='code')
         items, headers = paginate(query)
         return items, 200, headers
-    
+
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
@@ -169,7 +164,6 @@ class AccountList(MethodView):
         return generic_service.create_tenant_resource(
             Account, account_instance, tenant_id, unique_fields=['code']
         )
-
 
 @blp.route("/journal")
 class JournalEntryList(MethodView):
@@ -189,9 +183,10 @@ class JournalEntryList(MethodView):
              query = query.order_by(JournalEntry.date.desc(), JournalEntry.entry_number.desc())
         else:
              query = apply_sorting(query, JournalEntry)
+
         items, headers = paginate(query)
         return items, 200, headers
-    
+
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
@@ -201,19 +196,19 @@ class JournalEntryList(MethodView):
         """Create journal entry with double-entry validation."""
         # The lines are already on the instance from Marshmallow
         lines = entry_instance.lines
-        
         total_debit = sum(line.debit for line in lines)
         total_credit = sum(line.credit for line in lines)
         
         if abs(total_debit - total_credit) > 0.01:
             abort(400, message=f"Debits ({total_debit}) must equal credits ({total_credit}).")
-        
+
         entry_number = self._generate_entry_number(tenant_id)
         
         # Set tenant_id and other server-side fields on the main instance
         entry_instance.tenant_id = tenant_id
         entry_instance.entry_number = entry_number
         entry_instance.created_by = get_jwt_identity()
+
         if not entry_instance.date:
             entry_instance.date = datetime.date.today()
 
@@ -229,31 +224,32 @@ class JournalEntryList(MethodView):
         db.session.commit()
         
         try:
-            from backend.webhook_triggers import on_journal_entry_created
-            on_journal_entry_created(entry_instance)
+            from backend.core.events.triggers import trigger_webhook
+            trigger_webhook("journal_entry.created", {"id": entry_instance.id, "entry_number": entry_instance.entry_number})
         except Exception:
             pass
-        
+
         return entry_instance, 201
-    
+
     def _generate_entry_number(self, tenant_id):
         """Generate unique entry number."""
         today = datetime.date.today()
         year = today.year
-        
         last_entry = JournalEntry.query.filter(
             JournalEntry.tenant_id == tenant_id,
             JournalEntry.entry_number.like(f'JE-{year}%')
         ).order_by(JournalEntry.entry_number.desc()).first()
         
         if last_entry:
-            last_num = int(last_entry.entry_number.split('-')[-1])
-            new_num = last_num + 1
+            try:
+                last_num = int(last_entry.entry_number.split('-')[-1])
+                new_num = last_num + 1
+            except (ValueError, IndexError):
+                new_num = 1
         else:
             new_num = 1
-        
-        return f'JE-{year}-{new_num:05d}'
 
+        return f'JE-{year}-{new_num:05d}'
 
 @blp.route("/journal/<int:entry_id>")
 class JournalEntryResource(MethodView):
@@ -268,7 +264,7 @@ class JournalEntryResource(MethodView):
         return generic_service.get_tenant_resource(
             JournalEntry, entry_id, tenant_id, not_found_message="Journal entry not found"
         )
-    
+
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
@@ -278,18 +274,14 @@ class JournalEntryResource(MethodView):
         entry = JournalEntry.query.filter_by(id=entry_id, tenant_id=tenant_id).first()
         if not entry:
             abort(404, message="Journal entry not found")
-        
         if entry.status != 'draft':
             abort(400, message="Only draft entries can be posted.")
-        
         if not entry.is_balanced:
             abort(400, message="Entry must be balanced before posting.")
-        
+
         entry.status = 'posted'
         db.session.commit()
-        
         return entry
-
 
 @blp.route("/invoices")
 class InvoiceList(MethodView):
@@ -302,12 +294,11 @@ class InvoiceList(MethodView):
     def get(self, tenant_id):
         """List invoices."""
         query = Invoice.query.filter_by(tenant_id=tenant_id)
-        
         if request.args.get('type'):
             query = query.filter_by(invoice_type=request.args.get('type'))
         if request.args.get('status'):
             query = query.filter_by(status=request.args.get('status'))
-        
+
         query = apply_filters(query, Invoice, ['invoice_number', 'description'])
         
         sort_by = request.args.get('sort_by')
@@ -318,7 +309,7 @@ class InvoiceList(MethodView):
              
         items, headers = paginate(query)
         return items, 200, headers
-    
+
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
@@ -331,16 +322,16 @@ class InvoiceList(MethodView):
         # Set server-side fields on the instance from Marshmallow
         invoice_instance.tenant_id = tenant_id
         invoice_instance.invoice_number = invoice_number
+
         if not invoice_instance.date:
             invoice_instance.date = datetime.date.today()
-        
+
         subtotal = 0
         # Process lines that were loaded by Marshmallow
         for line in invoice_instance.lines:
-            line.tenant_id = tenant_id
             line.calculate()
             subtotal += line.amount
-        
+
         invoice_instance.subtotal = subtotal
         invoice_instance.tax_amount = sum(l.amount - (l.amount / (1 + l.tax_percent/100)) for l in invoice_instance.lines if l.tax_percent > 0)
         invoice_instance.total = invoice_instance.subtotal + invoice_instance.tax_amount
@@ -349,13 +340,13 @@ class InvoiceList(MethodView):
         db.session.commit()
         
         try:
-            from backend.webhook_triggers import on_invoice_created
-            on_invoice_created(invoice_instance)
+            from backend.core.events.triggers import trigger_webhook
+            trigger_webhook("invoice.created", {"id": invoice_instance.id, "invoice_number": invoice_instance.invoice_number})
         except Exception:
             pass
-        
+
         return invoice_instance, 201
-    
+
     def _generate_invoice_number(self, tenant_id, invoice_type):
         """Generate unique invoice number."""
         prefix = 'AR' if invoice_type == 'AR' else 'AP'
@@ -367,13 +358,15 @@ class InvoiceList(MethodView):
         ).order_by(Invoice.invoice_number.desc()).first()
         
         if last_invoice:
-            last_num = int(last_invoice.invoice_number.split('-')[-1])
-            new_num = last_num + 1
+            try:
+                last_num = int(last_invoice.invoice_number.split('-')[-1])
+                new_num = last_num + 1
+            except (ValueError, IndexError):
+                new_num = 1
         else:
             new_num = 1
-        
-        return f'{prefix}-{today.year}{today.month:02d}-{new_num:05d}'
 
+        return f'{prefix}-{today.year}{today.month:02d}-{new_num:05d}'
 
 @blp.route("/invoices/<int:invoice_id>")
 class InvoiceResource(MethodView):
@@ -388,7 +381,7 @@ class InvoiceResource(MethodView):
         return generic_service.get_tenant_resource(
             Invoice, invoice_id, tenant_id, not_found_message="Invoice not found"
         )
-    
+
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
@@ -398,15 +391,12 @@ class InvoiceResource(MethodView):
         invoice = Invoice.query.filter_by(id=invoice_id, tenant_id=tenant_id).first()
         if not invoice:
             abort(404, message="Invoice not found")
-        
         if invoice.status != 'draft':
             abort(400, message="Only draft invoices can be sent.")
-        
+
         invoice.status = 'sent'
         db.session.commit()
-        
         return invoice
-
 
 @blp.route("/reports/trial-balance")
 class TrialBalance(MethodView):
@@ -419,7 +409,6 @@ class TrialBalance(MethodView):
     def get(self, tenant_id):
         """Generate trial balance report."""
         accounts = Account.query.filter_by(tenant_id=tenant_id, is_active=True).all()
-        
         result = []
         total_debit = 0
         total_credit = 0
@@ -439,7 +428,6 @@ class TrialBalance(MethodView):
                 'type': account.coa.type if account.coa else 'unknown',
                 'balance': balance or 0
             }
-            
             result.append(entry)
             
             if entry['type'] in ['asset', 'expense']:
@@ -452,7 +440,7 @@ class TrialBalance(MethodView):
                     total_credit += balance
                 else:
                     total_debit += abs(balance)
-        
+
         return {
             'accounts': result,
             'total_debit': total_debit,

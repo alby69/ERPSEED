@@ -27,6 +27,7 @@ from backend.modules.sales.domain import (
 )
 from backend.modules.sales.infrastructure.repository import SalesOrderRepository
 from backend.modules.entities.soggetto import Soggetto
+from backend.modules.entities.soggetto import Soggetto
 
 logger = logging.getLogger(__name__)
 

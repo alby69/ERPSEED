@@ -4,6 +4,7 @@ from datetime import datetime
 def trigger_webhook(event: str, data: dict, async_mode: bool = True):
     try:
         from backend.core.services.webhook_service import WebhookService
+        from backend.core.services.webhook_service import WebhookService
         WebhookService.trigger_event(event, data, async_mode)
     except Exception:
         pass
@@ -23,22 +24,10 @@ def trigger_webhook(event: str, data: dict, async_mode: bool = True):
         pass
 
 def on_user_created(user):
-    trigger_webhook("user.created", {
-        "id": user.id,
-        "email": user.email,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "role": user.role
-    })
+    trigger_webhook("user.created", {"id": user.id, "email": user.email})
 
 def on_user_updated(user):
-    trigger_webhook("user.updated", {
-        "id": user.id,
-        "email": user.email,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "role": user.role
-    })
+    trigger_webhook("user.updated", {"id": user.id, "email": user.email})
 
 def on_user_deleted(user_id, email):
     trigger_webhook("user.deleted", {"id": user_id, "email": email})

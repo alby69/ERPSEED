@@ -43,6 +43,11 @@ class Block(BaseModel):
     config = db.Column(db.JSON)
     metadata_info = db.Column(db.JSON)
 
+
+    # Configuration and metadata
+    config = db.Column(db.JSON)
+    metadata_info = db.Column(db.JSON)
+
     is_system = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
 
@@ -64,6 +69,7 @@ def create_system_archetypes():
         {'name': 'document', 'title': 'Documento', 'icon': 'file-text', 'description': 'Fatture, ordini, contratti'},
         {'name': 'process', 'title': 'Processo', 'icon': 'project', 'description': 'Workflow e stati di avanzamento'},
     ]
+
 
     for arch_data in archetypes:
         if not Archetype.query.filter_by(name=arch_data['name']).first():

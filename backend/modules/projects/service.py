@@ -16,6 +16,10 @@ class ProjectService:
         if user.role == 'admin':
             return Project.query.order_by(Project.name)
 
+
+        if user.role == 'admin':
+            return Project.query.order_by(Project.name)
+
         return Project.query.filter(
             (Project.owner_id == user_id) | (Project.members.any(id=user_id))
         ).order_by(Project.name)
@@ -24,6 +28,13 @@ class ProjectService:
         project = db.session.get(Project, project_id)
         if not project:
             abort(404, message="Project not found.")
+
+        user = db.session.get(User, user_id)
+        is_member = project.members.filter_by(id=user_id).first() is not None
+
+        if user.role != 'admin' and project.owner_id != user_id and not is_member:
+            abort(403, message="You don't have access to this project.")
+
 
         user = db.session.get(User, user_id)
         is_member = project.members.filter_by(id=user_id).first() is not None

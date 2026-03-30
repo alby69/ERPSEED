@@ -26,6 +26,10 @@ class PurchaseList(MethodView):
         if not result.get("success"):
             abort(400, message=result.get("error", "Failed to list purchases"))
 
+
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to list purchases"))
+
         return result["data"]["items"]
 
     @blp.doc(security=[{"jwt": []}])
@@ -37,6 +41,7 @@ class PurchaseList(MethodView):
         """Create a new purchase order"""
         service = get_purchase_service()
 
+
         payload = {}
         if hasattr(purchase_data, 'items'):
             for key, value in purchase_data.items():
@@ -44,11 +49,16 @@ class PurchaseList(MethodView):
         else:
             payload = dict(purchase_data)
 
+
         result = service.execute({
             "command": "CreatePurchaseOrder",
             "tenant_id": tenant_id,
             **payload
         })
+
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to create purchase"))
+
 
         if not result.get("success"):
             abort(400, message=result.get("error", "Failed to create purchase"))
@@ -76,6 +86,12 @@ class PurchaseResource(MethodView):
 
         return result["data"]
 
+
+        if not result.get("success"):
+            abort(404, message=result.get("error", "Purchase not found"))
+
+        return result["data"]
+
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
@@ -85,6 +101,7 @@ class PurchaseResource(MethodView):
         """Update a purchase order"""
         service = get_purchase_service()
 
+
         payload = {}
         if hasattr(purchase_data, 'items'):
             for key, value in purchase_data.items():
@@ -92,12 +109,19 @@ class PurchaseResource(MethodView):
         else:
             payload = dict(purchase_data)
 
+
         result = service.execute({
             "command": "UpdatePurchaseOrder",
             "tenant_id": tenant_id,
             "entity_id": purchase_id,
             **payload
         })
+
+        if not result.get("success"):
+            abort(400, message=result.get("error", "Failed to update purchase"))
+
+        return result["data"]
+
 
         if not result.get("success"):
             abort(400, message=result.get("error", "Failed to update purchase"))
@@ -116,6 +140,10 @@ class PurchaseResource(MethodView):
             "tenant_id": tenant_id,
             "entity_id": purchase_id
         })
+
+        if not result.get("success"):
+            abort(409, message=result.get("error", "Failed to delete purchase"))
+
 
         if not result.get("success"):
             abort(409, message=result.get("error", "Failed to delete purchase"))

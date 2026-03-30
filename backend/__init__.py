@@ -56,6 +56,7 @@ from .modules.automation.api.workflows_api import blp as workflows_bp
 
 # Import purchases and builder APIs
 from .modules.purchases.api.rest_api import blp as purchases_bp
+from .modules.builder.api import blp as builder_bp
 
 # Import Core API blueprints (additional)
 from .core.api.tenant import tenant_bp
@@ -199,10 +200,10 @@ def create_app(db_url=None):
     container = ServiceContainer()
     app.container = container  # Attach to app for global access
 
-    from .shared.events import get_event_bus
-    event_bus = get_event_bus()
+    event_bus = EventBus()
     from .shared.events.handlers.read_model_handler import register_read_model_handlers
     register_read_model_handlers(event_bus)
+
 
     container.register('event_bus', lambda: event_bus, singleton=True)
     container.register('db', lambda: db, singleton=True)
@@ -341,6 +342,7 @@ def create_app(db_url=None):
     # Module APIs
     api.register_blueprint(users_bp, url_prefix=f"{API_V1_PREFIX}/users", name="api_users")
     api.register_blueprint(projects_bp, url_prefix=f"{API_V1_PREFIX}/projects", name="api_projects")
+    api.register_blueprint(builder_bp, url_prefix=f"{API_V1_PREFIX}/builder", name="api_builder")
     api.register_blueprint(ai_bp, url_prefix=f"{API_V1_PREFIX}/ai", name="api_ai")
     api.register_blueprint(products_api_bp, url_prefix=f"{API_V1_PREFIX}/products", name="api_products")
     api.register_blueprint(sales_api_bp, url_prefix=f"{API_V1_PREFIX}/sales", name="api_sales")
