@@ -4,7 +4,6 @@ from backend import create_app
 from backend.extensions import db
 from backend.models.workflow import Workflow, WorkflowStep
 from backend.modules.automation.services.workflow_executor import WorkflowEngine
-from backend.modules.automation.services.workflow_executor import WorkflowEngine
 
 class WorkflowTestCase(unittest.TestCase):
     def setUp(self):

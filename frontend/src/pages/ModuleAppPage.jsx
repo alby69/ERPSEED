@@ -52,7 +52,7 @@ function ModuleAppPage() {
           const blocksWithDetails = await Promise.all(
             detailData.blocks.map(async (block) => {
               try {
-                const blockResponse = await apiFetch(`/api/v1/builder/blocks/${block.id}`);
+                const blockResponse = await apiFetch(`/api/blocks/${block.id}`);
                 if (blockResponse.ok) {
                   return await blockResponse.json();
                 }

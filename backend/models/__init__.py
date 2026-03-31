@@ -7,7 +7,7 @@ from backend.extensions import db
 from .base import BaseModel
 from .user import User
 from .project import Project, project_members
-from .product import Product, CoreProductStock as ProductStock
+from .product import Product, ProductStockModel as ProductStock
 from .sales import SalesOrder, SalesOrderLine
 from .purchase import PurchaseOrder, PurchaseOrderLine
 from .ai import AIConversation

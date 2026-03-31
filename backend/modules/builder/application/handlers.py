@@ -14,7 +14,6 @@ class BuilderCommandHandler:
         if existing:
             abort(409, message=f"Model with name '{cmd.name}' already exists in this project.")
 
-
         model = SysModel(
             project_id=cmd.project_id,
             name=cmd.name,
@@ -26,7 +25,6 @@ class BuilderCommandHandler:
         )
         db.session.add(model)
         db.session.commit()
-
 
         try:
             log_audit(None, 'sys_models', model.id, 'CREATE', {'name': cmd.name, 'project_id': cmd.project_id})
@@ -40,7 +38,6 @@ class BuilderCommandHandler:
         if not model:
             abort(404, message="Model not found.")
 
-
         data = cmd.data
         if "name" in data and data["name"] != model.name:
             existing = SysModel.query.filter(
@@ -50,11 +47,6 @@ class BuilderCommandHandler:
             ).first()
             if existing:
                 abort(409, message=f"Model with name '{data['name']}' already exists.")
-
-        for key, value in data.items():
-            if hasattr(model, key):
-                setattr(model, key, value)
-
 
         for key, value in data.items():
             if hasattr(model, key):
@@ -73,7 +65,6 @@ class BuilderCommandHandler:
         if not model:
             abort(404, message="Model not found.")
 
-
         model_name = model.name
         log_audit(None, 'sys_models', cmd.model_id, 'DELETE')
         db.session.delete(model)
@@ -88,7 +79,6 @@ class BuilderCommandHandler:
         existing = SysField.query.filter_by(model_id=cmd.model_id, name=cmd.name).first()
         if existing:
             abort(409, message="Field with this name already exists in the model.")
-
 
         field = SysField(
             model_id=cmd.model_id,
@@ -111,7 +101,6 @@ class BuilderCommandHandler:
         if not model:
             abort(404, message="Model not found.")
 
-
         schema_name = f"project_{model.project_id}"
         try:
             sql_commands = generate_schema_diff_sql(model, cmd.db_engine, schema=schema_name)
@@ -133,11 +122,6 @@ class BuilderCommandHandler:
         if existing:
             abort(409, message=f"Model with name '{cmd.new_name}' already exists in this project.")
 
-
-        existing = SysModel.query.filter_by(project_id=source_model.project_id, name=cmd.new_name).first()
-        if existing:
-            abort(409, message=f"Model with name '{cmd.new_name}' already exists in this project.")
-
         new_model = SysModel(
             project_id=source_model.project_id,
             name=cmd.new_name,
@@ -149,7 +133,6 @@ class BuilderCommandHandler:
         )
         db.session.add(new_model)
         db.session.flush()
-
 
         for field in source_model.fields:
             new_field = SysField(
@@ -168,7 +151,6 @@ class BuilderCommandHandler:
                 validation_message=field.validation_message
             )
             db.session.add(new_field)
-
 
         db.session.commit()
         log_audit(cmd.user_id, 'sys_models', new_model.id, 'CLONE', {'source_id': cmd.model_id})

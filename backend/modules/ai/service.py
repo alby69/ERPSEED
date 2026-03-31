@@ -610,7 +610,6 @@ What would you like me to create or modify? I'll analyze the project context and
         from backend.modules.ai.application.commands.ai_commands import SaveConversationCommand
         from backend.modules.ai.application.handlers import AICommandHandler
 
-
         cmd = SaveConversationCommand(
             project_id=project_id,
             user_id=user_id,

@@ -82,7 +82,7 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
 
   const loadConversationHistory = async () => {
     try {
-      const response = await apiFetch(`/api/v1/ai/conversations?project_id=${projectId || 1}`, {
+      const response = await apiFetch(`/api/ai/conversations?project_id=${projectId || 1}`, {
         method: 'GET',
       });
       if (response.ok) {
@@ -96,7 +96,7 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
 
   const handleFeedback = async (messageId, wasSuccessful, correction = null) => {
     try {
-      await apiFetch('/api/v1/ai/feedback', {
+      await apiFetch('/api/ai/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -127,7 +127,7 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
     setLoading(true);
 
     try {
-      const response = await apiFetch('/api/v1/ai/generate', {
+      const response = await apiFetch('/api/ai/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -436,7 +436,7 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
             type="primary"
             onClick={async () => {
               try {
-                const response = await apiFetch('/api/v1/ai/apply', {
+                const response = await apiFetch('/api/ai/apply', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',

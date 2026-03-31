@@ -278,7 +278,7 @@ class TestRunner:
         
         # Audit logging
         try:
-            from backend.services.audit_service import AuditService
+            from backend.shared.utils.audit import create_audit_entry as AuditService
             AuditService.log_action(
                 user_id=user_id,
                 action='test_execution',

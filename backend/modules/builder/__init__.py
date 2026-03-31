@@ -19,7 +19,7 @@ from backend.core.schemas.schemas import (
 )
 from backend.core.schemas.schemas import SysModelSchema as schemas_module
 from backend.core.utils.utils import apply_filters, apply_sorting, paginate
-from backend.services import BuilderService
+from backend.modules.builder.service import get_builder_service as BuilderService
 from backend.core.decorators.decorators import admin_required
 from .generator import CodeGenerator, TemplateValidator, AdaptiveBuilder
 

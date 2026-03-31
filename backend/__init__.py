@@ -204,7 +204,6 @@ def create_app(db_url=None):
     from .shared.events.handlers.read_model_handler import register_read_model_handlers
     register_read_model_handlers(event_bus)
 
-
     container.register('event_bus', lambda: event_bus, singleton=True)
     container.register('db', lambda: db, singleton=True)
 

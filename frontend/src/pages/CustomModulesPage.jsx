@@ -42,7 +42,7 @@ function CustomModulesPage() {
 
     const fetchBlocks = async () => {
         try {
-            const response = await apiFetch(`/api/v1/projects/${projectId || 1}/blocks`);
+            const response = await apiFetch(`/api/projects/${projectId || 1}/blocks`);
             if (response.ok) {
                 const data = await response.json();
                 setBlocks(data || []);
@@ -408,7 +408,7 @@ function CustomModulesPage() {
                         onSave={async (components) => {
                             try {
                                 const blockName = `block_${Date.now()}`;
-                                const response = await apiFetch(`/api/v1/projects/${projectId || 1}/blocks`, {
+                                const response = await apiFetch(`/api/projects/${projectId || 1}/blocks`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({

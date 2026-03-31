@@ -38,7 +38,7 @@ const TemplateGallery = ({ projectId, onInstalled }) => {
   const fetchTemplates = async () => {
     setLoading(true);
     try {
-      const response = await apiFetch('/api/v1/templates/');
+      const response = await apiFetch('/api/templates/');
       const data = await response.json();
       setTemplates(data);
     } catch (error) {
@@ -58,7 +58,7 @@ const TemplateGallery = ({ projectId, onInstalled }) => {
       onOk: async () => {
         setInstalling(templateId);
         try {
-          const response = await apiFetch('/api/v1/templates/install', {
+          const response = await apiFetch('/api/templates/install', {
             method: 'POST',
             body: JSON.stringify({
               template_id: templateId,

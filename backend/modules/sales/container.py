@@ -2,7 +2,6 @@
 Container - Dependency Injection for Sales Service.
 """
 from backend.core.container import get_container as get_global_container
-from backend.core.container import get_container as get_global_container
 from backend.modules.sales.infrastructure.repository import SalesOrderRepository
 from backend.modules.sales.service_api import SalesService
 

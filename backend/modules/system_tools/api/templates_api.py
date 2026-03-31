@@ -2,7 +2,6 @@ from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
 from backend.modules.system_tools.services.template_service import TemplateService
-from backend.modules.system_tools.services.template_service import TemplateService
 
 blp = Blueprint("templates", __name__, description="Starter templates gallery")
 

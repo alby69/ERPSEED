@@ -10,7 +10,6 @@ class UserCommandHandler:
         if existing:
             abort(409, message="A user with that email already exists.")
 
-
         user = User(
             email=email,
             first_name=cmd.first_name,
@@ -20,7 +19,6 @@ class UserCommandHandler:
         user.set_password(cmd.password)
         db.session.add(user)
         db.session.commit()
-
 
         try:
             on_user_created(user)
@@ -33,7 +31,6 @@ class UserCommandHandler:
         if not user:
             abort(404, message="User not found.")
 
-
         data = cmd.data
         if "email" in data:
             email = data["email"].lower()
@@ -42,11 +39,6 @@ class UserCommandHandler:
                 if existing:
                     abort(409, message="Email already in use.")
                 user.email = email
-
-        for field in ["first_name", "last_name", "role", "is_active"]:
-            if field in data:
-                setattr(user, field, data[field])
-
 
         for field in ["first_name", "last_name", "role", "is_active"]:
             if field in data:
@@ -67,11 +59,6 @@ class UserCommandHandler:
         if not user:
             abort(404, message="User not found.")
 
-
-        user = db.session.get(User, cmd.user_id)
-        if not user:
-            abort(404, message="User not found.")
-
         db.session.delete(user)
         db.session.commit()
         return True
@@ -80,7 +67,6 @@ class UserCommandHandler:
         user = db.session.get(User, cmd.user_id)
         if not user:
             abort(404, message="User not found.")
-
 
         user.set_password(cmd.new_password)
         user.force_password_change = True

@@ -2,7 +2,6 @@
 Container - Dependency Injection for Products Service.
 """
 from backend.core.container import get_container as get_global_container
-from backend.core.container import get_container as get_global_container
 from backend.modules.products.infrastructure.repository import ProductRepository
 from backend.modules.products.service_api import ProductService
 

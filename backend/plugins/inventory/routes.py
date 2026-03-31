@@ -13,6 +13,7 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import datetime
 from marshmallow import fields
+
 from .models import InventoryLocation, ProductStock, StockMovement, InventoryCount, InventoryCountLine
 from backend.core.services.tenant_context import TenantContext
 from backend.extensions import db, ma
@@ -55,6 +56,7 @@ class InventoryCountLineUpdateSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
         model = InventoryCountLine
         load_instance = False
+        exclude = BaseSchema.Meta.exclude + ('count',)
 
 class InventoryCountSchema(BaseSchema):
     scheduled_date = fields.Date(load_default=None)
@@ -62,6 +64,7 @@ class InventoryCountSchema(BaseSchema):
     lines = fields.List(fields.Nested(InventoryCountLineSchema))
     class Meta(BaseSchema.Meta):
         model = InventoryCount
+
 
 @blp.route("/locations")
 class LocationList(MethodView):
@@ -89,6 +92,7 @@ class LocationList(MethodView):
         return generic_service.create_tenant_resource(
             InventoryLocation, location_instance, tenant_id, unique_fields=['code']
         )
+
 
 @blp.route("/locations/<int:location_id>")
 class LocationResource(MethodView):
@@ -137,6 +141,7 @@ class LocationResource(MethodView):
         db.session.commit()
         return '', 204
 
+
 @blp.route("/stock")
 class StockList(MethodView):
     """Product Stock endpoints."""
@@ -170,6 +175,7 @@ class StockList(MethodView):
             unique_fields=['product_id', 'location_id']
         )
 
+
 @blp.route("/stock/<int:stock_id>")
 class StockResource(MethodView):
     """Single Product Stock."""
@@ -195,6 +201,7 @@ class StockResource(MethodView):
             ProductStock, stock_id, tenant_id, data, not_found_message="Stock record not found"
         )
 
+
 @blp.route("/movements")
 class StockMovementList(MethodView):
     """Stock Movement endpoints."""
@@ -206,6 +213,11 @@ class StockMovementList(MethodView):
     def get(self, tenant_id):
         """List stock movements."""
         query = StockMovement.query.filter_by(tenant_id=tenant_id)
+
+        if request.args.get('product_id'):
+            query = query.filter_by(product_id=request.args.get('product_id'))
+        if request.args.get('location_id'):
+            query = query.filter_by(location_id=request.args.get('location_id'))
         if request.args.get('type'):
             query = query.filter_by(movement_type=request.args.get('type'))
 
@@ -265,6 +277,7 @@ class StockMovementList(MethodView):
             stock.quantity = quantity
 
         db.session.commit()
+
         return movement_instance, 201
 
     def _generate_movement_number(self, tenant_id, movement_type):
@@ -277,7 +290,6 @@ class StockMovementList(MethodView):
         }.get(movement_type, 'STK')
         
         today = datetime.date.today()
-        year = today.year
         
         last_movement = StockMovement.query.filter(
             StockMovement.tenant_id == tenant_id,
@@ -285,15 +297,13 @@ class StockMovementList(MethodView):
         ).order_by(StockMovement.movement_number.desc()).first()
         
         if last_movement:
-            try:
-                last_num = int(last_movement.movement_number.split('-')[-1])
-                new_num = last_num + 1
-            except (ValueError, IndexError):
-                new_num = 1
+            last_num = int(last_movement.movement_number.split('-')[-1])
+            new_num = last_num + 1
         else:
             new_num = 1
 
         return f'{prefix}-{today.year}{today.month:02d}-{new_num:05d}'
+
 
 @blp.route("/counts")
 class InventoryCountList(MethodView):
@@ -328,6 +338,8 @@ class InventoryCountList(MethodView):
     def post(self, count_instance, tenant_id):
         """Create new inventory count."""
         count_number = self._generate_count_number(tenant_id)
+
+        # Set server-side fields
         count_instance.tenant_id = tenant_id
         count_instance.count_number = count_number
         count_instance.created_by_id = get_jwt_identity()
@@ -349,26 +361,26 @@ class InventoryCountList(MethodView):
             db.session.add(line)
 
         db.session.commit()
+
         return count_instance, 201
 
     def _generate_count_number(self, tenant_id):
         """Generate unique count number."""
         today = datetime.date.today()
+
         last_count = InventoryCount.query.filter(
             InventoryCount.tenant_id == tenant_id,
             InventoryCount.count_number.like(f'INV%')
         ).order_by(InventoryCount.count_number.desc()).first()
         
         if last_count:
-            try:
-                last_num = int(last_count.count_number.split('-')[-1])
-                new_num = last_num + 1
-            except (ValueError, IndexError):
-                new_num = 1
+            last_num = int(last_count.count_number.split('-')[-1])
+            new_num = last_num + 1
         else:
             new_num = 1
 
         return f'INV-{today.year}{today.month:02d}-{new_num:05d}'
+
 
 @blp.route("/counts/<int:count_id>")
 class InventoryCountResource(MethodView):
@@ -393,6 +405,7 @@ class InventoryCountResource(MethodView):
         count = InventoryCount.query.filter_by(id=count_id, tenant_id=tenant_id).first()
         if not count:
             abort(404, message="Inventory count not found")
+
         if count.status != 'draft':
             abort(400, message="Only draft counts can be completed.")
 
@@ -428,7 +441,9 @@ class InventoryCountResource(MethodView):
         count.status = 'completed'
         count.completed_date = datetime.date.today()
         db.session.commit()
+
         return count
+
 
 @blp.route("/counts/<int:count_id>/lines/<int:line_id>")
 class InventoryCountLineResource(MethodView):
@@ -444,7 +459,8 @@ class InventoryCountLineResource(MethodView):
         count = InventoryCount.query.filter_by(id=count_id, tenant_id=tenant_id).first()
         if not count:
             abort(404, message="Inventory count not found")
-        if count.status == 'completed':
+
+        if count.status != 'draft':
             abort(400, message="Cannot modify a completed count.")
 
         line = InventoryCountLine.query.filter_by(id=line_id, tenant_id=tenant_id, count_id=count_id).first()
@@ -454,11 +470,14 @@ class InventoryCountLineResource(MethodView):
         if 'counted_quantity' in data:
             line.counted_quantity = data['counted_quantity']
             line.calculate_variance()
+
         if 'notes' in data:
             line.notes = data['notes']
 
         db.session.commit()
+
         return line
+
 
 @blp.route("/reports/stock-summary")
 class StockSummary(MethodView):
@@ -470,6 +489,7 @@ class StockSummary(MethodView):
     @blp.response(200, fields.List(fields.Dict()))
     def get(self, tenant_id):
         """Get stock summary (all products with total stock levels)."""
+
         from backend.models import Product
         from sqlalchemy import func
         
@@ -478,7 +498,8 @@ class StockSummary(MethodView):
             Product.id,
             Product.name,
             Product.code,
-            func.sum(ProductStock.quantity).label('total_quantity')
+            func.sum(ProductStock.quantity).label('total_quantity'),
+            func.sum(ProductStock.reserved_quantity).label('total_reserved')
         ).join(
             ProductStock, Product.id == ProductStock.product_id
         ).filter(
@@ -492,9 +513,12 @@ class StockSummary(MethodView):
                 'product_name': r.name,
                 'product_code': r.code,
                 'total_quantity': r.total_quantity or 0,
-                'available': r.total_quantity or 0
+                'total_reserved': r.total_reserved or 0,
+                'available': (r.total_quantity or 0) - (r.total_reserved or 0)
             })
+
         return summary
+
 
 @blp.route("/reports/low-stock")
 class LowStockReport(MethodView):
@@ -506,31 +530,38 @@ class LowStockReport(MethodView):
     @blp.response(200, fields.List(fields.Dict()))
     def get(self, tenant_id):
         """Get products below reorder level."""
+
+        # Products where available stock <= reorder level
         from backend.models import Product
-        from sqlalchemy import func
+        from sqlalchemy import func, case
         
         results = db.session.query(
             Product.id,
             Product.name,
             Product.code,
             func.sum(ProductStock.quantity).label('total_quantity'),
-            func.max(Product.reorder_level).label('reorder_level')
+            func.sum(ProductStock.reserved_quantity).label('total_reserved'),
+            func.max(ProductStock.reorder_level).label('reorder_level')
         ).join(
             ProductStock, Product.id == ProductStock.product_id
         ).filter(
             ProductStock.tenant_id == tenant_id
         ).group_by(Product.id).having(
-            func.sum(ProductStock.quantity) <= func.max(Product.reorder_level)
+            (func.sum(ProductStock.quantity) - func.coalesce(func.sum(ProductStock.reserved_quantity), 0)) <= func.max(ProductStock.reorder_level)
         ).all()
         
         low_stock = []
         for r in results:
+            available = (r.total_quantity or 0) - (r.total_reserved or 0)
             low_stock.append({
                 'product_id': r.id,
                 'product_name': r.name,
                 'product_code': r.code,
                 'current_stock': r.total_quantity or 0,
+                'reserved': r.total_reserved or 0,
+                'available': available,
                 'reorder_level': r.reorder_level or 0,
-                'needs_reorder': True
+                'needs_reorder': available <= (r.reorder_level or 0)
             })
+
         return low_stock

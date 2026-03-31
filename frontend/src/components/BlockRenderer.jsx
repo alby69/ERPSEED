@@ -143,7 +143,7 @@ function BlockRenderer({ blockId, data = {}, onAction, projectId }) {
   const loadBlock = async (id) => {
     setLoading(true);
     try {
-      const response = await apiFetch(`/api/v1/builder/blocks/${id}`);
+      const response = await apiFetch(`/api/blocks/${id}`);
       if (response.ok) {
         const blockData = await response.json();
         setBlock(blockData);

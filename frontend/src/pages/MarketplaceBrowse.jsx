@@ -51,7 +51,7 @@ function MarketplaceBrowse() {
 
   const loadCategories = async () => {
     try {
-      const res = await apiFetch('/api/v1/marketplace/categories');
+      const res = await apiFetch('/api/marketplace/categories');
       if (res.ok) {
         const data = await res.json();
         setCategories(data);
@@ -71,7 +71,7 @@ function MarketplaceBrowse() {
       if (search) params.append('q', search);
       if (selectedCategory) params.append('category', selectedCategory);
 
-      const res = await apiFetch(`/api/v1/marketplace/blocks?${params}`);
+      const res = await apiFetch(`/api/marketplace/blocks?${params}`);
       if (res.ok) {
         const data = await res.json();
         setListings(data.items || []);

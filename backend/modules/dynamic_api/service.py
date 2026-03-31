@@ -1,7 +1,6 @@
 from .application.handlers import RecordCommandHandler
 from .application.commands.record_commands import CreateRecordCommand, UpdateRecordCommand, DeleteRecordCommand
 from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
-from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
 class DynamicApiServiceWrapper:
     """Wrapper that combines old logic with new command pattern"""

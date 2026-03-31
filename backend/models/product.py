@@ -34,7 +34,7 @@ class Product(BaseModel):
         return f"<Product {self.name}>"
 
 
-class CoreProductStock(BaseModel):
+class ProductStockModel(BaseModel):
     """Stock tracking for products across warehouses."""
 
     __tablename__ = "product_stocks"

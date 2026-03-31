@@ -10,7 +10,9 @@ from composition import (
 )
 
 
+# ============================================================
 # ESEMPIO 1: Creare un Block personalizzato
+# ============================================================
 
 class SoggettoBlock(Block):
     """Block per la gestione dei Soggetti"""
@@ -56,7 +58,9 @@ class IndirizzoBlock(Block):
         )
 
 
+# ============================================================
 # ESEMPIO 2: Creare un Container
+# ============================================================
 
 def create_anagrafica_container():
     """Crea il container per l'anagrafica"""
@@ -79,7 +83,9 @@ def create_anagrafica_container():
     return container
 
 
+# ============================================================
 # ESEMPIO 3: Creare un Robot
+# ============================================================
 
 def create_crm_robot():
     """Crea il robot CRM completo"""
@@ -100,7 +106,9 @@ def create_crm_robot():
     return robot
 
 
+# ============================================================
 # ESEMPIO 4: Utilizzare Eventi
+# ============================================================
 
 def setup_event_handlers():
     """Configura gli handler per gli eventi"""
@@ -118,7 +126,9 @@ def setup_event_handlers():
     })
 
 
+# ============================================================
 # ESEMPIO 5: Utilizzare Hook
+# ============================================================
 
 @hook("soggetto.before_create", priority=10, description="Valida dati soggetto")
 def valida_soggetto(data):
@@ -134,7 +144,9 @@ def notifica_nuovo_soggetto(entity):
     print(f"[Notifica] Nuovo soggetto creato: {entity}")
 
 
+# ============================================================
 # ESEMPIO 6: Init completo del sistema
+# ============================================================
 
 def initialize_composition_system():
     """Inizializza il sistema di composizione"""
@@ -160,7 +172,9 @@ def initialize_composition_system():
     return crm
 
 
+# ============================================================
 # MAIN
+# ============================================================
 
 if __name__ == "__main__":
     # Inizializza il sistema

@@ -21,7 +21,7 @@ export const NavigationProvider = ({
     try {
       // Try to fetch custom navigation from API
       const endpoint = projectId 
-        ? `/api/v1/projects/${projectId}/navigation`
+        ? `/api/projects/${projectId}/navigation`
         : '/api/navigation';
       
       const response = await apiFetch(endpoint);

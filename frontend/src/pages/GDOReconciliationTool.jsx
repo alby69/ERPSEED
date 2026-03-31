@@ -41,7 +41,7 @@ const GDOReconciliationTool = () => {
     formData.append('config', JSON.stringify(config));
 
     try {
-      const response = await apiFetch('/api/v1/gdo/process', {
+      const response = await apiFetch('/api/gdo/process', {
         method: 'POST',
         body: formData,
       });
@@ -59,7 +59,7 @@ const GDOReconciliationTool = () => {
 
   const downloadExcel = async () => {
     try {
-      const response = await apiFetch('/api/v1/gdo/export', {
+      const response = await apiFetch('/api/gdo/export', {
         method: 'POST',
         body: JSON.stringify(results)
       });
@@ -79,7 +79,7 @@ const GDOReconciliationTool = () => {
   const saveResults = async () => {
     try {
       setLoading(true);
-      const response = await apiFetch('/api/v1/gdo/save', {
+      const response = await apiFetch('/api/gdo/save', {
         method: 'POST',
         body: JSON.stringify({
           project_id: projectId,

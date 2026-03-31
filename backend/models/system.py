@@ -349,14 +349,12 @@ class SysReadModel(BaseModel):
     record_id = db.Column(db.Integer, nullable=False, index=True)
     project_id = db.Column(db.Integer, nullable=False, index=True)
 
-
     # The actual data in JSONB format for PostgreSQL performance
     data = db.Column(db.JSON().with_variant(JSONB, "postgresql"), nullable=False)
 
     @property
     def json_data(self):
         return self.data
-
 
     # Metadata for filtering/versioning
     version = db.Column(db.Integer, default=1)

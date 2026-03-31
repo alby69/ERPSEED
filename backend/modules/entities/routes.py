@@ -23,10 +23,15 @@ from backend.core.utils.utils import paginate, apply_filters, apply_sorting
 from backend.core.decorators.decorators import tenant_required
 from backend.core.services.generic_service import generic_service
 
+
 soggetto_blp = Blueprint("soggetti", __name__, description="Operazioni su Soggetti")
 ruolo_blp = Blueprint("ruoli", __name__, description="Operazioni su Ruoli")
 indirizzo_blp = Blueprint("indirizzi", __name__, description="Operazioni su Indirizzi")
 contatto_blp = Blueprint("contatti", __name__, description="Operazioni su Contatti")
+
+
+# ==================== SOGGETTO ====================
+
 
 @soggetto_blp.route("/soggetti")
 class SoggettoList(MethodView):
@@ -49,11 +54,14 @@ class SoggettoList(MethodView):
     @soggetto_blp.response(201, SoggettoSchema)
     def post(self, data, tenant_id):
         """Crea un nuovo soggetto"""
+
         # Estrai ruoli, indirizzi, contatti dalla richiesta
         ruoli_data = data.pop("ruoli", [])
         indirizzi_data = data.pop("indirizzi", [])
         contatti_data = data.pop("contatti", [])
+
         data["tenant_id"] = tenant_id
+
         # Genera codice automatico se non fornito
         if not data.get("codice"):
             last = (
@@ -63,11 +71,13 @@ class SoggettoList(MethodView):
             )
             next_num = (last.id + 1) if last else 1
             data["codice"] = f"SOG{next_num:05d}"
+
         soggetto = Soggetto()
         for key, value in data.items():
             setattr(soggetto, key, value)
         db.session.add(soggetto)
         db.session.flush()  # Per ottenere l'ID
+
         # Aggiungi ruoli
         for ruolo_data in ruoli_data:
             sr = SoggettoRuolo()
@@ -76,6 +86,7 @@ class SoggettoList(MethodView):
             sr.stato=ruolo_data.get("stato", "attivo")
             sr.data_inizio=ruolo_data.get("data_inizio")
             db.session.add(sr)
+
         # Aggiungi indirizzi
         for ind_data in indirizzi_data:
             # Crea o riutilizza indirizzo
@@ -92,12 +103,14 @@ class SoggettoList(MethodView):
             indirizzo.tipo=ind_data.get("tipo")
             db.session.add(indirizzo)
             db.session.flush()
+
             si = SoggettoIndirizzo()
             si.soggetto_id=soggetto.id
             si.indirizzo_id=indirizzo.id
             si.tipo_riferimento=ind_data.get("tipo_riferimento")
             si.is_preferred=ind_data.get("is_preferred", False)
             db.session.add(si)
+
         # Aggiungi contatti
         for cont_data in contatti_data:
             contatto = Contatto()
@@ -107,14 +120,18 @@ class SoggettoList(MethodView):
             contatto.tipo_utilizzo=cont_data.get("tipo_utilizzo")
             contatto.is_preferred=cont_data.get("is_preferred", False)
             db.session.add(contatto)
+            db.session.flush()
+
             sc = SoggettoContatto()
             sc.soggetto_id=soggetto.id
             sc.contatto_id=contatto.id
             sc.tipo_riferimento=cont_data.get("tipo_riferimento")
             sc.is_primary=cont_data.get("is_primary", False)
             db.session.add(sc)
+
         db.session.commit()
         return soggetto
+
 
 @soggetto_blp.route("/soggetti/<int:soggetto_id>")
 class SoggettoResource(MethodView):
@@ -131,21 +148,24 @@ class SoggettoResource(MethodView):
     @soggetto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @soggetto_blp.arguments(SoggettoSchema)
+    @soggetto_blp.arguments(SoggettoCreateSchema)
     @soggetto_blp.response(200, SoggettoSchema)
     def put(self, data, soggetto_id, tenant_id):
         """Aggiorna soggetto"""
         soggetto = Soggetto.query.filter_by(id=soggetto_id, tenant_id=tenant_id).first()
         if not soggetto:
             abort(404, message="Soggetto not found")
+
         # Estrai e gestisci dati nidificati
         ruoli_data = data.pop("ruoli", None)
         indirizzi_data = data.pop("indirizzi", None)
         contatti_data = data.pop("contatti", None)
+
         # Aggiorna i campi principali del soggetto
         for key, value in data.items():
             if hasattr(soggetto, key):
                 setattr(soggetto, key, value)
+
         # Gestisci aggiornamento ruoli (sostituzione completa)
         if ruoli_data is not None:
             SoggettoRuolo.query.filter_by(soggetto_id=soggetto.id).delete()
@@ -154,6 +174,7 @@ class SoggettoResource(MethodView):
                 if ruolo:
                     sr = SoggettoRuolo(soggetto_id=soggetto.id, ruolo_id=ruolo.id)
                     db.session.add(sr)
+
         # Gestisci aggiornamento indirizzi (sostituzione completa)
         if indirizzi_data is not None:
             # Eliminiamo i vecchi link, ma non gli indirizzi stessi che potrebbero essere condivisi.
@@ -173,6 +194,7 @@ class SoggettoResource(MethodView):
                     is_preferred=ind_data.get("is_preferred", False),
                 )
                 db.session.add(si)
+
         # Gestisci aggiornamento contatti (sostituzione completa)
         if contatti_data is not None:
             SoggettoContatto.query.filter_by(soggetto_id=soggetto.id).delete()
@@ -183,13 +205,15 @@ class SoggettoResource(MethodView):
                         setattr(contatto, k, v)
                 contatto.tenant_id = tenant_id
                 db.session.add(contatto)
+                db.session.flush()
                 sc = SoggettoContatto(
-                    contatto_id=contatto.id,
                     soggetto_id=soggetto.id,
+                    contatto_id=contatto.id,
                     tipo_riferimento=cont_data.get("tipo_riferimento"),
                     is_primary=cont_data.get("is_primary", False),
                 )
                 db.session.add(sc)
+
         db.session.commit()
         return soggetto
 
@@ -211,6 +235,10 @@ class SoggettoResource(MethodView):
             not_found_message="Soggetto not found"
         )
         return "", 204
+
+
+# ==================== RUOLO ====================
+
 
 @ruolo_blp.route("/ruoli")
 class RuoloList(MethodView):
@@ -234,6 +262,7 @@ class RuoloList(MethodView):
     def post(self, data, tenant_id):
         """Crea un nuovo ruolo"""
         return generic_service.create_tenant_resource(Ruolo, data, tenant_id, unique_fields=['codice'])
+
 
 @ruolo_blp.route("/ruoli/<int:ruolo_id>")
 class RuoloResource(MethodView):
@@ -275,6 +304,10 @@ class RuoloResource(MethodView):
         )
         return "", 204
 
+
+# ==================== INDIRIZZO ====================
+
+
 @indirizzo_blp.route("/indirizzi")
 class IndirizzoList(MethodView):
     @indirizzo_blp.doc(security=[{"jwt": []}])
@@ -297,6 +330,7 @@ class IndirizzoList(MethodView):
     def post(self, data, tenant_id):
         """Crea un nuovo indirizzo"""
         return generic_service.create_tenant_resource(Indirizzo, data, tenant_id)
+
 
 @indirizzo_blp.route("/indirizzi/<int:indirizzo_id>")
 class IndirizzoResource(MethodView):
@@ -338,6 +372,10 @@ class IndirizzoResource(MethodView):
         )
         return "", 204
 
+
+# ==================== CONTATTO ====================
+
+
 @contatto_blp.route("/contatti")
 class ContattoList(MethodView):
     @contatto_blp.doc(security=[{"jwt": []}])
@@ -360,6 +398,7 @@ class ContattoList(MethodView):
     def post(self, data, tenant_id):
         """Crea un nuovo contatto"""
         return generic_service.create_tenant_resource(Contatto, data, tenant_id)
+
 
 @contatto_blp.route("/contatti/<int:contatto_id>")
 class ContattoResource(MethodView):

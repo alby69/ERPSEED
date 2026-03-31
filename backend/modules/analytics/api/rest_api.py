@@ -9,17 +9,20 @@ from backend.models import SysChart, SysDashboard, SysModel, ChartLibraryConfig
 from backend.extensions import db
 from backend.core.schemas.schemas import SysChartSchema, SysDashboardSchema, ChartLibraryConfigSchema
 from backend.core.utils.utils import get_table_object
-from backend.services import DynamicApiService
+from backend.modules.dynamic_api.service import get_dynamic_api_service as DynamicApiService
 from backend.core.services.generic_service import generic_service
 from backend.core.utils.utils import paginate, serialize_value
 from backend.modules.analytics.service import get_analytics_service
 
 dynamic_service = DynamicApiService()
+
 blp = Blueprint("analytics", __name__, description="BI & Analytics Operations")
 
+
 def get_analytics_svc():
-    from backend.modules.analytics.service import get_analytics_service
-    return get_analytics_service()
+    from backend.modules.analytics.service.api import AnalyticsService
+    return AnalyticsService()
+
 
 # --- CRUD per Chart Libraries ---
 @blp.route("/chart-libraries")
@@ -48,7 +51,9 @@ class ChartLibraryList(MethodView):
         
         if not result.get("success"):
             abort(400, message=result.get("error", "Failed to create chart library"))
+
         return result["data"], 201
+
 
 @blp.route("/chart-libraries/<int:library_id>")
 class ChartLibraryResource(MethodView):
@@ -73,7 +78,7 @@ class ChartLibraryResource(MethodView):
             **payload
         })
         if not result.get("success"):
-            abort(400, message=result.get("error", "Failed to update chart library"))
+            abort(404, message=result.get("error", "Chart library not found"))
         return result["data"]
 
     @blp.doc(security=[{"jwt": []}])
@@ -82,8 +87,9 @@ class ChartLibraryResource(MethodView):
     def delete(self, library_id):
         result = get_analytics_svc().execute({"command": "DeleteChartLibrary", "entity_id": library_id})
         if not result.get("success"):
-            abort(400, message=result.get("error", "Failed to delete chart library"))
+            abort(404, message=result.get("error", "Chart library not found"))
         return ""
+
 
 @blp.route("/chart-libraries/default")
 class ChartLibraryDefault(MethodView):
@@ -96,6 +102,7 @@ class ChartLibraryDefault(MethodView):
         if not default_lib:
             return {"library_name": "chartjs", "is_default": True, "is_active": True}
         return default_lib
+
 
 # --- CRUD per Grafici ---
 @blp.route("/sys-charts")
@@ -119,9 +126,12 @@ class SysChartList(MethodView):
             "command": "CreateChart",
             **payload
         })
+
         if not result.get("success"):
             abort(400, message=result.get("error", "Failed to create chart"))
+
         return result["data"], 201
+
 
 @blp.route("/sys-charts/<int:chart_id>")
 class SysChartResource(MethodView):
@@ -146,7 +156,7 @@ class SysChartResource(MethodView):
             **payload
         })
         if not result.get("success"):
-            abort(400, message=result.get("error", "Failed to update chart"))
+            abort(404, message=result.get("error", "Chart not found"))
         return result["data"]
 
     @blp.doc(security=[{"jwt": []}])
@@ -155,8 +165,9 @@ class SysChartResource(MethodView):
     def delete(self, chart_id):
         result = get_analytics_svc().execute({"command": "DeleteChart", "entity_id": chart_id})
         if not result.get("success"):
-            abort(400, message=result.get("error", "Failed to delete chart"))
+            abort(404, message=result.get("error", "Chart not found"))
         return ""
+
 
 # --- CRUD per Dashboard ---
 @blp.route("/sys-dashboards")
@@ -171,6 +182,7 @@ class SysDashboardList(MethodView):
             return items, 200, headers
         except Exception as e:
             import logging
+
             logging.warning(f"Dashboard query failed (returning empty list): {e}")
             return [], 200, {}
 
@@ -180,6 +192,7 @@ class SysDashboardList(MethodView):
     @blp.response(201, SysDashboardSchema)
     def post(self, dashboard_data):
         return generic_service.create_resource(SysDashboard, dashboard_data)
+
 
 @blp.route("/sys-dashboards/<int:dashboard_id>")
 class SysDashboardResource(MethodView):
@@ -200,13 +213,6 @@ class SysDashboardResource(MethodView):
             SysDashboard, dashboard_id, dashboard_data, not_found_message="Dashboard not found"
         )
 
-    @blp.doc(security=[{"jwt": []}])
-    @jwt_required()
-    @blp.response(204)
-    def delete(self, dashboard_id):
-        return generic_service.delete_resource(
-            SysDashboard, dashboard_id, not_found_message="Dashboard not found"
-        )
 
 # --- Motore di Query Analytics ---
 @blp.route("/analytics/chart-data/<int:chart_id>")
@@ -217,6 +223,7 @@ class ChartData(MethodView):
     def get(self, chart_id):
         """Esegue la query di aggregazione per un grafico specifico."""
         chart = SysChart.query.get_or_404(chart_id)
+
         # Recupera il modello sorgente
         sys_model = SysModel.query.get(chart.model_id)
         if not sys_model:
@@ -232,6 +239,7 @@ class ChartData(MethodView):
         def apply_date_filter(q):
             date_from = request.args.get("date_from")
             date_to = request.args.get("date_to")
+
             date_col = None
             if "date" in table.c:
                 date_col = table.c.date
@@ -272,6 +280,7 @@ class ChartData(MethodView):
 
             # Applica filtro data globale
             query = apply_date_filter(query)
+
             # Applica filtri dinamici
             query = apply_dynamic_filters(query)
 
@@ -327,10 +336,12 @@ class ChartData(MethodView):
 
         # Applica filtro data globale
         query = apply_date_filter(query)
+
         # Applica filtri dinamici
         query = apply_dynamic_filters(query)
 
         query = query.group_by(x_col).order_by(desc("value"))
+
         results = db.session.execute(query).mappings().all()
 
         # Formatta per il frontend (es. Chart.js)

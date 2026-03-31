@@ -15,10 +15,6 @@ class RecordCommandHandler:
         schema_name = f"project_{cmd.project_id}"
         table = get_table_object(cmd.model_name, schema=schema_name)
 
-
-        schema_name = f"project_{cmd.project_id}"
-        table = get_table_object(cmd.model_name, schema=schema_name)
-
         # Simple validation & mapping (extracted from old service)
         validated_data = {}
         for field in sys_model.fields:
@@ -34,29 +30,16 @@ class RecordCommandHandler:
         db.session.commit()
         result_dict = {k: serialize_value(v) for k, v in dict(result).items()}
 
-
-        stmt = insert(table).values(validated_data).returning(table)
-        result = db.session.execute(stmt).mappings().one()
-
-        db.session.commit()
-        result_dict = {k: serialize_value(v) for k, v in dict(result).items()}
-
         try:
             on_record_created(cmd.model_name, result.id, result_dict, cmd.project_id)
         except Exception:
             pass
-
 
         return result_dict
 
     def handle_update(self, cmd):
         schema_name = f"project_{cmd.project_id}"
         table = get_table_object(cmd.model_name, schema=schema_name)
-
-        stmt = update(table).where(table.c.id == cmd.item_id).values(cmd.data).returning(table)
-        result = db.session.execute(stmt).mappings().one()
-        db.session.commit()
-
 
         stmt = update(table).where(table.c.id == cmd.item_id).values(cmd.data).returning(table)
         result = db.session.execute(stmt).mappings().one()
@@ -72,11 +55,6 @@ class RecordCommandHandler:
     def handle_delete(self, cmd):
         schema_name = f"project_{cmd.project_id}"
         table = get_table_object(cmd.model_name, schema=schema_name)
-
-        stmt = delete(table).where(table.c.id == cmd.item_id)
-        db.session.execute(stmt)
-        db.session.commit()
-
 
         stmt = delete(table).where(table.c.id == cmd.item_id)
         db.session.execute(stmt)

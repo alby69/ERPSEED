@@ -9,7 +9,6 @@ def sync_to_read_model(event):
     """
     Sync record data to SysReadModel (JSONB).
 
-
     Expected event payload:
     {
         "model": str,
@@ -21,12 +20,10 @@ def sync_to_read_model(event):
     payload = event.payload
     event_type = event.event_type
 
-
     model_name = payload.get("model")
     record_id = payload.get("record_id")
     project_id = payload.get("project_id")
     data = payload.get("data")
-
 
     if not all([model_name, record_id, project_id]):
         logger.warning(f"Invalid payload for read model sync: {payload}")
@@ -45,15 +42,11 @@ def sync_to_read_model(event):
             # Since we are using SQLAlchemy and might be on SQLite in dev,
             # we handle upsert carefully.
 
-            # Since we are using SQLAlchemy and might be on SQLite in dev,
-            # we handle upsert carefully.
-
             existing = db.session.query(SysReadModel).filter_by(
                 model_name=model_name,
                 record_id=record_id,
                 project_id=project_id
             ).first()
-
 
             if existing:
                 existing.data = data
@@ -68,7 +61,6 @@ def sync_to_read_model(event):
                 )
                 db.session.add(new_read_model)
                 logger.debug(f"Created read model for {model_name}:{record_id}")
-
 
         db.session.commit()
     except Exception as e:
