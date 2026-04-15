@@ -16,13 +16,12 @@ Tipi:
 
 from backend.core.models.base import BaseModel
 from backend.extensions import db
-from backend.infrastructure.builder.models import Block  # noqa: F401 - needed for SQLAlchemy relationship
 
 module_models = db.Table(
     "module_models",
     db.Column("module_id", db.Integer, db.ForeignKey("modules.id"), primary_key=True),
     db.Column(
-        "sysmodel_id", db.Integer, db.ForeignKey("sys_models.id"), primary_key=True
+        "sysmodelId", db.Integer, db.ForeignKey("sys_models.id"), primary_key=True
     ),
     info={"bind_key": None},
 )
@@ -48,7 +47,7 @@ module_packages = db.Table(
 module_projects = db.Table(
     "module_projects",
     db.Column("module_id", db.Integer, db.ForeignKey("modules.id"), primary_key=True),
-    db.Column("project_id", db.Integer, db.ForeignKey("projects.id"), primary_key=True),
+    db.Column("projectId", db.Integer, db.ForeignKey("projects.id"), primary_key=True),
     db.Column("is_enabled", db.Boolean, default=True),
     db.Column("assigned_at", db.DateTime, default=db.func.now()),
     info={"bind_key": None},
@@ -162,7 +161,7 @@ class Module(BaseModel):
             "icon": self.icon,
             "menu_position": self.menu_position,
             "api_definition": self.api_definition or {},
-            "project_ids": [p.id for p in self.projects],
+            "projectIds": [p.id for p in self.projects],
             "contained_module_ids": [m.id for m in self.contained_modules],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

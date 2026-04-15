@@ -1,20 +1,69 @@
 """
-Composition Module - Hook System for ERPE.
+Composition Module - Sistema di Composizione per ERPE.
 
-DEPRECATED: Only HookManager is kept for backward compatibility.
-The rest of this module was experimental scaffolding and has been removed.
-
-For CQRS patterns, use:
-- backend.shared.events for domain events
-- backend.domain.* for domain models
-- backend.application.* for command handlers
+Fornisce le classi base per costruire il sistema modulare:
+- Block: mattoncino atomico
+- Container: aggregatore di blocchi
+- Robot: modulo funzionale completo
+- EventBus: comunicazione asincrona
+- HookSystem: callback per automazione
+- ExpressionEngine: valutazione espressioni dinamiche
+- HotReloader: ricarica moduli a runtime
+- AdaptiveModule: moduli modificabili a runtime
 """
 
+from .registry import Block, BlockRegistry, BlockMetadata, BlockType, register_block
+from .container import Container, ContainerConfig
+from .robot import Robot, RobotRegistry, RobotConfig
+from .events import EventBus, SystemEvents, emit
 from .hooks import Hook, HookManager, HookType, hook
+from .expression import ExpressionEngine, Formula, FormulaRegistry, formula
+from .hot_reload import (
+    ModuleWatcher,
+    HotReloader,
+    AdaptiveModule,
+    AdaptiveModuleRegistry,
+    hot_reload
+)
 
 __all__ = [
+    # Block
+    'Block',
+    'BlockRegistry',
+    'BlockMetadata',
+    'BlockType',
+    'register_block',
+
+    # Container
+    'Container',
+    'ContainerConfig',
+
+    # Robot
+    'Robot',
+    'RobotRegistry',
+    'RobotConfig',
+
+    # Events
+    'EventBus',
+    'SystemEvents',
+    'emit',
+
+    # Hooks
     'Hook',
     'HookManager',
     'HookType',
     'hook',
+
+    # Expression Engine
+    'ExpressionEngine',
+    'Formula',
+    'FormulaRegistry',
+    'formula',
+
+    # Hot Reload
+    'ModuleWatcher',
+    'HotReloader',
+    'AdaptiveModule',
+    'AdaptiveModuleRegistry',
+    'hot_reload',
 ]

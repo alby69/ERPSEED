@@ -27,7 +27,7 @@ function CustomModulesPage() {
         setLoading(true);
         try {
             const url = projectId
-                ? `/api/v1/modules?project_id=${projectId}`
+                ? `/api/v1/modules?projectId=${projectId}`
                 : '/api/v1/modules';
             const response = await apiFetch(url);
             const data = await response.json();

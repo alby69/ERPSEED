@@ -6,8 +6,8 @@ from .base import BaseModel
 
 project_members = db.Table(
     "project_members",
-    db.Column("user_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
-    db.Column("project_id", db.Integer, db.ForeignKey("projects.id"), primary_key=True),
+    db.Column("userId", db.Integer, db.ForeignKey("users.id"), primary_key=True),
+    db.Column("projectId", db.Integer, db.ForeignKey("projects.id"), primary_key=True),
 )
 
 
@@ -48,8 +48,8 @@ class Project(BaseModel):
     user_memberships = db.relationship(
         "TenantMember",
         secondary=project_members,
-        primaryjoin="Project.id == project_members.c.project_id",
-        secondaryjoin="TenantMember.user_id == project_members.c.user_id",
+        primaryjoin="Project.id == project_members.c.projectId",
+        secondaryjoin="TenantMember.userId == project_members.c.userId",
         viewonly=True,
     )
 

@@ -35,7 +35,7 @@ export const apiFetch = async (endpoint, options = {}) => {
     const refreshToken = getToken('refresh_token');
     if (refreshToken) {
       try {
-        const refreshRes = await fetch(`${BASE_URL}/api/v1/auth/refresh`, {
+        const refreshRes = await fetch(`${BASE_URL}/api/v1/auth/refreshes`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${refreshToken}`

@@ -1,7 +1,7 @@
 from backend import create_app
 from backend.extensions import db
 from backend.models import SysModel, SysField, Project, User
-from backend.shared.utils.utils import generate_create_table_sql
+from backend.core.utils.utils import generate_create_table_sql
 from sqlalchemy import text
 
 def seed_kpi(app=None):
@@ -40,7 +40,7 @@ def seed_kpi(app=None):
             title="Dashboard KPIs",
             description="KPIs for the main dashboard",
             permissions='{"read": ["admin", "user"], "write": ["admin"]}',
-            project_id=project.id
+            projectId=project.id
         )
         db.session.add(kpi_model)
         db.session.commit()
@@ -55,7 +55,7 @@ def seed_kpi(app=None):
         ]
 
         for f in fields_data:
-            field = SysField(model_id=kpi_model.id, **f)
+            field = SysField(modelId=kpi_model.id, **f)
             db.session.add(field)
 
         db.session.commit()

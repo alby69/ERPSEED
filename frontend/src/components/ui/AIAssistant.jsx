@@ -82,7 +82,7 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
 
   const loadConversationHistory = async () => {
     try {
-      const response = await apiFetch(`/api/ai/conversations?project_id=${projectId || 1}`, {
+      const response = await apiFetch(`/api/ai/conversations?projectId=${projectId || 1}`, {
         method: 'GET',
       });
       if (response.ok) {

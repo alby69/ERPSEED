@@ -13,7 +13,7 @@ from flask_smorest import Blueprint, abort
 from marshmallow import fields
 
 from backend.extensions import db
-from backend.services.dynamic_api_service import DynamicApiService
+from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
 blp = Blueprint("module_api", __name__, url_prefix="/api/modules")
 
@@ -24,7 +24,7 @@ class ModuleApiService:
     def __init__(self):
         self.dynamic_api = DynamicApiService()
 
-    def get_module_by_name(self, module_name, project_id):
+    def get_module_by_name(self, module_name, projectId):
         """Trova un modulo pubblicato per nome."""
         from backend.core.models.module import Module
         from backend.models import Project
@@ -32,7 +32,7 @@ class ModuleApiService:
         module = Module.query.filter(
             Module.name == module_name,
             Module.status == "published",
-        ).join(Module.projects).filter(Project.id == project_id).first() # type: ignore
+        ).join(Module.projects).filter(Project.id == projectId).first() # type: ignore
 
         if not module:
             abort(404, message=f"Module '{module_name}' not found or not published")
@@ -59,18 +59,18 @@ class ModuleApiRoot(MethodView):
     @blp.response(200, {"type": "object"})
     def get(self, module_name):
         """Info sul modulo e modelli disponibili."""
-        user_id = get_jwt_identity()
+        userId = get_jwt_identity()
         from backend.models import User
 
-        user = db.session.get(User, user_id)
+        user = db.session.get(User, userId)
 
         if not user:
             abort(401, message="User not found")
 
         # Trova il progetto dell'utente
-        project_id = getattr(user, "current_project_id", None) or 1
+        projectId = getattr(user, "current_projectId", None) or 1
 
-        module = module_api_service.get_module_by_name(module_name, project_id)
+        module = module_api_service.get_module_by_name(module_name, projectId)
         models = module_api_service.get_module_models(module)
 
         return {
@@ -107,18 +107,18 @@ class ModuleModelList(MethodView):
     @blp.response(200, {"type": "object"})
     def get(self, module_name, model_name):
         """Lista record del modello."""
-        user_id = get_jwt_identity()
+        userId = get_jwt_identity()
         from backend.models import User
 
-        user = db.session.get(User, user_id)
+        user = db.session.get(User, userId)
 
         if not user:
             abort(401, message="User not found")
 
-        project_id = getattr(user, "current_project_id", None) or 1
+        projectId = getattr(user, "current_projectId", None) or 1
 
         # Verifica che il modello appartenga al modulo
-        module = module_api_service.get_module_by_name(module_name, project_id)
+        module = module_api_service.get_module_by_name(module_name, projectId)
         models = module_api_service.get_module_models(module)
         model_names = [m.name for m in models]
 
@@ -132,7 +132,7 @@ class ModuleModelList(MethodView):
         per_page = request.args.get("per_page", 10, type=int)
 
         result, headers = module_api_service.dynamic_api.list_records(
-            project_id=project_id, model_name=model_name, page=page, per_page=per_page
+            projectId=projectId, model_name=model_name, page=page, per_page=per_page
         )
 
         return result, 200, headers
@@ -142,18 +142,18 @@ class ModuleModelList(MethodView):
     @blp.response(201, {"type": "object"})
     def post(self, module_name, model_name):
         """Crea un nuovo record nel modello."""
-        user_id = get_jwt_identity()
+        userId = get_jwt_identity()
         from backend.models import User
 
-        user = db.session.get(User, user_id)
+        user = db.session.get(User, userId)
 
         if not user:
             abort(401, message="User not found")
 
-        project_id = getattr(user, "current_project_id", None) or 1
+        projectId = getattr(user, "current_projectId", None) or 1
 
         # Verifica che il modello appartenga al modulo
-        module = module_api_service.get_module_by_name(module_name, project_id)
+        module = module_api_service.get_module_by_name(module_name, projectId)
         models = module_api_service.get_module_models(module)
         model_names = [m.name for m in models]
 
@@ -165,7 +165,7 @@ class ModuleModelList(MethodView):
         data = request.get_json() or {}
 
         result, status = module_api_service.dynamic_api.create_record(
-            project_id=project_id, model_name=model_name, data=data
+            projectId=projectId, model_name=model_name, data=data
         )
 
         if status != 201:
@@ -173,27 +173,27 @@ class ModuleModelList(MethodView):
         return result
 
 
-@blp.route("/<string:module_name>/<string:model_name>/<int:item_id>")
+@blp.route("/<string:module_name>/<string:model_name>/<int:itemId>")
 class ModuleModelDetail(MethodView):
     """Dettaglio, aggiornamento e cancellazione record."""
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, {"type": "object"})
-    def get(self, module_name, model_name, item_id):
+    def get(self, module_name, model_name, itemId):
         """Leggi un record."""
-        user_id = get_jwt_identity()
+        userId = get_jwt_identity()
         from backend.models import User
 
-        user = db.session.get(User, user_id)
+        user = db.session.get(User, userId)
 
         if not user:
             abort(401, message="User not found")
 
-        project_id = getattr(user, "current_project_id", None) or 1
+        projectId = getattr(user, "current_projectId", None) or 1
 
         # Verifica che il modello appartenga al modulo
-        module = module_api_service.get_module_by_name(module_name, project_id)
+        module = module_api_service.get_module_by_name(module_name, projectId)
         models = module_api_service.get_module_models(module)
         model_names = [m.name for m in models]
 
@@ -203,7 +203,7 @@ class ModuleModelDetail(MethodView):
             )
 
         result = module_api_service.dynamic_api.get_record(
-            project_id=project_id, model_name=model_name, item_id=item_id
+            projectId=projectId, model_name=model_name, itemId=itemId
         )
 
         return result
@@ -211,20 +211,20 @@ class ModuleModelDetail(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, {"type": "object"})
-    def put(self, module_name, model_name, item_id):
+    def put(self, module_name, model_name, itemId):
         """Aggiorna un record."""
-        user_id = get_jwt_identity()
+        userId = get_jwt_identity()
         from backend.models import User
 
-        user = db.session.get(User, user_id)
+        user = db.session.get(User, userId)
 
         if not user:
             abort(401, message="User not found")
 
-        project_id = getattr(user, "current_project_id", None) or 1
+        projectId = getattr(user, "current_projectId", None) or 1
 
         # Verifica che il modello appartenga al modulo
-        module = module_api_service.get_module_by_name(module_name, project_id)
+        module = module_api_service.get_module_by_name(module_name, projectId)
         models = module_api_service.get_module_models(module)
         model_names = [m.name for m in models]
 
@@ -236,7 +236,7 @@ class ModuleModelDetail(MethodView):
         data = request.get_json() or {}
 
         result = module_api_service.dynamic_api.update_record(
-            project_id=project_id, model_name=model_name, item_id=item_id, data=data
+            projectId=projectId, model_name=model_name, itemId=itemId, data=data
         )
 
         return result
@@ -244,20 +244,20 @@ class ModuleModelDetail(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
-    def delete(self, module_name, model_name, item_id):
+    def delete(self, module_name, model_name, itemId):
         """Elimina un record."""
-        user_id = get_jwt_identity()
+        userId = get_jwt_identity()
         from backend.models import User
 
-        user = db.session.get(User, user_id)
+        user = db.session.get(User, userId)
 
         if not user:
             abort(401, message="User not found")
 
-        project_id = getattr(user, "current_project_id", None) or 1
+        projectId = getattr(user, "current_projectId", None) or 1
 
         # Verifica che il modello appartenga al modulo
-        module = module_api_service.get_module_by_name(module_name, project_id)
+        module = module_api_service.get_module_by_name(module_name, projectId)
         models = module_api_service.get_module_models(module)
         model_names = [m.name for m in models]
 
@@ -267,7 +267,7 @@ class ModuleModelDetail(MethodView):
             )
 
         module_api_service.dynamic_api.delete_record(
-            project_id=project_id, model_name=model_name, item_id=item_id
+            projectId=projectId, model_name=model_name, itemId=itemId
         )
 
         return "", 204

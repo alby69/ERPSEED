@@ -1,3 +1,4 @@
+import os
 from backend import create_app
 from backend.extensions import socketio
 

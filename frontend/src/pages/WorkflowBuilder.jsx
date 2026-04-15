@@ -82,7 +82,7 @@ const WorkflowBuilder = () => {
 
   const fetchWorkflows = async () => {
     try {
-      const response = await apiFetch(`/workflows?project_id=${projectId || ''}`);
+      const response = await apiFetch(`/workflows?projectId=${projectId || ''}`);
       const data = await response.json();
       setWorkflows(data);
     } catch (error) {

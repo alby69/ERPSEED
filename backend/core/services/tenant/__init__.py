@@ -21,7 +21,7 @@ from backend.core.services.tenant.tenant_filter import (
     get_current_tenant,
     get_current_user,
     get_current_tenant_id,
-    get_current_user_id,
+    get_current_userId,
 )
 
 __all__ = [
@@ -32,5 +32,5 @@ __all__ = [
     'get_current_tenant',
     'get_current_user',
     'get_current_tenant_id',
-    'get_current_user_id',
+    'get_current_userId',
 ]

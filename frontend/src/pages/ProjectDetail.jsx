@@ -42,7 +42,7 @@ function ProjectDetail() {
         setProject(projectData);
 
         // Fetch all tasks for the project, assuming pagination is not needed for the board
-        const tasksRes = await apiFetch(`/project-tasks?project_id=${id}&per_page=1000`);
+        const tasksRes = await apiFetch(`/project-tasks?projectId=${id}&per_page=1000`);
         const tasksData = await tasksRes.json();
         setTasks(tasksData);
 

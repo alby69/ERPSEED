@@ -21,7 +21,7 @@ const ProjectLayout = () => {
             Promise.all([
                 apiFetch(`/projects/${projectId}/models`),
                 apiFetch(`/projects/${projectId}`),
-                apiFetch(`/api/v1/modules?project_id=${projectId}&status=published`)
+                apiFetch(`/api/v1/modules?projectId=${projectId}&status=published`)
             ])
                 .then(([modelsRes, projectRes, modulesRes]) => {
                     if (!modelsRes.ok) throw new Error('Failed to fetch project models');

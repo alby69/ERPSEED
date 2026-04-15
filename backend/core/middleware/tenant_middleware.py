@@ -6,18 +6,6 @@ from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from backend.core.models import Tenant
 from backend.core.services.tenant import TenantContext
 
-def _get_tenant_id_from_jwt():
-    from flask_jwt_extended import get_jwt
-    try:
-        claims = get_jwt()
-        return claims.get('tenant_id', 1)
-    except Exception:
-        from backend.core.services.tenant_context import TenantContext
-        tenant = TenantContext.get_tenant()
-        return tenant.id if tenant else 1
-
-
-
 
 class TenantMiddleware:
     """
@@ -53,28 +41,18 @@ class TenantMiddleware:
     def _extract_tenant():
         """
         Extract tenant from various sources:
-        1. JWT token (Primary & Secure)
+        1. X-Tenant-ID header (for API)
         2. Subdomain (for UI)
+        3. JWT token
         """
-        # Method 1: From JWT if user is logged in (Secure & Preferred)
-        try:
-            from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity
-            if verify_jwt_in_request(optional=True):
-                claims = get_jwt()
-                tenant_id = claims.get('tenant_id')
-
-                if tenant_id:
-                    return Tenant.query.filter_by(id=tenant_id, is_active=True).first()
-
-                # Fallback to user-based tenant if claim is missing but identity exists
-                user_id = get_jwt_identity()
-                if user_id:
-                    from backend.models import User
-                    user = User.query.get(int(user_id))
-                    if user:
-                        return user.tenant
-        except Exception:
-            pass
+        # Method 1: Explicit header (for API)
+        tenant_id = request.headers.get('X-Tenant-ID')
+        if tenant_id:
+            try:
+                tenant_id = int(tenant_id)
+                return Tenant.query.filter_by(id=tenant_id, is_active=True).first()
+            except (ValueError, TypeError):
+                pass
 
         # Method 2: Subdomain (for UI)
         host = request.host
@@ -88,11 +66,11 @@ class TenantMiddleware:
         # Method 3: From JWT if user is logged in
         try:
             if verify_jwt_in_request(optional=True):
-                user_id = get_jwt_identity()
-                if user_id:
+                userId = get_jwt_identity()
+                if userId:
                     # Lazy import to avoid circular dependency
                     from backend.models import User
-                    user = User.query.get(int(user_id))
+                    user = User.query.get(int(userId))
                     if user:
                         return user.tenant
         except Exception:
@@ -105,11 +83,11 @@ class TenantMiddleware:
         """Extract current user from JWT."""
         try:
             verify_jwt_in_request(optional=True)
-            user_id = get_jwt_identity()
-            if user_id:
+            userId = get_jwt_identity()
+            if userId:
                 # Lazy import to avoid circular dependency
                 from backend.models import User
-                return User.query.get(int(user_id))
+                return User.query.get(int(userId))
         except Exception:
             pass
         return None
@@ -117,9 +95,10 @@ class TenantMiddleware:
     @staticmethod
     def _after_request(response):
         """Run after each request."""
-        # Add tenant info for debugging/visibility in response
+        # Add tenant headers for debugging
         tenant = TenantContext.get_tenant()
         if tenant:
+            response.headers['X-Tenant-ID'] = str(tenant.id)
             response.headers['X-Tenant-Slug'] = tenant.slug
         return response
 

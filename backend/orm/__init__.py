@@ -7,7 +7,7 @@ Provides an Odoo-like interface for working with dynamic models.
 Usage:
     from backend.orm import get_environment
 
-    env = get_environment(tenant_id=1, user_id=1, project_id=1)
+    env = get_environment(tenant_id=1, userId=1, projectId=1)
 
     # Search
     leads = env['crm.lead'].search([('state', '=', 'new')])

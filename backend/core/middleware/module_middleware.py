@@ -29,9 +29,9 @@ class ModuleMiddleware:
             def decorated_function(*args, **kwargs):
                 # Verifica JWT
                 verify_jwt_in_request()
-                user_id = get_jwt_identity()
+                userId = get_jwt_identity()
 
-                user = User.query.get(user_id)
+                user = User.query.get(userId)
                 if not user:
                     return jsonify({
                         'error': 'USER_NOT_FOUND',
@@ -60,10 +60,10 @@ class ModuleMiddleware:
         def middleware():
             try:
                 verify_jwt_in_request(optional=True)
-                user_id = get_jwt_identity(optional=True)
+                userId = get_jwt_identity(optional=True)
 
-                if user_id:
-                    user = User.query.get(user_id)
+                if userId:
+                    user = User.query.get(userId)
                     if user and user.tenant_id:
                         enabled = TenantModuleService.get_enabled_module_ids(user.tenant_id)
                         g.enabled_modules = enabled
@@ -89,12 +89,12 @@ class ModuleMiddleware:
         """
         try:
             verify_jwt_in_request(optional=True)
-            user_id = get_jwt_identity(optional=True)
+            userId = get_jwt_identity(optional=True)
 
-            if not user_id:
+            if not userId:
                 return False
 
-            user = User.query.get(user_id)
+            user = User.query.get(userId)
             if not user or not user.tenant_id:
                 return False
 

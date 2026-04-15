@@ -29,7 +29,7 @@ class InventoryLocation(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     tenant = db.relationship('Tenant', backref=db.backref('inventory_locations', lazy='dynamic'))
-    stock_lines = db.relationship('LocationStock', back_populates='location', lazy='dynamic')
+    stock_lines = db.relationship('ProductStock', back_populates='location', lazy='dynamic')
     movements = db.relationship('StockMovement', back_populates='location', lazy='dynamic')
 
     __table_args__ = (
@@ -40,9 +40,9 @@ class InventoryLocation(db.Model):
         return f'<InventoryLocation {self.code}: {self.name}>'
 
 
-class LocationStock(db.Model):
+class ProductStock(db.Model):
     """Current stock levels for products at locations."""
-    __tablename__ = 'location_stocks'
+    __tablename__ = 'product_stock'
 
     # Multi-tenant support
     tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
@@ -60,7 +60,7 @@ class LocationStock(db.Model):
 
     product = db.relationship('Product', backref=db.backref('stock_levels', lazy='dynamic'))
     location = db.relationship('InventoryLocation', back_populates='stock_lines')
-    tenant = db.relationship('Tenant', backref=db.backref('location_stocks', lazy='dynamic'))
+    tenant = db.relationship('Tenant', backref=db.backref('product_stock', lazy='dynamic'))
 
     __table_args__ = (
         db.UniqueConstraint('tenant_id', 'product_id', 'location_id', name='uix_tenant_product_location'),
@@ -72,7 +72,7 @@ class LocationStock(db.Model):
         return max(0, self.quantity - self.reserved_quantity)
 
     def __repr__(self):
-        return f'<LocationStock {self.product_id}@{self.location_id}: {self.quantity}>'
+        return f'<ProductStock {self.product_id}@{self.location_id}: {self.quantity}>'
 
 
 class StockMovement(db.Model):

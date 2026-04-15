@@ -21,15 +21,15 @@ class Environment:
     """Environment for accessing dynamic models.
 
     Usage:
-        env = Environment(tenant_id, user_id)
+        env = Environment(tenant_id, userId)
         leads = env['crm.lead'].search([('state', '=', 'new')])
         lead = env['crm.lead'].create({'name': 'Test'})
     """
 
-    def __init__(self, tenant_id: int, user_id: int = None, project_id: int = None):
+    def __init__(self, tenant_id: int, userId: int = None, projectId: int = None):
         self.tenant_id = tenant_id
-        self.user_id = user_id
-        self.project_id = project_id
+        self.userId = userId
+        self.projectId = projectId
         self.registry = get_registry()
         self._cache = {}
 
@@ -80,7 +80,7 @@ class Environment:
 
         sys_model = SysModel.query.filter(
             SysModel.technical_name == model_name,
-            SysModel.project_id == self.project_id,
+            SysModel.projectId == self.projectId,
             SysModel.is_active == True,
         ).first()
 
@@ -185,7 +185,7 @@ class DynamicModelProxy:
         # Get the SysModel definition
         sys_model = SysModel.query.filter(
             SysModel.technical_name == self.model_name,
-            SysModel.project_id == self.env.project_id,
+            SysModel.projectId == self.env.projectId,
         ).first()
 
         if not sys_model:
@@ -223,7 +223,7 @@ class DynamicModelProxy:
 
         sys_model = SysModel.query.filter(
             SysModel.technical_name == self.model_name,
-            SysModel.project_id == self.env.project_id,
+            SysModel.projectId == self.env.projectId,
         ).first()
 
         if not sys_model:
@@ -255,7 +255,7 @@ class DynamicModelProxy:
 
         sys_model = SysModel.query.filter(
             SysModel.technical_name == self.model_name,
-            SysModel.project_id == self.env.project_id,
+            SysModel.projectId == self.env.projectId,
         ).first()
 
         if not sys_model:
@@ -285,7 +285,7 @@ class DynamicModelProxy:
 
         sys_model = SysModel.query.filter(
             SysModel.technical_name == self.model_name,
-            SysModel.project_id == self.env.project_id,
+            SysModel.projectId == self.env.projectId,
         ).first()
 
         if not sys_model:
@@ -334,10 +334,10 @@ class DynamicModelProxy:
 
 
 def get_environment(
-    tenant_id: int, user_id: int = None, project_id: int = None
+    tenant_id: int, userId: int = None, projectId: int = None
 ) -> Environment:
     """Get an Environment instance.
 
     This is the main entry point for using the dynamic ORM.
     """
-    return Environment(tenant_id, user_id, project_id)
+    return Environment(tenant_id, userId, projectId)

@@ -38,7 +38,7 @@ class Employee(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     employee_number = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    userId = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     first_name = db.Column(db.String(80), nullable=False)
     last_name = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120))

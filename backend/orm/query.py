@@ -48,7 +48,7 @@ class QueryBuilder:
 
         sys_model = SysModel.query.filter(
             SysModel.technical_name == self.model_name,
-            SysModel.project_id == self.env.project_id,
+            SysModel.projectId == self.env.projectId,
             SysModel.is_active == True,
         ).first()
 

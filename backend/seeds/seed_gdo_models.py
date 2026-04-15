@@ -1,7 +1,7 @@
 import json
 from backend import create_app
 from backend.extensions import db
-from backend.services.template_service import TemplateService
+from backend.modules.system_tools.services.template_service import TemplateService
 
 def seed_gdo_models():
     app = create_app()
@@ -9,10 +9,10 @@ def seed_gdo_models():
         # Use TemplateService to install it
         ts = TemplateService()
         # Assuming project ID 1 exists
-        project_id = 1
+        projectId = 1
         # In this environment, we use 'gdo_reconciliation' as ID (matches filename)
         try:
-            res = ts.install_template('gdo_reconciliation', project_id)
+            res = ts.install_template('gdo_reconciliation', projectId)
             print(res["message"])
         except Exception as e:
             print(f"Error seeding models: {e}")
