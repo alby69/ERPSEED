@@ -1,4 +1,5 @@
-# ERPSeed Dependencies
+# ERPSeed Backend Dependencies
+
 # Core
 flask
 flask-cors
