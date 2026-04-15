@@ -1,0 +1,686 @@
+from flask.views import MethodView
+from flask import request, current_app, send_from_directory
+from flask_smorest import Blueprint, abort
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from sqlalchemy import text, select, desc
+
+from backend.extensions import db
+from backend.core.schemas.schemas import (
+    SysModelSchema,
+    SysModelCreateSchema,
+    SysFieldSchema,
+    AuditLogSchema,
+    SysViewSchema,
+    SysViewCreateSchema,
+    SysComponentSchema,
+    SysComponentCreateSchema,
+    SysActionSchema,
+    SysActionCreateSchema,
+)
+from backend.core.schemas.schemas import SysModelSchema as schemas_module
+from backend.core.utils.utils import apply_filters, apply_sorting, paginate
+from backend.modules.builder.service import get_builder_service as BuilderService
+from backend.core.decorators.decorators import admin_required
+from .generator import CodeGenerator, TemplateValidator, AdaptiveBuilder
+
+blp = Blueprint("builder", __name__, description="No-Code Builder Operations")
+
+builder_service = BuilderService()
+
+
+@blp.route("/sys-models")
+class SysModelList(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, SysModelSchema(many=True))
+    def get(self):
+        """List all system models"""
+        try:
+            items, headers = builder_service.get_all_models(
+                search_fields=["name", "title"], sort_by=None, sort_order="asc"
+            )
+            return items, 200, headers
+        except Exception as e:
+            import sys
+            import traceback
+
+            traceback.print_exc()
+            print(f"Error listing SysModels: {e}", file=sys.stderr)
+            abort(500, message=f"Internal Server Error: {str(e)}")
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def post(self):
+        """Create a new system model"""
+        # Get raw JSON data directly instead of using schema validation
+        from flask import request
+        data = request.get_json()
+        print(f"DEBUG: Received raw data: {data}")
+
+        if not data:
+            abort(400, message="No data provided")
+
+        projectId = data.get("projectId")
+        if not projectId:
+            abort(400, message="projectId is required to create a model.")
+
+        return builder_service.create_model(
+            projectId=projectId,
+            name=data.get("name"),
+            title=data.get("title"),
+            description=data.get("description"),
+            permissions=data.get("permissions"),
+        ), 201
+
+
+@blp.route("/sys-models/<int:modelId>")
+class SysModelResource(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, SysModelSchema)
+    def get(self, modelId):
+        """Get system model details"""
+        return builder_service.get_model(modelId)
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def put(self, modelId):
+        """Update system model"""
+        from flask import request
+        data = request.get_json()
+        return builder_service.update_model(modelId, data or {})
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(204)
+    def delete(self, modelId):
+        """Delete system model"""
+        builder_service.delete_model(modelId)
+        return ""
+
+
+@blp.route("/sys-fields")
+class SysFieldList(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def post(self):
+        """Add a field to a system model"""
+        from flask import request
+        data = request.get_json()
+
+        if not data:
+            abort(400, message="No data provided")
+
+        if "modelId" not in data:
+            abort(400, message="modelId is required")
+
+        return builder_service.create_field(
+            modelId=data["modelId"],
+            name=data.get("name"),
+            field_type=data.get("type"),
+            title=data.get("title"),
+            required=data.get("required"),
+            is_unique=data.get("is_unique"),
+            default_value=data.get("default_value"),
+            options=data.get("options"),
+            order=data.get("order", 0),
+            formula=data.get("formula"),
+            summary_expression=data.get("summary_expression"),
+            validation_regex=data.get("validation_regex"),
+            validation_message=data.get("validation_message"),
+        ), 201
+
+
+@blp.route("/sys-fields/<int:field_id>")
+class SysFieldResource(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def put(self, field_id):
+        """Update a system field"""
+        from flask import request
+        data = request.get_json()
+        return builder_service.update_field(field_id, data or {})
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(204)
+    def delete(self, field_id):
+        """Delete a system field"""
+        builder_service.delete_field(field_id)
+        return ""
+
+
+@blp.route("/sys-models/<int:modelId>/generate-table")
+class SysModelSyncSchema(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200)
+    def post(self, modelId):
+        """Generate and execute CREATE or ALTER TABLE SQL to sync the DB with the model"""
+        sql_commands, message = builder_service.sync_schema(modelId, db.engine)
+
+        if not sql_commands:
+            return {"message": message}
+        return {"message": message}
+
+
+@blp.route("/sys-models/<int:modelId>/reset-table")
+class SysModelResetTable(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200)
+    def post(self, modelId):
+        """Drop and Re-create the table based on metadata (DATA LOSS WARNING)"""
+        userId = get_jwt_identity()
+
+        backup_folder = current_app.config.get("BACKUP_FOLDER", "backups")
+
+        message = builder_service.reset_table(modelId, userId, backup_folder)
+
+        return {"message": message}
+
+
+@blp.route("/sys-models/<int:modelId>/clone")
+class SysModelClone(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def post(self, modelId):
+        """Clone an existing model (definition and fields)."""
+        userId = get_jwt_identity()
+
+        data = request.get_json()
+        new_name = data.get("name")
+        new_title = data.get("title")
+
+        if not new_name or not new_title:
+            abort(400, message="Name and Title are required.")
+
+        new_model = builder_service.clone_model(modelId, userId, new_name, new_title)
+
+        return SysModelSchema().dump(new_model), 201
+
+
+@blp.route("/sys-models/<int:modelId>/backups")
+class SysModelBackups(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self, modelId):
+        """List available backups for a specific model"""
+        backup_folder = current_app.config.get("BACKUP_FOLDER", "backups")
+
+        backups = builder_service.get_backups(modelId, backup_folder)
+
+        return backups
+
+
+@blp.route("/backups/<string:filename>")
+class BackupDownload(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self, filename):
+        """Download a specific backup file"""
+        backup_folder = current_app.config.get("BACKUP_FOLDER", "backups")
+        import os
+
+        abs_backup_folder = os.path.abspath(backup_folder)
+
+        return send_from_directory(abs_backup_folder, filename, as_attachment=True)
+
+
+@blp.route("/audit-logs")
+class AuditLogList(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, AuditLogSchema(many=True))
+    def get(self):
+        """Retrieve audit logs (admin only)."""
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 20, type=int)
+
+        items, total = builder_service.get_audit_logs(page, per_page)
+
+        return items
+
+
+@blp.route("/sys-models/<int:modelId>/generate-code")
+class SysModelGenerateCode(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self, modelId):
+        """Generate Python code from model definition."""
+        model = builder_service.get_model(modelId)
+        if not model:
+            abort(404, message="Model not found.")
+
+        validator = TemplateValidator()
+        errors = validator.validate(model)
+        if errors:
+            abort(400, message=f"Validation errors: {', '.join(errors)}")
+
+        generator = CodeGenerator()
+
+        api_prefix = request.args.get("api_prefix", "/api")
+
+        code = generator.generate_module(model, api_prefix)
+
+        return {"model": model.name, "code": code}
+
+
+@blp.route("/sys-models/<int:modelId>/validate")
+class SysModelValidate(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self, modelId):
+        """Validate model definition."""
+        model = builder_service.get_model(modelId)
+        if not model:
+            abort(404, message="Model not found.")
+
+        validator = TemplateValidator()
+        errors = validator.validate(model)
+
+        return {"valid": len(errors) == 0, "errors": errors}
+
+
+@blp.route("/projects/<int:projectId>/business-rules")
+class BusinessRulesList(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self, projectId):
+        """List all business rules for a project."""
+        from backend.models import SysModel
+        import json
+
+        models = SysModel.query.filter_by(
+            projectId=projectId, status="published"
+        ).all()
+
+        all_rules = []
+        for model in models:
+            if model.tool_options:
+                try:
+                    opts = json.loads(model.tool_options)
+                    hooks = opts.get("hooks", [])
+                    for hook in hooks:
+                        all_rules.append(
+                            {
+                                "id": hook.get("id"),
+                                "model_name": model.name,
+                                "model_title": model.title,
+                                "hook_type": hook.get("hook_type"),
+                                "rule_name": hook.get("rule_name"),
+                                "rule_logic": hook.get("rule_logic"),
+                                "enabled": hook.get("enabled", True),
+                                "condition": hook.get("condition"),
+                                "action": hook.get("action"),
+                            }
+                        )
+                except (json.JSONDecodeError, AttributeError):
+                    pass
+
+        return {"rules": all_rules}
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def post(self, projectId):
+        """Create a business rule."""
+        from backend.models import SysModel
+        import json
+        from datetime import datetime
+
+        data = request.get_json()
+
+        model_name = data.get("model_name")
+        if not model_name:
+            abort(400, message="model_name is required.")
+
+        model = SysModel.query.filter_by(projectId=projectId, name=model_name).first()
+
+        if not model:
+            abort(404, message=f"Model '{model_name}' not found.")
+
+        tool_options = {}
+        if model.tool_options:
+            try:
+                tool_options = json.loads(model.tool_options)
+            except json.JSONDecodeError:
+                pass
+
+        if "hooks" not in tool_options:
+            tool_options["hooks"] = []
+
+        existing_ids = [h.get("id", 0) for h in tool_options["hooks"]]
+        new_id = max(existing_ids, default=0) + 1
+
+        rule = {
+            "id": new_id,
+            "hook_type": data.get("hook_type"),
+            "rule_name": data.get("rule_name", f"Rule_{new_id}"),
+            "rule_logic": data.get("rule_logic", ""),
+            "condition": data.get("condition"),
+            "action": data.get("action"),
+            "enabled": True,
+            "created_at": datetime.utcnow().isoformat(),
+        }
+
+        tool_options["hooks"].append(rule)
+        model.tool_options = json.dumps(tool_options)
+        db.session.commit()
+
+        return {"success": True, "rule_id": new_id}, 201
+
+
+@blp.route("/projects/<int:projectId>/business-rules/<int:rule_id>")
+class BusinessRuleDetail(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def delete(self, projectId, rule_id):
+        """Delete a business rule."""
+        from backend.models import SysModel
+        import json
+
+        data = request.get_json()
+        model_name = data.get("model_name")
+
+        if not model_name:
+            abort(400, message="model_name is required in request body.")
+
+        model = SysModel.query.filter_by(projectId=projectId, name=model_name).first()
+
+        if not model:
+            abort(404, message=f"Model '{model_name}' not found.")
+
+        tool_options = {}
+        if model.tool_options:
+            try:
+                tool_options = json.loads(model.tool_options)
+            except json.JSONDecodeError:
+                pass
+
+        hooks = tool_options.get("hooks", [])
+        tool_options["hooks"] = [h for h in hooks if h.get("id") != rule_id]
+
+        model.tool_options = json.dumps(tool_options)
+        db.session.commit()
+
+        return {"success": True, "message": f"Rule {rule_id} deleted"}
+
+
+@blp.route("/sys-views")
+class SysViewList(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, SysViewSchema(many=True))
+    def get(self):
+        """List all system views"""
+        from backend.models import SysView, SysModel
+
+        projectId = request.args.get("projectId")
+        modelId = request.args.get("modelId")
+
+        query = SysView.query
+        if projectId:
+            query = query.join(SysModel).filter(SysModel.projectId == projectId)
+        if modelId:
+            query = query.filter(SysView.modelId == modelId)
+
+        return query.order_by(SysView.order).all()
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def post(self):
+        """Create a new system view"""
+        from flask import request
+        data = request.get_json()
+        from backend.models import SysView
+
+        view = SysView()
+        view.name = data.get("name")
+        view.technical_name = data.get("technical_name", data.get("name"))
+        view.title = data.get("title", data.get("name"))
+        view.view_type = data.get("view_type", "list")
+        view.modelId = data.get("modelId")
+        view.config = data.get("config", "{}")
+        view.is_default = data.get("is_default", False)
+        view.is_active = data.get("is_active", True)
+        view.order = data.get("order", 0)
+
+        db.session.add(view)
+        db.session.commit()
+        return view, 201
+
+
+@blp.route("/sys-views/<int:viewId>")
+class SysViewResource(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, SysViewSchema)
+    def get(self, viewId):
+        """Get system view details"""
+        from backend.models import SysView
+
+        view = SysView.query.get_or_404(viewId)
+        return view
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def put(self, viewId):
+        """Update system view"""
+        from flask import request
+        data = request.get_json()
+        from backend.models import SysView
+
+        view = SysView.query.get_or_404(viewId)
+
+        for key, value in (data or {}).items():
+            if hasattr(view, key) and key not in ("id", "created_at"):
+                setattr(view, key, value)
+
+        db.session.commit()
+        return view
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(204)
+    def delete(self, viewId):
+        """Delete system view"""
+        from backend.models import SysView
+
+        view = SysView.query.get_or_404(viewId)
+        db.session.delete(view)
+        db.session.commit()
+        return ""
+
+
+@blp.route("/sys-components")
+class SysComponentList(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, SysComponentSchema(many=True))
+    def get(self):
+        """List all system components"""
+        from backend.models import SysComponent
+
+        return SysComponent.query.filter_by(is_active=True).all()
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def post(self):
+        """Create a new system component"""
+        from flask import request
+        data = request.get_json()
+        from backend.models import SysComponent
+
+        component = SysComponent()
+        component.name = data.get("name")
+        component.technical_name = data.get("technical_name", data.get("name"))
+        component.title = data.get("title", data.get("name"))
+        component.description = data.get("description", "")
+        component.component_type = data.get("component_type", "custom")
+        component.component_path = data.get("component_path", "")
+        component.default_config = data.get("default_config", "{}")
+        component.props_schema = data.get("props_schema", "{}")
+        component.icon = data.get("icon", "component")
+        component.is_custom = True
+        component.is_active = True
+
+        db.session.add(component)
+        db.session.commit()
+        return component, 201
+
+
+@blp.route("/sys-components/<int:component_id>")
+class SysComponentResource(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, SysComponentSchema)
+    def get(self, component_id):
+        """Get system component details"""
+        from backend.models import SysComponent
+
+        component = SysComponent.query.get_or_404(component_id)
+        return component
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def put(self, component_id):
+        """Update system component"""
+        from flask import request
+        data = request.get_json()
+        from backend.models import SysComponent
+
+        component = SysComponent.query.get_or_404(component_id)
+
+        for key, value in (data or {}).items():
+            if hasattr(component, key) and key not in ("id", "created_at"):
+                setattr(component, key, value)
+
+        db.session.commit()
+        return component
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(204)
+    def delete(self, component_id):
+        """Delete system component"""
+        from backend.models import SysComponent
+
+        component = SysComponent.query.get_or_404(component_id)
+        db.session.delete(component)
+        db.session.commit()
+        return ""
+
+
+@blp.route("/sys-actions")
+class SysActionList(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, SysActionSchema(many=True))
+    def get(self):
+        """List all system actions"""
+        from backend.models import SysAction
+
+        viewId = request.args.get("viewId")
+        modelId = request.args.get("modelId")
+
+        query = SysAction.query
+        if viewId:
+            query = query.filter(SysAction.viewId == viewId)
+        if modelId:
+            query = query.filter(SysAction.modelId == modelId)
+
+        return query.filter_by(is_active=True).order_by(SysAction.order).all()
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def post(self):
+        """Create a new system action"""
+        from flask import request
+        data = request.get_json()
+        from backend.models import SysAction
+
+        action = SysAction()
+        action.name = data.get("name")
+        action.technical_name = data.get("technical_name", data.get("name"))
+        action.title = data.get("title", data.get("name"))
+        action.action_type = data.get("action_type", "button")
+        action.target = data.get("target", "api")
+        action.viewId = data.get("viewId")
+        action.modelId = data.get("modelId")
+        action.config = data.get("config", "{}")
+        action.icon = data.get("icon")
+        action.style = data.get("style", "primary")
+        action.position = data.get("position", "toolbar")
+        action.conditions = data.get("conditions", "{}")
+        action.is_active = True
+        action.order = data.get("order", 0)
+
+        db.session.add(action)
+        db.session.commit()
+        return action, 201
+
+
+@blp.route("/sys-actions/<int:action_id>")
+class SysActionResource(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, SysActionSchema)
+    def get(self, action_id):
+        """Get system action details"""
+        from backend.models import SysAction
+
+        action = SysAction.query.get_or_404(action_id)
+        return action
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def put(self, action_id):
+        """Update system action"""
+        from flask import request
+        data = request.get_json()
+        from backend.models import SysAction
+
+        action = SysAction.query.get_or_404(action_id)
+
+        for key, value in (data or {}).items():
+            if hasattr(action, key) and key not in ("id", "created_at"):
+                setattr(action, key, value)
+
+        db.session.commit()
+        return action
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(204)
+    def delete(self, action_id):
+        """Delete system action"""
+        from backend.models import SysAction
+
+        action = SysAction.query.get_or_404(action_id)
+        db.session.delete(action)
+        db.session.commit()
+        return ""
+
+
+@blp.route("/component-registry")
+class ComponentRegistryResource(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self):
+        """Get component registry (built-in + custom)"""
+        from backend.models import SysComponent
+        from ..view_renderer import get_registry as get_view_renderer_registry
+        from ..view_renderer.component_registry import ComponentRegistry
+
+        registry = get_view_renderer_registry()
+
+        custom_components = SysComponent.query.filter_by(is_active=True).all()
+        if custom_components:
+            custom_registry = ComponentRegistry.from_database(custom_components)
+            for comp in custom_registry.get_all():
+                registry.register(comp)
+
+        return registry.to_dict()
+
+
+__all__ = ["blp", "CodeGenerator", "TemplateValidator", "AdaptiveBuilder"]

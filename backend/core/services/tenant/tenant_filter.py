@@ -54,7 +54,7 @@ class TenantContext:
         return tenant.id if tenant else None
 
     @classmethod
-    def get_user_id(cls) -> Optional[int]:
+    def get_userId(cls) -> Optional[int]:
         """Get current user ID."""
         user = cls.get_user()
         return user.id if user else None
@@ -198,6 +198,6 @@ def get_current_tenant_id():
     return TenantContext.get_tenant_id()
 
 
-def get_current_user_id():
+def get_current_userId():
     """Helper per ottenere ID utente corrente."""
-    return TenantContext.get_user_id()
+    return TenantContext.get_userId()

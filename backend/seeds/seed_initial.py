@@ -7,7 +7,7 @@ from backend.extensions import db
 from backend.models import User
 from backend.core.models import Tenant, TenantMember
 from backend.core.models.modulo import Modulo, ModuloAttivato
-from backend.infrastructure.entities.models import Soggetto, Ruolo, Indirizzo, Contatto
+from backend.modules.entities import Soggetto, Ruolo, Indirizzo, Contatto
 
 
 def init_db():
@@ -49,7 +49,7 @@ def init_db():
         print("Adding owner to tenant...")
         member = TenantMember(
             tenant_id=tenant.id,
-            user_id=owner.id,
+            userId=owner.id,
             ruolo='admin',
             stato='attivo',
             accepted_at=db.func.now()

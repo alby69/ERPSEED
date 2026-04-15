@@ -71,13 +71,13 @@ class ModuleStatusResponseSchema(Schema):
     storico = fields.List(fields.Dict())
 
 class ModuleStatusChangeSchema(Schema):
-    modulo_nome = fields.Str(required=True)
+    moduleName = fields.Str(required=True)
     nuovo_stato = fields.Str(required=True)
     motivo = fields.Str()
 
 
 class GenerateSuiteSchema(Schema):
-    modulo_nome = fields.Str(required=True)
+    moduleName = fields.Str(required=True)
     endpoint_base = fields.Str(required=True)
     tipo = fields.Str(load_default='crud')
 
@@ -255,19 +255,19 @@ class TestSuiteRun(MethodView):
     def post(self, suite_id):
         """Esegue una test suite."""
         identity = get_jwt_identity()
-        user_id = int(identity)
+        userId = int(identity)
 
         suite = TestSuite.query.get_or_404(suite_id)
 
         from backend.models import User
-        user = User.query.get(user_id)
+        user = User.query.get(userId)
         tenant_id = user.tenant_id if user else None
 
         auth_token = request.headers.get('Authorization', '').replace('Bearer ', '')
 
         runner = TestRunner(auth_token=auth_token, tenant_id=tenant_id if tenant_id else 0)
 
-        execution = runner.esegui_suite(suite, user_id)
+        execution = runner.esegui_suite(suite, userId)
 
         return execution
 
@@ -290,22 +290,22 @@ class TestExecutionList(MethodView):
         return {'executions': executions}
 
 
-@blp.route('/executions/<int:exec_id>')
+@blp.route('/executions/<int:executionId>')
 class TestExecutionResource(MethodView):
     @jwt_required()
     @blp.response(200, TestExecutionSchema)
-    def get(self, exec_id):
+    def get(self, executionId):
         """Dettagli esecuzione test."""
-        execution = TestExecution.query.get_or_404(exec_id)
+        execution = TestExecution.query.get_or_404(executionId)
         return execution
 
     @jwt_required()
     @blp.response(204)
-    def delete(self, exec_id):
+    def delete(self, executionId):
         """Elimina esecuzione test."""
         import traceback
         try:
-            execution = TestExecution.query.get_or_404(exec_id)
+            execution = TestExecution.query.get_or_404(executionId)
             db.session.delete(execution)
             db.session.commit()
             return ''
@@ -328,14 +328,14 @@ class TestSuiteGeneratorEndpoint(MethodView):
 
         if tipo == 'crud':
             suite = TestSuiteGenerator.genera_crud_suite(
-                data['modulo_nome'],
+                data['moduleName'],
                 data['endpoint_base']
             )
             if suite is None:
                 abort(400, message=f'Endpoint non valido: {data["endpoint_base"]}. Endpoint validi: soggetti, indirizzi, ruoli, contatti')
         elif tipo == 'validation':
             suite = TestSuiteGenerator.genera_validation_suite(
-                data['modulo_nome'],
+                data['moduleName'],
                 data['endpoint_base']
             )
         else:
@@ -359,12 +359,12 @@ class ModuleStatusChange(MethodView):
     def post(self, data):
         """Cambia lo stato di un modulo."""
         identity = get_jwt_identity()
-        user_id = int(identity)
+        userId = int(identity)
 
         success, message = ModuleStatusManager.cambia_stato(
-            data['modulo_nome'],
+            data['moduleName'],
             data['nuovo_stato'],
-            user_id,
+            userId,
             data.get('motivo', '')
         )
 
@@ -374,23 +374,23 @@ class ModuleStatusChange(MethodView):
         return {'message': message}
 
 
-@blp.route('/module/status/<modulo_nome>')
+@blp.route('/module/status/<moduleName>')
 class ModuleStatusGet(MethodView):
     @jwt_required()
     @blp.response(200, ModuleStatusResponseSchema)
-    def get(self, modulo_nome):
+    def get(self, moduleName):
         """Stato corrente di un modulo."""
-        stato = ModuleStatusManager.get_stato_modulo(modulo_nome)
+        stato = ModuleStatusManager.get_stato_modulo(moduleName)
 
         if stato is None:
-            abort(404, message=f'Modulo {modulo_nome} non trovato')
+            abort(404, message=f'Modulo {moduleName} non trovato')
 
         history = ModuleStatusHistory.query.filter_by(
-            modulo_target=modulo_nome
+            modulo_target=moduleName
         ).order_by(ModuleStatusHistory.created_at.desc()).limit(10).all()
 
         return {
-            'modulo': modulo_nome,
+            'modulo': moduleName,
             'stato': stato,
             'storico': [
                 {

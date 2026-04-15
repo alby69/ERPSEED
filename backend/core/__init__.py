@@ -18,7 +18,7 @@ from backend.core.services import (
     get_current_tenant,
     get_current_user,
     get_current_tenant_id,
-    get_current_user_id,
+    get_current_userId,
 )
 from backend.core.middleware import TenantMiddleware, setup_tenant_middleware
 from backend.core.api import auth_bp, tenant_bp
@@ -42,7 +42,7 @@ __all__ = [
     'get_current_tenant',
     'get_current_user',
     'get_current_tenant_id',
-    'get_current_user_id',
+    'get_current_userId',
     # Middleware
     'TenantMiddleware',
     'setup_tenant_middleware',

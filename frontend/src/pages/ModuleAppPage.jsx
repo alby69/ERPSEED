@@ -26,7 +26,7 @@ function ModuleAppPage() {
   const fetchModule = async () => {
     setLoading(true);
     try {
-      const response = await apiFetch(`/api/v1/modules?project_id=${projectId}&search=${moduleName}`);
+      const response = await apiFetch(`/api/v1/modules?projectId=${projectId}&search=${moduleName}`);
       const data = await response.json();
 
       if (data.modules && data.modules.length > 0) {

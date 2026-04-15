@@ -66,7 +66,7 @@ class BaseModel(db.Model):
 #### 1.1 - Utility Paginazione
 
 ```python
-# backend/utils/pagination.py
+# backend.core.utils.utils/pagination.py
 def paginate_response(query, page=1, per_page=20):
     """
     Centralizza logica paginazione.

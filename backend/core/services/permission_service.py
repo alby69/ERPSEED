@@ -132,8 +132,8 @@ class PermissionService:
                 from flask_jwt_extended import get_jwt_identity
                 from backend.core.models import User
 
-                user_id = get_jwt_identity()
-                user = User.query.get(user_id)
+                userId = get_jwt_identity()
+                user = User.query.get(userId)
 
                 if not user:
                     abort(404, description="User not found")
@@ -154,8 +154,8 @@ class PermissionService:
                 from flask_jwt_extended import get_jwt_identity
                 from backend.core.models import User
 
-                user_id = get_jwt_identity()
-                user = User.query.get(user_id)
+                userId = get_jwt_identity()
+                user = User.query.get(userId)
 
                 if not user:
                     abort(404, description="User not found")

@@ -13,7 +13,7 @@ from backend.core.api.tenant_schemas import (
     UserCreateSchema,
     UserUpdateSchema,
 )
-from backend.schemas import UserDisplaySchema
+from backend.core.schemas.schemas import UserDisplaySchema
 from backend.extensions import db
 
 tenant_bp = Blueprint('tenant', __name__, description='Tenant Management')
@@ -103,15 +103,15 @@ class TenantUsers(MethodView):
         return user
 
 
-@tenant_bp.route('/users/<int:user_id>')
+@tenant_bp.route('/users/<int:userId>')
 class TenantUserDetail(MethodView):
     @tenant_bp.doc(security=[{"bearerAuth": []}])
     @jwt_required()
     @tenant_bp.response(200, UserDisplaySchema)
-    def get(self, user_id):
+    def get(self, userId):
         """Get user detail."""
         tenant_id = TenantContext.get_tenant_id()
-        user = User.query.filter_by(id=user_id, tenant_id=tenant_id).first()
+        user = User.query.filter_by(id=userId, tenant_id=tenant_id).first()
         if not user:
             abort(404, message="User not found")
         return user
@@ -121,10 +121,10 @@ class TenantUserDetail(MethodView):
     @PermissionService.require_permission(Permission.MANAGE_USERS)
     @tenant_bp.arguments(UserUpdateSchema)
     @tenant_bp.response(200, UserDisplaySchema)
-    def put(self, data, user_id):
+    def put(self, data, userId):
         """Update user."""
         tenant_id = TenantContext.get_tenant_id()
-        user = User.query.filter_by(id=user_id, tenant_id=tenant_id).first()
+        user = User.query.filter_by(id=userId, tenant_id=tenant_id).first()
         if not user:
             abort(404, message="User not found")
 
@@ -146,10 +146,10 @@ class TenantUserDetail(MethodView):
     @jwt_required()
     @PermissionService.require_permission(Permission.MANAGE_USERS)
     @tenant_bp.response(204)
-    def delete(self, user_id):
+    def delete(self, userId):
         """Delete (deactivate) user."""
         tenant_id = TenantContext.get_tenant_id()
-        user = User.query.filter_by(id=user_id, tenant_id=tenant_id).first()
+        user = User.query.filter_by(id=userId, tenant_id=tenant_id).first()
         if not user:
             abort(404, message="User not found")
 

@@ -10,8 +10,8 @@ class AIConversation(BaseModel):
 
     __tablename__ = "ai_conversations"
 
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    projectId = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
+    userId = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
     user_message = db.Column(db.Text, nullable=False)
     ai_response = db.Column(db.Text)
@@ -31,4 +31,4 @@ class AIConversation(BaseModel):
     user = db.relationship("User")
 
     def __repr__(self):
-        return f"<AIConversation project={self.project_id} user={self.user_id}>"
+        return f"<AIConversation project={self.projectId} user={self.userId}>"

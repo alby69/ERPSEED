@@ -84,8 +84,8 @@ class CurrentUser(MethodView):
     @auth_bp.response(200, UserSchema)
     def get(self):
         """Get current user info."""
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
+        userId = get_jwt_identity()
+        user = User.query.get(userId)
         if not user:
             abort(404, message="User not found")
         return user.to_dict()
@@ -155,11 +155,11 @@ class PasswordChange(MethodView):
             - current_password: Current password
             - new_password: New password
         """
-        user_id = get_jwt_identity()
+        userId = get_jwt_identity()
 
         try:
             result = AuthService.change_password(
-                user_id=int(user_id),
+                userId=int(userId),
                 current_password=data.get('current_password', ''),
                 new_password=data.get('new_password', '')
             )

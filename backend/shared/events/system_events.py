@@ -136,7 +136,7 @@ class RecordDeletedEvent(EntityEvent):
 class UserEvent(DomainEvent):
     """Base event for user operations."""
 
-    user_id: int = 0
+    userId: int = 0
     username: str = ""
 
 
@@ -165,7 +165,7 @@ class UserLoggedOutEvent(UserEvent):
 class ProjectEvent(DomainEvent):
     """Base event for project operations."""
 
-    project_id: int = 0
+    projectId: int = 0
     project_name: str = ""
 
 
@@ -187,7 +187,7 @@ class ProjectDeletedEvent(ProjectEvent):
 class WorkflowEvent(DomainEvent):
     """Base event for workflow operations."""
 
-    workflow_id: int = 0
+    workflowId: int = 0
     workflow_name: str = ""
     execution_id: Optional[int] = None
 

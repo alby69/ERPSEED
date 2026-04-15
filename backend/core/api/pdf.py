@@ -21,8 +21,8 @@ class SalesOrderPDF(MethodView):
         """
         Genera PDF per ordine di vendita.
         """
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
+        userId = get_jwt_identity()
+        user = User.query.get(userId)
 
         if not user:
             abort(404, message="Utente non trovato")
@@ -50,8 +50,8 @@ class InvoicePDF(MethodView):
         """
         Genera PDF per fattura.
         """
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
+        userId = get_jwt_identity()
+        user = User.query.get(userId)
 
         if not user:
             abort(404, message="Utente non trovato")
@@ -79,8 +79,8 @@ class QuotePDF(MethodView):
         """
         Genera PDF per preventivo.
         """
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
+        userId = get_jwt_identity()
+        user = User.query.get(userId)
 
         if not user:
             abort(404, message="Utente non trovato")

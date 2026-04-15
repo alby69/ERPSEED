@@ -8,10 +8,10 @@ from sqlalchemy import text
 try:
     # I modelli User e Project sono definiti nel file models.py principale.
     from backend.models import User, Project, SysModel, SysField
-    from backend.shared.utils.utils import generate_create_table_sql
+    from backend.core.utils.utils import generate_create_table_sql
     # Le funzioni di seeding per altri moduli.
     # NOTA: L'associazione utente-progetto viene gestita tramite la relazione 'members' del modello Project.
-    from backend.domain.builder.models import create_system_archetypes
+    from backend.modules.builder.models import create_system_archetypes
     from backend.marketplace.models import create_default_categories
 except ImportError as e:
     print(f"ERRORE: Impossibile importare i modelli necessari. Dettagli: {e}")
@@ -23,7 +23,7 @@ def seed_dashboard_kpi(project):
     model_name = "dashboard_kpi"
 
     # Controlla se esiste già per questo progetto
-    if SysModel.query.filter_by(name=model_name, project_id=project.id).first():
+    if SysModel.query.filter_by(name=model_name, projectId=project.id).first():
         print(f"   - Modello '{model_name}' già esistente nel progetto.")
         return
 
@@ -36,7 +36,7 @@ def seed_dashboard_kpi(project):
         title="Dashboard KPIs",
         description="KPIs for the main dashboard",
         permissions='{"read": ["admin", "user"], "write": ["admin"]}',
-        project_id=project.id,
+        projectId=project.id,
         status='published'
     )
     db.session.add(kpi_model)
@@ -51,7 +51,7 @@ def seed_dashboard_kpi(project):
     ]
 
     for f_data in fields_data:
-        field = SysField(model_id=kpi_model.id, **f_data)
+        field = SysField(modelId=kpi_model.id, **f_data)
         db.session.add(field)
 
     db.session.flush()

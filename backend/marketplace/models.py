@@ -128,7 +128,7 @@ class Review(db.Model):
     listing_id = db.Column(
         db.Integer, db.ForeignKey("marketplace_listings.id"), nullable=False
     )
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    userId = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
     # Review content
     rating = db.Column(db.Integer)  # 1-5
@@ -202,7 +202,7 @@ class Author(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    user_id = db.Column(
+    userId = db.Column(
         db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True
     )
 

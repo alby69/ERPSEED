@@ -1,16 +1,13 @@
 import unittest
 import json
-import os
-os.environ.setdefault('JWT_SECRET_KEY', 'test-secret-key-for-testing-purposes-only-12345')
-
 from backend import create_app
 from backend.extensions import db
 from backend.models import Project, SysModel, SysField
-from backend.services.template_service import TemplateService
+from backend.modules.system_tools.services.template_service import TemplateService
 
 class TemplateTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app(db_url="sqlite:///:memory:")
+        self.app = create_app()
         self.app.config['TESTING'] = True
         self.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
         self.client = self.app.test_client()
@@ -47,11 +44,11 @@ class TemplateTestCase(unittest.TestCase):
         self.assertGreater(len(result['models']), 0)
 
         # Verify models were actually created
-        models = SysModel.query.filter_by(project_id=self.project.id).all()
+        models = SysModel.query.filter_by(projectId=self.project.id).all()
         self.assertEqual(len(models), 3) # customer, lead, activity
 
         # Verify fields for 'customer'
-        customer = SysModel.query.filter_by(project_id=self.project.id, name='crm_customers').first()
+        customer = SysModel.query.filter_by(projectId=self.project.id, name='crm_customers').first()
         self.assertIsNotNone(customer)
         self.assertGreater(len(customer.fields), 0)
 

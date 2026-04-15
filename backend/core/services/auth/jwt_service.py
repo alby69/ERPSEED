@@ -46,7 +46,7 @@ class JWTService:
         Crea un access token JWT.
 
         Args:
-            identity: Identità dell'utente (user_id)
+            identity: Identità dell'utente (userId)
             additional_claims: Claims aggiuntivi da includere nel token
             expires_delta: Durata personalizzata del token
 
@@ -68,7 +68,7 @@ class JWTService:
         Crea un refresh token JWT.
 
         Args:
-            identity: Identità dell'utente (user_id)
+            identity: Identità dell'utente (userId)
 
         Returns:
             str: Refresh token JWT
@@ -93,7 +93,7 @@ class JWTService:
 
     @classmethod
     def get_identity(cls) -> Optional[str]:
-        """Ottiene l'identità (user_id) dal token corrente."""
+        """Ottiene l'identità (userId) dal token corrente."""
         return get_jwt_identity()
 
     @classmethod
