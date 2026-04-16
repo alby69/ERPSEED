@@ -48,7 +48,7 @@ class RelationHandler:
         related_model = sys_field.relation_model
         related_table = SysModel.query.filter(
             SysModel.technical_name == related_model,
-            SysModel.projectId == env.projectId,
+            SysModel.project_id == env.project_id,
         ).first()
 
         if not related_table:
@@ -124,7 +124,7 @@ class RelationHandler:
         related_model_name = sys_field.relation_model
         related_table_def = SysModel.query.filter(
             SysModel.technical_name == related_model_name,
-            SysModel.projectId == env.projectId,
+            SysModel.project_id == env.project_id,
         ).first()
 
         if not related_table_def:
@@ -187,7 +187,7 @@ class RelationHandler:
 
         # Get the current model table
         current_model = SysModel.query.filter(
-            SysModel.technical_name == model_name, SysModel.projectId == env.projectId
+            SysModel.technical_name == model_name, SysModel.project_id == env.project_id
         ).first()
 
         if not current_model:
@@ -250,7 +250,7 @@ class RelationHandler:
         related_model = sys_field.relation_model
         related_table_def = SysModel.query.filter(
             SysModel.technical_name == related_model,
-            SysModel.projectId == env.projectId,
+            SysModel.project_id == env.project_id,
         ).first()
 
         if not related_table_def:

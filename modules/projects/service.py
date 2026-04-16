@@ -8,8 +8,8 @@ class ProjectService:
     def __init__(self):
         self.handler = ProjectCommandHandler()
 
-    def get_all_for_user(self, userId):
-        user = db.session.get(User, userId)
+    def get_all_for_user(self, user_id):
+        user = db.session.get(User, user_id)
         if not user:
             abort(404, message="User not found.")
 
@@ -17,18 +17,18 @@ class ProjectService:
             return Project.query.order_by(Project.name)
 
         return Project.query.filter(
-            (Project.owner_id == userId) | (Project.members.any(id=userId))
+            (Project.owner_id == user_id) | (Project.members.any(id=user_id))
         ).order_by(Project.name)
 
-    def get_by_id(self, projectId, userId):
-        project = db.session.get(Project, projectId)
+    def get_by_id(self, project_id, user_id):
+        project = db.session.get(Project, project_id)
         if not project:
             abort(404, message="Project not found.")
 
-        user = db.session.get(User, userId)
-        is_member = project.members.filter_by(id=userId).first() is not None
+        user = db.session.get(User, user_id)
+        is_member = project.members.filter_by(id=user_id).first() is not None
 
-        if user.role != 'admin' and project.owner_id != userId and not is_member:
+        if user.role != 'admin' and project.owner_id != user_id and not is_member:
             abort(403, message="You don't have access to this project.")
 
         return project
@@ -37,24 +37,24 @@ class ProjectService:
         cmd = CreateProjectCommand(name, title, description, owner_id)
         return self.handler.handle_create(cmd)
 
-    def update(self, projectId, userId, data):
-        cmd = UpdateProjectCommand(projectId, userId, data)
+    def update(self, project_id, user_id, data):
+        cmd = UpdateProjectCommand(project_id, user_id, data)
         return self.handler.handle_update(cmd)
 
-    def delete(self, projectId, userId):
-        cmd = DeleteProjectCommand(projectId, userId)
+    def delete(self, project_id, user_id):
+        cmd = DeleteProjectCommand(project_id, user_id)
         return self.handler.handle_delete(cmd)
 
-    def add_member(self, projectId, userId, member_userId):
-        cmd = AddMemberCommand(projectId, userId, member_userId)
+    def add_member(self, project_id, user_id, member_user_id):
+        cmd = AddMemberCommand(project_id, user_id, member_user_id)
         return self.handler.handle_add_member(cmd)
 
-    def remove_member(self, projectId, userId, member_userId):
-        cmd = RemoveMemberCommand(projectId, userId, member_userId)
+    def remove_member(self, project_id, user_id, member_user_id):
+        cmd = RemoveMemberCommand(project_id, user_id, member_user_id)
         return self.handler.handle_remove_member(cmd)
 
-    def get_members(self, projectId, userId):
-        project = self.get_by_id(projectId, userId)
+    def get_members(self, project_id, user_id):
+        project = self.get_by_id(project_id, user_id)
         return project.members.all()
 
 _project_service = None

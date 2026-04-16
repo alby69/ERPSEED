@@ -38,13 +38,13 @@ def create_default_project(project_name, admin_email):
             print(f"Progetto '{project_name}' già esistente.")
 
         # 4. Controlla se l'utente è già associato al progetto
-        association = UserProjectAssociation.query.filter_by(userId=admin_user.id, projectId=project.id).first()
+        association = UserProjectAssociation.query.filter_by(user_id=admin_user.id, project_id=project.id).first()
         if association:
             print(f"L'utente '{admin_email}' è già membro del progetto '{project_name}'. Nessuna azione necessaria.")
         else:
             # 5. Se non lo è, crea l'associazione
             print(f"Associo l'utente '{admin_email}' al progetto '{project_name}' con ruolo 'admin'...")
-            new_association = UserProjectAssociation(userId=admin_user.id, projectId=project.id, role='admin')
+            new_association = UserProjectAssociation(user_id=admin_user.id, project_id=project.id, role='admin')
             db.session.add(new_association)
 
         db.session.commit()

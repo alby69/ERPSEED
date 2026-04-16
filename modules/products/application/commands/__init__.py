@@ -53,7 +53,7 @@ class CreateProductCommand(CreateCommand):
         """Create command from dictionary."""
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             name=data.get("name", ""),
             code=data.get("code", ""),
@@ -108,7 +108,7 @@ class UpdateProductCommand(UpdateCommand):
         """Create command from dictionary."""
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             entity_id=data.get("entity_id", data.get("id", 0)),
             name=data.get("name"),
@@ -137,7 +137,7 @@ class DeleteProductCommand(DeleteCommand):
         """Create command from dictionary."""
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             entity_id=data.get("entity_id", data.get("id", 0)),
         )
@@ -151,7 +151,7 @@ class GetProductCommand(QueryCommand):
     def from_dict(cls, data: Dict[str, Any]) -> "GetProductCommand":
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             entity_id=data.get("entity_id", data.get("id", 0)),
         )
@@ -171,7 +171,7 @@ class ListProductsCommand(QueryCommand):
     def from_dict(cls, data: Dict[str, Any]) -> "ListProductsCommand":
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             filters=data.get("filters", {}),
             pagination=data.get("pagination", {}),
@@ -196,7 +196,7 @@ class UpdateStockCommand(Command):
     def from_dict(cls, data: Dict[str, Any]) -> "UpdateStockCommand":
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             product_id=data.get("product_id", 0),
             new_stock=data.get("new_stock", 0.0),

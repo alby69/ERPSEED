@@ -6,22 +6,22 @@ class CreateWorkflowCommand:
     name: str
     description: Optional[str] = None
     trigger_type: str = "record_event"
-    projectId: Optional[int] = None
+    project_id: Optional[int] = None
     config: Optional[Dict] = None
 
 @dataclass
 class UpdateWorkflowCommand:
-    workflowId: int
+    workflow_id: int
     data: Dict[str, Any]
 
 @dataclass
 class DeleteWorkflowCommand:
-    workflowId: int
+    workflow_id: int
 
 @dataclass
 class CreateWebhookCommand:
     name: str
     url: str
     event_type: str
-    projectId: Optional[int] = None
+    project_id: Optional[int] = None
     is_active: bool = True

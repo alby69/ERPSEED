@@ -284,7 +284,7 @@ class GDOReconciliationService(BaseService):
 
         return matches
 
-    def save_results(self, projectId: int, company_id: Optional[int], results: Dict[str, Any]) -> int:
+    def save_results(self, project_id: int, company_id: Optional[int], results: Dict[str, Any]) -> int:
         """
         Persist reconciliation results (Session and Matches) to dynamic tables.
         """
@@ -292,7 +292,7 @@ class GDOReconciliationService(BaseService):
         from sqlalchemy import insert
         import json
 
-        schema_name = f"project_{projectId}"
+        schema_name = f"project_{project_id}"
         session_table = get_table_object("gdo_session", schema=schema_name)
         match_table = get_table_object("gdo_match", schema=schema_name)
         movement_table = get_table_object("gdo_movement", schema=schema_name)

@@ -27,7 +27,7 @@ class UserCommandHandler:
         return user
 
     def handle_update(self, cmd):
-        user = db.session.get(User, cmd.userId)
+        user = db.session.get(User, cmd.user_id)
         if not user:
             abort(404, message="User not found.")
 
@@ -52,10 +52,10 @@ class UserCommandHandler:
         return user
 
     def handle_delete(self, cmd):
-        if int(cmd.current_userId) == cmd.userId:
+        if int(cmd.current_user_id) == cmd.user_id:
             abort(403, message="You cannot delete your own account.")
 
-        user = db.session.get(User, cmd.userId)
+        user = db.session.get(User, cmd.user_id)
         if not user:
             abort(404, message="User not found.")
 
@@ -64,7 +64,7 @@ class UserCommandHandler:
         return True
 
     def handle_reset_password(self, cmd):
-        user = db.session.get(User, cmd.userId)
+        user = db.session.get(User, cmd.user_id)
         if not user:
             abort(404, message="User not found.")
 

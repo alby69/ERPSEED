@@ -268,7 +268,7 @@ def seed_metadata():
         print("Seeding SysActions...")
 
         # Check if they already exist
-        existing_actions = {a.technical_name for a in SysAction.query.filter_by(viewId=None).all()}
+        existing_actions = {a.technical_name for a in SysAction.query.filter_by(view_id=None).all()}
 
         default_actions = [
             {

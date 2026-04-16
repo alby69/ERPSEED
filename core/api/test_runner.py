@@ -42,7 +42,7 @@ class TestSuiteSchema(Schema):
 
 class TestExecutionSchema(Schema):
     id = fields.Int()
-    test_suiteId = fields.Int()
+    test_suite_id = fields.Int()
     esito = fields.Str()
     totale_test = fields.Int()
     test_passati = fields.Int()
@@ -71,13 +71,13 @@ class ModuleStatusResponseSchema(Schema):
     storico = fields.List(fields.Dict())
 
 class ModuleStatusChangeSchema(Schema):
-    moduleName = fields.Str(required=True)
+    modulo_nome = fields.Str(required=True)
     nuovo_stato = fields.Str(required=True)
     motivo = fields.Str()
 
 
 class GenerateSuiteSchema(Schema):
-    moduleName = fields.Str(required=True)
+    modulo_nome = fields.Str(required=True)
     endpoint_base = fields.Str(required=True)
     tipo = fields.Str(load_default='crud')
 
@@ -132,21 +132,21 @@ class TestSuiteList(MethodView):
         return suite
 
 
-@blp.route('/suites/<int:suiteId>')
+@blp.route('/suites/<int:suite_id>')
 class TestSuiteResource(MethodView):
     @jwt_required()
     @blp.response(200, TestSuiteSchema)
-    def get(self, suiteId):
+    def get(self, suite_id):
         """Dettagli di una test suite."""
-        suite = TestSuite.query.get_or_404(suiteId)
+        suite = TestSuite.query.get_or_404(suite_id)
         return suite
 
     @jwt_required()
     @blp.arguments(TestSuiteSchema(partial=True, exclude=("id", "ultimo_esito", "created_at", "updated_at", "test_cases")))
     @blp.response(200, TestSuiteSchema)
-    def put(self, data, suiteId):
+    def put(self, data, suite_id):
         """Aggiorna una test suite."""
-        suite = TestSuite.query.get_or_404(suiteId)
+        suite = TestSuite.query.get_or_404(suite_id)
 
         for key, value in data.items():
             if hasattr(suite, key):
@@ -157,13 +157,13 @@ class TestSuiteResource(MethodView):
 
     @jwt_required()
     @blp.response(204)
-    def delete(self, suiteId):
+    def delete(self, suite_id):
         """Elimina una test suite."""
         try:
-            suite = TestSuite.query.get_or_404(suiteId)
+            suite = TestSuite.query.get_or_404(suite_id)
 
-            TestCase.query.filter_by(test_suiteId=suiteId).delete()
-            TestExecution.query.filter_by(test_suiteId=suiteId).delete()
+            TestCase.query.filter_by(test_suite_id=suite_id).delete()
+            TestExecution.query.filter_by(test_suite_id=suite_id).delete()
 
             db.session.delete(suite)
             db.session.commit()
@@ -173,14 +173,14 @@ class TestSuiteResource(MethodView):
             abort(500, message=str(e))
 
 
-@blp.route('/suites/<int:suiteId>/cases')
+@blp.route('/suites/<int:suite_id>/cases')
 class TestCaseList(MethodView):
     @jwt_required()
     @blp.arguments(TestCaseSchema(exclude=("id",)))
     @blp.response(201, TestCaseSchema)
-    def post(self, data, suiteId):
+    def post(self, data, suite_id):
         """Aggiunge un test case alla suite."""
-        suite = TestSuite.query.get_or_404(suiteId)
+        suite = TestSuite.query.get_or_404(suite_id)
 
         # Gestione payload se inviato come stringa JSON
         payload = data.get('payload', {})
@@ -192,7 +192,7 @@ class TestCaseList(MethodView):
                 pass
 
         case = TestCase(
-            test_suiteId=suite.id, # type: ignore
+            test_suite_id=suite.id, # type: ignore
             nome=data['nome'], # type: ignore
             descrizione=data.get('descrizione', ''), # type: ignore
             test_type=data['test_type'], # type: ignore
@@ -209,21 +209,21 @@ class TestCaseList(MethodView):
         return case
 
 
-@blp.route('/cases/<int:caseId>')
+@blp.route('/cases/<int:case_id>')
 class TestCaseResource(MethodView):
     @jwt_required()
     @blp.response(200, TestCaseSchema)
-    def get(self, caseId):
+    def get(self, case_id):
         """Dettagli di un test case."""
-        case = TestCase.query.get_or_404(caseId)
+        case = TestCase.query.get_or_404(case_id)
         return case
 
     @jwt_required()
     @blp.arguments(TestCaseSchema(partial=True, exclude=("id",)))
     @blp.response(200, TestCaseSchema)
-    def put(self, data, caseId):
+    def put(self, data, case_id):
         """Aggiorna un test case."""
-        case = TestCase.query.get_or_404(caseId)
+        case = TestCase.query.get_or_404(case_id)
 
         for key, value in data.items():
             if hasattr(case, key):
@@ -240,34 +240,34 @@ class TestCaseResource(MethodView):
 
     @jwt_required()
     @blp.response(204)
-    def delete(self, caseId):
+    def delete(self, case_id):
         """Elimina un test case."""
-        case = TestCase.query.get_or_404(caseId)
+        case = TestCase.query.get_or_404(case_id)
         db.session.delete(case)
         db.session.commit()
         return ''
 
 
-@blp.route('/suites/<int:suiteId>/runs')
+@blp.route('/suites/<int:suite_id>/run')
 class TestSuiteRun(MethodView):
     @jwt_required()
     @blp.response(200, TestExecutionSchema)
-    def post(self, suiteId):
+    def post(self, suite_id):
         """Esegue una test suite."""
         identity = get_jwt_identity()
-        userId = int(identity)
+        user_id = int(identity)
 
-        suite = TestSuite.query.get_or_404(suiteId)
+        suite = TestSuite.query.get_or_404(suite_id)
 
         from models import User
-        user = User.query.get(userId)
+        user = User.query.get(user_id)
         tenant_id = user.tenant_id if user else None
 
         auth_token = request.headers.get('Authorization', '').replace('Bearer ', '')
 
         runner = TestRunner(auth_token=auth_token, tenant_id=tenant_id if tenant_id else 0)
 
-        execution = runner.esegui_suite(suite, userId)
+        execution = runner.esegui_suite(suite, user_id)
 
         return execution
 
@@ -279,33 +279,33 @@ class TestExecutionList(MethodView):
     def get(self):
         """Lista tutte le esecuzioni test."""
         limit = request.args.get('limit', 50, type=int)
-        suiteId = request.args.get('suiteId', type=int)
+        suite_id = request.args.get('suite_id', type=int)
 
         query = TestExecution.query.order_by(TestExecution.created_at.desc())
 
-        if suiteId:
-            query = query.filter_by(test_suiteId=suiteId)
+        if suite_id:
+            query = query.filter_by(test_suite_id=suite_id)
 
         executions = query.limit(limit).all()
         return {'executions': executions}
 
 
-@blp.route('/executions/<int:executionId>')
+@blp.route('/executions/<int:exec_id>')
 class TestExecutionResource(MethodView):
     @jwt_required()
     @blp.response(200, TestExecutionSchema)
-    def get(self, executionId):
+    def get(self, exec_id):
         """Dettagli esecuzione test."""
-        execution = TestExecution.query.get_or_404(executionId)
+        execution = TestExecution.query.get_or_404(exec_id)
         return execution
 
     @jwt_required()
     @blp.response(204)
-    def delete(self, executionId):
+    def delete(self, exec_id):
         """Elimina esecuzione test."""
         import traceback
         try:
-            execution = TestExecution.query.get_or_404(executionId)
+            execution = TestExecution.query.get_or_404(exec_id)
             db.session.delete(execution)
             db.session.commit()
             return ''
@@ -328,14 +328,14 @@ class TestSuiteGeneratorEndpoint(MethodView):
 
         if tipo == 'crud':
             suite = TestSuiteGenerator.genera_crud_suite(
-                data['moduleName'],
+                data['modulo_nome'],
                 data['endpoint_base']
             )
             if suite is None:
                 abort(400, message=f'Endpoint non valido: {data["endpoint_base"]}. Endpoint validi: soggetti, indirizzi, ruoli, contatti')
         elif tipo == 'validation':
             suite = TestSuiteGenerator.genera_validation_suite(
-                data['moduleName'],
+                data['modulo_nome'],
                 data['endpoint_base']
             )
         else:
@@ -351,7 +351,7 @@ class TestSuiteGeneratorEndpoint(MethodView):
         return suite
 
 
-@blp.route('/module-statuses', methods=['POST'])
+@blp.route('/module/status', methods=['POST'])
 class ModuleStatusChange(MethodView):
     @jwt_required()
     @blp.arguments(ModuleStatusChangeSchema)
@@ -359,12 +359,12 @@ class ModuleStatusChange(MethodView):
     def post(self, data):
         """Cambia lo stato di un modulo."""
         identity = get_jwt_identity()
-        userId = int(identity)
+        user_id = int(identity)
 
         success, message = ModuleStatusManager.cambia_stato(
-            data['moduleName'],
+            data['modulo_nome'],
             data['nuovo_stato'],
-            userId,
+            user_id,
             data.get('motivo', '')
         )
 
@@ -374,23 +374,23 @@ class ModuleStatusChange(MethodView):
         return {'message': message}
 
 
-@blp.route('/module/status/<moduleName>')
+@blp.route('/module/status/<modulo_nome>')
 class ModuleStatusGet(MethodView):
     @jwt_required()
     @blp.response(200, ModuleStatusResponseSchema)
-    def get(self, moduleName):
+    def get(self, modulo_nome):
         """Stato corrente di un modulo."""
-        stato = ModuleStatusManager.get_stato_modulo(moduleName)
+        stato = ModuleStatusManager.get_stato_modulo(modulo_nome)
 
         if stato is None:
-            abort(404, message=f'Modulo {moduleName} non trovato')
+            abort(404, message=f'Modulo {modulo_nome} non trovato')
 
         history = ModuleStatusHistory.query.filter_by(
-            modulo_target=moduleName
+            modulo_target=modulo_nome
         ).order_by(ModuleStatusHistory.created_at.desc()).limit(10).all()
 
         return {
-            'modulo': moduleName,
+            'modulo': modulo_nome,
             'stato': stato,
             'storico': [
                 {
@@ -405,7 +405,7 @@ class ModuleStatusGet(MethodView):
         }
 
 
-@blp.route('/modules-statuses')
+@blp.route('/modules/status')
 class AllModulesStatus(MethodView):
     @jwt_required()
     @blp.response(200, {"type": "object"})

@@ -19,16 +19,16 @@ from extensions import db
 
 module_models = db.Table(
     "module_models",
-    db.Column("moduleId", db.Integer, db.ForeignKey("modules.id"), primary_key=True),
+    db.Column("module_id", db.Integer, db.ForeignKey("modules.id"), primary_key=True),
     db.Column(
-        "sysmodelId", db.Integer, db.ForeignKey("sys_models.id"), primary_key=True
+        "sysmodel_id", db.Integer, db.ForeignKey("sys_models.id"), primary_key=True
     ),
     info={"bind_key": None},
 )
 
 module_blocks = db.Table(
     "module_blocks",
-    db.Column("moduleId", db.Integer, db.ForeignKey("modules.id"), primary_key=True),
+    db.Column("module_id", db.Integer, db.ForeignKey("modules.id"), primary_key=True),
     db.Column("block_id", db.Integer, db.ForeignKey("blocks.id"), primary_key=True),
     info={"bind_key": None},
 )
@@ -38,7 +38,7 @@ module_packages = db.Table(
     "module_packages",
     db.Column("package_id", db.Integer, db.ForeignKey("modules.id"), primary_key=True),
     db.Column(
-        "contained_moduleId", db.Integer, db.ForeignKey("modules.id"), primary_key=True
+        "contained_module_id", db.Integer, db.ForeignKey("modules.id"), primary_key=True
     ),
     info={"bind_key": None},
 )
@@ -46,8 +46,8 @@ module_packages = db.Table(
 # Module ↔ Project: quali moduli sono assegnati a quali progetti
 module_projects = db.Table(
     "module_projects",
-    db.Column("moduleId", db.Integer, db.ForeignKey("modules.id"), primary_key=True),
-    db.Column("projectId", db.Integer, db.ForeignKey("projects.id"), primary_key=True),
+    db.Column("module_id", db.Integer, db.ForeignKey("modules.id"), primary_key=True),
+    db.Column("project_id", db.Integer, db.ForeignKey("projects.id"), primary_key=True),
     db.Column("is_enabled", db.Boolean, default=True),
     db.Column("assigned_at", db.DateTime, default=db.func.now()),
     info={"bind_key": None},
@@ -90,7 +90,7 @@ class Module(BaseModel):
     dependencies = db.Column(db.JSON, default=list)
 
     # Test
-    test_suiteId = db.Column(db.Integer, db.ForeignKey("test_suites.id"))
+    test_suite_id = db.Column(db.Integer, db.ForeignKey("test_suites.id"))
     test_results = db.Column(db.JSON, default=dict)
     quality_score = db.Column(db.Float, default=0.0)
 
@@ -128,7 +128,7 @@ class Module(BaseModel):
         "Module",
         secondary=module_packages,
         primaryjoin="Module.id==module_packages.c.package_id",
-        secondaryjoin="Module.id==module_packages.c.contained_moduleId",
+        secondaryjoin="Module.id==module_packages.c.contained_module_id",
         backref=db.backref("packages", lazy="dynamic"),
         lazy="select",
     )
@@ -155,14 +155,14 @@ class Module(BaseModel):
             "version": self.version,
             "core_version_min": self.core_version_min,
             "dependencies": self.dependencies or [],
-            "test_suiteId": self.test_suiteId,
+            "test_suite_id": self.test_suite_id,
             "test_results": self.test_results or {},
             "quality_score": self.quality_score,
             "icon": self.icon,
             "menu_position": self.menu_position,
             "api_definition": self.api_definition or {},
-            "projectIds": [p.id for p in self.projects],
-            "contained_moduleIds": [m.id for m in self.contained_modules],
+            "project_ids": [p.id for p in self.projects],
+            "contained_module_ids": [m.id for m in self.contained_modules],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

@@ -41,7 +41,7 @@ class HRPlugin(BasePlugin):
 
         def on_user_created(event: DomainEvent):
             """Handle user created event - auto-create employee profile."""
-            if event.payload.get("userId"):
+            if event.payload.get("user_id"):
                 self._on_employee_auto_create(event.payload)
 
         def on_record_created(event: DomainEvent):

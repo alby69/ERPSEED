@@ -98,8 +98,8 @@ class AuthService:
     @staticmethod
     def refresh_token():
         """Refresh access token."""
-        userId = get_jwt_identity()
-        user = User.query.get(userId)
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
 
         if not user or not user.is_active:
             raise ValueError("Invalid user")
@@ -220,7 +220,7 @@ class AuthService:
 
         # Log password change
         AuditLog.log_create(
-            userId=user.id,
+            user_id=user.id,
             tenant_id=user.tenant_id,
             resource_type='user',
             resource_id=user.id,
@@ -230,9 +230,9 @@ class AuthService:
         return {'success': True}
 
     @staticmethod
-    def change_password(userId, current_password, new_password):
+    def change_password(user_id, current_password, new_password):
         """Change password with verification."""
-        user = User.query.get(userId)
+        user = User.query.get(user_id)
 
         if not user:
             raise ValueError("User not found")
@@ -245,7 +245,7 @@ class AuthService:
 
         # Log password change
         AuditLog.log_create(
-            userId=user.id,
+            user_id=user.id,
             tenant_id=user.tenant_id,
             resource_type='user',
             resource_id=user.id,

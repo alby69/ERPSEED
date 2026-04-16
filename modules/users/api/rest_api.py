@@ -11,7 +11,7 @@ blp = Blueprint("users", __name__, description="Operations on users")
 user_service = get_user_service()
 
 
-@blp.route("/registrations")
+@blp.route("/register")
 class UserRegister(MethodView):
     @blp.arguments(UserRegisterSchema)
     @blp.response(201, UserDisplaySchema)
@@ -37,39 +37,39 @@ class UserList(MethodView):
         return items, 200, headers
 
 
-@blp.route("/users/<int:userId>")
+@blp.route("/users/<int:user_id>")
 class UserResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
     @blp.response(200, UserDisplaySchema)
-    def get(self, userId):
+    def get(self, user_id):
         """Get user details (Admins only)"""
-        return user_service.get_by_id(userId)
+        return user_service.get_by_id(user_id)
 
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
     @blp.arguments(UserUpdateSchema)
     @blp.response(200, UserDisplaySchema)
-    def put(self, update_data, userId):
+    def put(self, update_data, user_id):
         """Update user details (Admins only)"""
-        return user_service.update(userId, update_data)
+        return user_service.update(user_id, update_data)
 
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
     @blp.response(204)
-    def delete(self, userId):
+    def delete(self, user_id):
         """Delete a user (Admins only)"""
-        current_userId = get_jwt_identity()
-        user_service.delete(userId, current_userId)
+        current_user_id = get_jwt_identity()
+        user_service.delete(user_id, current_user_id)
         return ""
 
 
-@blp.route("/users/<int:userId>/password")
+@blp.route("/users/<int:user_id>/password")
 class AdminUserPasswordReset(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
     @blp.arguments(AdminPasswordResetSchema)
     @blp.response(200)
-    def put(self, data, userId):
+    def put(self, data, user_id):
         """Reset a user's password (Admins only)"""
-        return {"message": user_service.reset_password(userId, data['new_password'])}
+        return {"message": user_service.reset_password(user_id, data['new_password'])}

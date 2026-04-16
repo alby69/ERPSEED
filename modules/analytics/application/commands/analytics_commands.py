@@ -6,7 +6,7 @@ class CreateChartCommand:
     title: str
     library: str
     chart_type: str
-    modelId: int
+    model_id: int
     x_axis: str
     y_axis: str
     aggregation: str

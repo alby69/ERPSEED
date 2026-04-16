@@ -20,35 +20,35 @@ class BuilderService:
             query = apply_sorting(query, SysModel)
         return paginate(query)
 
-    def get_model(self, modelId):
+    def get_model(self, model_id):
         from sqlalchemy.orm import joinedload
-        return db.session.query(SysModel).options(joinedload(SysModel.fields)).get(modelId)
+        return db.session.query(SysModel).options(joinedload(SysModel.fields)).get(model_id)
 
-    def create_model(self, projectId, name, title, **kwargs):
-        cmd = CreateModelCommand(projectId, name, title, **kwargs)
+    def create_model(self, project_id, name, title, **kwargs):
+        cmd = CreateModelCommand(project_id, name, title, **kwargs)
         return self.handler.handle_create_model(cmd)
 
-    def update_model(self, modelId, data):
-        cmd = UpdateModelCommand(modelId, data)
+    def update_model(self, model_id, data):
+        cmd = UpdateModelCommand(model_id, data)
         return self.handler.handle_update_model(cmd)
 
-    def delete_model(self, modelId):
-        cmd = DeleteModelCommand(modelId)
+    def delete_model(self, model_id):
+        cmd = DeleteModelCommand(model_id)
         return self.handler.handle_delete_model(cmd)
 
-    def create_field(self, modelId, name, field_type, title=None, technical_name=None, **kwargs):
-        cmd = CreateFieldCommand(modelId, name, field_type, title, technical_name, kwargs)
+    def create_field(self, model_id, name, field_type, title=None, technical_name=None, **kwargs):
+        cmd = CreateFieldCommand(model_id, name, field_type, title, technical_name, kwargs)
         return self.handler.handle_create_field(cmd)
 
-    def sync_schema(self, modelId, db_engine):
-        cmd = SyncSchemaCommand(modelId, db_engine)
+    def sync_schema(self, model_id, db_engine):
+        cmd = SyncSchemaCommand(model_id, db_engine)
         sql_commands = self.handler.handle_sync_schema(cmd)
         if not sql_commands:
             return [], "Schema is already up to date."
         return sql_commands, "Schema synced successfully."
 
-    def clone_model(self, modelId, userId, new_name, new_title):
-        cmd = CloneModelCommand(modelId, userId, new_name, new_title)
+    def clone_model(self, model_id, user_id, new_name, new_title):
+        cmd = CloneModelCommand(model_id, user_id, new_name, new_title)
         return self.handler.handle_clone_model(cmd)
 
     def get_audit_logs(self, page=1, per_page=20):

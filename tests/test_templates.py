@@ -44,11 +44,11 @@ class TemplateTestCase(unittest.TestCase):
         self.assertGreater(len(result['models']), 0)
 
         # Verify models were actually created
-        models = SysModel.query.filter_by(projectId=self.project.id).all()
+        models = SysModel.query.filter_by(project_id=self.project.id).all()
         self.assertEqual(len(models), 3) # customer, lead, activity
 
         # Verify fields for 'customer'
-        customer = SysModel.query.filter_by(projectId=self.project.id, name='crm_customers').first()
+        customer = SysModel.query.filter_by(project_id=self.project.id, name='crm_customers').first()
         self.assertIsNotNone(customer)
         self.assertGreater(len(customer.fields), 0)
 

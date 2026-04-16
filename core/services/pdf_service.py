@@ -26,12 +26,12 @@ class PDFService:
     """Service per generazione PDF documenti."""
 
     @staticmethod
-    def generate_sales_order(orderId: int, tenant_id: int) -> bytes:
+    def generate_sales_order(order_id: int, tenant_id: int) -> bytes:
         """
         Genera PDF per ordine di vendita.
 
         Args:
-            orderId: ID dell'ordine
+            order_id: ID dell'ordine
             tenant_id: ID del tenant
 
         Returns:
@@ -40,7 +40,7 @@ class PDFService:
         from sales import SalesOrder, SalesOrderLine
 
         order = SalesOrder.query.filter_by(
-            id=orderId,
+            id=order_id,
             tenant_id=tenant_id
         ).first()
 
@@ -53,12 +53,12 @@ class PDFService:
         return PDFService._convert_to_pdf(html)
 
     @staticmethod
-    def generate_invoice(invoiceId: int, tenant_id: int) -> bytes:
+    def generate_invoice(invoice_id: int, tenant_id: int) -> bytes:
         """
         Genera PDF per fattura.
 
         Args:
-            invoiceId: ID della fattura
+            invoice_id: ID della fattura
             tenant_id: ID del tenant
 
         Returns:
@@ -67,7 +67,7 @@ class PDFService:
         from plugins.accounting.models import Invoice, InvoiceLine
 
         invoice = Invoice.query.filter_by(
-            id=invoiceId,
+            id=invoice_id,
             tenant_id=tenant_id
         ).first()
 
@@ -80,12 +80,12 @@ class PDFService:
         return PDFService._convert_to_pdf(html)
 
     @staticmethod
-    def generate_quote(quoteId: int, tenant_id: int) -> bytes:
+    def generate_quote(quote_id: int, tenant_id: int) -> bytes:
         """
         Genera PDF per preventivo/quote.
 
         Args:
-            quoteId: ID del preventivo
+            quote_id: ID del preventivo
             tenant_id: ID del tenant
 
         Returns:

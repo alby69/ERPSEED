@@ -255,10 +255,10 @@ def paginate(query):
 
     return pagination.items, headers
 
-def log_audit(userId, model_name, record_id, action, changes=None):
+def log_audit(user_id, model_name, record_id, action, changes=None):
     """Logs an audit entry."""
     log = AuditLog(
-        userId=userId,
+        user_id=user_id,
         model_name=model_name,
         record_id=record_id,
         action=action,

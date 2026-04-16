@@ -38,12 +38,12 @@ class ProjectCommandHandler:
         return project
 
     def handle_update(self, cmd):
-        project = db.session.get(Project, cmd.projectId)
+        project = db.session.get(Project, cmd.project_id)
         if not project:
             abort(404, message="Project not found.")
 
-        user = db.session.get(User, cmd.userId)
-        if user.role != 'admin' and project.owner_id != cmd.userId:
+        user = db.session.get(User, cmd.user_id)
+        if user.role != 'admin' and project.owner_id != cmd.user_id:
             abort(403, message="Only the owner or an admin can modify the project.")
 
         for key, value in cmd.data.items():
@@ -58,37 +58,37 @@ class ProjectCommandHandler:
         return project
 
     def handle_delete(self, cmd):
-        project = db.session.get(Project, cmd.projectId)
+        project = db.session.get(Project, cmd.project_id)
         if not project:
             abort(404, message="Project not found.")
 
-        user = db.session.get(User, cmd.userId)
-        if user.role != 'admin' and project.owner_id != cmd.userId:
+        user = db.session.get(User, cmd.user_id)
+        if user.role != 'admin' and project.owner_id != cmd.user_id:
             abort(403, message="Only the owner or an admin can delete the project.")
 
         project_name = project.name
-        projectId = project.id
+        project_id = project.id
         schema_name = f"project_{project.id}"
         db.session.execute(text(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE'))
 
         db.session.delete(project)
         db.session.commit()
         try:
-            on_project_deleted(projectId, project_name)
+            on_project_deleted(project_id, project_name)
         except Exception:
             pass
         return True
 
     def handle_add_member(self, cmd):
-        project = db.session.get(Project, cmd.projectId)
+        project = db.session.get(Project, cmd.project_id)
         if not project:
             abort(404, message="Project not found.")
 
-        user = db.session.get(User, cmd.userId)
-        if user.role != 'admin' and project.owner_id != cmd.userId:
+        user = db.session.get(User, cmd.user_id)
+        if user.role != 'admin' and project.owner_id != cmd.user_id:
             abort(403, message="Only the owner or an admin can add members.")
 
-        user_to_add = db.session.get(User, cmd.member_userId)
+        user_to_add = db.session.get(User, cmd.member_user_id)
         if not user_to_add:
             abort(404, message="User to add not found.")
 
@@ -100,15 +100,15 @@ class ProjectCommandHandler:
         return user_to_add
 
     def handle_remove_member(self, cmd):
-        project = db.session.get(Project, cmd.projectId)
+        project = db.session.get(Project, cmd.project_id)
         if not project:
             abort(404, message="Project not found.")
 
-        user = db.session.get(User, cmd.userId)
-        if user.role != 'admin' and project.owner_id != cmd.userId:
+        user = db.session.get(User, cmd.user_id)
+        if user.role != 'admin' and project.owner_id != cmd.user_id:
             abort(403, message="Only the owner or an admin can remove members.")
 
-        user_to_remove = db.session.get(User, cmd.member_userId)
+        user_to_remove = db.session.get(User, cmd.member_user_id)
         if not user_to_remove:
             abort(404, message="User not found.")
 

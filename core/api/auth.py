@@ -23,7 +23,7 @@ from core.api.auth_schemas import (
 auth_bp = Blueprint('auth', __name__, description='Authentication')
 
 
-@auth_bp.route('/registrations')
+@auth_bp.route('/register')
 class Register(MethodView):
     @auth_bp.arguments(RegisterSchema)
     @auth_bp.response(201, AuthResponseSchema)
@@ -53,7 +53,7 @@ class Register(MethodView):
             abort(400, message=str(e))
 
 
-@auth_bp.route('/logins')
+@auth_bp.route('/login')
 class Login(MethodView):
     @auth_bp.arguments(LoginSchema)
     @auth_bp.response(200, AuthResponseSchema)
@@ -84,14 +84,14 @@ class CurrentUser(MethodView):
     @auth_bp.response(200, UserSchema)
     def get(self):
         """Get current user info."""
-        userId = get_jwt_identity()
-        user = User.query.get(userId)
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
         if not user:
             abort(404, message="User not found")
         return user.to_dict()
 
 
-@auth_bp.route('/refreshes')
+@auth_bp.route('/refresh')
 class Refresh(MethodView):
     @auth_bp.doc(security=[{"bearerAuth": []}])
     @jwt_required(refresh=True)
@@ -155,11 +155,11 @@ class PasswordChange(MethodView):
             - current_password: Current password
             - new_password: New password
         """
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         try:
             result = AuthService.change_password(
-                userId=int(userId),
+                user_id=int(user_id),
                 current_password=data.get('current_password', ''),
                 new_password=data.get('new_password', '')
             )

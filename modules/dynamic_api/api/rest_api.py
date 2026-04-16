@@ -9,7 +9,7 @@ from modules.dynamic_api.service import get_dynamic_api_service
 from extensions import db
 from core.utils.utils import paginate
 
-blp = Blueprint("dynamic_api", __name__, url_prefix="/projects/<int:projectId>", description="Dynamic CRUD API for builder models")
+blp = Blueprint("dynamic_api", __name__, url_prefix="/projects/<int:project_id>", description="Dynamic CRUD API for builder models")
 
 dynamic_api_service = get_dynamic_api_service()
 
@@ -26,13 +26,13 @@ class DynamicDataList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, {"type": "object"})
-    def get(self, projectId, model_name):
+    def get(self, project_id, model_name):
         """List records from a dynamically created table."""
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
 
         result, headers = dynamic_api_service.list_records(
-            projectId=projectId,
+            project_id=project_id,
             model_name=model_name,
             page=page,
             per_page=per_page
@@ -44,11 +44,11 @@ class DynamicDataList(MethodView):
     @jwt_required()
     @blp.arguments(AnyJsonSchema)
     @blp.response(201, {"type": "object"})
-    def post(self, data, projectId, model_name):
+    def post(self, data, project_id, model_name):
         """Create a new record in a dynamically created table."""
 
         result, status = dynamic_api_service.create_record(
-            projectId=projectId,
+            project_id=project_id,
             model_name=model_name,
             data=data
         )
@@ -61,12 +61,12 @@ class DynamicDataList(MethodView):
     @jwt_required()
     @blp.arguments(BulkDeleteSchema)
     @blp.response(204)
-    def delete(self, data, projectId, model_name):
+    def delete(self, data, project_id, model_name):
         """Delete multiple records."""
         ids_to_delete = data['ids']
 
         dynamic_api_service.bulk_delete(
-            projectId=projectId,
+            project_id=project_id,
             model_name=model_name,
             ids_to_delete=ids_to_delete
         )
@@ -74,42 +74,42 @@ class DynamicDataList(MethodView):
         return ""
 
 
-@blp.route("/data/<string:model_name>/<int:itemId>")
+@blp.route("/data/<string:model_name>/<int:item_id>")
 class DynamicDataItem(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, {"type": "object"})
-    def get(self, projectId, model_name, itemId):
+    def get(self, project_id, model_name, item_id):
         """Retrieve a single record from a dynamic table."""
         return dynamic_api_service.get_record(
-            projectId=projectId,
+            project_id=project_id,
             model_name=model_name,
-            itemId=itemId
+            item_id=item_id
         )
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(AnyJsonSchema)
     @blp.response(200, {"type": "object"})
-    def put(self, data, projectId, model_name, itemId):
+    def put(self, data, project_id, model_name, item_id):
         """Update a record in a dynamic table."""
 
         return dynamic_api_service.update_record(
-            projectId=projectId,
+            project_id=project_id,
             model_name=model_name,
-            itemId=itemId,
+            item_id=item_id,
             data=data
         )
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
-    def delete(self, projectId, model_name, itemId):
+    def delete(self, project_id, model_name, item_id):
         """Delete a record from a dynamic table."""
         dynamic_api_service.delete_record(
-            projectId=projectId,
+            project_id=project_id,
             model_name=model_name,
-            itemId=itemId
+            item_id=item_id
         )
         return ""
 
@@ -119,25 +119,25 @@ class DynamicModelMeta(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, SysModelSchema)
-    def get(self, projectId, model_name):
+    def get(self, project_id, model_name):
         """Retrieve metadata of a dynamic model for the frontend."""
         return dynamic_api_service.get_model_metadata(
-            projectId=projectId,
+            project_id=project_id,
             model_name=model_name
         )
 
 
-@blp.route("/data/<string:model_name>/<int:itemId>/clone")
+@blp.route("/data/<string:model_name>/<int:item_id>/clone")
 class DynamicDataClone(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(201, {"type": "object"})
-    def post(self, projectId, model_name, itemId):
+    def post(self, project_id, model_name, item_id):
         """Clone an existing record."""
         result, status = dynamic_api_service.clone_record(
-            projectId=projectId,
+            project_id=project_id,
             model_name=model_name,
-            itemId=itemId
+            item_id=item_id
         )
 
         if status != 201:
@@ -155,8 +155,8 @@ class AuditLogList(MethodView):
         from models import User
         from extensions import db
 
-        userId = get_jwt_identity()
-        user = db.session.get(User, userId)
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
 
         if not user or user.role != 'admin':
             abort(403, message="Access denied")
@@ -179,7 +179,7 @@ class DynamicDataImport(MethodView):
     @jwt_required()
     @blp.arguments(Schema.from_dict({"file": fields.Raw(metadata={"type": "file"}, required=True)}), location="files")
     @blp.response(200, {"type": "object"})
-    def post(self, files, projectId, model_name):
+    def post(self, files, project_id, model_name):
         """Import data from CSV."""
         file = files['file']
         if file.filename == '':
@@ -188,7 +188,7 @@ class DynamicDataImport(MethodView):
             abort(400, message="File must be a CSV")
 
         result, status = dynamic_api_service.import_csv(
-            projectId=projectId,
+            project_id=project_id,
             model_name=model_name,
             file=file
         )

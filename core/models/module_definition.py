@@ -11,7 +11,7 @@ class ModuleDefinition(BaseModel):
     """
     __tablename__ = 'module_definitions'
 
-    moduleId = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    module_id = db.Column(db.String(50), unique=True, nullable=False, index=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
 
@@ -36,13 +36,13 @@ class ModuleDefinition(BaseModel):
     is_active = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
-        return f'<ModuleDefinition {self.moduleId}>'
+        return f'<ModuleDefinition {self.module_id}>'
 
     def to_dict(self):
         """Serialize module definition."""
         return {
-            'id': self.moduleId,
-            'moduleId': self.moduleId,
+            'id': self.module_id,
+            'module_id': self.module_id,
             'name': self.name,
             'description': self.description,
             'category': self.category,

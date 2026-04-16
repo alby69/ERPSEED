@@ -25,7 +25,7 @@ class TestResult:
 
     def to_dict(self):
         return {
-            'test_caseId': self.test_case.id,
+            'test_case_id': self.test_case.id,
             'nome': self.test_case.nome,
             'tipo': self.test_case.test_type,
             'esito': self.esito,
@@ -209,7 +209,7 @@ class TestRunner:
     def esegui_suite(
         self,
         test_suite: TestSuite,
-        userId: int,
+        user_id: int,
         environment: str = 'test'
     ) -> TestExecution:
         """
@@ -218,8 +218,8 @@ class TestRunner:
         start_time = time.time()
 
         execution = TestExecution(
-            test_suiteId=test_suite.id,
-            utente_id=userId,
+            test_suite_id=test_suite.id,
+            utente_id=user_id,
             esito='in_corso',
             environment=environment,
             totale_test=len(test_suite.test_cases)
@@ -280,11 +280,11 @@ class TestRunner:
         try:
             from shared.utils.audit import create_audit_entry as AuditService
             AuditService.log_action(
-                userId=userId,
+                user_id=user_id,
                 action='test_execution',
                 model_name='TestSuite',
-                modelId=test_suite.id,
-                projectId=test_suite.id, # Assumiamo che test_suite sia collegata al progetto (se presente)
+                model_id=test_suite.id,
+                project_id=test_suite.id, # Assumiamo che test_suite sia collegata al progetto (se presente)
                 changes={
                     'esito': esito_finale,
                     'passati': test_passati,
@@ -313,7 +313,7 @@ class TestSuiteGenerator:
     VALID_ENDPOINTS = ['soggetti', 'indirizzi', 'ruoli', 'contatti']
 
     @staticmethod
-    def genera_crud_suite(moduleName: str, endpoint_base: str) -> TestSuite:
+    def genera_crud_suite(modulo_nome: str, endpoint_base: str) -> TestSuite:
         """
         Genera una test suite standard per operazioni CRUD.
         """
@@ -322,12 +322,12 @@ class TestSuiteGenerator:
         if endpoint_base not in TestSuiteGenerator.VALID_ENDPOINTS:
             return None
 
-        base_payload = TestSuiteGenerator.ENTITY_PAYLOADS.get(moduleName, {'nome': 'Test Record'})
+        base_payload = TestSuiteGenerator.ENTITY_PAYLOADS.get(modulo_nome, {'nome': 'Test Record'})
 
         suite = TestSuite(
-            nome=f'{moduleName}_crud',
-            descrizione=f'Test CRUD per il modulo {moduleName}',
-            modulo_target=moduleName,
+            nome=f'{modulo_nome}_crud',
+            descrizione=f'Test CRUD per il modulo {modulo_nome}',
+            modulo_target=modulo_nome,
             test_type='crud',
             stato='bozza'
         )
@@ -358,12 +358,12 @@ class TestSuiteGenerator:
         return suite
 
     @staticmethod
-    def genera_validation_suite(moduleName: str, endpoint_base: str) -> TestSuite:
+    def genera_validation_suite(modulo_nome: str, endpoint_base: str) -> TestSuite:
         """Genera test suite per validazione campi."""
         suite = TestSuite(
-            nome=f'{moduleName}_validation',
-            descrizione=f'Test validazione per il modulo {moduleName}',
-            modulo_target=moduleName,
+            nome=f'{modulo_nome}_validation',
+            descrizione=f'Test validazione per il modulo {modulo_nome}',
+            modulo_target=modulo_nome,
             test_type='validation',
             stato='bozza'
         )
@@ -411,7 +411,7 @@ class ModuleStatusManager:
 
     @staticmethod
     def cambia_stato(
-        moduleName: str,
+        modulo_nome: str,
         nuovo_stato: str,
         utente_id: int,
         motivo: str = ''
@@ -422,9 +422,9 @@ class ModuleStatusManager:
         if nuovo_stato not in ModuleStatusManager.STATI_VALIDI:
             return False, f'Stato non valido: {nuovo_stato}'
 
-        suite = TestSuite.query.filter_by(modulo_target=moduleName).first()
+        suite = TestSuite.query.filter_by(modulo_target=modulo_nome).first()
         if not suite:
-            return False, f'TestSuite non trovata per {moduleName}'
+            return False, f'TestSuite non trovata per {modulo_nome}'
 
         stato_attuale = suite.stato
 
@@ -433,7 +433,7 @@ class ModuleStatusManager:
 
         if nuovo_stato == 'testato':
             ultimo = TestExecution.query.filter_by(
-                test_suiteId=suite.id
+                test_suite_id=suite.id
             ).order_by(TestExecution.created_at.desc()).first()
 
             if not ultimo or ultimo.esito != 'successo':
@@ -442,7 +442,7 @@ class ModuleStatusManager:
         suite.stato = nuovo_stato
 
         history = ModuleStatusHistory(
-            modulo_target=moduleName,
+            modulo_target=modulo_nome,
             stato_precedente=stato_attuale,
             stato_nuovo=nuovo_stato,
             utente_id=utente_id,
@@ -451,10 +451,10 @@ class ModuleStatusManager:
         db.session.add(history)
         db.session.commit()
 
-        return True, f'Modulo {moduleName} -> {nuovo_stato}'
+        return True, f'Modulo {modulo_nome} -> {nuovo_stato}'
 
     @staticmethod
-    def get_stato_modulo(moduleName: str) -> Optional[str]:
+    def get_stato_modulo(modulo_nome: str) -> Optional[str]:
         """Restituisce lo stato corrente di un modulo."""
-        suite = TestSuite.query.filter_by(modulo_target=moduleName).first()
+        suite = TestSuite.query.filter_by(modulo_target=modulo_nome).first()
         return suite.stato if suite else None

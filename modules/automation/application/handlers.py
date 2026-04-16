@@ -9,7 +9,7 @@ class AutomationCommandHandler:
             name=cmd.name,
             description=cmd.description,
             trigger_type=cmd.trigger_type,
-            projectId=cmd.projectId,
+            project_id=cmd.project_id,
             config=cmd.config
         )
         db.session.add(workflow)
@@ -17,7 +17,7 @@ class AutomationCommandHandler:
         return workflow
 
     def handle_update_workflow(self, cmd):
-        workflow = db.session.get(Workflow, cmd.workflowId)
+        workflow = db.session.get(Workflow, cmd.workflow_id)
         if not workflow:
             abort(404, message="Workflow not found.")
         for key, value in cmd.data.items():
@@ -27,7 +27,7 @@ class AutomationCommandHandler:
         return workflow
 
     def handle_delete_workflow(self, cmd):
-        workflow = db.session.get(Workflow, cmd.workflowId)
+        workflow = db.session.get(Workflow, cmd.workflow_id)
         if not workflow:
             abort(404, message="Workflow not found.")
         db.session.delete(workflow)
@@ -39,7 +39,7 @@ class AutomationCommandHandler:
             name=cmd.name,
             url=cmd.url,
             event_type=cmd.event_type,
-            projectId=cmd.projectId,
+            project_id=cmd.project_id,
             is_active=cmd.is_active
         )
         db.session.add(webhook)

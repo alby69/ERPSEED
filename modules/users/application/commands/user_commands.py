@@ -10,15 +10,15 @@ class RegisterUserCommand:
 
 @dataclass
 class UpdateUserCommand:
-    userId: int
+    user_id: int
     data: dict
 
 @dataclass
 class DeleteUserCommand:
-    userId: int
-    current_userId: int
+    user_id: int
+    current_user_id: int
 
 @dataclass
 class ResetPasswordCommand:
-    userId: int
+    user_id: int
     new_password: str

@@ -30,7 +30,7 @@ class CreateSalesOrderCommand(CreateCommand):
     def from_dict(cls, data: Dict[str, Any]) -> "CreateSalesOrderCommand":
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             number=data.get("number", ""),
             date=data.get("date", ""),
@@ -62,7 +62,7 @@ class UpdateSalesOrderCommand(UpdateCommand):
     def from_dict(cls, data: Dict[str, Any]) -> "UpdateSalesOrderCommand":
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             entity_id=data.get("entity_id", data.get("id", 0)),
             number=data.get("number"),
@@ -81,7 +81,7 @@ class DeleteSalesOrderCommand(DeleteCommand):
     def from_dict(cls, data: Dict[str, Any]) -> "DeleteSalesOrderCommand":
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             entity_id=data.get("entity_id", data.get("id", 0)),
         )
@@ -95,7 +95,7 @@ class ConfirmSalesOrderCommand(Command):
     def from_dict(cls, data: Dict[str, Any]) -> "ConfirmSalesOrderCommand":
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
         )
 
@@ -108,7 +108,7 @@ class CancelSalesOrderCommand(Command):
     def from_dict(cls, data: Dict[str, Any]) -> "CancelSalesOrderCommand":
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
         )
 
@@ -121,7 +121,7 @@ class GetSalesOrderCommand(QueryCommand):
     def from_dict(cls, data: Dict[str, Any]) -> "GetSalesOrderCommand":
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             entity_id=data.get("entity_id", data.get("id", 0)),
         )
@@ -139,7 +139,7 @@ class ListSalesOrdersCommand(QueryCommand):
     def from_dict(cls, data: Dict[str, Any]) -> "ListSalesOrdersCommand":
         return cls(
             tenant_id=data.get("tenant_id"),
-            userId=data.get("userId"),
+            user_id=data.get("user_id"),
             metadata=data.get("metadata", {}),
             filters=data.get("filters", {}),
             pagination=data.get("pagination", {}),

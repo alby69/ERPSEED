@@ -43,10 +43,10 @@ class ModuleService:
         ).all()
 
     @staticmethod
-    def get_module_by_id(moduleId: str) -> Optional[ModuleDefinition]:
+    def get_module_by_id(module_id: str) -> Optional[ModuleDefinition]:
         """Restituisce un modulo per ID."""
         return ModuleDefinition.query.filter_by(
-            moduleId=moduleId,
+            module_id=module_id,
             is_active=True
         ).first()
 
@@ -103,7 +103,7 @@ class ModuleService:
         for dep_id in (module.dependencies or []):
             dep_module = TenantModule.query.filter_by(
                 tenant_id=tenant_id,
-                moduleId=dep_id,
+                module_id=dep_id,
                 is_enabled=True
             ).first()
 
@@ -114,7 +114,7 @@ class ModuleService:
 
     @staticmethod
     def register_module(
-        moduleId: str,
+        module_id: str,
         name: str,
         description: str,
         category: str,
@@ -127,7 +127,7 @@ class ModuleService:
         menu_position: int = 100
     ) -> ModuleDefinition:
         """Registra un nuovo modulo nel sistema."""
-        existing = ModuleDefinition.query.filter_by(moduleId=moduleId).first()
+        existing = ModuleDefinition.query.filter_by(module_id=module_id).first()
 
         if existing:
             existing.name = name
@@ -143,7 +143,7 @@ class ModuleService:
             module = existing
         else:
             module = ModuleDefinition(
-                moduleId=moduleId,
+                module_id=module_id,
                 name=name,
                 description=description,
                 category=category,
@@ -163,9 +163,9 @@ class ModuleService:
         return module
 
     @staticmethod
-    def unregister_module(moduleId: str) -> bool:
+    def unregister_module(module_id: str) -> bool:
         """Disattiva un modulo dal sistema (soft delete)."""
-        module = ModuleDefinition.query.filter_by(moduleId=moduleId).first()
+        module = ModuleDefinition.query.filter_by(module_id=module_id).first()
 
         if not module:
             return False

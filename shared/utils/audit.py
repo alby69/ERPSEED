@@ -12,7 +12,7 @@ import json
 class AuditEntry:
     """Represents an audit log entry."""
 
-    userId: Optional[int] = None
+    user_id: Optional[int] = None
     model_name: str = ""
     record_id: Optional[int] = None
     action: str = ""
@@ -21,7 +21,7 @@ class AuditEntry:
 
     def to_dict(self) -> dict:
         return {
-            "userId": self.userId,
+            "user_id": self.user_id,
             "model_name": self.model_name,
             "record_id": self.record_id,
             "action": self.action,
@@ -31,7 +31,7 @@ class AuditEntry:
 
 
 def create_audit_entry(
-    userId: Optional[int],
+    user_id: Optional[int],
     model_name: str,
     record_id: Optional[int],
     action: str,
@@ -40,7 +40,7 @@ def create_audit_entry(
     """Create an audit entry.
 
     Args:
-        userId: ID of user performing action
+        user_id: ID of user performing action
         model_name: Name of the model being modified
         record_id: ID of the record
         action: Action type (create, update, delete, etc.)
@@ -50,7 +50,7 @@ def create_audit_entry(
         AuditEntry instance
     """
     return AuditEntry(
-        userId=userId,
+        user_id=user_id,
         model_name=model_name,
         record_id=record_id,
         action=action,

@@ -49,7 +49,7 @@ def init_db():
         print("Adding owner to tenant...")
         member = TenantMember(
             tenant_id=tenant.id,
-            userId=owner.id,
+            user_id=owner.id,
             ruolo='admin',
             stato='attivo',
             accepted_at=db.func.now()

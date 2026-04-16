@@ -216,9 +216,9 @@ class WorkflowToolExecutor:
                 "steps": [
                     {"step_type": "condition|action|notification|delay", "name": "...", "config": {...}}
                 ],
-                "projectId": 1
+                "project_id": 1
             }
-            context: {"projectId": 1, "userId": 1}
+            context: {"project_id": 1, "user_id": 1}
         """
         # Valida configurazione
         validation = self.validator.validate_workflow_config(args)
@@ -230,8 +230,8 @@ class WorkflowToolExecutor:
             }
 
         try:
-            projectId = context.get("projectId", args.get("projectId"))
-            userId = context.get("userId")
+            project_id = context.get("project_id", args.get("project_id"))
+            user_id = context.get("user_id")
 
             # Mappa trigger event
             trigger_event = self._map_trigger_event(
@@ -245,14 +245,14 @@ class WorkflowToolExecutor:
                 name=args["name"],
                 trigger_event=trigger_event,
                 description=args.get("description", ""),
-                projectId=projectId,
-                userId=userId,
+                project_id=project_id,
+                user_id=user_id,
             )
 
             # Aggiungi step
             for i, step_config in enumerate(args.get("steps", [])):
                 WorkflowService.add_step(
-                    workflowId=workflow.id,
+                    workflow_id=workflow.id,
                     step_type=step_config["step_type"],
                     name=step_config.get("name", f"Step {i + 1}"),
                     config=step_config.get("config", {}),
@@ -262,11 +262,11 @@ class WorkflowToolExecutor:
             # Invalida cache tool
             from modules.ai.tool_registry import tool_registry
 
-            tool_registry.invalidate_cache(projectId)
+            tool_registry.invalidate_cache(project_id)
 
             return {
                 "success": True,
-                "workflowId": workflow.id,
+                "workflow_id": workflow.id,
                 "workflow_name": workflow.name,
                 "steps_count": len(args.get("steps", [])),
                 "message": f"Workflow '{workflow.name}' created with {len(args.get('steps', []))} steps",
@@ -291,9 +291,9 @@ class WorkflowToolExecutor:
         try:
             from workflow_service import WorkflowService
 
-            workflowId = args.get("workflowId")
-            if not workflowId:
-                return {"success": False, "error": "workflowId required"}
+            workflow_id = args.get("workflow_id")
+            if not workflow_id:
+                return {"success": False, "error": "workflow_id required"}
 
             # Valida configurazione se fornita
             if "steps" in args:
@@ -311,11 +311,11 @@ class WorkflowToolExecutor:
                         "validation_errors": validation["errors"],
                     }
 
-            workflow = WorkflowService.update_workflow(workflowId, args)
+            workflow = WorkflowService.update_workflow(workflow_id, args)
 
             return {
                 "success": True,
-                "workflowId": workflow.id,
+                "workflow_id": workflow.id,
                 "message": f"Workflow '{workflow.name}' updated",
             }
 
@@ -327,13 +327,13 @@ class WorkflowToolExecutor:
         try:
             from workflow_service import WorkflowService
 
-            workflowId = args.get("workflowId")
-            if not workflowId:
-                return {"success": False, "error": "workflowId required"}
+            workflow_id = args.get("workflow_id")
+            if not workflow_id:
+                return {"success": False, "error": "workflow_id required"}
 
-            WorkflowService.delete_workflow(workflowId)
+            WorkflowService.delete_workflow(workflow_id)
 
-            return {"success": True, "message": f"Workflow {workflowId} deleted"}
+            return {"success": True, "message": f"Workflow {workflow_id} deleted"}
 
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -389,9 +389,9 @@ class HookToolExecutor:
             from extensions import db
 
             # Verifica che il modello esista
-            projectId = context.get("projectId", args.get("projectId"))
+            project_id = context.get("project_id", args.get("project_id"))
             sys_model = SysModel.query.filter_by(
-                projectId=projectId, name=model_name, status="published"
+                project_id=project_id, name=model_name, status="published"
             ).first()
 
             if not sys_model:
@@ -439,11 +439,11 @@ class HookToolExecutor:
             from models import SysModel
 
             model_name = args.get("model_name")
-            projectId = context.get("projectId", args.get("projectId"))
+            project_id = context.get("project_id", args.get("project_id"))
 
             if model_name:
                 sys_model = SysModel.query.filter_by(
-                    projectId=projectId, name=model_name
+                    project_id=project_id, name=model_name
                 ).first()
 
                 if not sys_model:
@@ -461,7 +461,7 @@ class HookToolExecutor:
             else:
                 # Lista tutte le regole del progetto
                 models = SysModel.query.filter_by(
-                    projectId=projectId, status="published"
+                    project_id=project_id, status="published"
                 ).all()
 
                 all_rules = []
@@ -484,10 +484,10 @@ class HookToolExecutor:
 
             model_name = args.get("model_name")
             rule_id = args.get("rule_id")
-            projectId = context.get("projectId", args.get("projectId"))
+            project_id = context.get("project_id", args.get("project_id"))
 
             sys_model = SysModel.query.filter_by(
-                projectId=projectId, name=model_name
+                project_id=project_id, name=model_name
             ).first()
 
             if not sys_model:
@@ -545,8 +545,8 @@ class ScheduledTaskToolExecutor:
             from models.workflow import ScheduledTask
             from extensions import db
 
-            projectId = context.get("projectId", args.get("projectId"))
-            userId = context.get("userId")
+            project_id = context.get("project_id", args.get("project_id"))
+            user_id = context.get("user_id")
 
             task = ScheduledTask(
                 name=args["name"],
@@ -554,8 +554,8 @@ class ScheduledTaskToolExecutor:
                 task_type=args.get("task_type", "webhook"),
                 schedule=args["schedule"],
                 config=json.dumps(args.get("config", {})),
-                projectId=projectId,
-                created_by=userId,
+                project_id=project_id,
+                created_by=user_id,
                 is_active=True,
             )
 
@@ -599,7 +599,7 @@ class UIToolExecutor:
     """
 
     def create_ui_view(self, args: Dict, context: Dict) -> Dict:
-        projectId = context.get("projectId")
+        project_id = context.get("project_id")
         model_name = args.get("model_name")
         view_name = args.get("view_name")
         view_title = args.get("view_title")
@@ -611,14 +611,14 @@ class UIToolExecutor:
         from view_renderer.serializer import deserialize_view_from_frontend
 
         sys_model = SysModel.query.filter_by(
-            projectId=projectId, name=model_name
+            project_id=project_id, name=model_name
         ).first()
         if not sys_model:
             return {"success": False, "error": f"Model '{model_name}' not found."}
 
         # Check if view already exists
         existing_view = SysView.query.filter_by(
-            modelId=sys_model.id, name=view_name
+            model_id=sys_model.id, name=view_name
         ).first()
         if existing_view:
             return {
@@ -644,7 +644,7 @@ class UIToolExecutor:
             return {
                 "success": True,
                 "message": f"View '{view_title or view_name}' created successfully.",
-                "viewId": new_view.id,
+                "view_id": new_view.id,
             }
         except Exception as e:
             db.session.rollback()
@@ -652,14 +652,14 @@ class UIToolExecutor:
             return {"success": False, "error": str(e)}
 
     def add_ui_component(self, args: Dict, context: Dict) -> Dict:
-        viewId = args.get("viewId")
+        view_id = args.get("view_id")
         component = args.get("component")
 
         from models import SysView, db
 
-        sys_view = SysView.query.get(viewId)
+        sys_view = SysView.query.get(view_id)
         if not sys_view:
-            return {"success": False, "error": f"View ID {viewId} not found."}
+            return {"success": False, "error": f"View ID {view_id} not found."}
 
         try:
             config = (
@@ -681,21 +681,21 @@ class UIToolExecutor:
 
             sys_view.config = json.dumps(config)
             db.session.commit()
-            return {"success": True, "message": f"Component added to view {viewId}."}
+            return {"success": True, "message": f"Component added to view {view_id}."}
         except Exception as e:
             db.session.rollback()
             logger.error(f"Error adding component: {e}")
             return {"success": False, "error": str(e)}
 
     def update_ui_view_config(self, args: Dict, context: Dict) -> Dict:
-        viewId = args.get("viewId")
+        view_id = args.get("view_id")
         components = args.get("components")
 
         from models import SysView, db
 
-        sys_view = SysView.query.get(viewId)
+        sys_view = SysView.query.get(view_id)
         if not sys_view:
-            return {"success": False, "error": f"View ID {viewId} not found."}
+            return {"success": False, "error": f"View ID {view_id} not found."}
 
         try:
             config = (
@@ -712,7 +712,7 @@ class UIToolExecutor:
             db.session.commit()
             return {
                 "success": True,
-                "message": f"View configuration updated for view {viewId}.",
+                "message": f"View configuration updated for view {view_id}.",
             }
         except Exception as e:
             db.session.rollback()
@@ -742,7 +742,7 @@ class NotificationToolExecutor:
             from models import SysModel
             from extensions import db
 
-            projectId = context.get("projectId", args.get("projectId"))
+            project_id = context.get("project_id", args.get("project_id"))
 
             # Salva configurazione nelle impostazioni del progetto
             # Per ora salvare come JSON nel progetto
@@ -751,7 +751,7 @@ class NotificationToolExecutor:
             project_service = ProjectService()
 
             # Carica impostazioni correnti
-            project = db.session.get("Project", projectId)  # Note: fix this
+            project = db.session.get("Project", project_id)  # Note: fix this
             if not project:
                 return {"success": False, "error": "Project not found"}
 

@@ -46,7 +46,7 @@ class ViewConfigSerializer:
 
         return ViewConfig(
             view_type=sys_view.view_type,
-            model=f"{sys_view.modelId}" if sys_view.modelId else "",
+            model=f"{sys_view.model_id}" if sys_view.model_id else "",
             components=parsed_components,
             actions=config.get("actions", []),
             config=config,
@@ -58,7 +58,7 @@ class ViewConfigSerializer:
         name: str,
         technical_name: str,
         view_type: str,
-        modelId: int,
+        model_id: int,
         title: Optional[str] = None,
         is_default: bool = False,
     ) -> Dict[str, Any]:
@@ -81,7 +81,7 @@ class ViewConfigSerializer:
             "technical_name": technical_name,
             "title": title or name,
             "view_type": view_type,
-            "modelId": modelId,
+            "model_id": model_id,
             "config": ViewConfigSerializer.serialize_config(config),
             "is_default": is_default,
         }
@@ -133,8 +133,8 @@ class ActionSerializer:
         technical_name: str,
         action_type: str,
         target: str,
-        viewId: Optional[int] = None,
-        modelId: Optional[int] = None,
+        view_id: Optional[int] = None,
+        model_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Convert action config dictionary to SysAction data."""
         return {
@@ -143,8 +143,8 @@ class ActionSerializer:
             "title": action_config.get("title", name),
             "action_type": action_type,
             "target": target,
-            "viewId": viewId,
-            "modelId": modelId,
+            "view_id": view_id,
+            "model_id": model_id,
             "config": ActionSerializer.serialize_action(
                 action_config.get("config", {})
             ),
@@ -243,7 +243,7 @@ def serialize_view_for_frontend(
         "technicalName": sys_view.technical_name,
         "title": sys_view.title,
         "viewType": sys_view.view_type,
-        "modelId": sys_view.modelId,
+        "modelId": sys_view.model_id,
         "isDefault": sys_view.is_default,
         "order": sys_view.order,
         "components": components,
@@ -254,7 +254,7 @@ def serialize_view_for_frontend(
 
 def deserialize_view_from_frontend(
     data: Dict[str, Any],
-    modelId: int,
+    model_id: int,
 ) -> Dict[str, Any]:
     """Deserialize view data from frontend to SysView format.
 
@@ -274,7 +274,7 @@ def deserialize_view_from_frontend(
         "technical_name": data.get("technicalName", data.get("name")),
         "title": data.get("title", data.get("name")),
         "view_type": data.get("viewType", "list"),
-        "modelId": modelId,
+        "model_id": model_id,
         "config": ViewConfigSerializer.serialize_config(full_config),
         "is_default": data.get("isDefault", False),
         "is_active": data.get("isActive", True),

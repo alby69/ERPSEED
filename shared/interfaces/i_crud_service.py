@@ -20,7 +20,7 @@ class ITenantService(ABC):
         pass
 
     @abstractmethod
-    def list_tenants(self, userId: int) -> List[Dict[str, Any]]:
+    def list_tenants(self, user_id: int) -> List[Dict[str, Any]]:
         """List all tenants accessible by user."""
         pass
 

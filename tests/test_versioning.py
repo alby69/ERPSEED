@@ -35,7 +35,7 @@ def test_create_snapshot(app):
             name="customer",
             technical_name="crm.customer",
             table_name="customer",
-            projectId=project.id
+            project_id=project.id
         )
         db.session.add(model)
         db.session.flush()
@@ -44,13 +44,13 @@ def test_create_snapshot(app):
             name="Name",
             technical_name="name",
             type="string",
-            modelId=model.id
+            model_id=model.id
         )
         db.session.add(field)
         db.session.commit()
 
         # Create snapshot
-        version = ModelVersioningService.create_snapshot(model.id, description="Initial version", userId=user.id)
+        version = ModelVersioningService.create_snapshot(model.id, description="Initial version", user_id=user.id)
 
         assert version.version_number == 1
         assert version.description == "Initial version"

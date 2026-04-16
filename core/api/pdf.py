@@ -13,16 +13,16 @@ from core.services.tenant_context import TenantContext
 pdf_bp = Blueprint('pdf', __name__, url_prefix='/api/v1/pdf', description='PDF Generation')
 
 
-@pdf_bp.route('/sales-order/<int:orderId>')
+@pdf_bp.route('/sales-order/<int:order_id>')
 class SalesOrderPDF(MethodView):
     @pdf_bp.response(200, content_type="application/pdf", schema={"type": "string", "format": "binary"})
     @jwt_required()
-    def get(self, orderId):
+    def get(self, order_id):
         """
         Genera PDF per ordine di vendita.
         """
-        userId = get_jwt_identity()
-        user = User.query.get(userId)
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
 
         if not user:
             abort(404, message="Utente non trovato")
@@ -30,10 +30,10 @@ class SalesOrderPDF(MethodView):
         tenant_id = user.tenant_id
 
         try:
-            pdf_content = PDFService.generate_sales_order(orderId, tenant_id)
+            pdf_content = PDFService.generate_sales_order(order_id, tenant_id)
 
             headers = {
-                "Content-Disposition": f"attachment; filename=ordine_{orderId}.pdf"
+                "Content-Disposition": f"attachment; filename=ordine_{order_id}.pdf"
             }
             return pdf_content, 200, headers
         except ValueError as e:
@@ -42,16 +42,16 @@ class SalesOrderPDF(MethodView):
             abort(500, message=f"Errore generazione PDF: {str(e)}")
 
 
-@pdf_bp.route('/invoice/<int:invoiceId>')
+@pdf_bp.route('/invoice/<int:invoice_id>')
 class InvoicePDF(MethodView):
     @pdf_bp.response(200, content_type="application/pdf", schema={"type": "string", "format": "binary"})
     @jwt_required()
-    def get(self, invoiceId):
+    def get(self, invoice_id):
         """
         Genera PDF per fattura.
         """
-        userId = get_jwt_identity()
-        user = User.query.get(userId)
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
 
         if not user:
             abort(404, message="Utente non trovato")
@@ -59,10 +59,10 @@ class InvoicePDF(MethodView):
         tenant_id = user.tenant_id
 
         try:
-            pdf_content = PDFService.generate_invoice(invoiceId, tenant_id)
+            pdf_content = PDFService.generate_invoice(invoice_id, tenant_id)
 
             headers = {
-                "Content-Disposition": f"attachment; filename=fattura_{invoiceId}.pdf"
+                "Content-Disposition": f"attachment; filename=fattura_{invoice_id}.pdf"
             }
             return pdf_content, 200, headers
         except ValueError as e:
@@ -71,16 +71,16 @@ class InvoicePDF(MethodView):
             abort(500, message=f"Errore generazione PDF: {str(e)}")
 
 
-@pdf_bp.route('/quote/<int:quoteId>')
+@pdf_bp.route('/quote/<int:quote_id>')
 class QuotePDF(MethodView):
     @pdf_bp.response(200, content_type="application/pdf", schema={"type": "string", "format": "binary"})
     @jwt_required()
-    def get(self, quoteId):
+    def get(self, quote_id):
         """
         Genera PDF per preventivo.
         """
-        userId = get_jwt_identity()
-        user = User.query.get(userId)
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
 
         if not user:
             abort(404, message="Utente non trovato")
@@ -88,10 +88,10 @@ class QuotePDF(MethodView):
         tenant_id = user.tenant_id
 
         try:
-            pdf_content = PDFService.generate_quote(quoteId, tenant_id)
+            pdf_content = PDFService.generate_quote(quote_id, tenant_id)
 
             headers = {
-                "Content-Disposition": f"attachment; filename=preventivo_{quoteId}.pdf"
+                "Content-Disposition": f"attachment; filename=preventivo_{quote_id}.pdf"
             }
             return pdf_content, 200, headers
         except ValueError as e:

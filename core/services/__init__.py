@@ -17,7 +17,7 @@ from core.services.tenant_context import (
     get_current_tenant,
     get_current_user,
     get_current_tenant_id,
-    get_current_userId,
+    get_current_user_id,
 )
 from core.services.auth_service import AuthService
 from core.services.permission_service import (
@@ -32,7 +32,7 @@ __all__ = [
     'get_current_tenant',
     'get_current_user',
     'get_current_tenant_id',
-    'get_current_userId',
+    'get_current_user_id',
     'AuthService',
     'JWTService',
     'Permission',

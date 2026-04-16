@@ -3,7 +3,7 @@ from typing import Dict, Any, List
 
 @dataclass
 class CreateModelCommand:
-    projectId: int
+    project_id: int
     name: str
     title: str
     description: str = None
@@ -13,16 +13,16 @@ class CreateModelCommand:
 
 @dataclass
 class UpdateModelCommand:
-    modelId: int
+    model_id: int
     data: Dict[str, Any]
 
 @dataclass
 class DeleteModelCommand:
-    modelId: int
+    model_id: int
 
 @dataclass
 class CreateFieldCommand:
-    modelId: int
+    model_id: int
     name: str
     field_type: str
     title: str = None
@@ -40,18 +40,18 @@ class DeleteFieldCommand:
 
 @dataclass
 class SyncSchemaCommand:
-    modelId: int
+    model_id: int
     db_engine: Any
 
 @dataclass
 class ResetTableCommand:
-    modelId: int
-    userId: int
+    model_id: int
+    user_id: int
     backup_folder: str = 'backups'
 
 @dataclass
 class CloneModelCommand:
-    modelId: int
-    userId: int
+    model_id: int
+    user_id: int
     new_name: str
     new_title: str

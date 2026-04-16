@@ -40,7 +40,7 @@ def seed_kpi(app=None):
             title="Dashboard KPIs",
             description="KPIs for the main dashboard",
             permissions='{"read": ["admin", "user"], "write": ["admin"]}',
-            projectId=project.id
+            project_id=project.id
         )
         db.session.add(kpi_model)
         db.session.commit()
@@ -55,7 +55,7 @@ def seed_kpi(app=None):
         ]
 
         for f in fields_data:
-            field = SysField(modelId=kpi_model.id, **f)
+            field = SysField(model_id=kpi_model.id, **f)
             db.session.add(field)
 
         db.session.commit()

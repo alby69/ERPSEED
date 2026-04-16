@@ -10,12 +10,12 @@ from core.events.triggers import on_model_created, on_model_updated, on_model_de
 
 class BuilderCommandHandler:
     def handle_create_model(self, cmd):
-        existing = SysModel.query.filter_by(projectId=cmd.projectId, name=cmd.name).first()
+        existing = SysModel.query.filter_by(project_id=cmd.project_id, name=cmd.name).first()
         if existing:
             abort(409, message=f"Model with name '{cmd.name}' already exists in this project.")
 
         model = SysModel(
-            projectId=cmd.projectId,
+            project_id=cmd.project_id,
             name=cmd.name,
             technical_name=cmd.technical_name or cmd.name,
             table_name=cmd.table_name or cmd.name,
@@ -27,23 +27,23 @@ class BuilderCommandHandler:
         db.session.commit()
 
         try:
-            log_audit(None, 'sys_models', model.id, 'CREATE', {'name': cmd.name, 'projectId': cmd.projectId})
+            log_audit(None, 'sys_models', model.id, 'CREATE', {'name': cmd.name, 'project_id': cmd.project_id})
             on_model_created(model)
         except Exception:
             pass
         return model
 
     def handle_update_model(self, cmd):
-        model = db.session.get(SysModel, cmd.modelId)
+        model = db.session.get(SysModel, cmd.model_id)
         if not model:
             abort(404, message="Model not found.")
 
         data = cmd.data
         if "name" in data and data["name"] != model.name:
             existing = SysModel.query.filter(
-                SysModel.projectId == model.projectId,
+                SysModel.project_id == model.project_id,
                 SysModel.name == data["name"],
-                SysModel.id != cmd.modelId
+                SysModel.id != cmd.model_id
             ).first()
             if existing:
                 abort(409, message=f"Model with name '{data['name']}' already exists.")
@@ -61,27 +61,27 @@ class BuilderCommandHandler:
         return model
 
     def handle_delete_model(self, cmd):
-        model = db.session.get(SysModel, cmd.modelId)
+        model = db.session.get(SysModel, cmd.model_id)
         if not model:
             abort(404, message="Model not found.")
 
         model_name = model.name
-        log_audit(None, 'sys_models', cmd.modelId, 'DELETE')
+        log_audit(None, 'sys_models', cmd.model_id, 'DELETE')
         db.session.delete(model)
         db.session.commit()
         try:
-            on_model_deleted(cmd.modelId, model_name)
+            on_model_deleted(cmd.model_id, model_name)
         except Exception:
             pass
         return True
 
     def handle_create_field(self, cmd):
-        existing = SysField.query.filter_by(modelId=cmd.modelId, name=cmd.name).first()
+        existing = SysField.query.filter_by(model_id=cmd.model_id, name=cmd.name).first()
         if existing:
             abort(409, message="Field with this name already exists in the model.")
 
         field = SysField(
-            modelId=cmd.modelId,
+            model_id=cmd.model_id,
             name=cmd.name,
             technical_name=cmd.technical_name or cmd.name,
             type=cmd.field_type,
@@ -91,39 +91,39 @@ class BuilderCommandHandler:
         db.session.add(field)
         db.session.commit()
         try:
-            log_audit(None, 'sys_fields', field.id, 'CREATE', {'name': cmd.name, 'modelId': cmd.modelId})
+            log_audit(None, 'sys_fields', field.id, 'CREATE', {'name': cmd.name, 'model_id': cmd.model_id})
         except Exception:
             pass
         return field
 
     def handle_sync_schema(self, cmd):
-        model = db.session.get(SysModel, cmd.modelId)
+        model = db.session.get(SysModel, cmd.model_id)
         if not model:
             abort(404, message="Model not found.")
 
-        schema_name = f"project_{model.projectId}"
+        schema_name = f"project_{model.project_id}"
         try:
             sql_commands = generate_schema_diff_sql(model, cmd.db_engine, schema=schema_name)
             for sql in sql_commands:
                 db.session.execute(text(sql))
             db.session.commit()
-            log_audit(None, 'sys_models', cmd.modelId, 'GENERATE_TABLE')
+            log_audit(None, 'sys_models', cmd.model_id, 'GENERATE_TABLE')
             return sql_commands
         except Exception as e:
             db.session.rollback()
             abort(500, message=f"Error syncing schema: {str(e)}")
 
     def handle_clone_model(self, cmd):
-        source_model = db.session.get(SysModel, cmd.modelId)
+        source_model = db.session.get(SysModel, cmd.model_id)
         if not source_model:
             abort(404, message="Model not found.")
 
-        existing = SysModel.query.filter_by(projectId=source_model.projectId, name=cmd.new_name).first()
+        existing = SysModel.query.filter_by(project_id=source_model.project_id, name=cmd.new_name).first()
         if existing:
             abort(409, message=f"Model with name '{cmd.new_name}' already exists in this project.")
 
         new_model = SysModel(
-            projectId=source_model.projectId,
+            project_id=source_model.project_id,
             name=cmd.new_name,
             title=cmd.new_title,
             description=source_model.description,
@@ -136,7 +136,7 @@ class BuilderCommandHandler:
 
         for field in source_model.fields:
             new_field = SysField(
-                modelId=new_model.id,
+                model_id=new_model.id,
                 name=field.name,
                 title=field.title,
                 type=field.type,
@@ -153,5 +153,5 @@ class BuilderCommandHandler:
             db.session.add(new_field)
 
         db.session.commit()
-        log_audit(cmd.userId, 'sys_models', new_model.id, 'CLONE', {'source_id': cmd.modelId})
+        log_audit(cmd.user_id, 'sys_models', new_model.id, 'CLONE', {'source_id': cmd.model_id})
         return new_model

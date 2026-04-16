@@ -212,11 +212,11 @@ class ReviewList(MethodView):
     @blp.response(201)
     def post(self, listing_id, review_data):
         """Add a review"""
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         review = Review(
             listing_id=listing_id,
-            userId=userId,
+            user_id=user_id,
             rating=review_data.get("rating"),
             comment=review_data.get("comment"),
         )
@@ -242,8 +242,8 @@ class PaymentList(MethodView):
     @blp.response(200)
     def get(self):
         """Get user's purchases"""
-        userId = get_jwt_identity()
-        purchases = PaymentTransaction.query.filter_by(buyer_id=userId).all()
+        user_id = get_jwt_identity()
+        purchases = PaymentTransaction.query.filter_by(buyer_id=user_id).all()
         return [
             {
                 "id": p.id,
@@ -266,7 +266,7 @@ class PaymentProcess(MethodView):
     @blp.response(201)
     def post(self, payment_data):
         """Process a payment for a block"""
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         listing_id = payment_data.get("listing_id")
         payment_method = payment_data.get("payment_method", "stripe")
@@ -275,7 +275,7 @@ class PaymentProcess(MethodView):
 
         payment = PaymentTransaction(
             listing_id=listing_id,
-            buyer_id=userId,
+            buyer_id=user_id,
             amount=listing.price,
             currency=listing.currency or "EUR",
             status="pending",
@@ -321,8 +321,8 @@ class MyListings(MethodView):
     @blp.response(200)
     def get(self):
         """Get current user's listings"""
-        userId = get_jwt_identity()
-        listings = BlockListing.query.filter_by(author_id=userId).all()
+        user_id = get_jwt_identity()
+        listings = BlockListing.query.filter_by(author_id=user_id).all()
         return [
             {
                 "id": l.id,

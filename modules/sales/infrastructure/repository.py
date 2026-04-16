@@ -57,9 +57,9 @@ class SalesOrderRepository:
 
         return self._to_dict(order)
 
-    def find_by_id(self, orderId: int, tenant_id: int) -> Optional[Dict[str, Any]]:
+    def find_by_id(self, order_id: int, tenant_id: int) -> Optional[Dict[str, Any]]:
         SalesOrder = self._get_order_class()
-        order = SalesOrder.query.filter_by(id=orderId, tenant_id=tenant_id).first()
+        order = SalesOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order:
             return None
         return self._to_dict(order)
@@ -105,10 +105,10 @@ class SalesOrderRepository:
             "per_page": per_page,
         }
 
-    def update(self, orderId: int, tenant_id: int, changes: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def update(self, order_id: int, tenant_id: int, changes: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         SalesOrder = self._get_order_class()
 
-        order = SalesOrder.query.filter_by(id=orderId, tenant_id=tenant_id).first()
+        order = SalesOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order:
             return None
 
@@ -126,10 +126,10 @@ class SalesOrderRepository:
 
         return {"old": old_data, "new": new_data}
 
-    def delete(self, orderId: int, tenant_id: int) -> Optional[Dict[str, Any]]:
+    def delete(self, order_id: int, tenant_id: int) -> Optional[Dict[str, Any]]:
         SalesOrder = self._get_order_class()
 
-        order = SalesOrder.query.filter_by(id=orderId, tenant_id=tenant_id).first()
+        order = SalesOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order:
             return None
 
@@ -140,15 +140,15 @@ class SalesOrderRepository:
 
         return order_data
 
-    def confirm(self, orderId: int, tenant_id: int) -> Optional[Dict[str, Any]]:
-        return self.update(orderId, tenant_id, {"status": "confirmed"})
+    def confirm(self, order_id: int, tenant_id: int) -> Optional[Dict[str, Any]]:
+        return self.update(order_id, tenant_id, {"status": "confirmed"})
 
-    def cancel(self, orderId: int, tenant_id: int) -> Optional[Dict[str, Any]]:
-        return self.update(orderId, tenant_id, {"status": "cancelled"})
+    def cancel(self, order_id: int, tenant_id: int) -> Optional[Dict[str, Any]]:
+        return self.update(order_id, tenant_id, {"status": "cancelled"})
 
-    def check_can_delete(self, orderId: int, tenant_id: int) -> Dict[str, Any]:
+    def check_can_delete(self, order_id: int, tenant_id: int) -> Dict[str, Any]:
         SalesOrder = self._get_order_class()
-        order = SalesOrder.query.filter_by(id=orderId, tenant_id=tenant_id).first()
+        order = SalesOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
 
         if not order:
             return {"can_delete": False, "reason": "Order not found"}

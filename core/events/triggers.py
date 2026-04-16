@@ -40,8 +40,8 @@ def on_user_updated(user):
         "role": user.role
     })
 
-def on_user_deleted(userId, email):
-    trigger_webhook("user.deleted", {"id": userId, "email": email})
+def on_user_deleted(user_id, email):
+    trigger_webhook("user.deleted", {"id": user_id, "email": email})
 
 def on_project_created(project):
     trigger_webhook("project.created", {"id": project.id, "name": project.name})
@@ -49,8 +49,8 @@ def on_project_created(project):
 def on_project_updated(project):
     trigger_webhook("project.updated", {"id": project.id, "name": project.name})
 
-def on_project_deleted(projectId, name):
-    trigger_webhook("project.deleted", {"id": projectId, "name": name})
+def on_project_deleted(project_id, name):
+    trigger_webhook("project.deleted", {"id": project_id, "name": name})
 
 def on_model_created(model):
     trigger_webhook("model.created", {"id": model.id, "name": model.name})
@@ -58,14 +58,14 @@ def on_model_created(model):
 def on_model_updated(model):
     trigger_webhook("model.updated", {"id": model.id, "name": model.name})
 
-def on_model_deleted(modelId, name):
-    trigger_webhook("model.deleted", {"id": modelId, "name": name})
+def on_model_deleted(model_id, name):
+    trigger_webhook("model.deleted", {"id": model_id, "name": name})
 
-def on_record_created(model_name, record_id, data, projectId):
-    trigger_webhook("record.created", {"model": model_name, "record_id": record_id, "projectId": projectId, "data": data})
+def on_record_created(model_name, record_id, data, project_id):
+    trigger_webhook("record.created", {"model": model_name, "record_id": record_id, "project_id": project_id, "data": data})
 
-def on_record_updated(model_name, record_id, data, projectId):
-    trigger_webhook("record.updated", {"model": model_name, "record_id": record_id, "projectId": projectId, "data": data})
+def on_record_updated(model_name, record_id, data, project_id):
+    trigger_webhook("record.updated", {"model": model_name, "record_id": record_id, "project_id": project_id, "data": data})
 
-def on_record_deleted(model_name, record_id, projectId):
-    trigger_webhook("record.deleted", {"model": model_name, "record_id": record_id, "projectId": projectId})
+def on_record_deleted(model_name, record_id, project_id):
+    trigger_webhook("record.deleted", {"model": model_name, "record_id": record_id, "project_id": project_id})

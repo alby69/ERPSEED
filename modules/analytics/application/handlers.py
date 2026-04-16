@@ -8,7 +8,7 @@ class AnalyticsCommandHandler:
             title=cmd.title,
             library=cmd.library,
             chart_type=cmd.chart_type,
-            modelId=cmd.modelId,
+            model_id=cmd.model_id,
             x_axis=cmd.x_axis,
             y_axis=cmd.y_axis,
             aggregation=cmd.aggregation,

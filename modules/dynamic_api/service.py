@@ -8,35 +8,35 @@ class DynamicApiServiceWrapper:
         self.handler = RecordCommandHandler()
         self.legacy_service = DynamicApiService()
 
-    def create_record(self, projectId, model_name, data):
-        cmd = CreateRecordCommand(projectId, model_name, data)
+    def create_record(self, project_id, model_name, data):
+        cmd = CreateRecordCommand(project_id, model_name, data)
         # Use legacy service for complex validation/file handling for now
         # but the actual write should go through handler eventually
-        return self.legacy_service.create_record(projectId, model_name, data)
+        return self.legacy_service.create_record(project_id, model_name, data)
 
-    def update_record(self, projectId, model_name, itemId, data):
-        return self.legacy_service.update_record(projectId, model_name, itemId, data)
+    def update_record(self, project_id, model_name, item_id, data):
+        return self.legacy_service.update_record(project_id, model_name, item_id, data)
 
-    def delete_record(self, projectId, model_name, itemId):
-        return self.legacy_service.delete_record(projectId, model_name, itemId)
+    def delete_record(self, project_id, model_name, item_id):
+        return self.legacy_service.delete_record(project_id, model_name, item_id)
 
-    def list_records(self, projectId, model_name, page=1, per_page=10):
-        return self.legacy_service.list_records(projectId, model_name, page, per_page)
+    def list_records(self, project_id, model_name, page=1, per_page=10):
+        return self.legacy_service.list_records(project_id, model_name, page, per_page)
 
-    def get_record(self, projectId, model_name, itemId):
-        return self.legacy_service.get_record(projectId, model_name, itemId)
+    def get_record(self, project_id, model_name, item_id):
+        return self.legacy_service.get_record(project_id, model_name, item_id)
 
-    def bulk_delete(self, projectId, model_name, ids_to_delete):
-        return self.legacy_service.bulk_delete(projectId, model_name, ids_to_delete)
+    def bulk_delete(self, project_id, model_name, ids_to_delete):
+        return self.legacy_service.bulk_delete(project_id, model_name, ids_to_delete)
 
-    def get_model_metadata(self, projectId, model_name):
-        return self.legacy_service.get_model_metadata(projectId, model_name)
+    def get_model_metadata(self, project_id, model_name):
+        return self.legacy_service.get_model_metadata(project_id, model_name)
 
-    def clone_record(self, projectId, model_name, itemId):
-        return self.legacy_service.clone_record(projectId, model_name, itemId)
+    def clone_record(self, project_id, model_name, item_id):
+        return self.legacy_service.clone_record(project_id, model_name, item_id)
 
-    def import_csv(self, projectId, model_name, file):
-        return self.legacy_service.import_csv(projectId, model_name, file)
+    def import_csv(self, project_id, model_name, file):
+        return self.legacy_service.import_csv(project_id, model_name, file)
 
 def get_dynamic_api_service():
     return DynamicApiServiceWrapper()

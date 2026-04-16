@@ -9,8 +9,8 @@ def admin_required():
         @wraps(fn)
         def decorator(*args, **kwargs):
             verify_jwt_in_request()
-            userId = get_jwt_identity()
-            user = User.query.get(userId)
+            user_id = get_jwt_identity()
+            user = User.query.get(user_id)
             if user and user.role == 'admin':
                 return fn(*args, **kwargs)
             else:

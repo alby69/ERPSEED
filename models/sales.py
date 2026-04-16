@@ -35,7 +35,7 @@ class SalesOrderLine(BaseModel):
         db.Integer, db.ForeignKey("tenants.id"), nullable=False, index=True
     )
 
-    orderId = db.Column(db.Integer, db.ForeignKey("sales_orders.id"), nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey("sales_orders.id"), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     description = db.Column(db.String(255))
     quantity = db.Column(db.Float, nullable=False)

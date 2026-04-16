@@ -52,9 +52,9 @@ class PurchaseOrderRepository:
         self.db.session.commit()
         return self._to_dict(order)
 
-    def find_by_id(self, orderId: int, tenant_id: int) -> Optional[Dict[str, Any]]:
+    def find_by_id(self, order_id: int, tenant_id: int) -> Optional[Dict[str, Any]]:
         PurchaseOrder = self._get_order_class()
-        order = PurchaseOrder.query.filter_by(id=orderId, tenant_id=tenant_id).first()
+        order = PurchaseOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         return self._to_dict(order) if order else None
 
     def find_all(self, tenant_id: int, search: str = None, status: str = None, supplier_id: int = None,
@@ -70,9 +70,9 @@ class PurchaseOrderRepository:
         items = query.offset((page - 1) * per_page).limit(per_page).all()
         return {"items": [self._to_dict(o) for o in items], "total": total, "page": page, "per_page": per_page}
 
-    def update(self, orderId: int, tenant_id: int, changes: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def update(self, order_id: int, tenant_id: int, changes: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         PurchaseOrder = self._get_order_class()
-        order = PurchaseOrder.query.filter_by(id=orderId, tenant_id=tenant_id).first()
+        order = PurchaseOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order: return None
         old_data = self._to_dict(order)
         for key, value in changes.items():
@@ -82,27 +82,27 @@ class PurchaseOrderRepository:
         self.db.session.commit()
         return {"old": old_data, "new": self._to_dict(order)}
 
-    def delete(self, orderId: int, tenant_id: int) -> Optional[Dict[str, Any]]:
+    def delete(self, order_id: int, tenant_id: int) -> Optional[Dict[str, Any]]:
         PurchaseOrder = self._get_order_class()
-        order = PurchaseOrder.query.filter_by(id=orderId, tenant_id=tenant_id).first()
+        order = PurchaseOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order: return None
         order_data = self._to_dict(order)
         self.db.session.delete(order)
         self.db.session.commit()
         return order_data
 
-    def confirm(self, orderId: int, tenant_id: int) -> Optional[Dict[str, Any]]:
-        return self.update(orderId, tenant_id, {"status": "confirmed"})
+    def confirm(self, order_id: int, tenant_id: int) -> Optional[Dict[str, Any]]:
+        return self.update(order_id, tenant_id, {"status": "confirmed"})
 
-    def receive(self, orderId: int, tenant_id: int) -> Optional[Dict[str, Any]]:
-        return self.update(orderId, tenant_id, {"status": "received"})
+    def receive(self, order_id: int, tenant_id: int) -> Optional[Dict[str, Any]]:
+        return self.update(order_id, tenant_id, {"status": "received"})
 
-    def cancel(self, orderId: int, tenant_id: int) -> Optional[Dict[str, Any]]:
-        return self.update(orderId, tenant_id, {"status": "cancelled"})
+    def cancel(self, order_id: int, tenant_id: int) -> Optional[Dict[str, Any]]:
+        return self.update(order_id, tenant_id, {"status": "cancelled"})
 
-    def check_can_delete(self, orderId: int, tenant_id: int) -> Dict[str, Any]:
+    def check_can_delete(self, order_id: int, tenant_id: int) -> Dict[str, Any]:
         PurchaseOrder = self._get_order_class()
-        order = PurchaseOrder.query.filter_by(id=orderId, tenant_id=tenant_id).first()
+        order = PurchaseOrder.query.filter_by(id=order_id, tenant_id=tenant_id).first()
         if not order: return {"can_delete": False, "reason": "Order not found"}
         if order.status not in ["draft", "cancelled"]: return {"can_delete": False, "reason": f"Cannot delete order with status '{order.status}'"}
         return {"can_delete": True}

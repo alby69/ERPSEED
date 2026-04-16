@@ -15,16 +15,16 @@ blp = Blueprint("ai", __name__, url_prefix="/api/ai", description="AI Assistant 
 
 class ChatRequestSchema(Schema):
     message = fields.String(required=True)
-    projectId = fields.Integer(required=False, allow_none=True)
+    project_id = fields.Integer(required=False, allow_none=True)
     context = fields.Dict(required=False, allow_none=True)
 
 
 class GenerateConfigSchema(Schema):
     request = fields.String(required=True)
-    projectId = fields.Integer(required=False, allow_none=True)
+    project_id = fields.Integer(required=False, allow_none=True)
 
 
-@blp.route("/generations")
+@blp.route("/generate")
 class AIGenerate(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -37,7 +37,7 @@ class AIGenerate(MethodView):
         Example request:
         {
             "request": "Create a module for suppliers with name, address and email",
-            "projectId": 1
+            "project_id": 1
         }
 
         Example response:
@@ -58,13 +58,13 @@ class AIGenerate(MethodView):
         """
         try:
             user_request = args.get("request", "")
-            projectId = args.get("projectId", 1)
+            project_id = args.get("project_id", 1)
 
             if not user_request:
                 return {"success": False, "error": "Missing request parameter"}, 400
 
             ai_service = get_ai_service()
-            result = ai_service.generate_erp_config(user_request, projectId)
+            result = ai_service.generate_erp_config(user_request, project_id)
 
             if not result.get("success"):
                 return {
@@ -161,7 +161,7 @@ class AIModels(MethodView):
         }
 
 
-@blp.route("/applications")
+@blp.route("/apply")
 class AIApply(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -184,7 +184,7 @@ class AIApply(MethodView):
                     }
                 ]
             },
-            "projectId": 1
+            "project_id": 1
         }
 
         Example response:
@@ -201,13 +201,13 @@ class AIApply(MethodView):
             logger = logging.getLogger(__name__)
 
             # Get current user
-            current_userId = get_jwt_identity()
-            logger.info(f"AI Apply requested by user {current_userId}")
+            current_user_id = get_jwt_identity()
+            logger.info(f"AI Apply requested by user {current_user_id}")
 
             data = request.json or {}
 
             config = data.get("config", {})
-            projectId = data.get("projectId")
+            project_id = data.get("project_id")
 
             # Import services
             from modules.builder.service import get_builder_service as BuilderService
@@ -222,12 +222,12 @@ class AIApply(MethodView):
                 abort(400, message="Missing config parameter")
 
             # Validate and get project - fallback to first available project if needed
-            project = db.session.get(Project, projectId) if projectId else None
+            project = db.session.get(Project, project_id) if project_id else None
             if not project:
                 # Try to find any available project
                 available_project = db.session.query(Project).first()
                 if available_project:
-                    projectId = available_project.id
+                    project_id = available_project.id
                     project = available_project
                 else:
                     abort(
@@ -235,7 +235,7 @@ class AIApply(MethodView):
                         message="Nessun progetto trovato. Creane uno prima di usare l'AI Assistant.",
                     )
 
-            schema_name = f"project_{projectId}"
+            schema_name = f"project_{project_id}"
 
             # Create schema if it doesn't exist
             try:
@@ -266,7 +266,7 @@ class AIApply(MethodView):
                     # Create the model
                     try:
                         new_model = builder_service.create_model(
-                            projectId=projectId,
+                            project_id=project_id,
                             name=table_name,
                             title=model_title,
                             description=model_description,
@@ -321,7 +321,7 @@ class AIApply(MethodView):
 
                         try:
                             builder_service.create_field(
-                                modelId=new_model.id,
+                                model_id=new_model.id,
                                 name=field_name,
                                 field_type=mapped_type,
                                 **field_kwargs,
@@ -385,7 +385,7 @@ class AIApply(MethodView):
 
 
 class ConversationSchema(Schema):
-    projectId = fields.Integer(required=True)
+    project_id = fields.Integer(required=True)
     limit = fields.Integer(required=False, load_default=20)
 
 
@@ -406,14 +406,14 @@ class AIConversations(MethodView):
         """Get conversation history for a project"""
         from models import AIConversation
 
-        projectId = args.get("projectId")
+        project_id = args.get("project_id")
         limit = args.get("limit", 20)
 
-        if not projectId:
-            return {"success": False, "error": "projectId required"}, 400
+        if not project_id:
+            return {"success": False, "error": "project_id required"}, 400
 
         conversations = (
-            AIConversation.query.filter_by(projectId=projectId)
+            AIConversation.query.filter_by(project_id=project_id)
             .order_by(AIConversation.created_at.desc())
             .limit(limit)
             .all()

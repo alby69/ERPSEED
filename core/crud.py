@@ -175,20 +175,20 @@ def register_crud_routes(blueprint, model, schema, url_prefix="", search_fields=
             return csv_content, 200, headers
 
     # Routes for a Single Item (Detail, Update, Delete)
-    @blueprint.route(url_prefix + "/<int:itemId>")
+    @blueprint.route(url_prefix + "/<int:item_id>")
     class ItemResource(MethodView):
         @jwt_required()
         @blueprint.response(200, schema)
-        def get(self, itemId):
+        def get(self, item_id):
             """Retrieve a specific item."""
-            return model.query.get_or_404(itemId)
+            return model.query.get_or_404(item_id)
 
         @jwt_required()
         @blueprint.arguments(schema, location=location)
         @blueprint.response(200, schema)
-        def put(self, item_data, itemId):
+        def put(self, item_data, item_id):
             """Update an existing item."""
-            item = model.query.get_or_404(itemId)
+            item = model.query.get_or_404(item_id)
 
             item_data = save_files(item_data)
 
@@ -199,8 +199,8 @@ def register_crud_routes(blueprint, model, schema, url_prefix="", search_fields=
 
         @jwt_required()
         @blueprint.response(204)
-        def delete(self, itemId):
+        def delete(self, item_id):
             """Delete an item."""
-            item = model.query.get_or_404(itemId)
+            item = model.query.get_or_404(item_id)
             db.session.delete(item)
             db.session.commit()

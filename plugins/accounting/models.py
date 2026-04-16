@@ -180,7 +180,7 @@ class InvoiceLine(db.Model):
     tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False, index=True)
 
     id = db.Column(db.Integer, primary_key=True)
-    invoiceId = db.Column(db.Integer, db.ForeignKey('invoices.id'), nullable=False)
+    invoice_id = db.Column(db.Integer, db.ForeignKey('invoices.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     description = db.Column(db.String(255))
     quantity = db.Column(db.Float, nullable=False, default=1.0)

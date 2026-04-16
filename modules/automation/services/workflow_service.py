@@ -33,7 +33,7 @@ class WorkflowService(BaseService):
 
     @staticmethod
     def trigger_event(
-        event: str, data: Dict[str, Any], projectId: Optional[int] = None
+        event: str, data: Dict[str, Any], project_id: Optional[int] = None
     ):
         """
         Trigger all workflows that listen for this event.
@@ -41,14 +41,14 @@ class WorkflowService(BaseService):
         Args:
             event: Event type (e.g., 'user.created')
             data: Event payload data
-            projectId: Optional project scope
+            project_id: Optional project scope
         """
         from workflows import Workflow, WorkflowExecution, WorkflowLog
 
         query = Workflow.query.filter_by(is_active=True)
-        if projectId:
+        if project_id:
             query = query.filter(
-                (Workflow.projectId == projectId) | (Workflow.projectId == None)
+                (Workflow.project_id == project_id) | (Workflow.project_id == None)
             )
 
         workflows = query.all()
@@ -57,7 +57,7 @@ class WorkflowService(BaseService):
 
         for workflow in workflows:
             if workflow.trigger_event == event or workflow.trigger_event == "*":
-                WorkflowEngine.run(workflow.id, event, data, projectId=projectId)
+                WorkflowEngine.run(workflow.id, event, data, project_id=project_id)
 
         try:
             from shared.events import get_event_bus, DomainEvent
@@ -68,7 +68,7 @@ class WorkflowService(BaseService):
                     event_type=event,
                     payload=data,
                     metadata={
-                        "projectId": projectId,
+                        "project_id": project_id,
                         "workflows_triggered": len(
                             [
                                 w
@@ -84,7 +84,7 @@ class WorkflowService(BaseService):
 
     @staticmethod
     def _execute_step(
-        step, data: Dict[str, Any], execution, projectId: Optional[int] = None
+        step, data: Dict[str, Any], execution, project_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """Execute a single workflow step."""
         step_config = step.get_config()
@@ -92,7 +92,7 @@ class WorkflowService(BaseService):
         if step.step_type == "condition":
             return WorkflowService._execute_condition(step, step_config, data)
         elif step.step_type == "action":
-            return WorkflowService._execute_action(step, step_config, data, projectId)
+            return WorkflowService._execute_action(step, step_config, data, project_id)
         elif step.step_type == "notification":
             return WorkflowService._execute_notification(step, step_config, data)
         elif step.step_type == "delay":
@@ -143,7 +143,7 @@ class WorkflowService(BaseService):
 
     @staticmethod
     def _execute_action(
-        step, config: dict, data: dict, projectId: Optional[int] = None
+        step, config: dict, data: dict, project_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """Execute an action step."""
         action_type = config.get("action_type")
@@ -157,12 +157,12 @@ class WorkflowService(BaseService):
 
         elif action_type == "update_record":
             return WorkflowService._execute_update_record(
-                step, config, data, projectId
+                step, config, data, project_id
             )
 
         elif action_type == "create_record":
             return WorkflowService._execute_create_record(
-                step, config, data, projectId
+                step, config, data, project_id
             )
 
         elif action_type == "send_email":
@@ -190,7 +190,7 @@ class WorkflowService(BaseService):
 
     @staticmethod
     def _execute_update_record(
-        step, config: dict, data: dict, projectId: Optional[int] = None
+        step, config: dict, data: dict, project_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """Esegue l'azione update_record usando DynamicApiService."""
         try:
@@ -206,7 +206,7 @@ class WorkflowService(BaseService):
                     "error": "Cannot determine model name. Specify model_name in step config."
                 }
 
-            if not projectId:
+            if not project_id:
                 return {"error": "Project ID not available for this workflow."}
 
             record_id = data.get("id") or config.get("record_id")
@@ -222,7 +222,7 @@ class WorkflowService(BaseService):
 
             dynamic_api = DynamicApiService()
             result = dynamic_api.update_record(
-                projectId, model_name, record_id, update_data
+                project_id, model_name, record_id, update_data
             )
 
             return {
@@ -240,7 +240,7 @@ class WorkflowService(BaseService):
 
     @staticmethod
     def _execute_create_record(
-        step, config: dict, data: dict, projectId: Optional[int] = None
+        step, config: dict, data: dict, project_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """Esegue l'azione create_record usando DynamicApiService."""
         try:
@@ -256,7 +256,7 @@ class WorkflowService(BaseService):
                     "error": "Cannot determine model name. Specify model_name in step config."
                 }
 
-            if not projectId:
+            if not project_id:
                 return {"error": "Project ID not available for this workflow."}
 
             create_data = config.get("data", {})
@@ -266,7 +266,7 @@ class WorkflowService(BaseService):
 
             dynamic_api = DynamicApiService()
             result, status_code = dynamic_api.create_record(
-                projectId, model_name, create_data
+                project_id, model_name, create_data
             )
 
             new_id = result.get("id")
@@ -369,16 +369,16 @@ class WorkflowService(BaseService):
         name: str,
         trigger_event: str,
         description: Optional[str] = None,
-        projectId: Optional[int] = None,
-        userId: Optional[int] = None,
+        project_id: Optional[int] = None,
+        user_id: Optional[int] = None,
     ) -> "Workflow":
         """Create a new workflow."""
         workflow = Workflow(
             name=name,  # type: ignore
             trigger_event=trigger_event,  # type: ignore
             description=description,  # type: ignore
-            projectId=projectId,  # type: ignore
-            created_by=userId,  # type: ignore
+            project_id=project_id,  # type: ignore
+            created_by=user_id,  # type: ignore
         )
 
         from extensions import db
@@ -390,11 +390,11 @@ class WorkflowService(BaseService):
 
     @staticmethod
     def add_step(
-        workflowId: int, step_type: str, name: str, config: dict, order: int = 0
+        workflow_id: int, step_type: str, name: str, config: dict, order: int = 0
     ) -> "WorkflowStep":
         """Add a step to a workflow."""
         step = WorkflowStep(
-            workflowId=workflowId,  # type: ignore
+            workflow_id=workflow_id,  # type: ignore
             step_type=step_type,  # type: ignore
             name=name,  # type: ignore
             config=config,  # type: ignore
@@ -409,12 +409,12 @@ class WorkflowService(BaseService):
         return step
 
     @staticmethod
-    def update_workflow(workflowId: int, data: dict) -> "Workflow":
+    def update_workflow(workflow_id: int, data: dict) -> "Workflow":
         """Update a workflow."""
 
-        workflow = db.session.get(Workflow, workflowId)
+        workflow = db.session.get(Workflow, workflow_id)
         if not workflow:
-            raise ValueError(f"Workflow {workflowId} not found")
+            raise ValueError(f"Workflow {workflow_id} not found")
 
         if "name" in data:
             workflow.name = data["name"]
@@ -424,30 +424,30 @@ class WorkflowService(BaseService):
             workflow.trigger_event = data["trigger_event"]
         if "is_active" in data:
             workflow.is_active = data["is_active"]
-        if "projectId" in data:
-            workflow.projectId = data["projectId"]
+        if "project_id" in data:
+            workflow.project_id = data["project_id"]
 
         db.session.commit()
         return workflow
 
     @staticmethod
-    def delete_workflow(workflowId: int):
+    def delete_workflow(workflow_id: int):
         """Delete a workflow."""
-        workflow = db.session.get(Workflow, workflowId)
+        workflow = db.session.get(Workflow, workflow_id)
         if workflow:
             db.session.delete(workflow)
             db.session.commit()
 
     @staticmethod
     def get_workflows(
-        projectId: Optional[int] = None, active_only: bool = True
+        project_id: Optional[int] = None, active_only: bool = True
     ) -> "Query":
         """Get workflows query with optional filters."""
         query = Workflow.query
 
-        if projectId:
+        if project_id:
             query = query.filter(
-                (Workflow.projectId == projectId) | (Workflow.projectId == None)
+                (Workflow.project_id == project_id) | (Workflow.project_id == None)
             )
 
         if active_only:
@@ -456,12 +456,12 @@ class WorkflowService(BaseService):
         return query.order_by(Workflow.created_at.desc())
 
     @staticmethod
-    def get_workflow_executions(workflowId: int) -> "Query":
+    def get_workflow_executions(workflow_id: int) -> "Query":
         """Get workflow execution history query."""
         from workflows import WorkflowExecution
         from sqlalchemy import desc
 
-        return WorkflowExecution.query.filter_by(workflowId=workflowId).order_by(
+        return WorkflowExecution.query.filter_by(workflow_id=workflow_id).order_by(
             desc(WorkflowExecution.started_at)
         )
 
@@ -567,16 +567,16 @@ class WorkflowService(BaseService):
 
 
 def trigger_workflow_event(
-    event: str, data: Dict[str, Any], projectId: Optional[int] = None
+    event: str, data: Dict[str, Any], project_id: Optional[int] = None
 ):
     """
     Convenience function to trigger workflow automation.
 
     Usage:
-        trigger_workflow_event('user.created', {'userId': 1, 'email': 'test@example.com'}, projectId=1)
+        trigger_workflow_event('user.created', {'user_id': 1, 'email': 'test@example.com'}, project_id=1)
     """
     try:
-        WorkflowService.trigger_event(event, data, projectId)
+        WorkflowService.trigger_event(event, data, project_id)
     except Exception as e:
         import traceback
 

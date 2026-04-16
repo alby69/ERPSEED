@@ -45,7 +45,7 @@ class ProductService:
         result = service.execute({
             "command": "CreateProduct",
             "tenant_id": 1,
-            "userId": 1,
+            "user_id": 1,
             "name": "My Product",
             "code": "PROD-001",
             "unit_price": 100.00
@@ -121,7 +121,7 @@ class ProductService:
             command_data: Dictionary containing:
                 - command: Command name (required)
                 - tenant_id: Tenant ID (required for most commands)
-                - userId: User ID (optional)
+                - user_id: User ID (optional)
                 - Other fields specific to the command
 
         Returns:

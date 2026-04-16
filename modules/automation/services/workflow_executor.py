@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 class NodeExecutor:
     """Esegue la logica specifica per ogni tipo di nodo nel workflow."""
 
-    def __init__(self, projectId: Optional[int] = None):
-        self.projectId = projectId
+    def __init__(self, project_id: Optional[int] = None):
+        self.project_id = project_id
         self.dynamic_api = DynamicApiService()
 
     def execute(self, step: WorkflowStep, data: Dict[str, Any], execution: WorkflowExecution) -> Dict[str, Any]:
@@ -55,11 +55,11 @@ class NodeExecutor:
 
         elif action_type == "update_record":
             from workflow_service import WorkflowService
-            return WorkflowService._execute_update_record(step, config, data, self.projectId)
+            return WorkflowService._execute_update_record(step, config, data, self.project_id)
 
         elif action_type == "create_record":
             from workflow_service import WorkflowService
-            return WorkflowService._execute_create_record(step, config, data, self.projectId)
+            return WorkflowService._execute_create_record(step, config, data, self.project_id)
 
         return {"output": {"message": f"Action {action_type} executed"}}
 
@@ -92,14 +92,14 @@ class WorkflowEngine:
     """Motore orchestratore per l'esecuzione dei workflow."""
 
     @staticmethod
-    def run(workflowId: int, trigger_event: str, trigger_data: Dict[str, Any], projectId: Optional[int] = None):
+    def run(workflow_id: int, trigger_event: str, trigger_data: Dict[str, Any], project_id: Optional[int] = None):
         """Avvia l'esecuzione di un workflow."""
-        workflow = db.session.get(Workflow, workflowId)
+        workflow = db.session.get(Workflow, workflow_id)
         if not workflow or not workflow.is_active:
             return None
 
         execution = WorkflowExecution()
-        execution.workflowId=workflow.id
+        execution.workflow_id=workflow.id
         execution.trigger_event=trigger_event
         execution.trigger_data=json.dumps(trigger_data)
         execution.status="running"
@@ -107,7 +107,7 @@ class WorkflowEngine:
         db.session.add(execution)
         db.session.commit()
 
-        executor = NodeExecutor(projectId=projectId or workflow.projectId)
+        executor = NodeExecutor(project_id=project_id or workflow.project_id)
 
         try:
             steps = workflow.get_steps()
@@ -117,7 +117,7 @@ class WorkflowEngine:
                 # Log step start
                 log = WorkflowLog()
                 log.execution_id=execution.id
-                log.stepId=step.id
+                log.step_id=step.id
                 log.step_name=step.name
                 log.status="running"
                 log.input_data=json.dumps(current_data)
@@ -170,10 +170,10 @@ def init_workflow_hooks():
     # Registriamo un hook globale per record creation/update/deletion
     # Questi hook verranno chiamati dai servizi CRUD (Soggetto, DynamicApi, ecc.)
 
-    def workflow_trigger_hook(event, record_id, data, projectId=None):
+    def workflow_trigger_hook(event, record_id, data, project_id=None):
         """Hook che scatena i workflow corrispondenti all'evento."""
         from workflow_service import WorkflowService
-        WorkflowService.trigger_event(event, data, projectId)
+        WorkflowService.trigger_event(event, data, project_id)
 
     # Nota: L'integrazione effettiva richiede che i servizi chiamino HookManager.trigger
     # In FlaskERP, questo è già parzialmente fatto in DynamicApiService e Soggetto service.

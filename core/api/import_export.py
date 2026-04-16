@@ -23,16 +23,16 @@ blp = Blueprint("import_export", __name__, url_prefix="/api/v1/import-export")
 # ==================== SYSMODEL ====================
 
 
-@blp.route("/sysmodels/<int:modelId>/config-exports")
+@blp.route("/sysmodel/<int:model_id>/export-config")
 class SysModelExportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, modelId):
+    def get(self, model_id):
         """Esporta configurazione SysModel."""
         from models import SysModel
 
-        sys_model = db.session.get(SysModel, modelId)
+        sys_model = db.session.get(SysModel, model_id)
         if not sys_model:
             abort(404, message="Model not found")
 
@@ -42,31 +42,31 @@ class SysModelExportConfig(MethodView):
         return export_data
 
 
-@blp.route("/sysmodels/<int:modelId>/data-exports")
+@blp.route("/sysmodel/<int:model_id>/export-data")
 class SysModelExportData(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, modelId):
+    def get(self, model_id):
         """Esporta dati SysModel."""
         from models import SysModel
 
-        sys_model = db.session.get(SysModel, modelId)
+        sys_model = db.session.get(SysModel, model_id)
         if not sys_model:
             abort(404, message="Model not found")
 
         service = ImportExportService()
-        export_data = service.export_sysmodel_data(sys_model, sys_model.projectId)
+        export_data = service.export_sysmodel_data(sys_model, sys_model.project_id)
 
         return export_data
 
 
-@blp.route("/sysmodels/projects/<int:projectId>/config-imports")
+@blp.route("/sysmodel/<int:project_id>/import-config")
 class SysModelImportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(201)
-    def post(self, projectId):
+    def post(self, project_id):
         """Importa configurazione SysModel."""
         data = request.get_json()
 
@@ -74,17 +74,17 @@ class SysModelImportConfig(MethodView):
             abort(400, message="No JSON data provided")
 
         service = ImportExportService()
-        result = service.import_sysmodel_config(data, projectId)
+        result = service.import_sysmodel_config(data, project_id)
 
         return result, 201
 
 
-@blp.route("/sysmodels/projects/<int:projectId>/data-imports")
+@blp.route("/sysmodel/<int:project_id>/import-data")
 class SysModelImportData(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(201)
-    def post(self, projectId):
+    def post(self, project_id):
         """Importa dati SysModel."""
         data = request.get_json()
 
@@ -92,7 +92,7 @@ class SysModelImportData(MethodView):
             abort(400, message="No JSON data provided")
 
         service = ImportExportService()
-        result = service.import_sysmodel_data(data, projectId)
+        result = service.import_sysmodel_data(data, project_id)
 
         return result, 201
 
@@ -119,12 +119,12 @@ class BlockExportConfig(MethodView):
         return export_data
 
 
-@blp.route("/block/<int:projectId>/import-config")
+@blp.route("/block/<int:project_id>/import-config")
 class BlockImportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(201)
-    def post(self, projectId):
+    def post(self, project_id):
         """Importa configurazione Block."""
         data = request.get_json()
 
@@ -132,7 +132,7 @@ class BlockImportConfig(MethodView):
             abort(400, message="No JSON data provided")
 
         service = ImportExportService()
-        result = service.import_block_config(data, projectId)
+        result = service.import_block_config(data, project_id)
 
         return result, 201
 
@@ -140,16 +140,16 @@ class BlockImportConfig(MethodView):
 # ==================== WORKFLOW ====================
 
 
-@blp.route("/workflow/<int:workflowId>/export-config")
+@blp.route("/workflow/<int:workflow_id>/export-config")
 class WorkflowExportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, workflowId):
+    def get(self, workflow_id):
         """Esporta configurazione Workflow."""
         from workflows import Workflow
 
-        workflow = db.session.get(Workflow, workflowId)
+        workflow = db.session.get(Workflow, workflow_id)
         if not workflow:
             abort(404, message="Workflow not found")
 
@@ -159,12 +159,12 @@ class WorkflowExportConfig(MethodView):
         return export_data
 
 
-@blp.route("/workflow/<int:projectId>/import-config")
+@blp.route("/workflow/<int:project_id>/import-config")
 class WorkflowImportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(201)
-    def post(self, projectId):
+    def post(self, project_id):
         """Importa configurazione Workflow."""
         data = request.get_json()
 
@@ -172,7 +172,7 @@ class WorkflowImportConfig(MethodView):
             abort(400, message="No JSON data provided")
 
         service = ImportExportService()
-        result = service.import_workflow_config(data, projectId)
+        result = service.import_workflow_config(data, project_id)
 
         return result, 201
 
@@ -180,16 +180,16 @@ class WorkflowImportConfig(MethodView):
 # ==================== MODULE ====================
 
 
-@blp.route("/module/<int:moduleId>/export-config")
+@blp.route("/module/<int:module_id>/export-config")
 class ModuleExportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, moduleId):
+    def get(self, module_id):
         """Esporta configurazione Module."""
         from core.models.module import Module
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -199,32 +199,32 @@ class ModuleExportConfig(MethodView):
         return export_data
 
 
-@blp.route("/module/<int:moduleId>/export-data")
+@blp.route("/module/<int:module_id>/export-data")
 class ModuleExportData(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, moduleId):
+    def get(self, module_id):
         """Esporta dati Module."""
         from core.models.module import Module
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
-        projectId = module.projects[0].id if module.projects else 1 # type: ignore
+        project_id = module.projects[0].id if module.projects else 1 # type: ignore
         service = ImportExportService()
-        export_data = service.export_module_data(module, projectId)
+        export_data = service.export_module_data(module, project_id)
 
         return export_data
 
 
-@blp.route("/module/<int:projectId>/import-config")
+@blp.route("/module/<int:project_id>/import-config")
 class ModuleImportConfig(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(201)
-    def post(self, projectId):
+    def post(self, project_id):
         """Importa configurazione Module."""
         data = request.get_json()
 
@@ -232,7 +232,7 @@ class ModuleImportConfig(MethodView):
             abort(400, message="No JSON data provided")
 
         service = ImportExportService()
-        result = service.import_module_config(data, projectId)
+        result = service.import_module_config(data, project_id)
 
         return result, 201
 
@@ -240,38 +240,38 @@ class ModuleImportConfig(MethodView):
 # ==================== PROJECT ====================
 
 
-@blp.route("/sysmodels/project/<int:projectId>/export-all")
+@blp.route("/sysmodels/project/<int:project_id>/export-all")
 class SysModelsProjectExportAll(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, projectId):
+    def get(self, project_id):
         """Esporta tutti i SysModel di un progetto."""
         service = ImportExportService()
-        export_data = service.export_sysmodels_project(projectId)
+        export_data = service.export_sysmodels_project(project_id)
 
         return export_data
 
 
-@blp.route("/project/<int:projectId>/export-full")
+@blp.route("/project/<int:project_id>/export-full")
 class ProjectExportFull(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, projectId):
+    def get(self, project_id):
         """Esporta intero progetto."""
         service = ImportExportService()
-        export_data = service.export_project_full(projectId)
+        export_data = service.export_project_full(project_id)
 
         return export_data
 
 
-@blp.route("/project/<int:projectId>/import-full")
+@blp.route("/project/<int:project_id>/import-full")
 class ProjectImportFull(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(201)
-    def post(self, projectId):
+    def post(self, project_id):
         """Importa intero progetto."""
         data = request.get_json()
 
@@ -279,6 +279,6 @@ class ProjectImportFull(MethodView):
             abort(400, message="No JSON data provided")
 
         service = ImportExportService()
-        result = service.import_project_full(data, projectId)
+        result = service.import_project_full(data, project_id)
 
         return result, 201

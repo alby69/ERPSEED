@@ -89,13 +89,13 @@ class WebhookList(MethodView):
             if event != WebhookEvent.ALL and event not in all_events:
                 abort(400, message=f"Invalid event: {event}")
 
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         endpoint = WebhookService.create_endpoint(
             name=data['name'],
             url=data['url'],
             events=data['events'],
-            userId=userId
+            user_id=user_id
         )
 
         return endpoint

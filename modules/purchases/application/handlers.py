@@ -78,7 +78,7 @@ class DeletePurchaseOrderHandler(DeleteHandler):
         if not check["can_delete"]: return CommandResult.error(check["reason"])
         try:
             result = self.repository.delete(command.entity_id, command.tenant_id)
-            return CommandResult.ok({"deleted": True, "orderId": command.entity_id})
+            return CommandResult.ok({"deleted": True, "order_id": command.entity_id})
         except Exception as e:
             logger.error(f"Error deleting purchase order: {e}")
             return CommandResult.error(f"Failed to delete order: {str(e)}")

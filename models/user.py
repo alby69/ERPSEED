@@ -44,14 +44,14 @@ class User(BaseModel):
     tenant_members = db.relationship(
         "TenantMember",
         back_populates="user",
-        foreign_keys="TenantMember.userId",
+        foreign_keys="TenantMember.user_id",
         lazy="dynamic",
     )
     project_memberships = db.relationship(
         "TenantMember",
         secondary=project_members,
-        primaryjoin="User.id == project_members.c.userId",
-        secondaryjoin="TenantMember.userId == project_members.c.userId",
+        primaryjoin="User.id == project_members.c.user_id",
+        secondaryjoin="TenantMember.user_id == project_members.c.user_id",
         viewonly=True,
     )
 

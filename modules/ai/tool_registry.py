@@ -322,7 +322,7 @@ class ToolRegistry:
 
     def get_tools_for_project(
         self,
-        projectId: int,
+        project_id: int,
         provider: str = "openrouter",
         operations: List[str] = None,
         use_cache: bool = True,
@@ -331,7 +331,7 @@ class ToolRegistry:
         Ottiene tutti i tool per un progetto.
 
         Args:
-            projectId: ID del progetto
+            project_id: ID del progetto
             provider: 'anthropic' o 'openrouter'
             operations: Operazioni da includere
             use_cache: Usa cache se disponibile
@@ -339,7 +339,7 @@ class ToolRegistry:
         Returns:
             Lista di tool definitions nel formato corretto
         """
-        cache_key = f"{projectId}:{provider}:{operations}"
+        cache_key = f"{project_id}:{provider}:{operations}"
 
         if use_cache and cache_key in self._tools_cache:
             cached_data, cached_time = self._tools_cache[cache_key]
@@ -350,7 +350,7 @@ class ToolRegistry:
         from models import SysModel
 
         models = SysModel.query.filter_by(
-            projectId=projectId, status="published"
+            project_id=project_id, status="published"
         ).all()
 
         all_tools = []
@@ -371,29 +371,29 @@ class ToolRegistry:
 
         return result
 
-    def invalidate_cache(self, projectId: int = None):
-        """Invalidate cache. Se projectId è None, invalida tutto."""
-        if projectId:
+    def invalidate_cache(self, project_id: int = None):
+        """Invalidate cache. Se project_id è None, invalida tutto."""
+        if project_id:
             keys_to_remove = [
-                k for k in self._tools_cache if k.startswith(f"{projectId}:")
+                k for k in self._tools_cache if k.startswith(f"{project_id}:")
             ]
             for key in keys_to_remove:
                 del self._tools_cache[key]
         else:
             self._tools_cache.clear()
 
-        logger.info(f"Cache invalidated for projectId={projectId}")
+        logger.info(f"Cache invalidated for project_id={project_id}")
 
     def set_cache_ttl(self, seconds: int):
         """Imposta TTL per la cache."""
         self._cache_ttl = seconds
 
-    def get_business_logic_tools(self, projectId: int = None) -> List[Dict]:
+    def get_business_logic_tools(self, project_id: int = None) -> List[Dict]:
         """
         Genera tool per la business logic (workflow, hooks, scheduled tasks).
 
         Args:
-            projectId: ID del progetto (opzionale)
+            project_id: ID del progetto (opzionale)
 
         Returns:
             Lista di tool definitions per automazione
@@ -475,7 +475,7 @@ class ToolRegistry:
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "workflowId": {
+                        "workflow_id": {
                             "type": "integer",
                             "description": "ID of the workflow to update",
                         },
@@ -492,7 +492,7 @@ class ToolRegistry:
                             "description": "New steps configuration",
                         },
                     },
-                    "required": ["workflowId"],
+                    "required": ["workflow_id"],
                 },
             },
             {
@@ -501,12 +501,12 @@ class ToolRegistry:
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "workflowId": {
+                        "workflow_id": {
                             "type": "integer",
                             "description": "ID of the workflow to delete",
                         }
                     },
-                    "required": ["workflowId"],
+                    "required": ["workflow_id"],
                 },
             },
         ]
@@ -674,7 +674,7 @@ class ToolRegistry:
             },
         ]
 
-    def get_ui_builder_tools(self, projectId: int = None) -> List[Dict]:
+    def get_ui_builder_tools(self, project_id: int = None) -> List[Dict]:
         """Genera tool per la gestione della UI tramite Visual Builder."""
         return [
             {
@@ -737,7 +737,7 @@ class ToolRegistry:
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "viewId": {
+                        "view_id": {
                             "type": "integer",
                             "description": "ID of the view to modify",
                         },
@@ -755,7 +755,7 @@ class ToolRegistry:
                             "required": ["type", "x", "y"],
                         },
                     },
-                    "required": ["viewId", "component"],
+                    "required": ["view_id", "component"],
                 },
             },
             {
@@ -764,7 +764,7 @@ class ToolRegistry:
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "viewId": {
+                        "view_id": {
                             "type": "integer",
                             "description": "ID of the view to update",
                         },
@@ -773,12 +773,12 @@ class ToolRegistry:
                             "description": "The new set of components for the view",
                         },
                     },
-                    "required": ["viewId", "components"],
+                    "required": ["view_id", "components"],
                 },
             },
         ]
 
-    def get_test_tools(self, projectId: int = None) -> List[Dict]:
+    def get_test_tools(self, project_id: int = None) -> List[Dict]:
         """Genera tool per la generazione automatica di test."""
         return [
             {
@@ -818,7 +818,7 @@ class ToolRegistry:
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "projectId": {
+                        "project_id": {
                             "type": "integer",
                             "description": "ID of the project",
                         }
@@ -831,12 +831,12 @@ class ToolRegistry:
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "suiteId": {
+                        "suite_id": {
                             "type": "integer",
                             "description": "ID of the test suite to run",
                         }
                     },
-                    "required": ["suiteId"],
+                    "required": ["suite_id"],
                 },
             },
         ]

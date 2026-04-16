@@ -41,13 +41,13 @@ class ModuleSchema(Schema):
     core_version_min = fields.Str()
     api_definition = fields.Dict()
     dependencies = fields.List(fields.Dict())
-    test_suiteId = fields.Int()
+    test_suite_id = fields.Int()
     test_results = fields.Dict()
     quality_score = fields.Float(dump_only=True)
     icon = fields.Str()
     menu_position = fields.Int()
-    projectIds = fields.List(fields.Int())
-    contained_moduleIds = fields.List(fields.Int())
+    project_ids = fields.List(fields.Int())
+    contained_module_ids = fields.List(fields.Int())
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
 
@@ -65,7 +65,7 @@ class ModuleUpdateSchema(Schema):
     dependencies = fields.List(fields.Dict())
     icon = fields.Str()
     menu_position = fields.Int()
-    contained_moduleIds = fields.List(fields.Int())
+    contained_module_ids = fields.List(fields.Int())
 
 
 @blp.route("")
@@ -77,8 +77,8 @@ class ModuleList(MethodView):
         from models import User, Project
         from core.models import TenantMember
 
-        userId = get_jwt_identity()
-        user = db.session.get(User, userId)
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
 
         if not user:
             abort(404, message="User not found")
@@ -119,16 +119,16 @@ class ModuleList(MethodView):
             )
 
         # Filter by project
-        projectId = request.args.get("projectId", type=int)
-        if projectId:
-            query = query.filter(Module.projects.any(Project.id == projectId))
+        project_id = request.args.get("project_id", type=int)
+        if project_id:
+            query = query.filter(Module.projects.any(Project.id == project_id))
 
         # Filter by assigned to project
         assigned = request.args.get("assigned")
-        if assigned == "true" and projectId:
-            query = query.filter(Module.projects.any(Project.id == projectId))
-        elif assigned == "false" and projectId:
-            query = query.filter(~Module.projects.any(Project.id == projectId))
+        if assigned == "true" and project_id:
+            query = query.filter(Module.projects.any(Project.id == project_id))
+        elif assigned == "false" and project_id:
+            query = query.filter(~Module.projects.any(Project.id == project_id))
 
         # Pagination
         page = request.args.get("page", 1, type=int)
@@ -154,8 +154,8 @@ class ModuleList(MethodView):
         """Create a new module."""
         from models import User
 
-        userId = get_jwt_identity()
-        user = db.session.get(User, userId)
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
 
         if not user:
             abort(404, message="User not found")
@@ -185,11 +185,11 @@ class ModuleList(MethodView):
         )
 
         # Handle project assignments
-        projectIds = data.get("projectIds", [])
-        if projectIds:
+        project_ids = data.get("project_ids", [])
+        if project_ids:
             from models import Project
 
-            for pid in projectIds:
+            for pid in project_ids:
                 project = db.session.get(Project, pid)
                 if project:
                     module.projects.append(project)
@@ -200,14 +200,14 @@ class ModuleList(MethodView):
         return module.to_dict()
 
 
-@blp.route("/<int:moduleId>")
+@blp.route("/<int:module_id>")
 class ModuleDetail(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, moduleId):
+    def get(self, module_id):
         """Get module details."""
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -217,9 +217,9 @@ class ModuleDetail(MethodView):
     @jwt_required()
     @blp.arguments(ModuleUpdateSchema)
     @blp.response(200)
-    def put(self, data, moduleId):
+    def put(self, data, module_id):
         """Update module."""
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -253,11 +253,11 @@ class ModuleDetail(MethodView):
             module.menu_position = data["menu_position"]
 
         # Handle contained modules (for packages)
-        if "contained_moduleIds" in data and module.type == "package":
+        if "contained_module_ids" in data and module.type == "package":
             module.contained_modules = [] # type: ignore
             from models import Project
 
-            for mid in data["contained_moduleIds"]:
+            for mid in data["contained_module_ids"]:
                 contained = db.session.get(Module, mid)
                 if contained:
                     module.contained_modules.append(contained)
@@ -269,17 +269,17 @@ class ModuleDetail(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def delete(self, moduleId):
+    def delete(self, module_id):
         """Delete module with mandatory backup."""
         from models import User
 
-        userId = get_jwt_identity()
-        user = db.session.get(User, userId)
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
 
         if not user or user.role != "admin":
             abort(403, message="Only admins can delete modules")
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -297,7 +297,7 @@ class ModuleDetail(MethodView):
             return { # type: ignore
                 "message": "Backup recommended before deletion",
                 "warning": "Please request /backup endpoint before deleting",
-                "moduleId": moduleId,
+                "module_id": module_id,
                 "data_available": len(list(module.models)) > 0 # type: ignore
                 if hasattr(module, "models")
                 else False,
@@ -310,24 +310,24 @@ class ModuleDetail(MethodView):
         return {"message": "Module deleted successfully"}
 
 
-@blp.route("/<int:moduleId>/backup")
+@blp.route("/<int:module_id>/backup")
 class ModuleBackup(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, moduleId):
+    def get(self, module_id):
         """Export module data as JSON for backup before deletion."""
         from models import User
         from modules.dynamic_api.services.dynamic_api_service import DynamicApiService
         import json
 
-        userId = get_jwt_identity()
-        user = db.session.get(User, userId)
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
 
         if not user or user.role != "admin":
             abort(403, message="Only admins can backup modules")
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -371,7 +371,7 @@ class ModuleBackup(MethodView):
                 # Export records
                 try:
                     result, _ = dynamic_api.list_records(
-                        projectId=module.projects[0].id if module.projects else 1, # type: ignore
+                        project_id=module.projects[0].id if module.projects else 1, # type: ignore
                         model_name=sys_model.name,
                         page=1,
                         per_page=10000,  # Get all records
@@ -400,14 +400,14 @@ class ModuleBackup(MethodView):
         }
 
 
-@blp.route("/<int:moduleId>/projects")
+@blp.route("/<int:module_id>/projects")
 class ModuleProjects(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, moduleId):
+    def get(self, module_id):
         """Get projects assigned to module."""
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -416,21 +416,21 @@ class ModuleProjects(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def post(self, moduleId):
+    def post(self, module_id):
         """Assign module to a project."""
         data = request.json or {}
-        projectId = data.get("projectId")
+        project_id = data.get("project_id")
 
-        if not projectId:
-            abort(400, message="projectId is required")
+        if not project_id:
+            abort(400, message="project_id is required")
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
         from models import Project
 
-        project = db.session.get(Project, projectId)
+        project = db.session.get(Project, project_id)
         if not project:
             abort(404, message="Project not found")
 
@@ -439,44 +439,44 @@ class ModuleProjects(MethodView):
             db.session.commit()
 
         return {
-            "message": f"Module assigned to project {projectId}",
-            "projectIds": [p.id for p in module.projects], # type: ignore
+            "message": f"Module assigned to project {project_id}",
+            "project_ids": [p.id for p in module.projects], # type: ignore
         }
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def delete(self, moduleId):
+    def delete(self, module_id):
         """Remove module from a project."""
         data = request.json or {}
-        projectId = data.get("projectId")
+        project_id = data.get("project_id")
 
-        if not projectId:
-            abort(400, message="projectId is required")
+        if not project_id:
+            abort(400, message="project_id is required")
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
         from models import Project
 
-        project = db.session.get(Project, projectId)
+        project = db.session.get(Project, project_id)
         if project and project in module.projects: # type: ignore
             module.projects.remove(project) # type: ignore
             db.session.commit()
 
         return {
-            "message": f"Module removed from project {projectId}",
-            "projectIds": [p.id for p in module.projects], # type: ignore
+            "message": f"Module removed from project {project_id}",
+            "project_ids": [p.id for p in module.projects], # type: ignore
         }
 
 
-@blp.route("/<int:moduleId>/status")
+@blp.route("/<int:module_id>/status")
 class ModuleStatus(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def post(self, moduleId):
+    def post(self, module_id):
         """Change module status."""
         data = request.json or {}
         new_status = data.get("status")
@@ -488,7 +488,7 @@ class ModuleStatus(MethodView):
                 message=f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
             )
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -511,16 +511,16 @@ class ModuleStatus(MethodView):
         }
 
 
-@blp.route("/<int:moduleId>/models/<int:modelId>")
+@blp.route("/<int:module_id>/models/<int:model_id>")
 class ModuleAddModel(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, ModuleSchema)
-    def post(self, moduleId, modelId):
+    def post(self, module_id, model_id):
         """Add a model to the module."""
         from models import SysModel
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -529,7 +529,7 @@ class ModuleAddModel(MethodView):
         if not can_modify:
             abort(400, message=message)
 
-        model = db.session.get(SysModel, modelId)
+        model = db.session.get(SysModel, model_id)
         if not model:
             abort(404, message="Model not found")
 
@@ -542,11 +542,11 @@ class ModuleAddModel(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, ModuleSchema)
-    def delete(self, moduleId, modelId):
+    def delete(self, module_id, model_id):
         """Remove a model from the module."""
         from models import SysModel
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -555,7 +555,7 @@ class ModuleAddModel(MethodView):
         if not can_modify:
             abort(400, message=message)
 
-        model = db.session.get(SysModel, modelId)
+        model = db.session.get(SysModel, model_id)
         if not model:
             abort(404, message="Model not found")
 
@@ -566,14 +566,14 @@ class ModuleAddModel(MethodView):
         return module.to_dict(include_relations=True)
 
 
-@blp.route("/<int:moduleId>/blocks/<int:block_id>")
+@blp.route("/<int:module_id>/blocks/<int:block_id>")
 class ModuleAddBlock(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, ModuleSchema)
-    def post(self, moduleId, block_id):
+    def post(self, module_id, block_id):
         """Add a block to the module."""
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -595,9 +595,9 @@ class ModuleAddBlock(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, ModuleSchema)
-    def delete(self, moduleId, block_id):
+    def delete(self, module_id, block_id):
         """Remove a block from the module."""
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -617,12 +617,12 @@ class ModuleAddBlock(MethodView):
         return module.to_dict(include_relations=True)
 
 
-@blp.route("/<int:moduleId>/publish")
+@blp.route("/<int:module_id>/publish")
 class ModulePublish(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, ModuleSchema)
-    def post(self, moduleId):
+    def post(self, module_id):
         """Publish a module.
 
         Rules for publishing:
@@ -632,13 +632,13 @@ class ModulePublish(MethodView):
         """
         from models import User
 
-        userId = get_jwt_identity()
-        user = db.session.get(User, userId)
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
 
         if not user or user.role != "admin":
             abort(403, message="Only admins can publish modules")
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -662,7 +662,7 @@ class ModulePublish(MethodView):
             errors.append("Module must have at least one SysModel or Block")
 
         # Rule 2: If test suite exists, all tests must pass
-        if module.test_suiteId and module.test_results:
+        if module.test_suite_id and module.test_results:
             test_results = module.test_results
             passed = test_results.get("passed", 0)
             failed = test_results.get("failed", 0)
@@ -687,22 +687,22 @@ class ModulePublish(MethodView):
         return module.to_dict(include_relations=True)
 
 
-@blp.route("/<int:moduleId>/unpublish")
+@blp.route("/<int:module_id>/unpublish")
 class ModuleUnpublish(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, ModuleSchema)
-    def post(self, moduleId):
+    def post(self, module_id):
         """Unpublish a module (make it draft again)."""
         from models import User
 
-        userId = get_jwt_identity()
-        user = db.session.get(User, userId)
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
 
         if not user or user.role != "admin":
             abort(403, message="Only admins can unpublish modules")
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -713,24 +713,24 @@ class ModuleUnpublish(MethodView):
         return module.to_dict(include_relations=True)
 
 
-@blp.route("/<int:moduleId>/test")
+@blp.route("/<int:module_id>/test")
 class ModuleTest(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, ModuleSchema)
-    def post(self, moduleId):
+    def post(self, module_id):
         """Run advanced tests for a module and update results."""
         from models import User
         from modules.dynamic_api.services.dynamic_api_service import DynamicApiService
         import time
 
-        userId = get_jwt_identity()
-        user = db.session.get(User, userId)
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
 
         if not user or user.role != "admin":
             abort(403, message="Only admins can run tests")
 
-        module = db.session.get(Module, moduleId)
+        module = db.session.get(Module, module_id)
         if not module:
             abort(404, message="Module not found")
 
@@ -745,7 +745,7 @@ class ModuleTest(MethodView):
         }
 
         dynamic_api = DynamicApiService()
-        projectId = module.projects[0].id if module.projects else 1 # type: ignore
+        project_id = module.projects[0].id if module.projects else 1 # type: ignore
 
         # For each SysModel in the module, generate and run tests
         if hasattr(module, "models"):
@@ -872,7 +872,7 @@ class ModuleTest(MethodView):
                 try:
                     # Simple list test to measure performance
                     _ = dynamic_api.list_records(
-                        projectId, sys_model.name, page=1, per_page=10
+                        project_id, sys_model.name, page=1, per_page=10
                     )
                     elapsed = time.time() - start_time
 

@@ -71,7 +71,7 @@ class Modulo(BaseModel):
     )
 
     __table_args__ = (
-        db.Index('ix_moduleName_stato', 'nome', 'stato'),
+        db.Index('ix_modulo_nome_stato', 'nome', 'stato'),
     )
 
     def __repr__(self):

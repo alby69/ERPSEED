@@ -20,7 +20,7 @@ class TenantMember(BaseModel):
         index=True
     )
 
-    userId = db.Column(
+    user_id = db.Column(
         db.Integer,
         db.ForeignKey('users.id'),
         nullable=False,
@@ -46,21 +46,21 @@ class TenantMember(BaseModel):
 
     # Relations
     tenant = db.relationship('Tenant', back_populates='members')
-    user = db.relationship('User', back_populates='tenant_members', foreign_keys=[userId])
+    user = db.relationship('User', back_populates='tenant_members', foreign_keys=[user_id])
     invited_by = db.relationship('User', foreign_keys=[invited_by_id])
 
     __table_args__ = (
-        db.UniqueConstraint('tenant_id', 'userId', name='uix_tenant_user'),
+        db.UniqueConstraint('tenant_id', 'user_id', name='uix_tenant_user'),
     )
 
     def __repr__(self):
-        return f'<TenantMember user={self.userId} tenant={self.tenant_id} role={self.ruolo}>'
+        return f'<TenantMember user={self.user_id} tenant={self.tenant_id} role={self.ruolo}>'
 
     def to_dict(self):
         return {
             'id': self.id,
             'tenant_id': self.tenant_id,
-            'userId': self.userId,
+            'user_id': self.user_id,
             'ruolo': self.ruolo,
             'stato': self.stato,
             'user': self.user.to_dict() if self.user else None,

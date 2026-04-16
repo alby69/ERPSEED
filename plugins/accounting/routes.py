@@ -375,7 +375,7 @@ class InvoiceList(MethodView):
         return f'{prefix}-{today.year}{today.month:02d}-{new_num:05d}'
 
 
-@blp.route("/invoices/<int:invoiceId>")
+@blp.route("/invoices/<int:invoice_id>")
 class InvoiceResource(MethodView):
     """Single Invoice."""
 
@@ -383,19 +383,19 @@ class InvoiceResource(MethodView):
     @jwt_required()
     @tenant_required
     @blp.response(200, InvoiceSchema)
-    def get(self, invoiceId, tenant_id):
+    def get(self, invoice_id, tenant_id):
         """Get invoice with lines."""
         return generic_service.get_tenant_resource(
-            Invoice, invoiceId, tenant_id, not_found_message="Invoice not found"
+            Invoice, invoice_id, tenant_id, not_found_message="Invoice not found"
         )
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
     @blp.response(200, InvoiceSchema)
-    def post(self, invoiceId, tenant_id):
+    def post(self, invoice_id, tenant_id):
         """Send/Confirm invoice."""
-        invoice = Invoice.query.filter_by(id=invoiceId, tenant_id=tenant_id).first()
+        invoice = Invoice.query.filter_by(id=invoice_id, tenant_id=tenant_id).first()
         if not invoice:
             abort(404, message="Invoice not found")
 

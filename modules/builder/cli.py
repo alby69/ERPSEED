@@ -90,9 +90,9 @@ def validate_template(template):
 
 
 @builder_cli.command(name='generate')
-@click.argument('modelId', type=int)
+@click.argument('model_id', type=int)
 @click.option('--api-prefix', default='/api', help='API prefix')
-def generate_code(modelId, api_prefix):
+def generate_code(model_id, api_prefix):
     """Generate code for an existing model."""
     from modules.builder.generator import CodeGenerator, TemplateValidator
     from extensions import create_app, db
@@ -101,10 +101,10 @@ def generate_code(modelId, api_prefix):
     app = create_app()
     with app.app_context():
         service = BuilderService()
-        model = service.get_model(modelId)
+        model = service.get_model(model_id)
 
         if not model:
-            click.echo(f"Error: Model {modelId} not found", err=True)
+            click.echo(f"Error: Model {model_id} not found", err=True)
             return
 
         validator = TemplateValidator()

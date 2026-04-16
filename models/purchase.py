@@ -36,7 +36,7 @@ class PurchaseOrderLine(BaseModel):
         db.Integer, db.ForeignKey("tenants.id"), nullable=False, index=True
     )
 
-    orderId = db.Column(
+    order_id = db.Column(
         db.Integer, db.ForeignKey("purchase_orders.id"), nullable=False
     )
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)

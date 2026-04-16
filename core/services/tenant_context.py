@@ -42,7 +42,7 @@ class TenantContext:
         return tenant.id if tenant else None
 
     @classmethod
-    def get_userId(cls):
+    def get_user_id(cls):
         """Get current user ID."""
         user = cls.get_user()
         return user.id if user else None
@@ -82,6 +82,6 @@ def get_current_tenant_id():
     return TenantContext.get_tenant_id()
 
 
-def get_current_userId():
+def get_current_user_id():
     """Helper to get current user ID."""
-    return TenantContext.get_userId()
+    return TenantContext.get_user_id()

@@ -35,26 +35,26 @@ class DynamicApiService(BaseService):
     Handles relations, formulas, validations, and imports.
     """
 
-    def check_permissions(self, sys_model, action, projectId=None):
+    def check_permissions(self, sys_model, action, project_id=None):
         """
         Check role-based permissions for a model.
 
         Args:
             sys_model: SysModel instance.
             action: Action to check (read, write, etc.).
-            projectId: Optional project ID to verify.
+            project_id: Optional project ID to verify.
         """
         from ..models import User
         from flask_smorest import abort
 
-        if projectId is not None and sys_model.projectId != projectId:
+        if project_id is not None and sys_model.project_id != project_id:
             abort(
                 404,
-                message=f"Model '{sys_model.name}' not found in project {projectId}.",
+                message=f"Model '{sys_model.name}' not found in project {project_id}.",
             )
 
-        userId = get_jwt_identity()
-        user = self.db.session.get(User, userId)
+        user_id = get_jwt_identity()
+        user = self.db.session.get(User, user_id)
 
         if not user:
             abort(401, message="User not found.")
@@ -76,12 +76,12 @@ class DynamicApiService(BaseService):
         except (json.JSONDecodeError, TypeError):
             pass
 
-    def get_model(self, projectId, model_name, require_published=True):
+    def get_model(self, project_id, model_name, require_published=True):
         """
         Get a SysModel by name, optionally checking for published status.
 
         Args:
-            projectId: Project ID
+            project_id: Project ID
             model_name: Name of the model
             require_published: If True, only return published models
 
@@ -91,7 +91,7 @@ class DynamicApiService(BaseService):
         from ..models import SysModel
         from flask_smorest import abort
 
-        query = SysModel.query.filter_by(projectId=projectId, name=model_name)
+        query = SysModel.query.filter_by(project_id=project_id, name=model_name)
 
         if require_published:
             query = query.filter_by(status="published")
@@ -467,25 +467,25 @@ class DynamicApiService(BaseService):
         elif val_upper == "{NOW}":
             return datetime.datetime.now()
         elif val_upper == "{CURRENT_USER}":
-            userId = get_jwt_identity()
-            if userId:
+            user_id = get_jwt_identity()
+            if user_id:
                 if field_type in ["relation", "integer"]:
-                    return int(userId)
-                user = self.db.session.get(User, userId)
+                    return int(user_id)
+                user = self.db.session.get(User, user_id)
                 return user.email if user else None
             return None
 
         return default_val
 
-    def list_records(self, projectId, model_name, page=1, per_page=10):
+    def list_records(self, project_id, model_name, page=1, per_page=10):
         """List records with filtering, sorting, pagination."""
         from ..utils import get_table_object, serialize_value
 
-        sys_model = self.get_model(projectId, model_name, require_published=True)
+        sys_model = self.get_model(project_id, model_name, require_published=True)
 
-        self.check_permissions(sys_model, "read", projectId)
+        self.check_permissions(sys_model, "read", project_id)
 
-        schema_name = f"project_{projectId}"
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         query, relation_fields = self.build_relational_query(
@@ -561,16 +561,16 @@ class DynamicApiService(BaseService):
 
         return result, headers
 
-    def create_record(self, projectId, model_name, data):
+    def create_record(self, project_id, model_name, data):
         """Create a new record."""
         from ..utils import get_table_object, serialize_value, log_audit
         from flask_jwt_extended import get_jwt_identity
 
-        sys_model = self.get_model(projectId, model_name, require_published=True)
+        sys_model = self.get_model(project_id, model_name, require_published=True)
 
-        self.check_permissions(sys_model, "write", projectId)
+        self.check_permissions(sys_model, "write", project_id)
 
-        schema_name = f"project_{projectId}"
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         if request.content_type and "multipart/form-data" in request.content_type:
@@ -627,22 +627,22 @@ class DynamicApiService(BaseService):
         try:
             from ..webhook_triggers import on_record_created
 
-            on_record_created(model_name, result.id, result_dict, projectId)
+            on_record_created(model_name, result.id, result_dict, project_id)
         except Exception:
             pass
 
         return result_dict, 201
 
-    def update_record(self, projectId, model_name, itemId, data):
+    def update_record(self, project_id, model_name, item_id, data):
         """Update an existing record."""
         from ..utils import get_table_object, serialize_value, log_audit
         from flask_jwt_extended import get_jwt_identity
 
-        sys_model = self.get_model(projectId, model_name, require_published=True)
+        sys_model = self.get_model(project_id, model_name, require_published=True)
 
-        self.check_permissions(sys_model, "write", projectId)
+        self.check_permissions(sys_model, "write", project_id)
 
-        schema_name = f"project_{projectId}"
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         if request.content_type and "multipart/form-data" in request.content_type:
@@ -665,7 +665,7 @@ class DynamicApiService(BaseService):
                     exists_query = (
                         select(func.count())
                         .select_from(table)
-                        .where(table.c[field.name] == value, table.c.id != itemId)
+                        .where(table.c[field.name] == value, table.c.id != item_id)
                     )
                     if self.db.session.execute(exists_query).scalar_one() > 0:
                         from flask_smorest import abort
@@ -677,14 +677,14 @@ class DynamicApiService(BaseService):
 
         stmt = (
             update(table)
-            .where(table.c.id == itemId)
+            .where(table.c.id == item_id)
             .values(validated_data)
             .returning(table)
         )
         result = self.db.session.execute(stmt).mappings().one()
 
-        self.handle_nested_writes(itemId, data, sys_model, schema=schema_name)
-        log_audit(get_jwt_identity(), model_name, itemId, "UPDATE", validated_data)
+        self.handle_nested_writes(item_id, data, sys_model, schema=schema_name)
+        log_audit(get_jwt_identity(), model_name, item_id, "UPDATE", validated_data)
 
         self.db.session.commit()
 
@@ -695,71 +695,71 @@ class DynamicApiService(BaseService):
         try:
             from ..webhook_triggers import on_record_updated
 
-            on_record_updated(model_name, itemId, result_dict, projectId)
+            on_record_updated(model_name, item_id, result_dict, project_id)
         except Exception:
             pass
 
         return result_dict
 
-    def delete_record(self, projectId, model_name, itemId):
+    def delete_record(self, project_id, model_name, item_id):
         """Delete a single record."""
         from ..utils import get_table_object, log_audit
         from flask_jwt_extended import get_jwt_identity
 
-        sys_model = self.get_model(projectId, model_name, require_published=True)
+        sys_model = self.get_model(project_id, model_name, require_published=True)
 
-        self.check_permissions(sys_model, "write", projectId)
+        self.check_permissions(sys_model, "write", project_id)
 
-        schema_name = f"project_{projectId}"
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
-        stmt = delete(table).where(table.c.id == itemId)
+        stmt = delete(table).where(table.c.id == item_id)
         self.db.session.execute(stmt)
-        log_audit(get_jwt_identity(), model_name, itemId, "DELETE")
+        log_audit(get_jwt_identity(), model_name, item_id, "DELETE")
         self.db.session.commit()
 
         try:
             from ..webhook_triggers import on_record_deleted
 
-            on_record_deleted(model_name, itemId, projectId)
+            on_record_deleted(model_name, item_id, project_id)
         except Exception:
             pass
 
-    def bulk_delete(self, projectId, model_name, ids_to_delete):
+    def bulk_delete(self, project_id, model_name, ids_to_delete):
         """Delete multiple records."""
         from ..utils import get_table_object, log_audit
         from flask_jwt_extended import get_jwt_identity
 
-        sys_model = self.get_model(projectId, model_name, require_published=True)
+        sys_model = self.get_model(project_id, model_name, require_published=True)
 
-        self.check_permissions(sys_model, "write", projectId)
+        self.check_permissions(sys_model, "write", project_id)
 
-        schema_name = f"project_{projectId}"
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
-        userId = get_jwt_identity()
-        for itemId in ids_to_delete:
-            log_audit(userId, model_name, itemId, "DELETE")
+        user_id = get_jwt_identity()
+        for item_id in ids_to_delete:
+            log_audit(user_id, model_name, item_id, "DELETE")
 
         stmt = delete(table).where(table.c.id.in_(ids_to_delete))
         self.db.session.execute(stmt)
         self.db.session.commit()
 
-    def get_record(self, projectId, model_name, itemId):
+    def get_record(self, project_id, model_name, item_id):
         """Get a single record with relations and lines."""
         from ..utils import get_table_object, serialize_value
 
-        sys_model = self.get_model(projectId, model_name, require_published=True)
+        sys_model = self.get_model(project_id, model_name, require_published=True)
 
-        self.check_permissions(sys_model, "read", projectId)
+        self.check_permissions(sys_model, "read", project_id)
 
-        schema_name = f"project_{projectId}"
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         query, relation_fields = self.build_relational_query(
             sys_model, table, schema=schema_name
         )
-        query = query.where(table.c.id == itemId)
+        query = query.where(table.c.id == item_id)
         raw_result = self.db.session.execute(query).mappings().first()
 
         if not raw_result:
@@ -778,7 +778,7 @@ class DynamicApiService(BaseService):
                     )
                     fk = opts["foreign_key"]
                     lines_query = select(target_table).where(
-                        target_table.c[fk] == itemId
+                        target_table.c[fk] == item_id
                     )
                     lines_res = self.db.session.execute(lines_query).mappings().all()
                     result[field.name] = [dict(r) for r in lines_res]
@@ -790,34 +790,34 @@ class DynamicApiService(BaseService):
 
         return result
 
-    def get_model_metadata(self, projectId, model_name):
+    def get_model_metadata(self, project_id, model_name):
         """Get model metadata for frontend."""
-        sys_model = self.get_model(projectId, model_name, require_published=True)
+        sys_model = self.get_model(project_id, model_name, require_published=True)
 
-        self.check_permissions(sys_model, "read", projectId)
+        self.check_permissions(sys_model, "read", project_id)
 
         _ = sys_model.fields
 
         return sys_model
 
-    def clone_record(self, projectId, model_name, itemId):
+    def clone_record(self, project_id, model_name, item_id):
         """Clone an existing record."""
         from ..utils import get_table_object, serialize_value, log_audit
         from flask_jwt_extended import get_jwt_identity
 
-        sys_model = self.get_model(projectId, model_name, require_published=True)
+        sys_model = self.get_model(project_id, model_name, require_published=True)
 
         if not sys_model:
             from flask_smorest import abort
 
             abort(404, message=f"Model '{model_name}' not found.")
 
-        self.check_permissions(sys_model, "write", projectId)
+        self.check_permissions(sys_model, "write", project_id)
 
-        schema_name = f"project_{projectId}"
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
-        query = select(table).where(table.c.id == itemId)
+        query = select(table).where(table.c.id == item_id)
         source_record = self.db.session.execute(query).mappings().first()
 
         if not source_record:
@@ -834,7 +834,7 @@ class DynamicApiService(BaseService):
         result = self.db.session.execute(stmt).mappings().one()
 
         log_audit(
-            get_jwt_identity(), model_name, result.id, "CLONE", {"source_id": itemId}
+            get_jwt_identity(), model_name, result.id, "CLONE", {"source_id": item_id}
         )
         self.db.session.commit()
 
@@ -844,16 +844,16 @@ class DynamicApiService(BaseService):
 
         return result_dict, 201
 
-    def import_csv(self, projectId, model_name, file):
+    def import_csv(self, project_id, model_name, file):
         """Import data from CSV file."""
         from ..utils import get_table_object, log_audit
         from flask_jwt_extended import get_jwt_identity
 
-        sys_model = self.get_model(projectId, model_name, require_published=True)
+        sys_model = self.get_model(project_id, model_name, require_published=True)
 
-        self.check_permissions(sys_model, "write", projectId)
+        self.check_permissions(sys_model, "write", project_id)
 
-        schema_name = f"project_{projectId}"
+        schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
         try:

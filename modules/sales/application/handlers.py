@@ -56,7 +56,7 @@ class CreateSalesOrderHandler(CreateHandler):
 
             if self.event_bus:
                 event = SalesOrderCreatedEvent(
-                    orderId=result["id"],
+                    order_id=result["id"],
                     order_data=result,
                     tenant_id=command.tenant_id
                 )
@@ -97,7 +97,7 @@ class UpdateSalesOrderHandler(UpdateHandler):
 
             if self.event_bus and result:
                 event = SalesOrderUpdatedEvent(
-                    orderId=command.entity_id,
+                    order_id=command.entity_id,
                     old_data=result["old"],
                     new_data=result["new"],
                     tenant_id=command.tenant_id
@@ -135,13 +135,13 @@ class DeleteSalesOrderHandler(DeleteHandler):
 
             if self.event_bus and result:
                 event = SalesOrderDeletedEvent(
-                    orderId=command.entity_id,
+                    order_id=command.entity_id,
                     order_data=result,
                     tenant_id=command.tenant_id
                 )
                 self.event_bus.publish(event)
 
-            return CommandResult.ok({"deleted": True, "orderId": command.entity_id})
+            return CommandResult.ok({"deleted": True, "order_id": command.entity_id})
         except Exception as e:
             logger.error(f"Error deleting sales order: {e}")
             return CommandResult.error(f"Failed to delete order: {str(e)}")
@@ -172,7 +172,7 @@ class ConfirmSalesOrderHandler(CommandHandler):
 
             if self.event_bus and result:
                 event = SalesOrderConfirmedEvent(
-                    orderId=command.entity_id,
+                    order_id=command.entity_id,
                     order_data=result,
                     tenant_id=command.tenant_id
                 )
@@ -209,7 +209,7 @@ class CancelSalesOrderHandler(CommandHandler):
 
             if self.event_bus and result:
                 event = SalesOrderCancelledEvent(
-                    orderId=command.entity_id,
+                    order_id=command.entity_id,
                     order_data=result,
                     tenant_id=command.tenant_id
                 )

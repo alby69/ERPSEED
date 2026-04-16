@@ -138,7 +138,7 @@ class ProjectUpdateSchema(BaseSchema):
 
 
 class ProjectMemberSchema(ma.Schema):
-    userId = mm_fields.Int(required=True)
+    user_id = mm_fields.Int(required=True)
 
 
 # --- Schemas for the Builder ---
@@ -156,7 +156,7 @@ class SysModelSchema(BaseSchema):
 
 
 class SysModelCreateSchema(BaseSchema):
-    projectId = mm_fields.Integer(required=True)
+    project_id = mm_fields.Integer(required=True)
     model_fields = mm_fields.List(mm_fields.Nested(SysFieldSchema), attribute="fields") # type: ignore
 
     class Meta(BaseSchema.Meta):

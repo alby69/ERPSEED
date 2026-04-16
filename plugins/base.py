@@ -174,7 +174,7 @@ class BasePlugin(ABC):
             List of menu item dictionaries.
             Format: [
                 {
-                    'id': 'moduleId',
+                    'id': 'module_id',
                     'label': 'Label',
                     'icon': 'icon-name',
                     'path': '/path',

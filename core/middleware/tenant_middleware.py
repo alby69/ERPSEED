@@ -66,11 +66,11 @@ class TenantMiddleware:
         # Method 3: From JWT if user is logged in
         try:
             if verify_jwt_in_request(optional=True):
-                userId = get_jwt_identity()
-                if userId:
+                user_id = get_jwt_identity()
+                if user_id:
                     # Lazy import to avoid circular dependency
                     from models import User
-                    user = User.query.get(int(userId))
+                    user = User.query.get(int(user_id))
                     if user:
                         return user.tenant
         except Exception:
@@ -83,11 +83,11 @@ class TenantMiddleware:
         """Extract current user from JWT."""
         try:
             verify_jwt_in_request(optional=True)
-            userId = get_jwt_identity()
-            if userId:
+            user_id = get_jwt_identity()
+            if user_id:
                 # Lazy import to avoid circular dependency
                 from models import User
-                return User.query.get(int(userId))
+                return User.query.get(int(user_id))
         except Exception:
             pass
         return None

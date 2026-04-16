@@ -135,30 +135,30 @@ class AIService:
         ]
         return base_tools
 
-    def get_tools_for_project(self, projectId: int) -> List[Dict]:
+    def get_tools_for_project(self, project_id: int) -> List[Dict]:
         """Ottiene i tool dinamici per un progetto."""
         return tool_registry.get_tools_for_project(
-            projectId, provider=self.provider_name
+            project_id, provider=self.provider_name
         )
 
-    def get_all_tools(self, projectId: int = None) -> List[Dict]:
+    def get_all_tools(self, project_id: int = None) -> List[Dict]:
         """Ottiene tutti i tool disponibili (base + dinamici + business logic + test)."""
         tools = self.tools.copy()
 
-        if projectId:
+        if project_id:
             try:
-                dynamic_tools = self.get_tools_for_project(projectId)
+                dynamic_tools = self.get_tools_for_project(project_id)
                 tools.extend(dynamic_tools)
 
                 business_logic_tools = tool_registry.get_business_logic_tools(
-                    projectId
+                    project_id
                 )
                 tools.extend(business_logic_tools)
 
-                test_tools = tool_registry.get_test_tools(projectId)
+                test_tools = tool_registry.get_test_tools(project_id)
                 tools.extend(test_tools)
 
-                ui_tools = tool_registry.get_ui_builder_tools(projectId)
+                ui_tools = tool_registry.get_ui_builder_tools(project_id)
                 tools.extend(ui_tools)
             except Exception as e:
                 logger.warning(f"Error getting dynamic tools: {e}")
@@ -174,8 +174,8 @@ class AIService:
     def generate_erp_config(
         self,
         user_request: str,
-        projectId: int,
-        userId: Optional[int] = None,
+        project_id: int,
+        user_id: Optional[int] = None,
         apply_directly: bool = False,
     ) -> Dict[str, Any]:
         """
@@ -183,8 +183,8 @@ class AIService:
 
         Args:
             user_request: Natural language description of what the user wants
-            projectId: Target project ID
-            userId: ID of the user making the request
+            project_id: Target project ID
+            user_id: ID of the user making the request
             apply_directly: If True, apply the config immediately
 
         Returns:
@@ -192,14 +192,14 @@ class AIService:
         """
         logger.info(f"AI: Generating config for request: {user_request[:50]}...")
 
-        system_prompt = self._build_system_prompt(projectId)
-        user_prompt = self._build_user_prompt(user_request, projectId)
+        system_prompt = self._build_system_prompt(project_id)
+        user_prompt = self._build_user_prompt(user_request, project_id)
 
-        response = self._call_llm_with_tools(system_prompt, user_prompt, projectId=projectId)
+        response = self._call_llm_with_tools(system_prompt, user_prompt, project_id=project_id)
 
         # Parse response and handle tools
         result = self._handle_response(
-            response, user_request, projectId, userId, apply_directly
+            response, user_request, project_id, user_id, apply_directly
         )
 
         # Convert simple config to a structured execution plan
@@ -251,12 +251,12 @@ class AIService:
 
         return plan
 
-    def _build_system_prompt(self, projectId: int) -> str:
+    def _build_system_prompt(self, project_id: int) -> str:
         """Build system prompt with project context (RAG)"""
 
         # Get project context via RAG
-        project_context = get_project_context(projectId)
-        conversation_context = get_conversation_context(projectId, limit=3)
+        project_context = get_project_context(project_id)
+        conversation_context = get_conversation_context(project_id, limit=3)
 
         return f"""You are FlaskERP AI Assistant, an expert in configuring FlaskERP - a no-code ERP platform.
 
@@ -323,16 +323,16 @@ When NOT using tools, respond with valid JSON in this format:
 
 Start by understanding the user's request, then use the appropriate tool or generate JSON."""
 
-    def _build_user_prompt(self, user_request: str, projectId: int) -> str:
+    def _build_user_prompt(self, user_request: str, project_id: int) -> str:
         """Build user prompt"""
-        return f"""Project ID: {projectId}
+        return f"""Project ID: {project_id}
 
 User Request: {user_request}
 
 What would you like me to create or modify? I'll analyze the project context and help you build the best solution."""
 
     def _call_llm_with_tools(
-        self, system_prompt: str, user_prompt: str, projectId: int = None
+        self, system_prompt: str, user_prompt: str, project_id: int = None
     ) -> Dict[str, Any]:
         """Call LLM API with tool calling support using adapter"""
         try:
@@ -341,7 +341,7 @@ What would you like me to create or modify? I'll analyze the project context and
                 {"role": "user", "content": user_prompt},
             ]
 
-            tools = self.get_all_tools(projectId)
+            tools = self.get_all_tools(project_id)
 
             llm_response = self.adapter.chat(
                 messages=messages,
@@ -354,7 +354,7 @@ What would you like me to create or modify? I'll analyze the project context and
             logger.info(f"AI response: {llm_response.raw}")
 
             if llm_response.has_tool_calls:
-                return self._handle_tool_calls(llm_response, projectId)
+                return self._handle_tool_calls(llm_response, project_id)
 
             return {
                 "content": llm_response.content,
@@ -365,7 +365,7 @@ What would you like me to create or modify? I'll analyze the project context and
             logger.error(f"AI call error: {e}")
             return {"error": str(e)}
 
-    def _handle_tool_calls(self, llm_response, projectId: int) -> Dict[str, Any]:
+    def _handle_tool_calls(self, llm_response, project_id: int) -> Dict[str, Any]:
         """Gestisce le chiamate tool dalla risposta LLM."""
         results = []
 
@@ -377,7 +377,7 @@ What would you like me to create or modify? I'll analyze the project context and
 
             try:
                 result = tool_registry.execute_tool(
-                    tool_name, tool_args, {"projectId": projectId}
+                    tool_name, tool_args, {"project_id": project_id}
                 )
                 results.append(
                     {"tool": tool_name, "result": result, "tool_id": tool_call.tool_id}
@@ -403,8 +403,8 @@ What would you like me to create or modify? I'll analyze the project context and
         self,
         response: Dict,
         user_request: str,
-        projectId: int,
-        userId: Optional[int],
+        project_id: int,
+        user_id: Optional[int],
         apply_directly: bool,
     ) -> Dict[str, Any]:
         """Handle the AI response, including tool calls"""
@@ -431,14 +431,14 @@ What would you like me to create or modify? I'll analyze the project context and
                         if tool_name == "generate_json":
                             # Generate JSON config
                             result = self._generate_config_internal(
-                                tool_args.get("user_request", user_request), projectId
+                                tool_args.get("user_request", user_request), project_id
                             )
                             results.append({"tool": "generate_json", "result": result})
 
                         elif tool_name == "apply_config":
                             # Apply config directly
                             result = self._apply_config_internal(
-                                tool_args.get("config", {}), projectId, userId
+                                tool_args.get("config", {}), project_id, user_id
                             )
                             results.append({"tool": "apply_config", "result": result})
 
@@ -459,17 +459,17 @@ What would you like me to create or modify? I'll analyze the project context and
             logger.error(f"Error handling response: {e}")
             return {"success": False, "error": str(e)}
 
-    def _generate_config_internal(self, user_request: str, projectId: int) -> Dict:
+    def _generate_config_internal(self, user_request: str, project_id: int) -> Dict:
         """Internal method to generate config"""
         # Simple generation without tools
-        system_prompt = self._build_system_prompt(projectId)
+        system_prompt = self._build_system_prompt(project_id)
         user_prompt = f"Generate FlaskERP configuration: {user_request}"
 
         response = self._call_llm_simple(system_prompt, user_prompt)
         return self._parse_response(response, user_request)
 
     def _apply_config_internal(
-        self, config: Dict, projectId: int, userId: Optional[int]
+        self, config: Dict, project_id: int, user_id: Optional[int]
     ) -> Dict[str, Any]:
         """Apply configuration to create actual entities - returns config for UI"""
         try:
@@ -512,15 +512,15 @@ What would you like me to create or modify? I'll analyze the project context and
     def _handle_generate_json(self, args: Dict, context: Dict) -> Dict:
         """Handler per il tool generate_json."""
         user_request = args.get("user_request", "")
-        projectId = context.get("projectId")
-        return self._generate_config_internal(user_request, projectId)
+        project_id = context.get("project_id")
+        return self._generate_config_internal(user_request, project_id)
 
     def _handle_apply_config(self, args: Dict, context: Dict) -> Dict:
         """Handler per il tool apply_config."""
         config = args.get("config", {})
-        projectId = context.get("projectId")
-        userId = context.get("userId")
-        return self._apply_config_internal(config, projectId, userId)
+        project_id = context.get("project_id")
+        user_id = context.get("user_id")
+        return self._apply_config_internal(config, project_id, user_id)
 
     def _handle_create_workflow(self, args: Dict, context: Dict) -> Dict:
         """Handler per il tool create_workflow."""
@@ -598,8 +598,8 @@ What would you like me to create or modify? I'll analyze the project context and
 
     def save_conversation(
         self,
-        projectId: int,
-        userId: int,
+        project_id: int,
+        user_id: int,
         user_message: str,
         ai_response: str,
         was_successful: bool = False,
@@ -611,8 +611,8 @@ What would you like me to create or modify? I'll analyze the project context and
         from modules.ai.application.handlers import AICommandHandler
 
         cmd = SaveConversationCommand(
-            projectId=projectId,
-            userId=userId,
+            project_id=project_id,
+            user_id=user_id,
             user_message=user_message,
             ai_response=ai_response,
             was_successful=was_successful,
@@ -682,7 +682,7 @@ What would you like me to create or modify? I'll analyze the project context and
         from models import SysModel
 
         model_name = args.get("model_name")
-        projectId = context.get("projectId", args.get("projectId"))
+        project_id = context.get("project_id", args.get("project_id"))
         test_types = args.get(
             "test_types", ["create", "read", "update", "delete", "validation"]
         )
@@ -691,11 +691,11 @@ What would you like me to create or modify? I'll analyze the project context and
         if not model_name:
             return {"success": False, "error": "model_name is required"}
 
-        if not projectId:
-            return {"success": False, "error": "projectId is required"}
+        if not project_id:
+            return {"success": False, "error": "project_id is required"}
 
         sys_model = SysModel.query.filter_by(
-            projectId=projectId, name=model_name, status="published"
+            project_id=project_id, name=model_name, status="published"
         ).first()
 
         if not sys_model:
@@ -705,12 +705,12 @@ What would you like me to create or modify? I'll analyze the project context and
             }
 
         result = ai_test_generator.generate_test_suite(
-            sys_model, projectId, test_types
+            sys_model, project_id, test_types
         )
 
         if save_to_db:
             save_result = ai_test_generator.save_test_suite(
-                result["test_suite"], result["test_cases"], projectId
+                result["test_suite"], result["test_cases"], project_id
             )
             return {
                 "success": True,
@@ -733,15 +733,15 @@ What would you like me to create or modify? I'll analyze the project context and
         from core.models.test_models import TestSuite
         from models import SysModel
 
-        projectId = context.get("projectId", args.get("projectId"))
+        project_id = context.get("project_id", args.get("project_id"))
 
-        if not projectId:
-            return {"success": False, "error": "projectId is required"}
+        if not project_id:
+            return {"success": False, "error": "project_id is required"}
 
         model_names = [
             m.name
             for m in SysModel.query.filter_by(
-                projectId=projectId, status="published"
+                project_id=project_id, status="published"
             ).all()
         ]
 
@@ -769,14 +769,14 @@ What would you like me to create or modify? I'll analyze the project context and
 
     def _handle_run_test_suite(self, args: Dict, context: Dict) -> Dict:
         """Handler per il tool run_test_suite."""
-        suiteId = args.get("suiteId")
+        suite_id = args.get("suite_id")
 
-        if not suiteId:
-            return {"success": False, "error": "suiteId is required"}
+        if not suite_id:
+            return {"success": False, "error": "suite_id is required"}
 
         return {
             "success": True,
-            "message": f"Test suite {suiteId} execution started",
+            "message": f"Test suite {suite_id} execution started",
             "note": "Use Test Runner UI to view results",
         }
 

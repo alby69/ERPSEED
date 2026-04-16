@@ -15,12 +15,12 @@ class AutomationService:
         cmd = CreateWorkflowCommand(**data)
         return self.handler.handle_create_workflow(cmd)
 
-    def update_workflow(self, workflowId, data):
-        cmd = UpdateWorkflowCommand(workflowId, data)
+    def update_workflow(self, workflow_id, data):
+        cmd = UpdateWorkflowCommand(workflow_id, data)
         return self.handler.handle_update_workflow(cmd)
 
-    def delete_workflow(self, workflowId):
-        cmd = DeleteWorkflowCommand(workflowId)
+    def delete_workflow(self, workflow_id):
+        cmd = DeleteWorkflowCommand(workflow_id)
         return self.handler.handle_delete_workflow(cmd)
 
     def list_workflows(self):

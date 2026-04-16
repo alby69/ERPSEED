@@ -59,7 +59,7 @@ class ImportExportService:
             "summary_expression": field.summary_expression,
         }
 
-    def export_sysmodel_data(self, sys_model, projectId: int) -> Dict[str, Any]:
+    def export_sysmodel_data(self, sys_model, project_id: int) -> Dict[str, Any]:
         """Esporta i dati di un SysModel."""
         from modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
@@ -67,7 +67,7 @@ class ImportExportService:
 
         # Get all records
         result, _ = dynamic_api.list_records(
-            projectId=projectId, model_name=sys_model.name, page=1, per_page=10000
+            project_id=project_id, model_name=sys_model.name, page=1, per_page=10000
         )
 
         return {
@@ -80,7 +80,7 @@ class ImportExportService:
         }
 
     def import_sysmodel_config(
-        self, config: Dict[str, Any], projectId: int
+        self, config: Dict[str, Any], project_id: int
     ) -> Dict[str, Any]:
         """Importa la configurazione di un SysModel."""
         from models import SysModel, SysField
@@ -90,7 +90,7 @@ class ImportExportService:
 
         # Check if model exists
         existing = SysModel.query.filter_by(
-            projectId=projectId, name=data["name"]
+            project_id=project_id, name=data["name"]
         ).first()
 
         if existing:
@@ -102,7 +102,7 @@ class ImportExportService:
             # Update fields
             for field_data in data.get("fields", []):
                 field = SysField.query.filter_by(
-                    modelId=existing.id, name=field_data["name"]
+                    model_id=existing.id, name=field_data["name"]
                 ).first()
 
                 if field:
@@ -112,7 +112,7 @@ class ImportExportService:
                 else:
                     # Create new field
                     new_field = SysField(
-                        modelId=existing.id,
+                        model_id=existing.id,
                         **{k: v for k, v in field_data.items() if k != "id"},
                     )
                     db.session.add(new_field)
@@ -122,7 +122,7 @@ class ImportExportService:
         else:
             # Create new model
             new_model = SysModel(
-                projectId=projectId,
+                project_id=project_id,
                 name=data["name"],
                 title=data.get("title", data["name"]),
                 description=data.get("description", ""),
@@ -134,7 +134,7 @@ class ImportExportService:
             # Create fields
             for field_data in data.get("fields", []):
                 new_field = SysField(
-                    modelId=new_model.id,
+                    model_id=new_model.id,
                     **{k: v for k, v in field_data.items() if k != "id"},
                 )
                 db.session.add(new_field)
@@ -143,7 +143,7 @@ class ImportExportService:
             return {"action": "created", "model": new_model.name}
 
     def import_sysmodel_data(
-        self, data_json: Dict[str, Any], projectId: int
+        self, data_json: Dict[str, Any], project_id: int
     ) -> Dict[str, Any]:
         """Importa i dati in un SysModel."""
         from modules.dynamic_api.services.dynamic_api_service import DynamicApiService
@@ -162,7 +162,7 @@ class ImportExportService:
         for record in records:
             try:
                 result, status = dynamic_api.create_record(
-                    projectId=projectId, model_name=model_name, data=record
+                    project_id=project_id, model_name=model_name, data=record
                 )
                 if status in [200, 201]:
                     imported_count += 1
@@ -211,7 +211,7 @@ class ImportExportService:
         }
 
     def import_block_config(
-        self, config: Dict[str, Any], projectId: int
+        self, config: Dict[str, Any], project_id: int
     ) -> Dict[str, Any]:
         """Importa la configurazione di un Block."""
         from modules.builder.models import Block, Component
@@ -220,7 +220,7 @@ class ImportExportService:
         data = config.get("config", config)
 
         existing = Block.query.filter_by(
-            projectId=projectId, name=data["name"]
+            project_id=project_id, name=data["name"]
         ).first()
 
         if existing:
@@ -230,7 +230,7 @@ class ImportExportService:
             return {"action": "updated", "block": existing.name}
         else:
             new_block = Block(
-                projectId=projectId,
+                project_id=project_id,
                 name=data["name"],
                 title=data.get("title", data["name"]),
                 description=data.get("description", ""),
@@ -281,7 +281,7 @@ class ImportExportService:
         }
 
     def import_workflow_config(
-        self, config: Dict[str, Any], projectId: int
+        self, config: Dict[str, Any], project_id: int
     ) -> Dict[str, Any]:
         """Importa la configurazione di un Workflow."""
         from models import Workflow
@@ -290,7 +290,7 @@ class ImportExportService:
         data = config.get("config", config)
 
         existing = Workflow.query.filter_by(
-            projectId=projectId, name=data["name"]
+            project_id=project_id, name=data["name"]
         ).first()
 
         if existing:
@@ -303,7 +303,7 @@ class ImportExportService:
             return {"action": "updated", "workflow": existing.name}
         else:
             new_workflow = Workflow(
-                projectId=projectId,
+                project_id=project_id,
                 name=data["name"],
                 title=data.get("title", data["name"]),
                 description=data.get("description", ""),
@@ -342,7 +342,7 @@ class ImportExportService:
             },
         }
 
-    def export_module_data(self, module, projectId: int) -> Dict[str, Any]:
+    def export_module_data(self, module, project_id: int) -> Dict[str, Any]:
         """Esporta tutti i dati del modulo."""
         from modules.dynamic_api.services.dynamic_api_service import DynamicApiService
 
@@ -360,7 +360,7 @@ class ImportExportService:
         for model in models:
             try:
                 result, _ = dynamic_api.list_records(
-                    projectId=projectId, model_name=model.name, page=1, per_page=10000
+                    project_id=project_id, model_name=model.name, page=1, per_page=10000
                 )
                 all_data["models"][model.name] = {
                     "records": result.get("data", []),
@@ -372,7 +372,7 @@ class ImportExportService:
         return all_data
 
     def import_module_config(
-        self, config: Dict[str, Any], projectId: int
+        self, config: Dict[str, Any], project_id: int
     ) -> Dict[str, Any]:
         """Importa la configurazione di un Module."""
         from core.models.module import Module
@@ -381,7 +381,7 @@ class ImportExportService:
         data = config.get("config", config)
 
         existing = Module.query.filter_by(
-            projectId=projectId, name=data["name"]
+            project_id=project_id, name=data["name"]
         ).first()
 
         if existing:
@@ -396,7 +396,7 @@ class ImportExportService:
             return {"action": "updated", "module": existing.name}
         else:
             new_module = Module(
-                projectId=projectId,
+                project_id=project_id,
                 name=data["name"],
                 title=data.get("title", data["name"]),
                 description=data.get("description", ""),
@@ -413,37 +413,37 @@ class ImportExportService:
 
     # ==================== PROJECT ====================
 
-    def export_sysmodels_project(self, projectId: int) -> Dict[str, Any]:
+    def export_sysmodels_project(self, project_id: int) -> Dict[str, Any]:
         """Esporta tutti i SysModel di un progetto."""
         from models import SysModel
 
-        models = SysModel.query.filter_by(projectId=projectId).all()
+        models = SysModel.query.filter_by(project_id=project_id).all()
 
         return {
             "type": "sysmodels_project",
             "version": "1.0",
             "exported_at": datetime.datetime.utcnow().isoformat(),
-            "projectId": projectId,
+            "project_id": project_id,
             "sysmodels": [self.export_sysmodel_config(m) for m in models],
         }
 
-    def export_project_full(self, projectId: int) -> Dict[str, Any]:
+    def export_project_full(self, project_id: int) -> Dict[str, Any]:
         """Esporta l'intero progetto."""
         from models import Project, SysModel, Workflow
         from modules.builder.models import Block
 
-        project = Project.query.get(projectId)
+        project = Project.query.get(project_id)
         if not project:
             raise ValueError("Project not found")
 
-        models = SysModel.query.filter_by(projectId=projectId).all()
-        blocks = Block.query.filter_by(projectId=projectId).all()
-        workflows = Workflow.query.filter_by(projectId=projectId).all()
+        models = SysModel.query.filter_by(project_id=project_id).all()
+        blocks = Block.query.filter_by(project_id=project_id).all()
+        workflows = Workflow.query.filter_by(project_id=project_id).all()
 
         # Get all modules for this project
         from core.models.module import Module
 
-        modules = Module.query.filter_by(projectId=projectId).all()
+        modules = Module.query.filter_by(project_id=project_id).all()
 
         export_data = {
             "type": "project",
@@ -463,7 +463,7 @@ class ImportExportService:
         return export_data
 
     def import_project_full(
-        self, project_json: Dict[str, Any], projectId: int
+        self, project_json: Dict[str, Any], project_id: int
     ) -> Dict[str, Any]:
         """Importa l'intero progetto."""
         results = {"sysmodels": [], "blocks": [], "workflows": [], "modules": []}
@@ -471,7 +471,7 @@ class ImportExportService:
         # Import sysmodels
         for sm in project_json.get("sysmodels", []):
             try:
-                result = self.import_sysmodel_config(sm, projectId)
+                result = self.import_sysmodel_config(sm, project_id)
                 results["sysmodels"].append(result)
             except Exception as e:
                 results["sysmodels"].append({"error": str(e)})
@@ -479,7 +479,7 @@ class ImportExportService:
         # Import blocks
         for blk in project_json.get("blocks", []):
             try:
-                result = self.import_block_config(blk, projectId)
+                result = self.import_block_config(blk, project_id)
                 results["blocks"].append(result)
             except Exception as e:
                 results["blocks"].append({"error": str(e)})
@@ -487,7 +487,7 @@ class ImportExportService:
         # Import workflows
         for wf in project_json.get("workflows", []):
             try:
-                result = self.import_workflow_config(wf, projectId)
+                result = self.import_workflow_config(wf, project_id)
                 results["workflows"].append(result)
             except Exception as e:
                 results["workflows"].append({"error": str(e)})
@@ -495,7 +495,7 @@ class ImportExportService:
         # Import modules
         for mod in project_json.get("modules", []):
             try:
-                result = self.import_module_config(mod, projectId)
+                result = self.import_module_config(mod, project_id)
                 results["modules"].append(result)
             except Exception as e:
                 results["modules"].append({"error": str(e)})

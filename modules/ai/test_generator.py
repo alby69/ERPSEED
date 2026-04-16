@@ -18,14 +18,14 @@ class AITestGenerator:
         self.test_types = ["create", "read", "update", "delete", "validation"]
 
     def generate_test_suite(
-        self, sys_model, projectId: int, test_types: List[str] = None
+        self, sys_model, project_id: int, test_types: List[str] = None
     ) -> Dict:
         """
         Genera una test suite completa per un modello.
 
         Args:
             sys_model: Modello SysModel
-            projectId: ID del progetto
+            project_id: ID del progetto
             test_types: Lista tipi test da generare
 
         Returns:
@@ -363,7 +363,7 @@ class AITestGenerator:
         return counts
 
     def save_test_suite(
-        self, test_suite_data: Dict, test_cases_data: List[Dict], projectId: int
+        self, test_suite_data: Dict, test_cases_data: List[Dict], project_id: int
     ) -> Dict:
         """
         Salva la test suite e i test cases nel DB.
@@ -371,7 +371,7 @@ class AITestGenerator:
         Args:
             test_suite_data: Dati della test suite
             test_cases_data: Lista test cases
-            projectId: ID progetto
+            project_id: ID progetto
 
         Returns:
             Dict con IDs creati
@@ -392,10 +392,10 @@ class AITestGenerator:
             db.session.add(test_suite)
             db.session.flush()
 
-            caseIds = []
+            case_ids = []
             for case_data in test_cases_data:
                 test_case = TestCase(
-                    test_suiteId=test_suite.id,
+                    test_suite_id=test_suite.id,
                     nome=case_data["nome"],
                     descrizione=case_data.get("descrizione", ""),
                     ordine=case_data.get("ordine", 0),
@@ -409,15 +409,15 @@ class AITestGenerator:
                 )
                 db.session.add(test_case)
                 db.session.flush()
-                caseIds.append(test_case.id)
+                case_ids.append(test_case.id)
 
             db.session.commit()
 
             return {
                 "success": True,
-                "test_suiteId": test_suite.id,
-                "test_cases_count": len(caseIds),
-                "test_caseIds": caseIds,
+                "test_suite_id": test_suite.id,
+                "test_cases_count": len(case_ids),
+                "test_case_ids": case_ids,
             }
 
         except Exception as e:

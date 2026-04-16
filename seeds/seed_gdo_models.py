@@ -9,10 +9,10 @@ def seed_gdo_models():
         # Use TemplateService to install it
         ts = TemplateService()
         # Assuming project ID 1 exists
-        projectId = 1
+        project_id = 1
         # In this environment, we use 'gdo_reconciliation' as ID (matches filename)
         try:
-            res = ts.install_template('gdo_reconciliation', projectId)
+            res = ts.install_template('gdo_reconciliation', project_id)
             print(res["message"])
         except Exception as e:
             print(f"Error seeding models: {e}")

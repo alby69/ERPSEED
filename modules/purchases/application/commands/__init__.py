@@ -22,7 +22,7 @@ class CreatePurchaseOrderCommand(CreateCommand):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CreatePurchaseOrderCommand":
-        return cls(tenant_id=data.get("tenant_id"), userId=data.get("userId"), metadata=data.get("metadata", {}),
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
             number=data.get("number", ""), date=data.get("date", ""), supplier_id=data.get("supplier_id", 0),
             expected_date=data.get("expected_date", ""), notes=data.get("notes", ""), lines=data.get("lines", []))
 
@@ -45,7 +45,7 @@ class UpdatePurchaseOrderCommand(UpdateCommand):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "UpdatePurchaseOrderCommand":
-        return cls(tenant_id=data.get("tenant_id"), userId=data.get("userId"), metadata=data.get("metadata", {}),
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
             entity_id=data.get("entity_id", data.get("id", 0)), number=data.get("number"), date=data.get("date"),
             supplier_id=data.get("supplier_id"), status=data.get("status"), expected_date=data.get("expected_date"),
             notes=data.get("notes"))
@@ -55,7 +55,7 @@ class UpdatePurchaseOrderCommand(UpdateCommand):
 class DeletePurchaseOrderCommand(DeleteCommand):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "DeletePurchaseOrderCommand":
-        return cls(tenant_id=data.get("tenant_id"), userId=data.get("userId"), metadata=data.get("metadata", {}),
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
             entity_id=data.get("entity_id", data.get("id", 0)))
 
 
@@ -63,28 +63,28 @@ class DeletePurchaseOrderCommand(DeleteCommand):
 class ConfirmPurchaseOrderCommand(Command):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ConfirmPurchaseOrderCommand":
-        return cls(tenant_id=data.get("tenant_id"), userId=data.get("userId"), metadata=data.get("metadata", {}))
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}))
 
 
 @dataclass
 class ReceivePurchaseOrderCommand(Command):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ReceivePurchaseOrderCommand":
-        return cls(tenant_id=data.get("tenant_id"), userId=data.get("userId"), metadata=data.get("metadata", {}))
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}))
 
 
 @dataclass
 class CancelPurchaseOrderCommand(Command):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "CancelPurchaseOrderCommand":
-        return cls(tenant_id=data.get("tenant_id"), userId=data.get("userId"), metadata=data.get("metadata", {}))
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}))
 
 
 @dataclass
 class GetPurchaseOrderCommand(QueryCommand):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GetPurchaseOrderCommand":
-        return cls(tenant_id=data.get("tenant_id"), userId=data.get("userId"), metadata=data.get("metadata", {}),
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
             entity_id=data.get("entity_id", data.get("id", 0)))
 
 
@@ -96,6 +96,6 @@ class ListPurchaseOrdersCommand(QueryCommand):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ListPurchaseOrdersCommand":
-        return cls(tenant_id=data.get("tenant_id"), userId=data.get("userId"), metadata=data.get("metadata", {}),
+        return cls(tenant_id=data.get("tenant_id"), user_id=data.get("user_id"), metadata=data.get("metadata", {}),
             filters=data.get("filters", {}), pagination=data.get("pagination", {}), sorting=data.get("sorting", {}),
             search=data.get("search", ""), status=data.get("status", ""), supplier_id=data.get("supplier_id"))

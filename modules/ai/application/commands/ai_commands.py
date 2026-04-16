@@ -4,14 +4,14 @@ from typing import Dict, Any, Optional
 @dataclass
 class GenerateConfigCommand:
     user_request: str
-    projectId: int
-    userId: Optional[int] = None
+    project_id: int
+    user_id: Optional[int] = None
     apply_directly: bool = False
 
 @dataclass
 class SaveConversationCommand:
-    projectId: int
-    userId: int
+    project_id: int
+    user_id: int
     user_message: str
     ai_response: str
     was_successful: bool = False

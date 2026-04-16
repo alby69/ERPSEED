@@ -43,11 +43,11 @@ def seed_modules():
         print("No modules configuration found")
         return
 
-    for moduleId, mod_def in module_configs.items():
+    for module_id, mod_def in module_configs.items():
         try:
             ModuleService.register_module(
-                moduleId=moduleId,
-                name=mod_def.get('name', moduleId),
+                module_id=module_id,
+                name=mod_def.get('name', module_id),
                 description=mod_def.get('description', ''),
                 category=mod_def.get('category', 'builtin'),
                 version=mod_def.get('version', '1.0.0'),
@@ -58,9 +58,9 @@ def seed_modules():
                 icon=mod_def.get('icon', 'box'),
                 menu_position=mod_def.get('menu_position', 100)
             )
-            print(f"  - Registered module: {moduleId}")
+            print(f"  - Registered module: {module_id}")
         except Exception as e:
-            print(f"  - Error registering module {moduleId}: {e}")
+            print(f"  - Error registering module {module_id}: {e}")
 
     print("Modules seeded successfully!")
 

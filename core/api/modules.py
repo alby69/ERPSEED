@@ -22,7 +22,7 @@ blp = Blueprint('modules', __name__, url_prefix='/api/v1/modules')
 
 class ModuleEnableSchema(Schema):
     """Schema per attivazione modulo."""
-    moduleId = fields.Str(required=True)
+    module_id = fields.Str(required=True)
     license_key = fields.Str(required=False, allow_none=True)
     config = fields.Dict(required=False, load_default={})
 
@@ -86,14 +86,14 @@ class TenantModules(MethodView):
         if not user or user.role != 'admin':
             abort(403, message="Solo gli admin possono gestire i moduli")
 
-        moduleId = args['moduleId']
+        module_id = args['module_id']
         license_key = args.get('license_key')
         config = args.get('config', {})
 
         try:
             tm = TenantModuleService.enable_module(
                 user.tenant_id if user else None, # type: ignore
-                moduleId,
+                module_id,
                 license_key,
                 config
             )
@@ -110,20 +110,20 @@ class TenantModules(MethodView):
             abort(400, message=str(e))
 
 
-@blp.route('/<string:moduleId>')
+@blp.route('/<string:module_id>')
 class ModuleDetail(MethodView):
     @blp.response(200)
     @jwt_required()
-    def get(self, moduleId):
+    def get(self, module_id):
         """
         Dettagli modulo con stato per il tenant corrente.
         """
-        module = ModuleService.get_module_by_id(moduleId)
+        module = ModuleService.get_module_by_id(module_id)
         if not module:
             abort(404, message="Modulo non trovato")
 
         user = User.query.get(get_jwt_identity())
-        is_enabled = TenantModuleService.is_module_enabled(user.tenant_id if user else None, moduleId) # type: ignore
+        is_enabled = TenantModuleService.is_module_enabled(user.tenant_id if user else None, module_id) # type: ignore
 
         result = module.to_dict()
         result['is_enabled'] = is_enabled
@@ -131,7 +131,7 @@ class ModuleDetail(MethodView):
 
     @blp.response(204)
     @jwt_required()
-    def delete(self, moduleId):
+    def delete(self, module_id):
         """
         Disattiva un modulo per il tenant corrente.
         """
@@ -141,29 +141,29 @@ class ModuleDetail(MethodView):
             abort(403, message="Solo gli admin possono gestire i moduli")
 
         try:
-            TenantModuleService.disable_module(user.tenant_id if user else None, moduleId) # type: ignore
+            TenantModuleService.disable_module(user.tenant_id if user else None, module_id) # type: ignore
         except ModuleDependencyError as e:
             abort(400, message=str(e))
         except ValueError as e:
             abort(400, message=str(e))
 
 
-@blp.route('/<string:moduleId>/config')
+@blp.route('/<string:module_id>/config')
 class ModuleConfig(MethodView):
     @blp.response(200)
     @jwt_required()
-    def get(self, moduleId):
+    def get(self, module_id):
         """
         Configurazione del modulo per il tenant corrente.
         """
         user = User.query.get(get_jwt_identity())
-        config = TenantModuleService.get_module_config(user.tenant_id if user else None, moduleId) # type: ignore
+        config = TenantModuleService.get_module_config(user.tenant_id if user else None, module_id) # type: ignore
         return {'config': config}
 
     @blp.arguments(ModuleConfigSchema)
     @blp.response(200)
     @jwt_required()
-    def put(self, args, moduleId):
+    def put(self, args, module_id):
         """
         Aggiorna configurazione del modulo.
         """
@@ -175,7 +175,7 @@ class ModuleConfig(MethodView):
         try:
             config = TenantModuleService.update_module_config(
                 user.tenant_id if user else None, # type: ignore
-                moduleId,
+                module_id,
                 args['config']
             )
             return {'config': config}

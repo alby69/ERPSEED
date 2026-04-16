@@ -26,7 +26,7 @@ class AuditLog(BaseModel):
     )
 
     # Who performed the action
-    userId = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     # Action details
     action = db.Column(
@@ -59,7 +59,7 @@ class AuditLog(BaseModel):
     # Indexes
     __table_args__ = (
         db.Index('ix_audit_tenant_created', 'tenant_id', 'created_at'),
-        db.Index('ix_audit_user_created', 'userId', 'created_at'),
+        db.Index('ix_audit_user_created', 'user_id', 'created_at'),
         db.Index('ix_audit_resource', 'resource_type', 'resource_id'),
     )
 
@@ -76,10 +76,10 @@ class AuditLog(BaseModel):
     ACTION_VIEW = 'view'
 
     @staticmethod
-    def log_create(userId, tenant_id, resource_type, resource_id, new_values=None):
+    def log_create(user_id, tenant_id, resource_type, resource_id, new_values=None):
         """Log record creation."""
         log = AuditLog(
-            userId=userId,
+            user_id=user_id,
             tenant_id=tenant_id,
             action=AuditLog.ACTION_CREATE,
             resource_type=resource_type,
@@ -91,10 +91,10 @@ class AuditLog(BaseModel):
         return log
 
     @staticmethod
-    def log_update(userId, tenant_id, resource_type, resource_id, old_values, new_values):
+    def log_update(user_id, tenant_id, resource_type, resource_id, old_values, new_values):
         """Log record update."""
         log = AuditLog(
-            userId=userId,
+            user_id=user_id,
             tenant_id=tenant_id,
             action=AuditLog.ACTION_UPDATE,
             resource_type=resource_type,
@@ -108,10 +108,10 @@ class AuditLog(BaseModel):
         return log
 
     @staticmethod
-    def log_delete(userId, tenant_id, resource_type, resource_id, old_values=None):
+    def log_delete(user_id, tenant_id, resource_type, resource_id, old_values=None):
         """Log record deletion."""
         log = AuditLog(
-            userId=userId,
+            user_id=user_id,
             tenant_id=tenant_id,
             action=AuditLog.ACTION_DELETE,
             resource_type=resource_type,
@@ -123,14 +123,14 @@ class AuditLog(BaseModel):
         return log
 
     @staticmethod
-    def log_login(userId, tenant_id, success=True, error_message=None):
+    def log_login(user_id, tenant_id, success=True, error_message=None):
         """Log login attempt."""
         log = AuditLog(
-            userId=userId,
+            user_id=user_id,
             tenant_id=tenant_id,
             action=AuditLog.ACTION_LOGIN,
             resource_type='user',
-            resource_id=userId,
+            resource_id=user_id,
             status='success' if success else 'failure',
             error_message=error_message
         )

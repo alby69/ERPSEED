@@ -27,7 +27,7 @@ class SystemModulesInfo(MethodView):
         tenant_id = user.tenant_id if user else None
 
         # Moduli abilitati per tenant
-        enabled_ids = set(TenantModuleService.get_enabled_moduleIds(tenant_id)) # type: ignore
+        enabled_ids = set(TenantModuleService.get_enabled_module_ids(tenant_id)) # type: ignore
 
         result = {
             "available_modules": [],
@@ -41,12 +41,12 @@ class SystemModulesInfo(MethodView):
 
         for mod in all_modules:
             module_info = {
-                "id": mod.moduleId,
+                "id": mod.module_id,
                 "name": mod.name,
                 "description": mod.description,
                 "category": mod.category,
                 "icon": mod.icon,
-                "is_enabled": mod.moduleId in enabled_ids,
+                "is_enabled": mod.module_id in enabled_ids,
                 "is_free": mod.is_free,
                 "price": float(mod.price) if mod.price else None,
                 "plan_required": mod.plan_required,
@@ -54,15 +54,15 @@ class SystemModulesInfo(MethodView):
             result["available_modules"].append(module_info)
 
             # Se abilitato, aggiungi al menu
-            if mod.moduleId in enabled_ids:
+            if mod.module_id in enabled_ids:
                 # Get plugin menu items
-                plugin = ModuleRegistry.get(mod.moduleId)
+                plugin = ModuleRegistry.get(mod.module_id)
                 if plugin and hasattr(plugin, "get_menu_items"):
                     try:
                         items = plugin.get_menu_items(tenant_id) # type: ignore
                         result["menu"].extend(items)
                     except Exception as e:
-                        print(f"Error getting menu items for {mod.moduleId}: {e}")
+                        print(f"Error getting menu items for {mod.module_id}: {e}")
 
                 # Get plugin widgets
                 if plugin and hasattr(plugin, "get_widgets"):
@@ -70,7 +70,7 @@ class SystemModulesInfo(MethodView):
                         w = plugin.get_widgets(tenant_id) # type: ignore
                         result["widgets"].extend(w)
                     except Exception as e:
-                        print(f"Error getting widgets for {mod.moduleId}: {e}")
+                        print(f"Error getting widgets for {mod.module_id}: {e}")
 
         # Ordina menu per position
         result["menu"].sort(key=lambda x: x.get("menu_position", 100))
@@ -78,15 +78,15 @@ class SystemModulesInfo(MethodView):
         return result
 
 
-@blp.route("/check-module/<string:moduleId>")
+@blp.route("/check-module/<string:module_id>")
 class CheckModule(MethodView):
     @jwt_required()
-    def get(self, moduleId):
+    def get(self, module_id):
         """
         Verifica se un modulo è abilitato per il tenant corrente.
         """
         user = User.query.get(get_jwt_identity())
 
-        is_enabled = TenantModuleService.is_module_enabled(user.tenant_id if user else None, moduleId) # type: ignore
+        is_enabled = TenantModuleService.is_module_enabled(user.tenant_id if user else None, module_id) # type: ignore
 
-        return {"moduleId": moduleId, "is_enabled": is_enabled}
+        return {"module_id": module_id, "is_enabled": is_enabled}

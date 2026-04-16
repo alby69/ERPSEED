@@ -26,12 +26,12 @@ class SalesOrderList(MethodView):
     def get(self):
         """List all sales orders."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         result = get_service().execute({
             "command": "ListSalesOrders",
             "tenant_id": tenant_id,
-            "userId": userId,
+            "user_id": user_id,
             "pagination": {
                 "page": request.args.get('page', 1, type=int),
                 "per_page": request.args.get('per_page', 20, type=int)
@@ -48,13 +48,13 @@ class SalesOrderList(MethodView):
     def post(self):
         """Create a new sales order."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
         data = request.get_json()
 
         result = get_service().execute({
             "command": "CreateSalesOrder",
             "tenant_id": tenant_id,
-            "userId": userId,
+            "user_id": user_id,
             **data
         })
 
@@ -64,20 +64,20 @@ class SalesOrderList(MethodView):
         return result.get("data", {}), 201
 
 
-@blp.route("/orders/<int:orderId>")
+@blp.route("/orders/<int:order_id>")
 class SalesOrderDetail(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def get(self, orderId):
+    def get(self, order_id):
         """Get a sales order by ID."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         result = get_service().execute({
             "command": "GetSalesOrder",
             "tenant_id": tenant_id,
-            "userId": userId,
-            "entity_id": orderId
+            "user_id": user_id,
+            "entity_id": order_id
         })
 
         if not result.get("success"):
@@ -87,17 +87,17 @@ class SalesOrderDetail(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def put(self, orderId):
+    def put(self, order_id):
         """Update a sales order."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
         data = request.get_json()
 
         result = get_service().execute({
             "command": "UpdateSalesOrder",
             "tenant_id": tenant_id,
-            "userId": userId,
-            "entity_id": orderId,
+            "user_id": user_id,
+            "entity_id": order_id,
             **data
         })
 
@@ -108,16 +108,16 @@ class SalesOrderDetail(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def delete(self, orderId):
+    def delete(self, order_id):
         """Delete a sales order."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         result = get_service().execute({
             "command": "DeleteSalesOrder",
             "tenant_id": tenant_id,
-            "userId": userId,
-            "entity_id": orderId
+            "user_id": user_id,
+            "entity_id": order_id
         })
 
         if not result.get("success"):
@@ -126,20 +126,20 @@ class SalesOrderDetail(MethodView):
         return {"message": "Order deleted"}, 204
 
 
-@blp.route("/orders/<int:orderId>/confirm")
+@blp.route("/orders/<int:order_id>/confirm")
 class SalesOrderConfirm(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def post(self, orderId):
+    def post(self, order_id):
         """Confirm a sales order."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         result = get_service().execute({
             "command": "ConfirmSalesOrder",
             "tenant_id": tenant_id,
-            "userId": userId,
-            "entity_id": orderId
+            "user_id": user_id,
+            "entity_id": order_id
         })
 
         if not result.get("success"):
@@ -148,20 +148,20 @@ class SalesOrderConfirm(MethodView):
         return result.get("data", {})
 
 
-@blp.route("/orders/<int:orderId>/cancel")
+@blp.route("/orders/<int:order_id>/cancel")
 class SalesOrderCancel(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def post(self, orderId):
+    def post(self, order_id):
         """Cancel a sales order."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         result = get_service().execute({
             "command": "CancelSalesOrder",
             "tenant_id": tenant_id,
-            "userId": userId,
-            "entity_id": orderId
+            "user_id": user_id,
+            "entity_id": order_id
         })
 
         if not result.get("success"):

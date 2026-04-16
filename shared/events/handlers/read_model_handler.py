@@ -13,7 +13,7 @@ def sync_to_read_model(event):
     {
         "model": str,
         "record_id": int,
-        "projectId": int,
+        "project_id": int,
         "data": dict
     }
     """
@@ -22,10 +22,10 @@ def sync_to_read_model(event):
 
     model_name = payload.get("model")
     record_id = payload.get("record_id")
-    projectId = payload.get("projectId")
+    project_id = payload.get("project_id")
     data = payload.get("data")
 
-    if not all([model_name, record_id, projectId]):
+    if not all([model_name, record_id, project_id]):
         logger.warning(f"Invalid payload for read model sync: {payload}")
         return
 
@@ -34,7 +34,7 @@ def sync_to_read_model(event):
             db.session.query(SysReadModel).filter_by(
                 model_name=model_name,
                 record_id=record_id,
-                projectId=projectId
+                project_id=project_id
             ).delete()
             logger.debug(f"Deleted read model for {model_name}:{record_id}")
         else:
@@ -45,7 +45,7 @@ def sync_to_read_model(event):
             existing = db.session.query(SysReadModel).filter_by(
                 model_name=model_name,
                 record_id=record_id,
-                projectId=projectId
+                project_id=project_id
             ).first()
 
             if existing:
@@ -56,7 +56,7 @@ def sync_to_read_model(event):
                 new_read_model = SysReadModel(
                     model_name=model_name,
                     record_id=record_id,
-                    projectId=projectId,
+                    project_id=project_id,
                     data=data
                 )
                 db.session.add(new_read_model)

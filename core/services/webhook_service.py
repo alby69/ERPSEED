@@ -172,7 +172,7 @@ class WebhookService:
 
     @staticmethod
     def create_endpoint(
-        name: str, url: str, events: list, userId: int
+        name: str, url: str, events: list, user_id: int
     ) -> WebhookEndpoint:
         """Create a new webhook endpoint."""
         from extensions import db
@@ -182,7 +182,7 @@ class WebhookService:
         endpoint.url = url
         endpoint.secret = WebhookEndpoint.generate_secret()
         endpoint.events = json.dumps(events)
-        endpoint.created_by = userId
+        endpoint.created_by = user_id
 
         db.session.add(endpoint)
         db.session.commit()
@@ -265,7 +265,7 @@ def trigger_webhook(event: str, data: Dict[str, Any], async_mode: bool = True):
     Convenience function to trigger a webhook event.
 
     Usage:
-        trigger_webhook('user.created', {'userId': 1, 'email': 'test@example.com'})
+        trigger_webhook('user.created', {'user_id': 1, 'email': 'test@example.com'})
     """
     try:
         WebhookService.trigger_event(event, data, async_mode)

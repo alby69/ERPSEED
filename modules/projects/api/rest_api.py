@@ -36,8 +36,8 @@ class ProjectList(MethodView):
     @blp.response(200, ProjectSchema(many=True))
     def get(self):
         """List projects the user has access to"""
-        userId = get_jwt_identity()
-        projects = project_service.get_all_for_user(userId)
+        user_id = get_jwt_identity()
+        projects = project_service.get_all_for_user(user_id)
         items, headers = paginate(projects)
         return items, 200, headers
 
@@ -57,41 +57,41 @@ class ProjectList(MethodView):
         ), 201
 
 
-@blp.route("/<int:projectId>")
+@blp.route("/<int:project_id>")
 class ProjectResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, ProjectSchema)
-    def get(self, projectId):
+    def get(self, project_id):
         """Get project details by ID"""
-        userId = get_jwt_identity()
-        return project_service.get_by_id(projectId, userId)
+        user_id = get_jwt_identity()
+        return project_service.get_by_id(project_id, user_id)
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(ProjectUpdateSchema)
     @blp.response(200, ProjectSchema)
-    def put(self, update_data, projectId):
+    def put(self, update_data, project_id):
         """Update an existing project (Admin or Owner)"""
-        userId = get_jwt_identity()
-        return project_service.update(projectId, userId, update_data)
+        user_id = get_jwt_identity()
+        return project_service.update(project_id, user_id, update_data)
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
-    def delete(self, projectId):
+    def delete(self, project_id):
         """Delete a project (Admin or Owner)"""
-        userId = get_jwt_identity()
-        project_service.delete(projectId, userId)
+        user_id = get_jwt_identity()
+        project_service.delete(project_id, user_id)
         return ""
 
 
-@blp.route("/<int:projectId>/models")
+@blp.route("/<int:project_id>/models")
 class ProjectModels(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, SysModelSchema(many=True))
-    def get(self, projectId):
+    def get(self, project_id):
         """List models for a project.
 
         - Admins see all models (including draft) for Builder access
@@ -99,10 +99,10 @@ class ProjectModels(MethodView):
         """
         from models import User
 
-        userId = get_jwt_identity()
-        user = db.session.get(User, userId)
+        user_id = get_jwt_identity()
+        user = db.session.get(User, user_id)
 
-        project = project_service.get_by_id(projectId, userId)
+        project = project_service.get_by_id(project_id, user_id)
 
         if user and user.role == "admin":
             return project.models
@@ -113,66 +113,66 @@ class ProjectModels(MethodView):
     @admin_required()
     @blp.arguments(SysModelCreateSchema)
     @blp.response(201, SysModelSchema)
-    def post(self, model_data, projectId):
+    def post(self, model_data, project_id):
         """Create a new model in a project (Admin only)"""
-        project_service.get_by_id(projectId, get_jwt_identity())
+        project_service.get_by_id(project_id, get_jwt_identity())
         return generic_service.create_scoped_resource(
-            SysModel, model_data, {'projectId': projectId}, unique_fields=['name']
+            SysModel, model_data, {'project_id': project_id}, unique_fields=['name']
         )
 
 
-@blp.route("/<int:projectId>/members")
+@blp.route("/<int:project_id>/members")
 class ProjectMemberList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, UserDisplaySchema(many=True))
-    def get(self, projectId):
+    def get(self, project_id):
         """List members of a project"""
-        userId = get_jwt_identity()
-        return project_service.get_members(projectId, userId)
+        user_id = get_jwt_identity()
+        return project_service.get_members(project_id, user_id)
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(ProjectMemberSchema)
     @blp.response(201, UserDisplaySchema)
-    def post(self, member_data, projectId):
+    def post(self, member_data, project_id):
         """Add a member to a project (Admin or Owner)"""
-        userId = get_jwt_identity()
-        member_userId = member_data["userId"]
+        user_id = get_jwt_identity()
+        member_user_id = member_data["user_id"]
 
-        return project_service.add_member(projectId, userId, member_userId)
+        return project_service.add_member(project_id, user_id, member_user_id)
 
 
-@blp.route("/<int:projectId>/members/<int:userId>")
+@blp.route("/<int:project_id>/members/<int:user_id>")
 class ProjectMemberResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
-    def delete(self, projectId, userId):
+    def delete(self, project_id, user_id):
         """Remove a member from a project (Admin or Owner)"""
-        current_userId = get_jwt_identity()
-        project_service.remove_member(projectId, current_userId, userId)
+        current_user_id = get_jwt_identity()
+        project_service.remove_member(project_id, current_user_id, user_id)
         return ""
 
 
-@blp.route("/<int:projectId>/export")
+@blp.route("/<int:project_id>/export")
 class ProjectExport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
     @blp.response(200, content_type="application/json")
-    def get(self, projectId):
+    def get(self, project_id):
         """Export project as JSON template"""
-        project_service.get_by_id(projectId, get_jwt_identity())
+        project_service.get_by_id(project_id, get_jwt_identity())
 
-        export_data = project_service.export_template(projectId)
-        project = Project.query.get(projectId)
+        export_data = project_service.export_template(project_id)
+        project = Project.query.get(project_id)
         filename = project.name if project else "project"
         headers = {"Content-Disposition": f"attachment; filename={filename}_template.json"}
 
         return export_data, 200, headers
 
 
-@blp.route("/imports")
+@blp.route("/import")
 class ProjectImport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
@@ -187,7 +187,7 @@ class ProjectImport(MethodView):
         except Exception as e:
             abort(400, message=f"Invalid JSON: {str(e)}")
 
-        userId = get_jwt_identity()
-        message, projectId = project_service.import_template(data, userId)
+        user_id = get_jwt_identity()
+        message, project_id = project_service.import_template(data, user_id)
 
-        return {"message": message, "projectId": projectId}, 200
+        return {"message": message, "project_id": project_id}, 200

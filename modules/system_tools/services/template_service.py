@@ -41,7 +41,7 @@ class TemplateService:
 
         return templates
 
-    def install_template(self, template_id: str, projectId: int) -> Dict[str, Any]:
+    def install_template(self, template_id: str, project_id: int) -> Dict[str, Any]:
         """Installa un template in un progetto specifico."""
         template_file = self.templates_dir / f"{template_id}.json"
         if not template_file.exists():
@@ -55,7 +55,7 @@ class TemplateService:
         # 1. Create Models and Fields
         for model_data in template.get("models", []):
             model = self.builder_service.create_model(
-                projectId=projectId,
+                project_id=project_id,
                 name=model_data["table"],
                 title=model_data["title"],
                 description=model_data.get("description", "")
@@ -63,7 +63,7 @@ class TemplateService:
 
             for field_data in model_data.get("fields", []):
                 self.builder_service.create_field(
-                    modelId=model.id,
+                    model_id=model.id,
                     name=field_data["name"],
                     field_type=field_data["type"],
                     title=field_data["title"],

@@ -17,7 +17,7 @@ class Command:
     command_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = field(default_factory=datetime.utcnow)
     tenant_id: Optional[int] = None
-    userId: Optional[int] = None
+    user_id: Optional[int] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -26,7 +26,7 @@ class Command:
             "command_id": self.command_id,
             "timestamp": self.timestamp.isoformat(),
             "tenant_id": self.tenant_id,
-            "userId": self.userId,
+            "user_id": self.user_id,
             "metadata": self.metadata,
         }
 

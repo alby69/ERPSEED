@@ -19,7 +19,7 @@ class SysModel(BaseModel):
 
     table_name = db.Column(db.String(100), nullable=False)
 
-    moduleId = db.Column(
+    module_id = db.Column(
         db.Integer, db.ForeignKey("modules.id"), comment="Module this model belongs to"
     )
 
@@ -43,12 +43,12 @@ class SysModel(BaseModel):
         comment="JSON for tool configuration (enabled operations, custom descriptions, etc.)",
     )
 
-    projectId = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=False)
 
     __table_args__ = (
-        db.UniqueConstraint("projectId", "name", name="_project_model_name_uc"),
+        db.UniqueConstraint("project_id", "name", name="_project_model_name_uc"),
         db.UniqueConstraint(
-            "projectId", "technical_name", name="_project_model_technical_name_uc"
+            "project_id", "technical_name", name="_project_model_technical_name_uc"
         ),
     )
 
@@ -130,7 +130,7 @@ class SysField(BaseModel):
 
     help_text = db.Column(db.Text, comment="Help text for users")
 
-    modelId = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
+    model_id = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
 
     model = db.relationship("SysModel", back_populates="fields")
 
@@ -158,7 +158,7 @@ class SysView(BaseModel):
         comment="View type: list, form, kanban, calendar, gantt, graph, pivot, dashboard",
     )
 
-    modelId = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
+    model_id = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
 
     config = db.Column(
         db.Text,
@@ -173,7 +173,7 @@ class SysView(BaseModel):
     order = db.Column(db.Integer, default=0, comment="Order in view selector")
 
     __table_args__ = (
-        db.UniqueConstraint("modelId", "name", name="_model_view_name_uc"),
+        db.UniqueConstraint("model_id", "name", name="_model_view_name_uc"),
     )
 
     model = db.relationship("SysModel", backref=db.backref("views", lazy="dynamic"))
@@ -251,9 +251,9 @@ class SysAction(BaseModel):
         comment="Action target: view, api, script, webhook, workflow",
     )
 
-    viewId = db.Column(db.Integer, db.ForeignKey("sys_views.id"), nullable=True)
+    view_id = db.Column(db.Integer, db.ForeignKey("sys_views.id"), nullable=True)
 
-    modelId = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=True)
+    model_id = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=True)
 
     config = db.Column(
         db.Text,
@@ -289,7 +289,7 @@ class SysChart(BaseModel):
         db.String(20), nullable=False, default="chartjs"
     )
     chart_type = db.Column(db.String(50))
-    modelId = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
+    model_id = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
     x_axis = db.Column(db.String(80))
     y_axis = db.Column(db.String(80))
     aggregation = db.Column(db.String(20))
@@ -318,7 +318,7 @@ class SysModelVersion(BaseModel):
 
     __tablename__ = "sys_model_versions"
 
-    modelId = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
+    model_id = db.Column(db.Integer, db.ForeignKey("sys_models.id"), nullable=False)
     version_number = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text)
 
@@ -335,7 +335,7 @@ class SysModelVersion(BaseModel):
     creator = db.relationship("User")
 
     def __repr__(self):
-        return f"<SysModelVersion {self.modelId} v{self.version_number}>"
+        return f"<SysModelVersion {self.model_id} v{self.version_number}>"
 
 
 from sqlalchemy.dialects.postgresql import JSONB
@@ -347,7 +347,7 @@ class SysReadModel(BaseModel):
 
     model_name = db.Column(db.String(80), nullable=False, index=True)
     record_id = db.Column(db.Integer, nullable=False, index=True)
-    projectId = db.Column(db.Integer, nullable=False, index=True)
+    project_id = db.Column(db.Integer, nullable=False, index=True)
 
     # The actual data in JSONB format for PostgreSQL performance
     data = db.Column(db.JSON().with_variant(JSONB, "postgresql"), nullable=False)
@@ -361,8 +361,8 @@ class SysReadModel(BaseModel):
     last_sync = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
 
     __table_args__ = (
-        db.UniqueConstraint("projectId", "model_name", "record_id", name="_project_record_uc"),
+        db.UniqueConstraint("project_id", "model_name", "record_id", name="_project_record_uc"),
     )
 
     def __repr__(self):
-        return f"<SysReadModel {self.model_name}:{self.record_id} (Project {self.projectId})>"
+        return f"<SysReadModel {self.model_name}:{self.record_id} (Project {self.project_id})>"

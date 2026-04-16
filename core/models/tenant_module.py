@@ -20,7 +20,7 @@ class TenantModule(BaseModel):
         index=True
     )
 
-    moduleId = db.Column(
+    module_id = db.Column(
         db.String(50),
         nullable=False,
         index=True
@@ -44,21 +44,21 @@ class TenantModule(BaseModel):
     def module(self):
         """Get module definition (lazy load)."""
         from core.models.module_definition import ModuleDefinition
-        return ModuleDefinition.query.filter_by(moduleId=self.moduleId).first()
+        return ModuleDefinition.query.filter_by(module_id=self.module_id).first()
 
     __table_args__ = (
-        db.UniqueConstraint('tenant_id', 'moduleId', name='uix_tenant_module'),
+        db.UniqueConstraint('tenant_id', 'module_id', name='uix_tenant_module'),
     )
 
     def __repr__(self):
-        return f'<TenantModule tenant={self.tenant_id} module={self.moduleId}>'
+        return f'<TenantModule tenant={self.tenant_id} module={self.module_id}>'
 
     def to_dict(self):
         """Serialize tenant module."""
         return {
             'id': self.id,
             'tenant_id': self.tenant_id,
-            'moduleId': self.moduleId,
+            'module_id': self.module_id,
             'is_enabled': self.is_enabled,
             'enabled_at': self.enabled_at.isoformat() if self.enabled_at else None,
             'disabled_at': self.disabled_at.isoformat() if self.disabled_at else None,

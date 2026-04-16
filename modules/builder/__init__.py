@@ -60,12 +60,12 @@ class SysModelList(MethodView):
         if not data:
             abort(400, message="No data provided")
 
-        projectId = data.get("projectId")
-        if not projectId:
-            abort(400, message="projectId is required to create a model.")
+        project_id = data.get("project_id")
+        if not project_id:
+            abort(400, message="project_id is required to create a model.")
 
         return builder_service.create_model(
-            projectId=projectId,
+            project_id=project_id,
             name=data.get("name"),
             title=data.get("title"),
             description=data.get("description"),
@@ -73,29 +73,29 @@ class SysModelList(MethodView):
         ), 201
 
 
-@blp.route("/sys-models/<int:modelId>")
+@blp.route("/sys-models/<int:model_id>")
 class SysModelResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, SysModelSchema)
-    def get(self, modelId):
+    def get(self, model_id):
         """Get system model details"""
-        return builder_service.get_model(modelId)
+        return builder_service.get_model(model_id)
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def put(self, modelId):
+    def put(self, model_id):
         """Update system model"""
         from flask import request
         data = request.get_json()
-        return builder_service.update_model(modelId, data or {})
+        return builder_service.update_model(model_id, data or {})
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
-    def delete(self, modelId):
+    def delete(self, model_id):
         """Delete system model"""
-        builder_service.delete_model(modelId)
+        builder_service.delete_model(model_id)
         return ""
 
 
@@ -111,11 +111,11 @@ class SysFieldList(MethodView):
         if not data:
             abort(400, message="No data provided")
 
-        if "modelId" not in data:
-            abort(400, message="modelId is required")
+        if "model_id" not in data:
+            abort(400, message="model_id is required")
 
         return builder_service.create_field(
-            modelId=data["modelId"],
+            model_id=data["model_id"],
             name=data.get("name"),
             field_type=data.get("type"),
             title=data.get("title"),
@@ -150,43 +150,43 @@ class SysFieldResource(MethodView):
         return ""
 
 
-@blp.route("/sys-models/<int:modelId>/generate-table")
+@blp.route("/sys-models/<int:model_id>/generate-table")
 class SysModelSyncSchema(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def post(self, modelId):
+    def post(self, model_id):
         """Generate and execute CREATE or ALTER TABLE SQL to sync the DB with the model"""
-        sql_commands, message = builder_service.sync_schema(modelId, db.engine)
+        sql_commands, message = builder_service.sync_schema(model_id, db.engine)
 
         if not sql_commands:
             return {"message": message}
         return {"message": message}
 
 
-@blp.route("/sys-models/<int:modelId>/reset-table")
+@blp.route("/sys-models/<int:model_id>/reset-table")
 class SysModelResetTable(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def post(self, modelId):
+    def post(self, model_id):
         """Drop and Re-create the table based on metadata (DATA LOSS WARNING)"""
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         backup_folder = current_app.config.get("BACKUP_FOLDER", "backups")
 
-        message = builder_service.reset_table(modelId, userId, backup_folder)
+        message = builder_service.reset_table(model_id, user_id, backup_folder)
 
         return {"message": message}
 
 
-@blp.route("/sys-models/<int:modelId>/clone")
+@blp.route("/sys-models/<int:model_id>/clone")
 class SysModelClone(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def post(self, modelId):
+    def post(self, model_id):
         """Clone an existing model (definition and fields)."""
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         data = request.get_json()
         new_name = data.get("name")
@@ -195,20 +195,20 @@ class SysModelClone(MethodView):
         if not new_name or not new_title:
             abort(400, message="Name and Title are required.")
 
-        new_model = builder_service.clone_model(modelId, userId, new_name, new_title)
+        new_model = builder_service.clone_model(model_id, user_id, new_name, new_title)
 
         return SysModelSchema().dump(new_model), 201
 
 
-@blp.route("/sys-models/<int:modelId>/backups")
+@blp.route("/sys-models/<int:model_id>/backups")
 class SysModelBackups(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def get(self, modelId):
+    def get(self, model_id):
         """List available backups for a specific model"""
         backup_folder = current_app.config.get("BACKUP_FOLDER", "backups")
 
-        backups = builder_service.get_backups(modelId, backup_folder)
+        backups = builder_service.get_backups(model_id, backup_folder)
 
         return backups
 
@@ -242,13 +242,13 @@ class AuditLogList(MethodView):
         return items
 
 
-@blp.route("/sys-models/<int:modelId>/generate-code")
+@blp.route("/sys-models/<int:model_id>/generate-code")
 class SysModelGenerateCode(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def get(self, modelId):
+    def get(self, model_id):
         """Generate Python code from model definition."""
-        model = builder_service.get_model(modelId)
+        model = builder_service.get_model(model_id)
         if not model:
             abort(404, message="Model not found.")
 
@@ -266,13 +266,13 @@ class SysModelGenerateCode(MethodView):
         return {"model": model.name, "code": code}
 
 
-@blp.route("/sys-models/<int:modelId>/validate")
+@blp.route("/sys-models/<int:model_id>/validate")
 class SysModelValidate(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def get(self, modelId):
+    def get(self, model_id):
         """Validate model definition."""
-        model = builder_service.get_model(modelId)
+        model = builder_service.get_model(model_id)
         if not model:
             abort(404, message="Model not found.")
 
@@ -282,17 +282,17 @@ class SysModelValidate(MethodView):
         return {"valid": len(errors) == 0, "errors": errors}
 
 
-@blp.route("/projects/<int:projectId>/business-rules")
+@blp.route("/projects/<int:project_id>/business-rules")
 class BusinessRulesList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def get(self, projectId):
+    def get(self, project_id):
         """List all business rules for a project."""
         from models import SysModel
         import json
 
         models = SysModel.query.filter_by(
-            projectId=projectId, status="published"
+            project_id=project_id, status="published"
         ).all()
 
         all_rules = []
@@ -322,7 +322,7 @@ class BusinessRulesList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def post(self, projectId):
+    def post(self, project_id):
         """Create a business rule."""
         from models import SysModel
         import json
@@ -334,7 +334,7 @@ class BusinessRulesList(MethodView):
         if not model_name:
             abort(400, message="model_name is required.")
 
-        model = SysModel.query.filter_by(projectId=projectId, name=model_name).first()
+        model = SysModel.query.filter_by(project_id=project_id, name=model_name).first()
 
         if not model:
             abort(404, message=f"Model '{model_name}' not found.")
@@ -370,11 +370,11 @@ class BusinessRulesList(MethodView):
         return {"success": True, "rule_id": new_id}, 201
 
 
-@blp.route("/projects/<int:projectId>/business-rules/<int:rule_id>")
+@blp.route("/projects/<int:project_id>/business-rules/<int:rule_id>")
 class BusinessRuleDetail(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def delete(self, projectId, rule_id):
+    def delete(self, project_id, rule_id):
         """Delete a business rule."""
         from models import SysModel
         import json
@@ -385,7 +385,7 @@ class BusinessRuleDetail(MethodView):
         if not model_name:
             abort(400, message="model_name is required in request body.")
 
-        model = SysModel.query.filter_by(projectId=projectId, name=model_name).first()
+        model = SysModel.query.filter_by(project_id=project_id, name=model_name).first()
 
         if not model:
             abort(404, message=f"Model '{model_name}' not found.")
@@ -415,14 +415,14 @@ class SysViewList(MethodView):
         """List all system views"""
         from models import SysView, SysModel
 
-        projectId = request.args.get("projectId")
-        modelId = request.args.get("modelId")
+        project_id = request.args.get("project_id")
+        model_id = request.args.get("model_id")
 
         query = SysView.query
-        if projectId:
-            query = query.join(SysModel).filter(SysModel.projectId == projectId)
-        if modelId:
-            query = query.filter(SysView.modelId == modelId)
+        if project_id:
+            query = query.join(SysModel).filter(SysModel.project_id == project_id)
+        if model_id:
+            query = query.filter(SysView.model_id == model_id)
 
         return query.order_by(SysView.order).all()
 
@@ -439,7 +439,7 @@ class SysViewList(MethodView):
         view.technical_name = data.get("technical_name", data.get("name"))
         view.title = data.get("title", data.get("name"))
         view.view_type = data.get("view_type", "list")
-        view.modelId = data.get("modelId")
+        view.model_id = data.get("model_id")
         view.config = data.get("config", "{}")
         view.is_default = data.get("is_default", False)
         view.is_active = data.get("is_active", True)
@@ -450,27 +450,27 @@ class SysViewList(MethodView):
         return view, 201
 
 
-@blp.route("/sys-views/<int:viewId>")
+@blp.route("/sys-views/<int:view_id>")
 class SysViewResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200, SysViewSchema)
-    def get(self, viewId):
+    def get(self, view_id):
         """Get system view details"""
         from models import SysView
 
-        view = SysView.query.get_or_404(viewId)
+        view = SysView.query.get_or_404(view_id)
         return view
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    def put(self, viewId):
+    def put(self, view_id):
         """Update system view"""
         from flask import request
         data = request.get_json()
         from models import SysView
 
-        view = SysView.query.get_or_404(viewId)
+        view = SysView.query.get_or_404(view_id)
 
         for key, value in (data or {}).items():
             if hasattr(view, key) and key not in ("id", "created_at"):
@@ -482,11 +482,11 @@ class SysViewResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(204)
-    def delete(self, viewId):
+    def delete(self, view_id):
         """Delete system view"""
         from models import SysView
 
-        view = SysView.query.get_or_404(viewId)
+        view = SysView.query.get_or_404(view_id)
         db.session.delete(view)
         db.session.commit()
         return ""
@@ -580,14 +580,14 @@ class SysActionList(MethodView):
         """List all system actions"""
         from models import SysAction
 
-        viewId = request.args.get("viewId")
-        modelId = request.args.get("modelId")
+        view_id = request.args.get("view_id")
+        model_id = request.args.get("model_id")
 
         query = SysAction.query
-        if viewId:
-            query = query.filter(SysAction.viewId == viewId)
-        if modelId:
-            query = query.filter(SysAction.modelId == modelId)
+        if view_id:
+            query = query.filter(SysAction.view_id == view_id)
+        if model_id:
+            query = query.filter(SysAction.model_id == model_id)
 
         return query.filter_by(is_active=True).order_by(SysAction.order).all()
 
@@ -605,8 +605,8 @@ class SysActionList(MethodView):
         action.title = data.get("title", data.get("name"))
         action.action_type = data.get("action_type", "button")
         action.target = data.get("target", "api")
-        action.viewId = data.get("viewId")
-        action.modelId = data.get("modelId")
+        action.view_id = data.get("view_id")
+        action.model_id = data.get("model_id")
         action.config = data.get("config", "{}")
         action.icon = data.get("icon")
         action.style = data.get("style", "primary")

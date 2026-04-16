@@ -67,7 +67,7 @@ class TestCase(BaseModel):
     """
     __tablename__ = 'test_cases'
 
-    test_suiteId = db.Column(
+    test_suite_id = db.Column(
         db.Integer,
         db.ForeignKey('test_suites.id'),
         nullable=False,
@@ -115,7 +115,7 @@ class TestExecution(BaseModel):
     """
     __tablename__ = 'test_executions'
 
-    test_suiteId = db.Column(
+    test_suite_id = db.Column(
         db.Integer,
         db.ForeignKey('test_suites.id'),
         nullable=False,

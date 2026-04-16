@@ -26,12 +26,12 @@ class ProductList(MethodView):
     def get(self):
         """List all products."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         result = get_service().execute({
             "command": "ListProducts",
             "tenant_id": tenant_id,
-            "userId": userId,
+            "user_id": user_id,
             "pagination": {
                 "page": request.args.get('page', 1, type=int),
                 "per_page": request.args.get('per_page', 20, type=int)
@@ -48,13 +48,13 @@ class ProductList(MethodView):
     def post(self):
         """Create a new product."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
         data = request.get_json()
 
         result = get_service().execute({
             "command": "CreateProduct",
             "tenant_id": tenant_id,
-            "userId": userId,
+            "user_id": user_id,
             **data
         })
 
@@ -71,12 +71,12 @@ class ProductDetail(MethodView):
     def get(self, product_id):
         """Get a product by ID."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         result = get_service().execute({
             "command": "GetProduct",
             "tenant_id": tenant_id,
-            "userId": userId,
+            "user_id": user_id,
             "entity_id": product_id
         })
 
@@ -90,13 +90,13 @@ class ProductDetail(MethodView):
     def put(self, product_id):
         """Update a product."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
         data = request.get_json()
 
         result = get_service().execute({
             "command": "UpdateProduct",
             "tenant_id": tenant_id,
-            "userId": userId,
+            "user_id": user_id,
             "entity_id": product_id,
             **data
         })
@@ -111,12 +111,12 @@ class ProductDetail(MethodView):
     def delete(self, product_id):
         """Delete a product."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         result = get_service().execute({
             "command": "DeleteProduct",
             "tenant_id": tenant_id,
-            "userId": userId,
+            "user_id": user_id,
             "entity_id": product_id
         })
 
@@ -133,13 +133,13 @@ class ProductStock(MethodView):
     def put(self, product_id):
         """Update product stock."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
         data = request.get_json()
 
         result = get_service().execute({
             "command": "UpdateStock",
             "tenant_id": tenant_id,
-            "userId": userId,
+            "user_id": user_id,
             "entity_id": product_id,
             "quantity": data.get("quantity", 0),
             "operation": data.get("operation", "set")  # set, add, remove

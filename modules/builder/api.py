@@ -122,14 +122,14 @@ class ArchetypeDetail(MethodView):
 # === COMPONENTS ===
 
 
-@blp.route("/projects/<int:projectId>/components")
+@blp.route("/projects/<int:project_id>/components")
 class ComponentList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, projectId):
+    def get(self, project_id):
         """List all components in a project"""
-        components = Component.query.filter_by(projectId=projectId).all()
+        components = Component.query.filter_by(project_id=project_id).all()
         return [
             {
                 "id": c.id,
@@ -153,10 +153,10 @@ class ComponentList(MethodView):
     @jwt_required()
     @blp.arguments(ComponentCreateSchema)
     @blp.response(201)
-    def post(self, projectId, component_data):
+    def post(self, project_id, component_data):
         """Create a new component"""
         component = Component(
-            projectId=projectId,
+            project_id=project_id,
             archetype_id=component_data.get("archetype_id"),
             name=component_data.get("name"),
             description=component_data.get("description"),
@@ -182,7 +182,7 @@ class ComponentDetail(MethodView):
         component = Component.query.get_or_404(component_id)
         return {
             "id": component.id,
-            "projectId": component.projectId,
+            "project_id": component.project_id,
             "archetype_id": component.archetype_id,
             "name": component.name,
             "description": component.description,
@@ -252,16 +252,16 @@ class ComponentPosition(MethodView):
 # === BLOCKS ===
 
 
-@blp.route("/projects/<int:projectId>/blocks")
+@blp.route("/projects/<int:project_id>/blocks")
 class BlockList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.response(200)
-    def get(self, projectId):
+    def get(self, project_id):
         """List all blocks in a project, optionally filtered by is_template"""
         is_template = request.args.get("is_template", "").lower() == "true"
 
-        query = Block.query.filter_by(projectId=projectId)
+        query = Block.query.filter_by(project_id=project_id)
         if is_template:
             query = query.filter_by(is_template=True)
 
@@ -287,13 +287,13 @@ class BlockList(MethodView):
     @jwt_required()
     @blp.arguments(BlockCreateSchema)
     @blp.response(201)
-    def post(self, projectId, block_data):
+    def post(self, project_id, block_data):
         """Create a new block, optionally from a template"""
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         block = Block(
-            projectId=projectId,
-            created_by=userId,
+            project_id=project_id,
+            created_by=user_id,
             name=block_data.get("name"),
             description=block_data.get("description"),
             component_ids=block_data.get("component_ids", []),
@@ -350,7 +350,7 @@ class BlockDetail(MethodView):
 
         return {
             "id": block.id,
-            "projectId": block.projectId,
+            "project_id": block.project_id,
             "name": block.name,
             "title": block.description.split('\n')[0] if block.description else block.name,
             "description": block.description,
@@ -429,10 +429,10 @@ class BlockTestSuite(MethodView):
         """Get or create test suite for a block"""
         block = Block.query.get_or_404(block_id)
 
-        if block.test_suiteId:
+        if block.test_suite_id:
             from core.models.test_models import TestSuite
 
-            suite = TestSuite.query.get(block.test_suiteId)
+            suite = TestSuite.query.get(block.test_suite_id)
             if suite:
                 return {
                     "id": suite.id,
@@ -457,7 +457,7 @@ class BlockTestSuite(MethodView):
 
         existing = TestSuite.query.filter_by(nome=suite_name).first()
         if existing:
-            block.test_suiteId = existing.id
+            block.test_suite_id = existing.id
             db.session.commit()
             return {"id": existing.id, "message": "Using existing test suite"}
 
@@ -472,7 +472,7 @@ class BlockTestSuite(MethodView):
         db.session.add(suite)
         db.session.flush()
 
-        block.test_suiteId = suite.id
+        block.test_suite_id = suite.id
         block.status = "testing"
 
         db.session.commit()
@@ -489,22 +489,22 @@ class BlockRunTests(MethodView):
         """Run tests for a block and calculate quality score"""
         block = Block.query.get_or_404(block_id)
 
-        if not block.test_suiteId:
+        if not block.test_suite_id:
             return {"error": "No test suite configured"}, 400
 
         from core.models.test_models import TestSuite, TestExecution
         from extensions import db
         import time
 
-        suite = TestSuite.query.get(block.test_suiteId)
+        suite = TestSuite.query.get(block.test_suite_id)
         if not suite:
             return {"error": "Test suite not found"}, 404
 
-        userId = get_jwt_identity()
+        user_id = get_jwt_identity()
 
         execution = TestExecution(
-            test_suiteId=suite.id,
-            utente_id=userId,
+            test_suite_id=suite.id,
+            utente_id=user_id,
             esito="in_corso",
         )
         db.session.add(execution)
@@ -637,7 +637,7 @@ class BlockInstances(MethodView):
             {
                 "id": b.id,
                 "name": b.name,
-                "projectId": b.projectId,
+                "project_id": b.project_id,
                 "params_override": b.params_override,
                 "created_at": b.created_at.isoformat() if b.created_at else None,
             }

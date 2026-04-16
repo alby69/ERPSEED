@@ -14,7 +14,7 @@ class SalesOrderLine:
 
     id: Optional[int] = None
     tenant_id: int = 0
-    orderId: int = 0
+    order_id: int = 0
     product_id: int = 0
     description: str = ""
     quantity: float = 0.0
@@ -30,7 +30,7 @@ class SalesOrderLine:
         return {
             "id": self.id,
             "tenant_id": self.tenant_id,
-            "orderId": self.orderId,
+            "order_id": self.order_id,
             "product_id": self.product_id,
             "description": self.description,
             "quantity": self.quantity,
@@ -43,7 +43,7 @@ class SalesOrderLine:
         return cls(
             id=data.get("id"),
             tenant_id=data.get("tenant_id", 0),
-            orderId=data.get("orderId", 0),
+            order_id=data.get("order_id", 0),
             product_id=data.get("product_id", 0),
             description=data.get("description", ""),
             quantity=data.get("quantity", 0.0),

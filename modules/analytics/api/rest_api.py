@@ -225,14 +225,14 @@ class ChartData(MethodView):
         chart = SysChart.query.get_or_404(chart_id)
 
         # Recupera il modello sorgente
-        sys_model = SysModel.query.get(chart.modelId)
+        sys_model = SysModel.query.get(chart.model_id)
         if not sys_model:
             abort(404, message="Source model not found")
 
         # Verifica permessi di lettura sul modello dati
         dynamic_service.check_permissions(sys_model, "read")
 
-        schema_name = f"project_{sys_model.projectId}"
+        schema_name = f"project_{sys_model.project_id}"
         table = get_table_object(sys_model.name, schema=schema_name)
 
         # --- Helper per filtri data ---

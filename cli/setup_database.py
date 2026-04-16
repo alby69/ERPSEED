@@ -23,7 +23,7 @@ def seed_dashboard_kpi(project):
     model_name = "dashboard_kpi"
 
     # Controlla se esiste già per questo progetto
-    if SysModel.query.filter_by(name=model_name, projectId=project.id).first():
+    if SysModel.query.filter_by(name=model_name, project_id=project.id).first():
         print(f"   - Modello '{model_name}' già esistente nel progetto.")
         return
 
@@ -36,7 +36,7 @@ def seed_dashboard_kpi(project):
         title="Dashboard KPIs",
         description="KPIs for the main dashboard",
         permissions='{"read": ["admin", "user"], "write": ["admin"]}',
-        projectId=project.id,
+        project_id=project.id,
         status='published'
     )
     db.session.add(kpi_model)
@@ -51,7 +51,7 @@ def seed_dashboard_kpi(project):
     ]
 
     for f_data in fields_data:
-        field = SysField(modelId=kpi_model.id, **f_data)
+        field = SysField(model_id=kpi_model.id, **f_data)
         db.session.add(field)
 
     db.session.flush()

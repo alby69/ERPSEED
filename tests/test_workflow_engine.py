@@ -28,7 +28,7 @@ class WorkflowTestCase(unittest.TestCase):
 
         # Add a set_field step
         step = WorkflowStep(
-            workflowId=wf.id,
+            workflow_id=wf.id,
             name="Set status",
             step_type="action",
             order=1,

@@ -9,23 +9,23 @@ class CreateProjectCommand:
 
 @dataclass
 class UpdateProjectCommand:
-    projectId: int
-    userId: int
+    project_id: int
+    user_id: int
     data: dict
 
 @dataclass
 class DeleteProjectCommand:
-    projectId: int
-    userId: int
+    project_id: int
+    user_id: int
 
 @dataclass
 class AddMemberCommand:
-    projectId: int
-    userId: int
-    member_userId: int
+    project_id: int
+    user_id: int
+    member_user_id: int
 
 @dataclass
 class RemoveMemberCommand:
-    projectId: int
-    userId: int
-    member_userId: int
+    project_id: int
+    user_id: int
+    member_user_id: int

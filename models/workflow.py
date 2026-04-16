@@ -20,7 +20,7 @@ class Workflow(db.Model):
     description = db.Column(db.Text)
     trigger_event = db.Column(db.String(100), nullable=False)  # Event that triggers the workflow
     is_active = db.Column(db.Boolean, default=True)
-    projectId = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -43,7 +43,7 @@ class WorkflowStep(db.Model):
     __tablename__ = 'workflow_steps'
 
     id = db.Column(db.Integer, primary_key=True)
-    workflowId = db.Column(db.Integer, db.ForeignKey('workflows.id'), nullable=False)
+    workflow_id = db.Column(db.Integer, db.ForeignKey('workflows.id'), nullable=False)
     order = db.Column(db.Integer, default=0)
     step_type = db.Column(db.String(50), nullable=False)  # condition, action, notification, delay
     name = db.Column(db.String(150), nullable=False)
@@ -71,7 +71,7 @@ class WorkflowExecution(db.Model):
     __tablename__ = 'workflow_executions'
 
     id = db.Column(db.Integer, primary_key=True)
-    workflowId = db.Column(db.Integer, db.ForeignKey('workflows.id'), nullable=False)
+    workflow_id = db.Column(db.Integer, db.ForeignKey('workflows.id'), nullable=False)
     trigger_event = db.Column(db.String(100), nullable=False)
     trigger_data = db.Column(db.Text)  # JSON data that triggered the workflow
     status = db.Column(db.String(20), default='running')  # running, completed, failed, cancelled
@@ -110,7 +110,7 @@ class WorkflowLog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     execution_id = db.Column(db.Integer, db.ForeignKey('workflow_executions.id'), nullable=False)
-    stepId = db.Column(db.Integer, db.ForeignKey('workflow_steps.id'), nullable=True)
+    step_id = db.Column(db.Integer, db.ForeignKey('workflow_steps.id'), nullable=True)
     step_name = db.Column(db.String(150))
     status = db.Column(db.String(20), default='pending')  # pending, running, success, failed, skipped
     input_data = db.Column(db.Text)
@@ -155,7 +155,7 @@ class ScheduledTask(db.Model):
     schedule = db.Column(db.String(100))  # Cron expression or interval
     config = db.Column(db.Text)  # JSON configuration
     is_active = db.Column(db.Boolean, default=True)
-    projectId = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     last_run = db.Column(db.DateTime)
     next_run = db.Column(db.DateTime)

@@ -3,7 +3,7 @@ from typing import Dict, Any, List
 
 @dataclass
 class ListRecordsCommand:
-    projectId: int
+    project_id: int
     model_name: int
     page: int = 1
     per_page: int = 10
@@ -11,25 +11,25 @@ class ListRecordsCommand:
 
 @dataclass
 class CreateRecordCommand:
-    projectId: int
+    project_id: int
     model_name: str
     data: Dict[str, Any]
 
 @dataclass
 class UpdateRecordCommand:
-    projectId: int
+    project_id: int
     model_name: str
-    itemId: int
+    item_id: int
     data: Dict[str, Any]
 
 @dataclass
 class DeleteRecordCommand:
-    projectId: int
+    project_id: int
     model_name: str
-    itemId: int
+    item_id: int
 
 @dataclass
 class BulkDeleteCommand:
-    projectId: int
+    project_id: int
     model_name: str
     ids: List[int]

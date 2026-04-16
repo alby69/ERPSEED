@@ -243,7 +243,7 @@ class AdaptiveBuilder:
         service = BuilderService()
 
         model = service.create_model(
-            projectId=template_data.get('projectId'),
+            project_id=template_data.get('project_id'),
             name=template_data['name'],
             title=template_data.get('title', template_data['name']),
             description=template_data.get('description'),
@@ -251,7 +251,7 @@ class AdaptiveBuilder:
 
         for field_data in template_data.get('fields', []):
             service.create_field(
-                modelId=model.id,
+                model_id=model.id,
                 name=field_data['name'],
                 field_type=field_data['type'],
                 title=field_data.get('title'),
