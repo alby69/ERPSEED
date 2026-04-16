@@ -1,6 +1,6 @@
 import os
-from . import create_app
-from extensions import socketio
+from backend import create_app
+from backend.extensions import socketio
 
 app = create_app()
 
