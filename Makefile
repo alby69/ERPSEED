@@ -73,3 +73,15 @@ status: ## Mostra status dei servizi
 	@echo ""
 	@echo "=== Immagini ==="
 	@docker images | grep erpseed
+
+# Local Testing
+test-backend: ## Esegui test backend locali
+	export PYTHONPATH=$$PYTHONPATH:. && python3 -m pytest backend/tests/
+
+test-frontend: ## Esegui test frontend locali
+	cd frontend && npm test
+
+test-e2e: ## Esegui test E2E locali
+	cd frontend && npx playwright test
+
+test-all: test-backend test-frontend ## Esegui tutti i test locali

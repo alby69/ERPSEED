@@ -15,17 +15,19 @@ Vedi [backend/docs/QUICKSTART.md](backend/docs/QUICKSTART.md) per la guida detta
 ```bash
 # Clona e entra
 git clone https://github.com/your-repo/erpseed.git
-cd erpseed/backend
+cd erpseed
 
-# Setup ambiente
+# Setup Backend
+cd backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+# Crea .env con JWT_SECRET_KEY, poi:
+python run.py
 
-# Crea .env con JWT_SECRET_KEY
-
-# Inizializza e avvia
-python -m cli.create_admin
-flask run
+# Setup Frontend (in un altro terminale)
+cd frontend
+npm install
+npm run dev
 ```
 
 ---
@@ -67,6 +69,24 @@ erpseed/
 |-----------|-------------|
 | [backend/docs/QUICKSTART.md](backend/docs/QUICKSTART.md) | Guida rapida |
 | [backend/docs/ARCHITECTURE.md](backend/docs/ARCHITECTURE.md) | Architettura |
+| [backend/docs/BRANCH_STRATEGY.md](backend/docs/BRANCH_STRATEGY.md) | Strategia Branch |
+
+## 🧪 Testing
+
+Il progetto include una suite di test completa per backend e frontend.
+
+```bash
+# Esegui tutti i test (richiede Makefile)
+make test-all
+
+# Test Backend
+cd backend
+pytest
+
+# Test Frontend
+cd frontend
+npm test
+```
 
 ---
 
