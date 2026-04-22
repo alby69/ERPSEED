@@ -350,7 +350,7 @@ def create_app(db_url=None):
     # Feature APIs
     api.register_blueprint(dashboard_bp, url_prefix=f"{API_V1_PREFIX}/dashboards")
     api.register_blueprint(analytics_bp, url_prefix=f"{API_V1_PREFIX}/analytics")
-    api.register_blueprint(dynamic_api_bp, url_prefix=f"{API_V1_PREFIX}/dynamic")
+    api.register_blueprint(dynamic_api_bp)
     api.register_blueprint(webhooks_bp, url_prefix=f"{API_V1_PREFIX}/webhooks")
     api.register_blueprint(workflows_bp, url_prefix=f"{API_V1_PREFIX}/workflows")
     api.register_blueprint(visual_builder_bp, url_prefix=f"{API_V1_PREFIX}/visual-builder")

@@ -497,3 +497,39 @@ class DynamicApiService(BaseService):
             self.db.session.commit()
 
         return {"message": f"Imported {inserted_count} records.", "errors": errors}, 200
+
+    def export_data(self, projectId, model_name, format='csv'):
+        """Export data from a dynamic table."""
+        sys_model = self.get_model(projectId, model_name, require_published=True)
+        self.check_permissions(sys_model, "read", projectId)
+
+        schema_name = f"project_{projectId}"
+        table = get_table_object(model_name, schema=schema_name)
+
+        query, relation_fields = self.build_relational_query(sys_model, table, schema=schema_name)
+        raw_results = self.db.session.execute(query).mappings().all()
+        result = self.process_results(raw_results, relation_fields, sys_model)
+
+        if format == 'json':
+            return result
+
+        # CSV Export
+        output = io.StringIO()
+        if not result:
+            return ""
+
+        writer = csv.DictWriter(output, fieldnames=result[0].keys())
+        writer.writeheader()
+        for row in result:
+            # Flatten nested objects for CSV
+            flat_row = {}
+            for k, v in row.items():
+                if isinstance(v, dict):
+                    flat_row[k] = json.dumps(v)
+                elif isinstance(v, list):
+                    flat_row[k] = json.dumps(v)
+                else:
+                    flat_row[k] = v
+            writer.writerow(flat_row)
+
+        return output.getvalue()
