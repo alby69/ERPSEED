@@ -1,6 +1,6 @@
 """
 Base models with multi-tenant support.
-All models inherit from BaseModel which includes tenant isolation.
+All models inherit from BaseModel which includes basic fields and utility methods.
 """
 from datetime import datetime
 from backend.extensions import db
@@ -36,6 +36,11 @@ class BaseModel(db.Model):
         self.deleted_at = None
         db.session.add(self)
 
+    @classmethod
+    def active(cls):
+        """Return only records that are not soft-deleted."""
+        return cls.query.filter_by(deleted_at=None)
+
     def to_dict(self, exclude=None):
         """Convert model to dictionary."""
         exclude = exclude or []
@@ -58,5 +63,6 @@ class TimestampMixin:
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     updated_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
+    # Note: Use lazy imports or string references to avoid circular dependency with User model
     created_by = db.relationship('User', foreign_keys=[created_by_id], lazy='joined')
     updated_by = db.relationship('User', foreign_keys=[updated_by_id], lazy='joined')
