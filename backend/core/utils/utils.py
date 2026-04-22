@@ -6,23 +6,36 @@ from sqlalchemy import or_, desc, asc, func, inspect, Table
 import json
 import decimal
 from datetime import datetime, date
-from backend.extensions import db
+from flask import request
 from flask_smorest import abort
+from sqlalchemy import or_, and_, desc, asc, func, Table, inspect
+from backend.extensions import db
 
-# Import AuditLog from core if available, else create dummy
-try:
-    from backend.core.models import AuditLog # type: ignore
-except ImportError:
-    # Fallback for migration period
-    class AuditLog:
-        def __init__(self, *args, **kwargs):
-            pass
-        @staticmethod
-        def log_create(*args, **kwargs):
-            pass
-        @staticmethod
-        def log_login(*args, **kwargs):
-            pass
+# Internal imports for models usually happen inside functions to avoid circularity
+
+def safe_json_parse(value, default=None):
+    """
+    Safely parse a JSON string or return the value if it's already a dict/list.
+    (Fase 1.3 DRY Utility)
+    """
+    if not value:
+        return default
+    if isinstance(value, (dict, list)):
+        return value
+    try:
+        return json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return default
+
+def check_unique(model, field, value, exclude_id=None):
+    """
+    Check if a value is unique for a given model field.
+    (Fase 1.2 Utility)
+    """
+    query = model.query.filter(getattr(model, field) == value)
+    if exclude_id:
+        query = query.filter(model.id != exclude_id)
+    return query.first() is None
 
 def apply_filters(query, model, search_fields):
     """Apply text search filters (q, search_field, search_value) to the query."""
@@ -222,7 +235,7 @@ def get_table_object(model_name, schema=None):
     """Reflect the database and return a SQLAlchemy Table object."""
     try:
         return Table(model_name, db.metadata, autoload_with=db.engine, schema=schema, extend_existing=True)
-    except Exception as e:
+    except Exception:
         abort(404, message=f"Table '{model_name}' not found in the database. Please generate it first.")
 
 def serialize_value(value):
@@ -282,12 +295,15 @@ def paginate(query, page=None, per_page=None):
 
 def log_audit(userId, model_name, record_id, action, changes=None):
     """Logs an audit entry."""
-    log = AuditLog(
-        userId=userId,
-        model_name=model_name,
-        record_id=record_id,
-        action=action,
-        changes=json.dumps(changes, default=str) if changes else None
-    )
-    if hasattr(log, '_sa_instance_state'):
+    try:
+        from backend.core.models.audit import AuditLog
+        log = AuditLog(
+            userId=userId,
+            model_name=model_name,
+            record_id=record_id,
+            action=action,
+            changes=json.dumps(changes, default=str) if changes else None
+        )
         db.session.add(log)
+    except ImportError:
+        pass # Fallback for envs without AuditLog

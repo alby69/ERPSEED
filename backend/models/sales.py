@@ -1,4 +1,4 @@
-from .base import BaseModel
+from backend.core.models.base import BaseModel
 from backend.extensions import db
 import datetime
 

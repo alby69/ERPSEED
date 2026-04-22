@@ -4,7 +4,7 @@ All application models are organized here with clear separation of concerns.
 """
 from backend.extensions import db
 
-from .base import BaseModel
+from backend.core.models.base import BaseModel
 from .user import User
 from .project import Project, project_members
 from .product import Product, ProductStockModel as ProductStock

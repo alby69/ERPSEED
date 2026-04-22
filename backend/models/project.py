@@ -1,7 +1,7 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 from backend.extensions import db
-from .base import BaseModel
+from backend.core.models.base import BaseModel
 
 
 project_members = db.Table(

@@ -13,7 +13,7 @@ class BaseModel(db.Model):
     - id: Primary key
     - created_at: Creation timestamp
     - updated_at: Last update timestamp
-    - deleted_at: Soft delete timestamp
+    - deleted_at: Soft delete timestamp (for soft deletion support)
     """
     __abstract__ = True
 

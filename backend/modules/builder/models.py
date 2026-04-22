@@ -1,5 +1,5 @@
 from backend.extensions import db
-from backend.models.base import BaseModel
+from backend.core.models.base import BaseModel
 
 class Archetype(BaseModel):
     """

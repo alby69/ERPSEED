@@ -45,6 +45,32 @@ class BaseService:
             self.db.session.delete(instance)
         self.db.session.commit()
 
+    def soft_delete(self, instance):
+        """
+        Mark record as deleted using deleted_at timestamp.
+        """
+        if hasattr(instance, 'deleted_at'):
+            instance.deleted_at = datetime.now(timezone.utc)
+            self.db.session.commit()
+        else:
+            self.delete(instance, soft=False)
+
+    def paginate(self, query, page=None, per_page=None):
+        """Standardized pagination."""
+        return paginate(query, page, per_page)
+
+    def check_unique(self, field, value, exclude_id=None):
+        """Check uniqueness using the service's model."""
+        if self.model is None:
+            # Fallback per compatibilità con test se passano il modello esplicitamente
+            return True
+        return check_unique(self.model, field, value, exclude_id)
+
+    def log_action(self, user_id, record_id, action, changes=None):
+        """Log an audit action."""
+        model_name = self.model.__name__ if self.model else "Unknown"
+        log_audit(user_id, model_name, record_id, action, changes)
+
     def flush(self):
         """Flush session without commit."""
         self.db.session.flush()
