@@ -13,7 +13,7 @@ class BaseModel(db.Model):
     - id: Primary key
     - created_at: Creation timestamp
     - updated_at: Last update timestamp
-    - deleted_at: Soft delete timestamp
+    - deleted_at: Soft delete timestamp (for soft deletion support)
     """
     __abstract__ = True
 
@@ -35,6 +35,11 @@ class BaseModel(db.Model):
         """Restore soft-deleted record."""
         self.deleted_at = None
         db.session.add(self)
+
+    @classmethod
+    def active(cls):
+        """Return a query for records that are not soft-deleted."""
+        return cls.query.filter_by(deleted_at=None)
 
     def to_dict(self, exclude=None):
         """Convert model to dictionary."""

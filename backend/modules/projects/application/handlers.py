@@ -28,7 +28,8 @@ class ProjectCommandHandler:
         db.session.flush()
 
         schema_name = f"project_{project.id}"
-        db.session.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema_name}"'))
+        if db.engine.dialect.name == 'postgresql':
+            db.session.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema_name}"'))
         db.session.commit()
 
         try:
@@ -69,7 +70,8 @@ class ProjectCommandHandler:
         project_name = project.name
         projectId = project.id
         schema_name = f"project_{project.id}"
-        db.session.execute(text(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE'))
+        if db.engine.dialect.name == 'postgresql':
+            db.session.execute(text(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE'))
 
         db.session.delete(project)
         db.session.commit()
