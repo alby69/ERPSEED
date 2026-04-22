@@ -11,6 +11,7 @@ from .extensions import db, socketio, api, jwt, ma, migrate
 
 # Import Core Middleware
 from .core.middleware.tenant_middleware import TenantMiddleware
+from .core.middleware.rate_limit import rate_limit_middleware
 from .core.services.query_filter import TenantQueryFilter, SoftDeleteFilter
 
 # Import new architectural components
@@ -263,6 +264,9 @@ def create_app(db_url=None):
             add_column_if_not_exists('sys_fields', 'created_at', 'TIMESTAMP')
             add_column_if_not_exists('sys_fields', 'updated_at', 'TIMESTAMP')
 
+    # --- Initialize Middleware ---
+    rate_limit_middleware(app)
+
     # --- Initialize Multi-tenant Filters ---
     TenantQueryFilter.init_app(app)
     SoftDeleteFilter.init_app(app)
@@ -350,7 +354,7 @@ def create_app(db_url=None):
     # Feature APIs
     api.register_blueprint(dashboard_bp, url_prefix=f"{API_V1_PREFIX}/dashboards")
     api.register_blueprint(analytics_bp, url_prefix=f"{API_V1_PREFIX}/analytics")
-    api.register_blueprint(dynamic_api_bp, url_prefix=f"{API_V1_PREFIX}/dynamic")
+    api.register_blueprint(dynamic_api_bp)
     api.register_blueprint(webhooks_bp, url_prefix=f"{API_V1_PREFIX}/webhooks")
     api.register_blueprint(workflows_bp, url_prefix=f"{API_V1_PREFIX}/workflows")
     api.register_blueprint(visual_builder_bp, url_prefix=f"{API_V1_PREFIX}/visual-builder")

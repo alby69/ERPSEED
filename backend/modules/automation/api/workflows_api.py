@@ -149,6 +149,26 @@ class WorkflowResource(MethodView):
         """Get workflow details with steps."""
         return generic_service.get_resource(Workflow, workflowId)
 
+    @blp.route("/canvas")
+    class WorkflowCanvas(MethodView):
+        @blp.doc(security=[{"jwt": []}])
+        @jwt_required()
+        @blp.response(200, {"type": "object"})
+        def get(self, workflowId):
+            """Get workflow as nodes/edges for visual editor."""
+            workflow = Workflow.query.get_or_404(workflowId)
+            return workflow.to_graph()
+
+        @blp.doc(security=[{"jwt": []}])
+        @jwt_required()
+        @blp.arguments(AnyJsonSchema)
+        @blp.response(200, {"type": "object"})
+        def put(self, data, workflowId):
+            """Update workflow from nodes/edges."""
+            workflow = Workflow.query.get_or_404(workflowId)
+            workflow.from_graph(data)
+            return {"message": "Workflow updated successfully"}
+
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @blp.arguments(WorkflowUpdateSchema)
@@ -168,6 +188,27 @@ class WorkflowResource(MethodView):
         """Delete workflow."""
         WorkflowService.delete_workflow(workflowId)
         return '', 204
+
+
+@blp.route("/<int:workflowId>/canvas")
+class WorkflowCanvas(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.response(200, {"type": "object"})
+    def get(self, workflowId):
+        """Get workflow as nodes/edges for visual editor."""
+        workflow = Workflow.query.get_or_404(workflowId)
+        return workflow.to_graph()
+
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.arguments(AnyJsonSchema)
+    @blp.response(200, {"type": "object"})
+    def put(self, data, workflowId):
+        """Update workflow from nodes/edges."""
+        workflow = Workflow.query.get_or_404(workflowId)
+        workflow.from_graph(data)
+        return {"message": "Workflow updated successfully"}
 
 
 @blp.route("/<int:workflowId>/steps")

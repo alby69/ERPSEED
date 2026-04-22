@@ -13,7 +13,7 @@ def safe_json_parse(value, default=None):
     Safely parse a JSON string or return the value if it's already a dict/list.
     (Fase 1.3 DRY Utility)
     """
-    if value is None:
+    if not value:
         return default
     if isinstance(value, (dict, list)):
         return value
@@ -21,6 +21,16 @@ def safe_json_parse(value, default=None):
         return json.loads(value)
     except (json.JSONDecodeError, TypeError):
         return default
+
+def check_unique(model, field, value, exclude_id=None):
+    """
+    Check if a value is unique for a given model field.
+    (Fase 1.2 Utility)
+    """
+    query = model.query.filter(getattr(model, field) == value)
+    if exclude_id:
+        query = query.filter(model.id != exclude_id)
+    return query.first() is None
 
 def apply_filters(query, model, search_fields):
     """Apply text search filters (q, search_field, search_value) to the query."""
@@ -231,13 +241,13 @@ def serialize_value(value):
         return float(value)
     return value
 
-def paginate(query):
+def paginate(query, page=None, per_page=None):
     """
     Paginate the query and return items and headers for the frontend.
     (Fase 1.1 Robust Pagination)
     """
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    page = page or request.args.get('page', 1, type=int)
+    per_page = per_page or request.args.get('per_page', 10, type=int)
 
     # Cap per_page at 100
     per_page = min(per_page, 100)
