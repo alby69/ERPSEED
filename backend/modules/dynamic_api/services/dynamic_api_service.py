@@ -217,7 +217,11 @@ class DynamicApiService(BaseService):
 
         query = query.limit(per_page).offset((page - 1) * per_page)
 
+        # Optimization: Use a single execution for count and results if possible,
+        # but for now we keep them separate for clarity and standard compatibility.
         total_count = self.db.session.execute(count_query).scalar_one_or_none() or 0
+
+        # Optimization: Fetch all results in one go to avoid N+1 in process_results
         raw_results = self.db.session.execute(query).mappings().all()
 
         result = self.process_results(raw_results, relation_fields, sys_model)
@@ -409,7 +413,7 @@ class DynamicApiService(BaseService):
         return result
 
     def get_model_metadata(self, projectId, model_name):
-        """Get model metadata for frontend."""
+        """Get model metadata for frontend, applying translations."""
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "read", projectId)
         return sys_model

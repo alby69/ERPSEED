@@ -16,6 +16,7 @@ class SysModel(BaseModel):
     )
     title = db.Column(db.String(120), comment="Display title (e.g., 'Cliente')")
     description = db.Column(db.Text)
+    translations = db.Column(db.JSON, comment="JSON for translated titles and descriptions")
 
     table_name = db.Column(db.String(100), nullable=False)
 
@@ -75,6 +76,7 @@ class SysField(BaseModel):
     )
     title = db.Column(db.String(120), comment="Label for UI")
     type = db.Column(db.String(50), nullable=False, comment="Field type")
+    translations = db.Column(db.JSON, comment="JSON for translated titles and help text")
 
     required = db.Column(db.Boolean, default=False)
     is_unique = db.Column(db.Boolean, default=False)
@@ -298,6 +300,12 @@ class SysAction(BaseModel):
     def __repr__(self):
         return f"<SysAction {self.name}>"
 
+    def get_localized_title(self, lang='en'):
+        """Return translated title if available."""
+        if self.translations and lang in self.translations:
+            return self.translations[lang].get('title', self.title)
+        return self.title
+
 
 class SysChart(BaseModel):
     __tablename__ = "sys_charts"
@@ -383,3 +391,9 @@ class SysReadModel(BaseModel):
 
     def __repr__(self):
         return f"<SysReadModel {self.model_name}:{self.record_id} (Project {self.projectId})>"
+
+    def get_localized_title(self, lang='en'):
+        """Return translated title if available."""
+        if self.translations and lang in self.translations:
+            return self.translations[lang].get('title', self.title)
+        return self.title

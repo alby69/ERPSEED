@@ -2,7 +2,7 @@
 Base models with multi-tenant support.
 All models inherit from BaseModel which includes basic fields and utility methods.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.extensions import db
 
 
@@ -18,8 +18,8 @@ class BaseModel(db.Model):
     __abstract__ = True
 
     id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     deleted_at = db.Column(db.DateTime, nullable=True, index=True)
 
     @property
@@ -28,7 +28,7 @@ class BaseModel(db.Model):
 
     def soft_delete(self):
         """Mark record as deleted without removing."""
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = datetime.now(timezone.utc)
         db.session.add(self)
 
     def restore(self):

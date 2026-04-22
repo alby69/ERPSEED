@@ -20,6 +20,8 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 ### Dettagli Fase 0
 
 #### 0.2 - Consolidare BaseModel
+- Unificato `BaseModel` in `backend/core/models/base.py` con supporto soft delete e utility `to_dict`.
+- `backend/models/base.py` mantenuto come proxy per retrocompatibilità.
 
 **Problema Risolto:**
 - Unificato `BaseModel` in `backend/core/models/base.py` con supporto soft delete.
