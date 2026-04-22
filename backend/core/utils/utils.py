@@ -1,3 +1,6 @@
+"""
+Centralized utilities for ERPSeed.
+"""
 from flask import request
 from sqlalchemy import or_, desc, asc, func, inspect, Table
 import json
@@ -230,10 +233,32 @@ def serialize_value(value):
         return float(value)
     return value
 
-def paginate(query):
+def safe_json_parse(value, default=None):
+    """Safely parse JSON string."""
+    if not value:
+        return default
+    if isinstance(value, (dict, list)):
+        return value
+    try:
+        return json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return default
+
+def check_unique(model, field, value, exclude_id=None):
+    """Check if a value is unique for a given model field."""
+    query = model.query.filter(getattr(model, field) == value)
+    if exclude_id:
+        query = query.filter(model.id != exclude_id)
+    return query.first() is None
+
+def paginate(query, page=None, per_page=None):
     """Paginate the query and return items and headers for the frontend."""
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    page = page or request.args.get('page', 1, type=int)
+    per_page = per_page or request.args.get('per_page', 10, type=int)
+
+    # Cap per_page to 100
+    per_page = min(per_page, 100)
+
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
     headers = {
