@@ -1,7 +1,7 @@
 """
 Base service class and service layer utilities.
 """
-from datetime import datetime, timezone
+from datetime import datetime
 from backend.core.utils.utils import paginate, check_unique, log_audit
 
 class BaseService:
@@ -82,6 +82,21 @@ class BaseService:
     def rollback(self):
         """Rollback current transaction."""
         self.db.session.rollback()
+
+    def paginate(self, query, page=None, per_page=None):
+        """Standard pagination."""
+        return paginate(query, page, per_page)
+
+    def check_unique(self, field, value, exclude_id=None):
+        """Check uniqueness using the service's model."""
+        if self.model is None:
+            raise ValueError("Model not defined for this service")
+        return check_unique(self.model, field, value, exclude_id)
+
+    def log_action(self, user_id, record_id, action, changes=None):
+        """Log an audit action."""
+        model_name = self.model.__name__ if self.model else "Unknown"
+        log_audit(user_id, model_name, record_id, action, changes)
 
     def get_all(self, query=None):
         """Get all records, optionally filtered by a query."""
