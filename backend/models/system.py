@@ -164,6 +164,10 @@ class SysView(BaseModel):
         db.Text,
         comment="JSON configuration: columns, filters, sorting, actions, etc.",
     )
+    layout = db.Column(
+        db.Text,
+        comment="Visual layout (x, y, w, h) for canvas",
+    )
 
     is_default = db.Column(
         db.Boolean, default=False, comment="Is default view for this model"
@@ -177,6 +181,19 @@ class SysView(BaseModel):
     )
 
     model = db.relationship("SysModel", backref=db.backref("views", lazy="dynamic"))
+
+    def get_layout(self):
+        """Get parsed layout."""
+        try:
+            import json
+            return json.loads(self.layout) if self.layout else []
+        except:
+            return []
+
+    def set_layout(self, layout):
+        """Set layout from list/dict."""
+        import json
+        self.layout = json.dumps(layout)
 
 
 class SysComponent(BaseModel):

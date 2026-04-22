@@ -37,6 +37,71 @@ class Workflow(db.Model):
         """Get ordered list of steps."""
         return self.steps.order_by(WorkflowStep.order).all()
 
+    def to_graph(self):
+        """Convert workflow to a graph representation (nodes and edges) for the visual editor."""
+        nodes = []
+        edges = []
+
+        # Trigger node
+        nodes.append({
+            "id": "trigger",
+            "type": "trigger",
+            "data": {"label": f"Trigger: {self.trigger_event}"},
+            "position": {"x": 250, "y": 0}
+        })
+
+        steps = self.get_steps()
+        prev_node_id = "trigger"
+
+        for i, step in enumerate(steps):
+            node_id = f"step_{step.id}"
+            nodes.append({
+                "id": node_id,
+                "type": step.step_type,
+                "data": {
+                    "label": step.name,
+                    "config": step.get_config(),
+                    "stepId": step.id
+                },
+                "position": {"x": 250, "y": (i + 1) * 100}
+            })
+
+            edges.append({
+                "id": f"edge_{prev_node_id}_{node_id}",
+                "source": prev_node_id,
+                "target": node_id
+            })
+            prev_node_id = node_id
+
+        return {"nodes": nodes, "edges": edges}
+
+    def from_graph(self, graph_data):
+        """Update workflow steps from a graph representation."""
+        # This is a simplified version. A real implementation would handle branches and conditions.
+        nodes = graph_data.get("nodes", [])
+
+        # Identify steps and their order based on connections or position
+        # For now, we assume a linear sequence based on nodes excluding trigger
+        step_nodes = [n for n in nodes if n["type"] != "trigger"]
+
+        # Remove existing steps and recreate? Or update?
+        # Recreating is simpler for this POC
+        from backend.extensions import db
+        for step in self.steps:
+            db.session.delete(step)
+
+        for i, node in enumerate(step_nodes):
+            new_step = WorkflowStep(
+                workflowId=self.id,
+                name=node["data"].get("label", f"Step {i}"),
+                step_type=node["type"],
+                order=i
+            )
+            new_step.set_config(node["data"].get("config", {}))
+            db.session.add(new_step)
+
+        db.session.commit()
+
 
 class WorkflowStep(db.Model):
     """Individual step in a workflow."""

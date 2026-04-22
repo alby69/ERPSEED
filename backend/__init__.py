@@ -11,6 +11,7 @@ from .extensions import db, socketio, api, jwt, ma, migrate
 
 # Import Core Middleware
 from .core.middleware.tenant_middleware import TenantMiddleware
+from .core.middleware.rate_limit import rate_limit_middleware
 from .core.services.query_filter import TenantQueryFilter, SoftDeleteFilter
 
 # Import new architectural components
@@ -262,6 +263,9 @@ def create_app(db_url=None):
             add_column_if_not_exists('sys_models', 'updated_at', 'TIMESTAMP')
             add_column_if_not_exists('sys_fields', 'created_at', 'TIMESTAMP')
             add_column_if_not_exists('sys_fields', 'updated_at', 'TIMESTAMP')
+
+    # --- Initialize Middleware ---
+    rate_limit_middleware(app)
 
     # --- Initialize Multi-tenant Filters ---
     TenantQueryFilter.init_app(app)

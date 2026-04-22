@@ -91,8 +91,8 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 | # | Task | Priorità | Complessità | Stato |
 |---|------|----------|------------|-------|
-| 4.1 | Rate Limiting | 🟡 ALTA | Bassa | ⏳ TODO |
-| 4.2 | Input Sanitization | 🟡 ALTA | Media | ⏳ TODO |
+| 4.1 | Rate Limiting | 🟡 ALTA | Bassa | ✅ COMPLETATO |
+| 4.2 | Input Sanitization | 🟡 ALTA | Media | ✅ COMPLETATO |
 | 4.3 | Query Optimization | 🟡 ALTA | Media | ⏳ TODO |
 | 4.4 | Redis Caching | 🟢 MEDIA | Media | ⏳ TODO |
 | 4.5 | API Versioning | 🟢 MEDIA | Bassa | ✅ COMPLETATO |
