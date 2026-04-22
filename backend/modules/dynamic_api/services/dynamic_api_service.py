@@ -416,27 +416,6 @@ class DynamicApiService(BaseService):
         """Get model metadata for frontend, applying translations."""
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "read", projectId)
-
-        # Apply translations based on current locale
-        from flask_babel import get_locale
-
-        lang = str(get_locale())
-
-        if sys_model.translations and lang in sys_model.translations:
-            sys_model.title = sys_model.translations[lang].get(
-                "title", sys_model.title
-            )
-            sys_model.description = sys_model.translations[lang].get(
-                "description", sys_model.description
-            )
-
-        for field in sys_model.fields:
-            if field.translations and lang in field.translations:
-                field.title = field.translations[lang].get("title", field.title)
-                field.help_text = field.translations[lang].get(
-                    "help_text", field.help_text
-                )
-
         return sys_model
 
     def clone_record(self, projectId, model_name, itemId):
@@ -522,23 +501,6 @@ class DynamicApiService(BaseService):
             self.db.session.commit()
 
         return {"message": f"Imported {inserted_count} records.", "errors": errors}, 200
-
-    def import_preview(self, projectId, model_name, file):
-        """Preview import without saving."""
-        sys_model = self.get_model(projectId, model_name, require_published=True)
-        self.check_permissions(sys_model, "read", projectId)
-
-        try:
-            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
-            csv_input = csv.DictReader(stream)
-            preview_data = []
-            for i, row in enumerate(csv_input):
-                if i >= 10: break # Limit preview to 10 rows
-                preview_data.append(row)
-            return {"preview": preview_data, "total_rows": "Unknown"}, 200
-        except Exception as e:
-            from flask_smorest import abort
-            abort(400, message=f"Error reading CSV: {str(e)}")
 
     def export_data(self, projectId, model_name, format='csv'):
         """Export data from a dynamic table."""
