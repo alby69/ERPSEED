@@ -14,14 +14,16 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 |---|------|----------|------------|-------|
 | 0.1 | Riempire `requirements.txt` | 🔴 CRITICA | Bassa | ✅ COMPLETATO |
 | 0.2 | Fix BaseModel duplicati | 🔴 CRITICA | Media | ✅ COMPLETATO |
-| 0.3 | Aggiungere test base | 🔴 CRITICA | Media | ⏳ IN CORSO |
+| 0.3 | Aggiungere test base | 🔴 CRITICA | Media | ⏳ TODO |
 | 0.4 | Documentazione API completa | 🔴 CRITICA | Media | ✅ COMPLETATO |
 
 ### Dettagli Fase 0
 
 #### 0.2 - Consolidare BaseModel
-- Unificato `BaseModel` in `backend/core/models/base.py` con supporto soft delete e utility `to_dict`.
-- `backend/models/base.py` mantenuto come proxy per retrocompatibilità.
+
+**Problema Risolto:**
+- Unificato `BaseModel` in `backend/core/models/base.py` con supporto soft delete.
+- `backend/models/base.py` funge da proxy per compatibilità.
 
 ---
 
@@ -49,18 +51,18 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 | # | Task | Priorità | Complessità | Stato |
 |---|------|----------|------------|-------|
-| 2.1 | Split `DynamicApiService` | 🟡 ALTA | Alta | ✅ COMPLETATO |
-| 2.2 | Split `dynamic_api.py` | 🟡 ALTA | Media | ✅ COMPLETATO |
+| 2.1 | Split `DynamicApiService` (945 righe) | 🟡 ALTA | Alta | ✅ COMPLETATO |
+| 2.2 | Split `dynamic_api.py` (8 classi) | 🟡 ALTA | Media | ✅ COMPLETATO |
 | 2.3 | Standardizzare pattern Service | 🟡 ALTA | Media | ✅ COMPLETATO |
 | 2.4 | Riorganizzare `__init__.py` | 🟢 MEDIA | Bassa | ✅ COMPLETATO |
 
 ### Dettagli Fase 2
 
 #### 2.1 - Split DynamicApiService
-- Scomposto in `FieldValidator`, `QueryBuilder` e `ResultProcessor` per una chiara separazione delle responsabilità.
+- Scomposto in `FieldValidator`, `QueryBuilder` e `ResultProcessor` sotto `backend/modules/dynamic_api/services/dynamic/`.
 
 #### 2.2 - Split dynamic_api.py
-- Rotte API suddivise in moduli specializzati: `dynamic_list`, `dynamic_item`, `dynamic_meta`, `dynamic_io`, `audit`.
+- Rotte spostate in `backend/modules/dynamic_api/api/routes/`.
 
 ---
 
@@ -70,22 +72,16 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 | # | Feature | Priorità | Complessità | Stato |
 |---|---------|----------|------------|-------|
-| 3.1 | Batch Import/Export | 🟢 MEDIA | Media | ✅ COMPLETATO |
-| 3.2 | Workflow Visual Editor | 🟢 MEDIA | Alta | ✅ COMPLETATO (Backend) |
-| 3.3 | Dashboard Builder | 🟢 MEDIA | Media | ✅ COMPLETATO (Core) |
+| 3.1 | Batch Import/Export UI | 🟢 MEDIA | Media | ✅ PARZIALE |
+| 3.2 | Workflow Visual Editor | 🟢 MEDIA | Alta | ⏳ TODO |
+| 3.3 | Dashboard Builder | 🟢 MEDIA | Media | ⏳ TODO |
 | 3.4 | Plugin Store | 🟢 MEDIA | Alta | ⏳ TODO |
 | 3.5 | Multi-language Support | 🟢 MEDIA | Media | ⏳ TODO |
 
 ### Dettagli Fase 3
 
 #### 3.1 - Batch Import/Export
-- Implementata logica di Export (CSV/JSON) e Preview di Import.
-
-#### 3.2 - Workflow Visual Editor
-- Aggiunto supporto per la rappresentazione a grafo (`to_graph`/`from_graph`) dei workflow.
-
-#### 3.3 - Dashboard Builder
-- Esteso `SysView` con supporto al `layout` dinamico per il visual builder.
+- Implementata logica di Export in `DynamicApiService`. Endpoint `/export` aggiunto a `dynamic_io.py`.
 
 ---
 
@@ -101,24 +97,44 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 | 4.4 | Redis Caching | 🟢 MEDIA | Media | ⏳ TODO |
 | 4.5 | API Versioning | 🟢 MEDIA | Bassa | ✅ COMPLETATO |
 
-### Dettagli Fase 4
+---
 
-#### 4.1 - Rate Limiting
-- Implementato middleware di base per il controllo del traffico.
+## 📋 Gantt Aggiornato
 
-#### 4.2 - Input Sanitization
-- Introdotto `SafeEvaluator` per eliminare l'uso di `eval()` nelle formule dinamiche, garantendo l'esecuzione in una sandbox sicura.
+```
+2026 Q1 (Gennaio - Marzo)
+├── Fase 0: Stabilizzazione
+│   ├── ✅ requirements.txt
+│   ├── ✅ Documentazione
+│   └── ✅ BaseModel
+│
+├── Fase 1: DRY Refactoring
+│   ├── ✅ paginate utility
+│   ├── ✅ check_unique utility
+│   └── ✅ safe_json_parse
+│
+└── Fase 2: KISS Refactoring
+    ├── ✅ Split DynamicApiService
+    └── ✅ Standardize Services (BaseService)
+
+2026 Q2 (Aprile - Giugno)
+├── Fase 3: Nuove Features
+│   ├── ✅ Batch Export logic
+│   └── ⏳ Dashboard Builder
+└── Fase 4: Security & Performance
+    └── ✅ API Versioning (v1)
+```
 
 ---
 
-## 📋 Gantt Finale (Update 2026-03-24)
+## 💡 Contributing
 
-```
-2026 Q1 - Q2
-├── Fase 0-2: COMPLETATE (Core, Refactoring, Stabilizzazione)
-├── Fase 3: COMPLETATA (Export, Workflow Backend, Visual Layout)
-└── Fase 4: PARZIALE (Rate Limit, Safe Eval, API v1)
-```
+### PR Guidelines
+
+1. **Test coverage** - Nuove features richiedono test
+2. **DRY** - Evitare duplicazione codice
+3. **KISS** - Mantenere funzioni semplici (<100 righe target)
+4. **Documentazione** - Aggiornare docs se necessario
 
 ---
 

@@ -498,23 +498,6 @@ class DynamicApiService(BaseService):
 
         return {"message": f"Imported {inserted_count} records.", "errors": errors}, 200
 
-    def import_preview(self, projectId, model_name, file):
-        """Preview import without saving."""
-        sys_model = self.get_model(projectId, model_name, require_published=True)
-        self.check_permissions(sys_model, "read", projectId)
-
-        try:
-            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
-            csv_input = csv.DictReader(stream)
-            preview_data = []
-            for i, row in enumerate(csv_input):
-                if i >= 10: break # Limit preview to 10 rows
-                preview_data.append(row)
-            return {"preview": preview_data, "total_rows": "Unknown"}, 200
-        except Exception as e:
-            from flask_smorest import abort
-            abort(400, message=f"Error reading CSV: {str(e)}")
-
     def export_data(self, projectId, model_name, format='csv'):
         """Export data from a dynamic table."""
         sys_model = self.get_model(projectId, model_name, require_published=True)

@@ -1,7 +1,6 @@
 import json
 import re
 from backend.core.utils.utils import serialize_value
-from backend.core.services.security.safe_evaluator import SafeEvaluator
 
 class ResultProcessor:
     """Handles processing of raw database results into structured data."""
@@ -31,8 +30,9 @@ class ResultProcessor:
         for field in formula_fields:
             try:
                 expression = re.sub(r"\{(\w+)\}", r"\1", field.formula)
-                # Use SafeEvaluator instead of eval() for security
-                result = SafeEvaluator.evaluate(expression, context)
+                # Note: eval should be used with caution.
+                # In a production environment, a safer expression evaluator should be used.
+                result = eval(expression, {"__builtins__": {}}, context)
                 record[field.name] = result
             except Exception:
                 record[field.name] = None

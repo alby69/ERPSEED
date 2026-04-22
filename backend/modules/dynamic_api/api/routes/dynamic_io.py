@@ -49,19 +49,3 @@ def register_io_routes(blp):
                     headers={"Content-disposition": f"attachment; filename={model_name}_export.csv"}
                 )
             return result
-
-    @blp.route("/data/<string:model_name>/import-preview")
-    class ImportPreview(MethodView):
-        @blp.doc(security=[{"jwt": []}])
-        @jwt_required()
-        @blp.arguments(ImportFileSchema, location="files")
-        @blp.response(200, {"type": "object"})
-        def post(self, files, projectId, model_name):
-            """Preview import without saving."""
-            file = files['file']
-            result, status = dynamic_api_service.import_preview(
-                projectId=projectId,
-                model_name=model_name,
-                file=file
-            )
-            return result, status
