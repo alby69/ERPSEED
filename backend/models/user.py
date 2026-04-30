@@ -1,3 +1,10 @@
+"""
+User Model
+----------
+Represents a system user. Supports multi-tenancy (via tenant_id) and
+project-based membership. Includes security features like password hashing
+and role-based authorization.
+"""
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 from backend.extensions import db
@@ -68,6 +75,9 @@ class User(BaseModel):
         return full or self.email
 
     def set_password(self, password):
+        """
+        Hashes and stores the user's password.
+        """
         self.password_hash = generate_password_hash(password)
         self.force_password_change = False
         self.password_reset_token = None

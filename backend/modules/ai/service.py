@@ -1,7 +1,15 @@
 """
-AI Assistant Service for FlaskERP
-Uses LLM to generate ERP configurations from natural language
-With RAG Context Injection and Tool Calling support
+AI Assistant Service
+--------------------
+Provides an AI-driven interface for platform configuration.
+Uses Large Language Models (LLMs) to transform natural language requests
+into structured ERP configurations (models, views, workflows).
+
+Features:
+- RAG (Retrieval-Augmented Generation): Injects project context into LLM prompts.
+- Tool Calling: Allows the AI to interact with system components (UI builder, workflows, tests).
+- Modular Adapters: Support for OpenAI, Anthropic, Ollama, and OpenRouter.
+- Multi-step reasoning for complex configuration tasks.
 """
 
 import json
@@ -179,16 +187,22 @@ class AIService:
         apply_directly: bool = False,
     ) -> Dict[str, Any]:
         """
-        Generate ERP configuration from natural language request
+        Transforms a user's natural language request into a structured ERP configuration.
+
+        This process involves:
+        1. Building a context-aware prompt (RAG).
+        2. Calling the LLM with available system tools.
+        3. Parsing the response (which may include tool calls).
+        4. Generating a step-by-step execution plan for the UI.
 
         Args:
-            user_request: Natural language description of what the user wants
-            projectId: Target project ID
-            userId: ID of the user making the request
-            apply_directly: If True, apply the config immediately
+            user_request (str): The natural language instruction.
+            projectId (int): The target project.
+            userId (int, optional): The user initiating the request.
+            apply_directly (bool): Whether to skip the review phase (default: False).
 
         Returns:
-            Dictionary containing generated configuration and metadata
+            Dict: Result containing 'config', 'plan', and 'message'.
         """
         logger.info(f"AI: Generating config for request: {user_request[:50]}...")
 

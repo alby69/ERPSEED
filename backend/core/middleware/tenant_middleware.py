@@ -1,5 +1,9 @@
 """
-Tenant middleware - extracts and sets tenant context for each request.
+Tenant Middleware
+-----------------
+This module handles multi-tenant data isolation by identifying the current tenant
+from each incoming request (via headers, subdomains, or JWT tokens) and
+initializing the global TenantContext.
 """
 from flask import request, g
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
@@ -9,10 +13,12 @@ from backend.core.services.tenant import TenantContext
 
 class TenantMiddleware:
     """
-    Middleware that:
-    1. Extracts tenant from request
-    2. Sets tenant context
-    3. Automatically filters queries
+    Handles multi-tenancy logic at the request level.
+
+    Responsibilities:
+    - Identifying the tenant from 'X-Tenant-ID' header or subdomain.
+    - Setting the global TenantContext for the duration of the request.
+    - Providing headers in the response for frontend identification.
     """
 
     @staticmethod

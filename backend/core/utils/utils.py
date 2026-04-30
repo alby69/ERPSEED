@@ -1,5 +1,9 @@
 """
-Centralized utilities for ERPSeed.
+ERPSeed Utility Module
+----------------------
+This module provides centralized utility functions for the ERPSeed platform,
+including database query helpers (filtering, sorting, pagination),
+dynamic schema generation (SQLAlchemy), and data serialization.
 """
 from flask import request
 from sqlalchemy import or_, desc, asc, func, inspect, Table
@@ -15,8 +19,14 @@ from backend.extensions import db
 
 def safe_json_parse(value, default=None):
     """
-    Safely parse a JSON string or return the value if it's already a dict/list.
-    (Fase 1.3 DRY Utility)
+    Safely parses a JSON string or returns the value if it's already a dictionary or list.
+
+    Args:
+        value: The value to parse.
+        default: The default value to return if parsing fails.
+
+    Returns:
+        The parsed object or the default value.
     """
     if not value:
         return default
@@ -265,7 +275,17 @@ def check_unique(model, field, value, exclude_id=None):
     return query.first() is None
 
 def paginate(query, page=None, per_page=None):
-    """Paginate the query and return items and headers for the frontend."""
+    """
+    Paginates a SQLAlchemy query and prepares standardized headers for the frontend.
+
+    Args:
+        query: The SQLAlchemy query object.
+        page (int, optional): The page number.
+        per_page (int, optional): Items per page.
+
+    Returns:
+        tuple: (list of items, dictionary of headers)
+    """
     page = page or request.args.get('page', 1, type=int)
     per_page = per_page or request.args.get('per_page', 10, type=int)
 

@@ -1,7 +1,11 @@
 """
-Base service class and service layer utilities.
+Base Service Module
+-------------------
+This module defines the BaseService class, which provides a common foundation
+for all business logic services in the application. It includes standard
+CRUD operations, pagination, and uniqueness checks.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.core.utils.utils import paginate, check_unique, log_audit
 
 class BaseService:
@@ -32,7 +36,15 @@ class BaseService:
         return self._db
 
     def save(self, instance):
-        """Save instance to database."""
+        """
+        Saves a model instance to the database.
+
+        Args:
+            instance: The SQLAlchemy model instance to save.
+
+        Returns:
+            The saved instance.
+        """
         self.db.session.add(instance)
         self.db.session.commit()
         return instance

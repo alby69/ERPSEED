@@ -1,6 +1,21 @@
+/**
+ * Frontend Utilities Module
+ * -------------------------
+ * This module provides centralized utility functions for the React frontend,
+ * including a robust API fetcher with automatic JWT token management,
+ * formatting helpers, and nested object access.
+ */
+
 export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002';
 
+/**
+ * Retrieves a token from storage (localStorage or sessionStorage).
+ */
 const getToken = (key) => localStorage.getItem(key) || sessionStorage.getItem(key);
+
+/**
+ * Removes a token from both storage types.
+ */
 const removeToken = (key) => {
   localStorage.removeItem(key);
   sessionStorage.removeItem(key);
@@ -13,6 +28,19 @@ const setToken = (key, value) => {
   }
 };
 
+/**
+ * Enhanced fetch wrapper for ERPSeed API calls.
+ *
+ * Features:
+ * - Automatically injects JWT Bearer token
+ * - Handles 'Content-Type' for JSON and FormData
+ * - Automatic 401 token refresh logic
+ * - Standardized error handling
+ *
+ * @param {string} endpoint - API endpoint (relative to BASE_URL or absolute)
+ * @param {object} options - Fetch options
+ * @returns {Promise<Response>}
+ */
 export const apiFetch = async (endpoint, options = {}) => {
   let token = getToken('access_token');
   const headers = { ...options.headers };

@@ -1,3 +1,18 @@
+/**
+ * Generic CRUD Page Component
+ * --------------------------
+ * A highly reusable higher-order component that provides complete CRUD functionality
+ * for any given model. It automatically handles:
+ * - Data fetching and pagination (via useCrudData hook)
+ * - Search and filtering (global and column-specific)
+ * - Sorting
+ * - Creation and Edition via dynamic modals
+ * - Form validation (regex and required fields)
+ * - File uploads
+ * - CSV Import/Export
+ * - Multiple view modes: Table, Card (Grid), and Kanban
+ */
+
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { message } from 'antd';
@@ -54,6 +69,20 @@ const TagInput = ({ value = [], onChange, disabled }) => {
   );
 };
 
+/**
+ * GenericCrudPage Component
+ *
+ * @param {string} pageTitle - Title displayed at the top of the page.
+ * @param {string} apiPath - The base API endpoint for CRUD operations.
+ * @param {Array} columns - Configuration for table columns and grid cards.
+ * @param {Array} formFields - Configuration for the creation/edit form fields.
+ * @param {Array} filterTabs - Configuration for top-level filter tabs.
+ * @param {string} defaultView - Initial view mode ('table', 'card', 'kanban').
+ * @param {object} defaultSort - Initial sort configuration { field, order }.
+ * @param {boolean} enableDateFilter - Whether to show date range filters.
+ * @param {object} kanbanConfig - Configuration for Kanban board (columns, status field).
+ * @param {boolean} embedded - If true, renders without the global Layout.
+ */
 function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, defaultView = 'table', defaultSort, enableDateFilter = false, kanbanConfig, embedded = false }) {
   const navigate = useNavigate();
   const location = useLocation();

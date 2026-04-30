@@ -1,3 +1,10 @@
+"""
+ERPSeed Backend Application Factory
+-----------------------------------
+This module initializes the Flask application, configures extensions,
+registers blueprints, and sets up middleware and global error handlers.
+"""
+
 import os
 from typing import Any
 from flask import Flask, jsonify, request
@@ -125,8 +132,20 @@ class CustomJSONProvider(DefaultJSONProvider):
         return super().default(o)
 
 def create_app(db_url=None):
+    """
+    Factory function to create and configure the Flask application.
+
+    Args:
+        db_url (str, optional): Database URL. Defaults to environment variable.
+
+    Returns:
+        Flask: The configured Flask application instance.
+    """
     # Configure Marshmallow schema name resolver to avoid name conflicts in OpenAPI spec
     def schema_name_resolver(schema):
+        """
+        Resolves schema names for OpenAPI documentation to prevent conflicts.
+        """
         # Strettamente basato sul suggerimento della chat per risolvere i warning di apispec
         cls_name = schema.__class__.__name__
         module_name = getattr(schema, "__module__", "common").split(".")[-1]
@@ -163,6 +182,7 @@ def create_app(db_url=None):
     app.config["JWT_TOKEN_LOCATION"] = ["headers"]
 
     # --- Custom JSON Provider ---
+    # Standardizes JSON serialization for Decimal and other types
     app.json_provider_class = CustomJSONProvider
     app.json = app.json_provider_class(app)
 
@@ -278,6 +298,9 @@ def create_app(db_url=None):
     app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
 
     def get_locale():
+        """
+        Determines the best locale for the user based on request headers.
+        """
         # Get language from header Accept-Language
         return (
             request.accept_languages.best_match(["en", "it"])

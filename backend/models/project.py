@@ -1,3 +1,10 @@
+"""
+Project Model
+-------------
+Represents a project container within a tenant.
+Projects group dynamic models (SysModel) and have their own visual theme
+and member access list.
+"""
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 from backend.extensions import db
