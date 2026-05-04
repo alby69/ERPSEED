@@ -1,6 +1,15 @@
 """
-Dynamic API Service - Handles dynamic CRUD operations for builder models.
-Refactored version for better maintainability (KISS/DRY).
+Dynamic API Service
+-------------------
+This service handles dynamic CRUD operations for models created via the No-Code Builder.
+It manages schema resolution, data validation, file uploads, nested writes (master-detail),
+and provides advanced querying capabilities including filtering, sorting, and pagination.
+
+Key features:
+- Multi-tenant data isolation (via schema-per-project)
+- Role-based access control per model
+- Automatic handling of relations and formulas
+- CSV Import/Export functionality
 """
 
 import json
@@ -38,7 +47,17 @@ class DynamicApiService(BaseService):
     """
 
     def check_permissions(self, sys_model, action, projectId=None):
-        """Check role-based permissions for a model."""
+        """
+        Verifies if the current user has permission to perform a specific action on a model.
+
+        Args:
+            sys_model: The SysModel instance.
+            action (str): The action to check ('read' or 'write').
+            projectId (int, optional): The project ID to verify ownership.
+
+        Raises:
+            HTTPException: 401 (Unauthorized), 403 (Forbidden), or 404 (Not Found).
+        """
         from backend.models.user import User
         from flask_smorest import abort
 
@@ -168,7 +187,18 @@ class DynamicApiService(BaseService):
         return default_val
 
     def list_records(self, projectId, model_name, page=1, per_page=10):
-        """List records with filtering, sorting, pagination."""
+        """
+        Retrieves a paginated list of records for a dynamic model.
+
+        Supports:
+        - Global search (q parameter)
+        - Column-specific filtering
+        - Dynamic sorting
+        - Relation expansion
+
+        Returns:
+            tuple: (processed_results, response_headers)
+        """
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "read", projectId)
 

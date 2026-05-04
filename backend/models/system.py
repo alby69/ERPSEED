@@ -1,3 +1,11 @@
+"""
+System Metadata Models
+----------------------
+This module defines the core metadata entities that power the No-Code Builder.
+These models store the definitions for dynamic models (SysModel), their fields
+(SysField), visual representations (SysView, SysComponent, SysAction, SysChart),
+and versioning/performance optimizations (SysModelVersion, SysReadModel).
+"""
 from backend.extensions import db
 from backend.core.models.base import BaseModel
 
@@ -67,7 +75,10 @@ class SysModel(BaseModel):
 
 
 class SysField(BaseModel):
-    """Definition of a field (column) for a SysModel."""
+    """
+    Definition of a field (column) for a SysModel.
+    Supports basic types, relations, formulas, and UI-specific hints.
+    """
 
     __tablename__ = "sys_fields"
     name = db.Column(db.String(80), nullable=False, comment="Field name for display")
@@ -366,7 +377,11 @@ class SysModelVersion(BaseModel):
 from sqlalchemy.dialects.postgresql import JSONB
 
 class SysReadModel(BaseModel):
-    """Denormalized read model for high-performance queries."""
+    """
+    Denormalized read model for high-performance queries.
+    Stores record data in a JSONB field (PostgreSQL) for fast, schema-less access.
+    Used mainly for dashboards and consolidated views.
+    """
 
     __tablename__ = "sys_read_models"
 

@@ -1,9 +1,14 @@
+"""
+Service Container Module
+------------------------
+Implements a simple Dependency Injection (DI) container for the ERPSeed platform.
+Supports both transient and singleton (lazy-loaded) services.
+"""
 from typing import Callable, Any, Dict
 
 class ServiceContainer:
     """
-    Un semplice container per la dependency injection con supporto per servizi
-    transient e singleton (lazy loaded).
+    DI Container for managing service instances.
     """
 
     def __init__(self):
