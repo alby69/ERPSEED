@@ -104,7 +104,7 @@ class ProjectModels(MethodView):
 
         project = project_service.get_by_id(projectId, userId)
 
-        if user and user.role == "admin":
+        if user and user.role in ("admin", "owner"):
             return project.models
         else:
             return [m for m in project.models if m.status == "published"] # type: ignore

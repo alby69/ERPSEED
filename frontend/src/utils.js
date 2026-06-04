@@ -6,7 +6,7 @@
  * formatting helpers, and nested object access.
  */
 
-export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002';
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 /**
  * Retrieves a token from storage (localStorage or sessionStorage).
@@ -41,6 +41,20 @@ const setToken = (key, value) => {
  * @param {object} options - Fetch options
  * @returns {Promise<Response>}
  */
+/**
+ * Ensure endpoint starts with /api/v1/.
+ * Handles three cases:
+ *  - /projects        → /api/v1/projects
+ *  - /api/blocks/...   → /api/v1/blocks/...
+ *  - /api/v1/...       → unchanged
+ */
+const normalizeEndpoint = (ep) => {
+  if (ep.startsWith('http')) return ep;
+  if (ep.startsWith('/api/v1/')) return ep;
+  if (ep.startsWith('/api/')) return '/api/v1' + ep.slice(4);
+  return '/api/v1' + ep;
+};
+
 export const apiFetch = async (endpoint, options = {}) => {
   let token = getToken('access_token');
   const headers = { ...options.headers };
@@ -54,7 +68,7 @@ export const apiFetch = async (endpoint, options = {}) => {
     headers['Content-Type'] = 'application/json';
   }
 
-  const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
+  const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${normalizeEndpoint(endpoint)}`;
 
   let response = await fetch(url, { ...options, headers });
 
@@ -63,7 +77,7 @@ export const apiFetch = async (endpoint, options = {}) => {
     const refreshToken = getToken('refresh_token');
     if (refreshToken) {
       try {
-        const refreshRes = await fetch(`${BASE_URL}/api/v1/auth/refreshes`, {
+        const refreshRes = await fetch(`${BASE_URL}/api/v1/auth/refresh`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${refreshToken}`

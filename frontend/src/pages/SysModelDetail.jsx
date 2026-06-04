@@ -101,7 +101,7 @@ function SysModelDetail() {
       const response = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...fieldData, model_id: parseInt(modelId) })
+        body: JSON.stringify({ ...fieldData, modelId: parseInt(modelId) })
       });
 
       if (!response.ok) {

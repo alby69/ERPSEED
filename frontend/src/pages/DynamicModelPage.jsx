@@ -17,6 +17,7 @@ function DynamicModelPage() {
         const response = await apiFetch(`/projects/${projectId}/data/${modelName}/meta`);
         if (!response.ok) throw new Error('Failed to load model metadata');
         const data = await response.json();
+        data.fields = data.fields || data.model_fields || [];
 
         // Se ci sono campi 'lines', carica i metadati dei modelli collegati
         const linesFields = data.fields.filter(f => f.type === 'lines');
@@ -28,6 +29,7 @@ function DynamicModelPage() {
                 const detailRes = await apiFetch(`/projects/${projectId}/data/${opts.target_table}/meta`);
                 if (detailRes.ok) {
                   const detailMeta = await detailRes.json();
+                  detailMeta.fields = detailMeta.fields || detailMeta.model_fields || [];
                   // Arricchiamo il campo con i metadati del dettaglio per FormLines
                   field.columns = detailMeta.fields
                     .filter(f => f.name !== opts.foreign_key && f.name !== 'id') // Nascondi FK e ID
@@ -76,7 +78,12 @@ function DynamicModelPage() {
         row[f.name]
           ? <span className="badge bg-success">Sì</span>
           : <span className="badge bg-secondary">No</span>
-      ) : undefined
+      ) : f.type === 'relation' ? (row) => {
+        const val = row[f.name];
+        if (!val) return '';
+        if (typeof val === 'object') return val.plate || val.title || val.name || val.id || JSON.stringify(val);
+        return val;
+      } : undefined
     }));
 
   // Aggiunge colonna ID se non presente
@@ -113,6 +120,8 @@ function DynamicModelPage() {
           if (opts.target_table) {
             fieldConfig.type = 'select';
             fieldConfig.apiUrl = `/projects/${projectId}/data/${opts.target_table}`;
+            if (opts.label_field) fieldConfig.labelKey = opts.label_field;
+            if (opts.value_field) fieldConfig.valueKey = opts.value_field;
           }
         } catch (e) {
           console.error("Error parsing options for relation", f.name);
@@ -135,6 +144,13 @@ function DynamicModelPage() {
         fieldConfig.type = 'lines';
         fieldConfig.columns = f.columns || [];
         fieldConfig.fields = f.fields || [];
+        try {
+          const opts = JSON.parse(f.options || '{}');
+          if (opts.target_table && opts.foreign_key) {
+            fieldConfig.fetchUrl = `/projects/${projectId}/data/${opts.target_table}`;
+            fieldConfig.filterField = opts.foreign_key;
+          }
+        } catch (e) {}
       }
 
       return fieldConfig;

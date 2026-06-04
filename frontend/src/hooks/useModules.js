@@ -45,7 +45,7 @@ export function useModules() {
   const enableModule = useCallback(async (moduleId, config = {}, licenseKey = null) => {
     try {
       const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-      const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002';
+      const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
       const response = await fetch(`${BASE_URL}/api/v1/modules/enabled`, {
         method: 'POST',

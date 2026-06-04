@@ -23,14 +23,14 @@ function Dashboard() {
   const [dateFilters, setDateFilters] = useState({ from: '', to: '' });
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (user?.role && ['admin', 'owner'].includes(user.role)) {
       loadUsersList();
     }
     loadDashboards();
   }, [user]);
 
   const loadDashboards = () => {
-    apiFetch('/sys-dashboards').then(res => res.json()).then(data => {
+    apiFetch('/analytics/sys-dashboards').then(res => res.json()).then(data => {
       setDashboards(data);
       if (data.length > 0) {
         handleDashboardChange(data[0].id);
@@ -45,7 +45,7 @@ function Dashboard() {
       setDashboardLayout([]);
       return;
     }
-    apiFetch(`/sys-dashboards/${dashboardId}`).then(res => res.json()).then(dashboard => {
+    apiFetch(`/analytics/sys-dashboards/${dashboardId}`).then(res => res.json()).then(dashboard => {
       setSelectedDashboard(dashboard);
       try {
         const layoutData = JSON.parse(dashboard.layout || '{}');
@@ -138,7 +138,7 @@ function Dashboard() {
         <div className="text-center text-muted p-4 border rounded bg-light">Questa dashboard non ha ancora grafici.</div>
       )}
 
-      {user.role === 'admin' && (
+      {user.role && ['admin', 'owner'].includes(user.role) && (
         <div className="mt-4">
           <div className="d-flex justify-content-between align-items-center">
             <h4>Gestione Utenti (Area Admin)</h4>

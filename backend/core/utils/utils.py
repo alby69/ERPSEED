@@ -123,7 +123,7 @@ def _build_column_definition(field):
     if field.is_unique:
         column_def += ' UNIQUE'
 
-    if field.default_value is not None:
+    if field.default_value is not None and field.default_value != '':
         if field.type in ['string', 'text', 'date', 'datetime', 'select', 'file', 'image']:
             escaped_default = field.default_value.replace("'", "''")
             column_def += f" DEFAULT '{escaped_default}'"
@@ -313,14 +313,15 @@ def paginate(query, page=None, per_page=None):
 
     return pagination.items, headers
 
-def log_audit(userId, model_name, record_id, action, changes=None):
+def log_audit(userId, model_name, record_id, action, changes=None, tenant_id=1):
     """Logs an audit entry."""
     try:
         from backend.core.models.audit import AuditLog
         log = AuditLog(
             userId=userId,
-            model_name=model_name,
-            record_id=record_id,
+            tenant_id=tenant_id,
+            resource_type=model_name,
+            resource_id=record_id,
             action=action,
             changes=json.dumps(changes, default=str) if changes else None
         )

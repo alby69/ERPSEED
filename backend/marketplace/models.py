@@ -33,7 +33,7 @@ class Category(db.Model):
     )
 
     # Relationships
-    parent = db.relationship("Category", remote_side=[id], backref="children")
+    parent = db.relationship("Category", remote_side=lambda: [Category.id], backref="children")
     listings = db.relationship("BlockListing", back_populates="category")
 
     def __repr__(self):

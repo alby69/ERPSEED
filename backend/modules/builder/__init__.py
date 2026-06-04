@@ -50,6 +50,7 @@ class SysModelList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(201, SysModelSchema)
     def post(self):
         """Create a new system model"""
         # Get raw JSON data directly instead of using schema validation
@@ -84,6 +85,7 @@ class SysModelResource(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, SysModelSchema)
     def put(self, modelId):
         """Update system model"""
         from flask import request
@@ -103,6 +105,7 @@ class SysModelResource(MethodView):
 class SysFieldList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(201, SysFieldSchema)
     def post(self):
         """Add a field to a system model"""
         from flask import request
@@ -128,13 +131,14 @@ class SysFieldList(MethodView):
             summary_expression=data.get("summary_expression"),
             validation_regex=data.get("validation_regex"),
             validation_message=data.get("validation_message"),
-        ), 201
+        )
 
 
 @blp.route("/sys-fields/<int:field_id>")
 class SysFieldResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, SysFieldSchema)
     def put(self, field_id):
         """Update a system field"""
         from flask import request
@@ -428,6 +432,7 @@ class SysViewList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(201, SysViewSchema)
     def post(self):
         """Create a new system view"""
         from flask import request
@@ -447,7 +452,7 @@ class SysViewList(MethodView):
 
         db.session.add(view)
         db.session.commit()
-        return view, 201
+        return view
 
 
 @blp.route("/sys-views/<int:viewId>")
@@ -464,6 +469,7 @@ class SysViewResource(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, SysViewSchema)
     def put(self, viewId):
         """Update system view"""
         from flask import request
@@ -505,6 +511,7 @@ class SysComponentList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(201, SysComponentSchema)
     def post(self):
         """Create a new system component"""
         from flask import request
@@ -526,7 +533,7 @@ class SysComponentList(MethodView):
 
         db.session.add(component)
         db.session.commit()
-        return component, 201
+        return component
 
 
 @blp.route("/sys-components/<int:component_id>")
@@ -543,6 +550,7 @@ class SysComponentResource(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, SysComponentSchema)
     def put(self, component_id):
         """Update system component"""
         from flask import request
@@ -593,6 +601,7 @@ class SysActionList(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(201, SysActionSchema)
     def post(self):
         """Create a new system action"""
         from flask import request
@@ -617,7 +626,7 @@ class SysActionList(MethodView):
 
         db.session.add(action)
         db.session.commit()
-        return action, 201
+        return action
 
 
 @blp.route("/sys-actions/<int:action_id>")
@@ -634,6 +643,7 @@ class SysActionResource(MethodView):
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
+    @blp.response(200, SysActionSchema)
     def put(self, action_id):
         """Update system action"""
         from flask import request

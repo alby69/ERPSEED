@@ -3,7 +3,7 @@ from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
 from backend.modules.dynamic_api.service import get_dynamic_api_service
-from backend.core.schemas.dynamic_schemas import AnyJsonSchema, BulkDeleteSchema
+from backend.core.schemas.dynamic_schemas import BulkDeleteSchema
 
 dynamic_api_service = get_dynamic_api_service()
 
@@ -12,7 +12,6 @@ def register_list_routes(blp):
     class DynamicDataList(MethodView):
         @blp.doc(security=[{"jwt": []}])
         @jwt_required()
-        @blp.response(200, {"type": "object"})
         def get(self, projectId, model_name):
             """List records from a dynamically created table."""
             page = request.args.get('page', 1, type=int)
@@ -28,10 +27,9 @@ def register_list_routes(blp):
 
         @blp.doc(security=[{"jwt": []}])
         @jwt_required()
-        @blp.arguments(AnyJsonSchema)
-        @blp.response(201, {"type": "object"})
-        def post(self, data, projectId, model_name):
+        def post(self, projectId, model_name):
             """Create a new record in a dynamically created table."""
+            data = request.get_json()
             result, status = dynamic_api_service.create_record(
                 projectId=projectId,
                 model_name=model_name,
@@ -39,7 +37,7 @@ def register_list_routes(blp):
             )
             if status != 201:
                 abort(status, message=result.get('message', 'Error creating record.'))
-            return result
+            return result, 201
 
         @blp.doc(security=[{"jwt": []}])
         @jwt_required()

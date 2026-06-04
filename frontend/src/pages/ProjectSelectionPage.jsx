@@ -4,6 +4,7 @@ import { List, Avatar, Button, Typography, Spin, Alert, Modal, Input, Select, Ra
 import { PlusOutlined, ProjectOutlined, AppstoreOutlined, UnorderedListOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useAuth } from '../context';
+import { Layout } from '../components';
 import ProjectForm from '../components/ProjectForm';
 import ImportProjectButton from '../components/ImportProjectButton';
 
@@ -25,7 +26,7 @@ const ProjectSelectionPage = () => {
     const fetchProjects = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await apiFetch('/projects');
+            const response = await apiFetch('/api/v1/projects');
             if (!response.ok) {
                 const err = await response.json();
                 throw new Error(err.message || "Unable to load projects.");
@@ -119,6 +120,7 @@ const ProjectSelectionPage = () => {
     }
 
     return (
+        <Layout>
         <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                 <Title level={2} style={{ margin: 0 }}>
@@ -145,10 +147,10 @@ const ProjectSelectionPage = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{ width: 250 }}
                     />
-                    {user?.role === 'admin' && (
+                    {['admin', 'owner'].includes(user?.role) && (
                         <>
                             <ImportProjectButton onSuccess={fetchProjects} />
-                            <Button type="primary" icon={<PlusOutlined />} onClick={handleShowModal}>
+                            <Button type="primary" icon={<PlusOutlined />} onClick={() => handleShowModal()}>
                                 Create Project
                             </Button>
                         </>
@@ -174,7 +176,7 @@ const ProjectSelectionPage = () => {
                     renderItem={(project) => (
                         <List.Item
                             actions={[
-                                user?.role === 'admin' && (
+                                ['admin', 'owner'].includes(user?.role) && (
                                     <>
                                         <Button icon={<EditOutlined />} onClick={() => handleShowModal(project)}>
                                             Edit
@@ -212,7 +214,7 @@ const ProjectSelectionPage = () => {
                                     style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
                                     styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column' } }}
                                     actions={[
-                                        user?.role === 'admin' && (
+                                        ['admin', 'owner'].includes(user?.role) && (
                                             <>
                                                 <Button icon={<EditOutlined />} onClick={() => handleShowModal(project)}>
                                                     Edit
@@ -258,6 +260,7 @@ const ProjectSelectionPage = () => {
                 <ProjectForm project={editingProject} onSuccess={handleFormSuccess} onCancel={handleModalClose} />
             </Modal>
         </div>
+        </Layout>
     );
 };
 

@@ -28,14 +28,14 @@ We need a model to store vehicle information.
 ### Option A: Using the Visual Builder (Manual)
 1. In the Project Dashboard, go to **Models**.
 2. Click **New Model**.
-3. **Name**: `Vehicle`, **Table**: `vehicles`.
-4. Add the following fields:
-   - `Plate` (String, Required, Unique)
-   - `Model` (String, Required)
-   - `Brand` (Select: Fiat, Ford, Tesla, etc.)
-   - `PurchaseDate` (Date)
-   - `Mileage` (Integer)
-5. Click **Save and Publish**.
+3. Fill in **Name**: `Vehicle`, **Title**: `Vehicle` (lascia vuoto Table Name, viene generato automaticamente).
+4. Aggiungi i campi uno per uno con **Add New Field**:
+   - `plate` / `Plate` (String, Required, Unique)
+   - `model` / `Model` (String, Required)
+   - `brand` / `Brand` (Select — valori: Fiat, Ford, Tesla, etc.)
+   - `purchase_date` / `Purchase Date` (Date)
+   - `mileage` / `Mileage` (Integer)
+5. Dopo aver aggiunto tutti i campi, clicca **Generate/Update DB Table** per creare la tabella nel database.
 
 ### Option B: Using the AI Assistant (Fast)
 1. Open the **AI Assistant** (usually a floating bubble or a side panel).
@@ -53,39 +53,71 @@ Now let's track maintenance for these vehicles.
 2. Add fields:
    - `Description` (Text)
    - `Date` (Date, Required)
-   - `Cost` (Decimal)
-   - `Vehicle` (**Relation** to `Vehicle` model, Required).
-3. In the **Vehicle** relation options, set:
-   - **Target Model**: `Vehicle`
-   - **Label Field**: `Plate` (this is what you will see in the dropdown).
-4. Click **Save and Publish**.
+   - `Cost` (Integer — il tipo Decimal non è disponibile, usa Integer per i centesimi o Float)
+3. Aggiungi un campo **Relation** per collegare il veicolo:
+   - **Field Name**: `vehicle`
+   - **Field Title**: `Vehicle`
+   - **Type**: `Relation`
+   - **Target Table**: seleziona `vehicles (vehicles)`.
+   - **Label Field**: seleziona il campo da usare come etichetta nei menu a tendina (es. `plate (plate)`).
+   - **Required**: spunta la casella.
+4. **Save Field**.
+5. Torna alla lista campi e clicca **Generate Table** per sincronizzare lo schema del DB.
 
 ---
 
-## Step 4: Configure Views
+## Step 3b: Aggiungere un campo Lines (Master-Detail) su Vehicle
 
-ERPSeed automatically creates default list and form views, but let's customize them.
+Ora colleghiamo i due modelli: quando modifichi un veicolo, vuoi vedere tutte le sue manutenzioni inline.
 
-1. Go to **Views** -> **Vehicle List**.
-2. Drag and drop columns to reorder.
-3. Add a **Filter** to show only vehicles with mileage > 100,000.
-4. Save the view.
+1. Vai su **Models** → seleziona il modello **Vehicle**.
+2. Clicca **Add New Field**.
+3. Configura:
+   - **Field Name**: `maintenance_history`
+   - **Field Title**: `Cronologia Manutenzioni`
+   - **Type**: `Master-Detail` (`lines`)
+   - **Target Table**: `maintenance (maintenance)`
+   - **Foreign Key Field**: `vehicle` (il campo su Maintenance che punta a Vehicle)
+4. **Save Field**, poi **Generate Table**.
+
+Ora, quando modifichi un veicolo nell'interfaccia **Application**, vedrai una sezione "Cronologia Manutenzioni" con le righe di manutenzione collegate. Puoi:
+- **Aggiungere** nuove manutenzioni direttamente dal form del veicolo
+- **Modificare** righe esistenti
+- **Rimuovere** righe (cestino)
+
+Le righe vengono salvate automaticamente quando salvi il veicolo.
 
 ---
 
-## Step 5: Test your Application
+## Step 3c: Filtrare le manutenzioni per veicolo e data
 
-1. Go to the **Application** menu (the "play" icon or the project title in the sidebar).
-2. You should see **Vehicles** and **Maintenance** in the menu.
-3. Add a new Vehicle:
+Nella pagina **Maintenance** (Application → Maintenance):
+
+1. Usa il **filtro data** in alto per selezionare un intervallo (`date_from` / `date_to`).
+2. La tabella mostra il veicolo collegato con la targa (grazie al `label_field` configurato).
+3. Puoi filtrare per qualsiasi campo usando la barra di ricerca.
+
+Se vuoi vedere solo le manutenzioni di un singolo veicolo, clicca **Edit** sul veicolo in **Vehicle** e guarda la sezione "Cronologia Manutenzioni".
+
+---
+
+## Step 4: Test your Application
+
+1. Dopo aver generato la tabella, torna alla **Project Dashboard**.
+2. Clicca su **Application** (l'icona "play" nella sidebar o il nome del progetto).
+3. Dovresti vedere **Vehicles** nel menu laterale.
+4. Aggiungi un nuovo Vehicle:
    - Plate: `AB123CD`
    - Brand: `Ford`
    - Model: `Transit`
-4. Add a Maintenance record for this vehicle.
+   - Purchase Date: seleziona una data
+   - Mileage: `15000`
+
+I modelli e i dati sono ora gestiti tramite l'interfaccia **Application**, che espone automaticamente CRUD per ogni modello creato nel progetto.
 
 ---
 
-## Step 6: Add an Automation (Optional)
+## Step 5: Add an Automation (Optional)
 
 Let's notify the owner when a maintenance cost exceeds $1,000.
 
@@ -99,9 +131,18 @@ Let's notify the owner when a maintenance cost exceeds $1,000.
 ---
 
 ## Summary
-Congratulations! You've built a multi-model relational application with custom views and automation without writing a single line of code.
+Congratulations! You've built a multi-model relational application with master-detail views and date-range filtering without writing a single line of code.
+
+### What you built:
+- **Vehicle model** with plate, brand, model, purchase date, mileage
+- **Maintenance model** linked to Vehicle via a Relation field
+- **Label Field** configuration for readable dropdowns (plate instead of ID)
+- **Master-Detail view**: maintenance history inline on the Vehicle edit form
+- **Date range filters** on the Maintenance list page
+- **Automatic save**: lines data is persisted in a single transaction when saving the parent record
 
 ### Next Steps:
-- Explore **Dashboards** to visualize your fleet data.
-- Use **GDO Reconciliation** if you need to match fuel invoices with maintenance records.
-- Check the [Developer Guide](./DEVELOPER_GUIDE.md) if you want to extend this with custom Python logic.
+- Explore **Workflows** to add automation (e.g., alert when maintenance > €1000).
+- Explore **Dashboards** to visualize fleet costs.
+- Add more fields or models (drivers, fuel logs, insurance policies).
+- Check the [Developer Guide](./DEVELOPER_GUIDE.md) to extend with custom Python logic.

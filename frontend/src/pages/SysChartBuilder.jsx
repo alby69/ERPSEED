@@ -60,7 +60,7 @@ function SysChartBuilder() {
     try {
       setLoading(true);
       const [chartsRes, modelsRes] = await Promise.all([
-        apiFetch('/sys-charts'),
+        apiFetch('/analytics/sys-charts'),
         apiFetch('/sys-models')
       ]);
 
@@ -97,7 +97,7 @@ function SysChartBuilder() {
         filters_config: newChart.filters_config
       };
 
-      const res = await apiFetch('/sys-charts', {
+      const res = await apiFetch('/analytics/sys-charts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -139,7 +139,7 @@ function SysChartBuilder() {
         filters_config: newChart.filters_config
       };
 
-      const res = await apiFetch(`/sys-charts/${editingChart.id}`, {
+      const res = await apiFetch(`/analytics/sys-charts/${editingChart.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -160,7 +160,7 @@ function SysChartBuilder() {
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this chart?")) return;
-    await apiFetch(`/sys-charts/${id}`, { method: 'DELETE' });
+    await apiFetch(`/analytics/sys-charts/${id}`, { method: 'DELETE' });
     fetchData();
   };
 
@@ -213,7 +213,7 @@ function SysChartBuilder() {
 
   const saveFiltersConfig = async () => {
     try {
-      const res = await apiFetch(`/sys-charts/${editingChart.id}`, {
+      const res = await apiFetch(`/analytics/sys-charts/${editingChart.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filters_config: newChart.filters_config })

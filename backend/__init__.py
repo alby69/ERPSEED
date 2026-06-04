@@ -65,6 +65,7 @@ from .modules.automation.api.workflows_api import blp as workflows_bp
 # Import purchases and builder APIs
 from .modules.purchases.api.rest_api import blp as purchases_bp
 from .modules.builder.api import blp as builder_bp
+from .modules.builder import blp as builder_init_bp
 
 # Import Core API blueprints (additional)
 from .core.api.tenant import tenant_bp
@@ -160,6 +161,7 @@ def create_app(db_url=None):
         return f"{display_name}_{module_name}"
 
     app = Flask(__name__)
+    app.url_map.strict_slashes = False
 
     # --- Configuration ---
     app.config["API_TITLE"] = "ERPSeed API"
@@ -369,6 +371,7 @@ def create_app(db_url=None):
     api.register_blueprint(users_bp, url_prefix=f"{API_V1_PREFIX}/users", name="api_users")
     api.register_blueprint(projects_bp, url_prefix=f"{API_V1_PREFIX}/projects", name="api_projects")
     api.register_blueprint(builder_bp, url_prefix=f"{API_V1_PREFIX}/builder", name="api_builder")
+    api.register_blueprint(builder_init_bp, url_prefix=f"{API_V1_PREFIX}", name="api_builder_init")
     api.register_blueprint(ai_bp, url_prefix=f"{API_V1_PREFIX}/ai", name="api_ai")
     api.register_blueprint(products_api_bp, url_prefix=f"{API_V1_PREFIX}/products", name="api_products")
     api.register_blueprint(sales_api_bp, url_prefix=f"{API_V1_PREFIX}/sales", name="api_sales")

@@ -29,6 +29,7 @@ function DynamicPageWrapper() {
           throw new Error('Failed to load model metadata');
         }
         const model = await response.json();
+        model.fields = model.fields || model.model_fields || [];
 
         // Trasforma i campi del modello in configurazione per GenericCrudPage
         const columns = [];

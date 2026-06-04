@@ -17,6 +17,7 @@ const ProjectLayout = () => {
 
     useEffect(() => {
         if (projectId) {
+            localStorage.setItem('currentProjectId', projectId);
             setLoading(true);
             Promise.all([
                 apiFetch(`/projects/${projectId}/models`),
@@ -34,7 +35,6 @@ const ProjectLayout = () => {
                     // Add published modules (App-like entries)
                     const modules = modulesData.modules || [];
                     modules.forEach(module => {
-                        // Special handling for GDO Reconciliation module
                         if (module.name === 'gdo_reconciliation') {
                             menuItems.push({
                                 key: `module-gdo`,
@@ -52,14 +52,18 @@ const ProjectLayout = () => {
                         }
                     });
 
-                    // Add individual models (for direct access)
-                    models.forEach(model => {
+                    // Group models under the project name
+                    if (models.length > 0) {
                         menuItems.push({
-                            key: model.name,
-                            label: model.title || model.name,
-                            path: `/projects/${projectId}/data/${model.name}`
+                            key: `project-${projectId}-models`,
+                            label: project.title || project.name,
+                            children: models.map(model => ({
+                                key: model.name,
+                                label: model.title || model.name,
+                                path: `/projects/${projectId}/data/${model.name}`
+                            }))
                         });
-                    });
+                    }
 
                     setProjectMenuItems(menuItems);
                     setProjectTitle(project.title);

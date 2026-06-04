@@ -13,7 +13,6 @@ def register_io_routes(blp):
         @blp.doc(security=[{"jwt": []}])
         @jwt_required()
         @blp.arguments(ImportFileSchema, location="files")
-        @blp.response(200, {"type": "object"})
         def post(self, files, projectId, model_name):
             """Import data from CSV."""
             file = files['file']

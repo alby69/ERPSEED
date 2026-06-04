@@ -18,18 +18,28 @@ def init_db():
         print("Creating tables...")
         db.create_all()
 
+        # Check if already seeded
+        existing_tenant = Tenant.query.filter_by(slug='flaskerp-main').first()
+        if existing_tenant:
+            print(f"Database already seeded (tenant '{existing_tenant.slug}' found). Skipping.")
+            return True
+
         # Create owner user
         print("Creating owner user...")
-        owner = User(
-            email='admin@erpseed.org',
-            first_name='Admin',
-            last_name='Admin',
-            role='owner',
-            is_active=True
-        )
-        owner.set_password('admin123')
-        db.session.add(owner)
-        db.session.flush()
+        owner = User.query.filter_by(email='admin@erpseed.org').first()
+        if not owner:
+            owner = User(
+                email='admin@erpseed.org',
+                first_name='Admin',
+                last_name='Admin',
+                role='owner',
+                is_active=True
+            )
+            owner.set_password('admin123')
+            db.session.add(owner)
+            db.session.flush()
+        else:
+            print("Owner user already exists, reusing.")
 
         # Create default tenant (ERP del owner)
         print("Creating default tenant...")
@@ -37,10 +47,9 @@ def init_db():
             name='ERPSeed Main',
             slug='flaskerp-main',
             email='admin@erpseed.org',
-            piano='starter',
-            stato='attivo',
-            owner_id=owner.id,
-            config={}
+            plan='starter',
+            is_active=True,
+            max_users=5,
         )
         db.session.add(tenant)
         db.session.flush()
@@ -60,32 +69,33 @@ def init_db():
         print("Creating core modules...")
 
         # Core module
-        core_modulo = Modulo(
-            nome='core',
-            versione='1.0.0_20260219',
-            titolo='Core Entities',
-            descrizione='Entità core del sistema: Soggetto, Ruolo, Indirizzo, Contatto',
-            autore='ERPSeed',
-            tipo='core',
-            stato='attivo',
-            dipendenze=[],
-            config_schema={},
-            definizione='{}'
-        )
-        db.session.add(core_modulo)
+        core_modulo = Modulo.query.filter_by(nome='core').first()
+        if not core_modulo:
+            core_modulo = Modulo(
+                nome='core',
+                versione='1.0.0_20260219',
+                titolo='Core Entities',
+                descrizione='Entità core del sistema: Soggetto, Ruolo, Indirizzo, Contatto',
+                autore='ERPSeed',
+                tipo='core',
+                stato='attivo',
+                dipendenze=[],
+                config_schema={},
+                definizione='{}'
+            )
+            db.session.add(core_modulo)
+            db.session.flush()
+        else:
+            print("Core module already exists, reusing.")
 
         # Activate core module for the tenant
         attivazione = ModuloAttivato(
             tenant_id=tenant.id,
-            modulo_id=None,  # Will be set after flush
+            modulo_id=core_modulo.id,
             config_tenant={},
             attivato_da_id=owner.id,
             stato='attivo'
         )
-        db.session.flush()
-
-        # Set modulo_id for attivazione
-        attivazione.modulo_id = core_modulo.id
         db.session.add(attivazione)
 
         # Create default roles for the tenant
@@ -103,8 +113,7 @@ def init_db():
                 codice=codice,
                 nome=nome,
                 descrizione=descrizione,
-                stato='attivo',
-                predefinito=True,
+                is_active=True,
                 tenant_id=tenant.id
             )
             db.session.add(ruolo)
@@ -120,7 +129,7 @@ def init_db():
         print(f"\nDefault Tenant:")
         print(f"  Name: {tenant.name}")
         print(f"  Slug: {tenant.slug}")
-        print(f"  Plan: {tenant.piano}")
+        print(f"  Plan: {tenant.plan}")
         print("="*50)
 
         return True

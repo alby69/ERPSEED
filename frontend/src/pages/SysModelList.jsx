@@ -44,7 +44,7 @@ function SysModelList() {
     try {
       const modelData = {
         ...newModel,
-        project_id: parseInt(projectId)
+        projectId: parseInt(projectId)
       };
       const response = await apiFetch('/sys-models', {
         method: 'POST',

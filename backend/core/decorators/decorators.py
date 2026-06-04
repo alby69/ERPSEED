@@ -11,7 +11,7 @@ def admin_required():
             verify_jwt_in_request()
             userId = get_jwt_identity()
             user = User.query.get(userId)
-            if user and user.role == 'admin':
+            if user and user.role in ('admin', 'owner'):
                 return fn(*args, **kwargs)
             else:
                 abort(403, message="Access restricted to administrators.")

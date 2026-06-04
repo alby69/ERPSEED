@@ -26,7 +26,7 @@ class UserRegister(MethodView):
         )
 
 
-@blp.route("/users")
+@blp.route("/")
 class UserList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
@@ -37,7 +37,7 @@ class UserList(MethodView):
         return items, 200, headers
 
 
-@blp.route("/users/<int:userId>")
+@blp.route("/<int:userId>")
 class UserResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()
@@ -64,7 +64,7 @@ class UserResource(MethodView):
         return ""
 
 
-@blp.route("/users/<int:userId>/password")
+@blp.route("/<int:userId>/password")
 class AdminUserPasswordReset(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @admin_required()

@@ -45,8 +45,8 @@ function DashboardBuilder() {
     setLoading(true);
     try {
       const [dashRes, chartsRes, modelsRes] = await Promise.all([
-        apiFetch(`/sys-dashboards?page=1&per_page=100`),
-        apiFetch(`/sys-charts?page=1&per_page=100`),
+        apiFetch(`/analytics/sys-dashboards?page=1&per_page=100`),
+        apiFetch(`/analytics/sys-charts?page=1&per_page=100`),
         apiFetch(`/sys-models?page=1&per_page=100`),
       ]);
 
@@ -105,11 +105,11 @@ function DashboardBuilder() {
         configuration: config,
       };
 
-      let url = '/sys-dashboards';
+      let url = '/analytics/sys-dashboards';
       let method = 'POST';
 
       if (currentDashboard.id) {
-        url = `/sys-dashboards/${currentDashboard.id}`;
+        url = `/analytics/sys-dashboards/${currentDashboard.id}`;
         method = 'PUT';
       }
 

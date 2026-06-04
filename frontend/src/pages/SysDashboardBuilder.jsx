@@ -27,7 +27,7 @@ function SysDashboardBuilder() {
     try {
       setLoading(true);
       const [dashboardsRes, chartsRes] = await Promise.all([
-        apiFetch('/sys-dashboards'),
+        apiFetch('/analytics/sys-dashboards'),
         apiFetch('/sys-charts')
       ]);
 
@@ -101,7 +101,7 @@ function SysDashboardBuilder() {
     });
     const payload = { title: formData.title, layout: layoutData };
 
-    const url = editingDashboard ? `/sys-dashboards/${editingDashboard.id}` : '/sys-dashboards';
+    const url = editingDashboard ? `/analytics/sys-dashboards/${editingDashboard.id}` : '/analytics/sys-dashboards';
     const method = editingDashboard ? 'PUT' : 'POST';
 
     try {
@@ -124,7 +124,7 @@ function SysDashboardBuilder() {
 
   const handleDelete = async (id) => {
     if (!confirm("Delete this dashboard?")) return;
-    await apiFetch(`/sys-dashboards/${id}`, { method: 'DELETE' });
+    await apiFetch(`/analytics/sys-dashboards/${id}`, { method: 'DELETE' });
     fetchData();
   };
 

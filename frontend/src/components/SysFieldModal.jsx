@@ -72,7 +72,9 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
   const [sysModels, setSysModels] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [targetFields, setTargetFields] = useState([]);
+  const [allTargetFields, setAllTargetFields] = useState([]);
   const [currentModelFields, setCurrentModelFields] = useState([]);
+  const [projectId, setProjectId] = useState(null);
 
   useEffect(() => {
     if (show) {
@@ -86,7 +88,10 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
       if (modelId) {
         apiFetch(`/sys-models/${modelId}`)
           .then(res => res.ok ? res.json() : {})
-          .then(data => setCurrentModelFields(data.fields || []))
+          .then(data => {
+            setCurrentModelFields(data.fields || data.model_fields || []);
+            if (data.project?.id) setProjectId(data.project.id);
+          })
           .catch(err => console.error("Failed to load current model fields", err));
       }
 
@@ -108,17 +113,24 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
   const targetTable = (() => { try { return JSON.parse(field.options || '{}').target_table; } catch { return null; } })();
 
   useEffect(() => {
-    if (field.type === 'summary' && targetTable) {
-      apiFetch(`/data/${targetTable}/meta`)
+    if (targetTable && projectId) {
+      apiFetch(`/projects/${projectId}/data/${targetTable}/meta`)
         .then(res => res.ok ? res.json() : null)
         .then(data => {
-          if (data && data.fields) {
-            setTargetFields(data.fields.filter(f => ['integer', 'float'].includes(f.type)));
+          if (data) {
+            const fields = data.model_fields || data.fields || [];
+            setAllTargetFields(fields);
+            if (field.type === 'summary') {
+              setTargetFields(fields.filter(f => ['integer', 'float'].includes(f.type)));
+            }
           }
         })
         .catch(err => console.error("Failed to load target fields", err));
+    } else {
+      setAllTargetFields([]);
+      setTargetFields([]);
     }
-  }, [field.type, targetTable]);
+  }, [field.type, targetTable, projectId]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -234,22 +246,46 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                 <div className="mb-3">
                   <label className="form-label">{['relation', 'lines'].includes(field.type) ? 'Target Table' : field.type === 'select' ? 'Options (List)' : 'Options (JSON)'}</label>
                   {['relation', 'lines'].includes(field.type) ? (
-                    <select
-                      className="form-select"
-                      value={(() => {
-                        try { return JSON.parse(field.options || '{}').target_table || ''; }
-                        catch { return ''; }
-                      })()}
-                      onChange={(e) => setField(prev => ({
-                        ...prev,
-                        options: JSON.stringify({ ...JSON.parse(prev.options || '{}'), target_table: e.target.value })
-                      }))}
-                    >
-                      <option value="">Select Table...</option>
-                      {sysModels.map(m => (
-                        <option key={m.id} value={m.name}>{m.title} ({m.name})</option>
-                      ))}
-                    </select>
+                    <div>
+                      <select
+                        className="form-select"
+                        value={(() => {
+                          try { return JSON.parse(field.options || '{}').target_table || ''; }
+                          catch { return ''; }
+                        })()}
+                        onChange={(e) => setField(prev => ({
+                          ...prev,
+                          options: JSON.stringify({ ...JSON.parse(prev.options || '{}'), target_table: e.target.value })
+                        }))}
+                      >
+                        <option value="">Select Table...</option>
+                        {sysModels.map(m => (
+                          <option key={m.id} value={m.name}>{m.title} ({m.name})</option>
+                        ))}
+                      </select>
+                      {field.type === 'relation' && targetTable && (
+                        <div className="mt-2">
+                          <label className="form-label">Label Field</label>
+                          <select
+                            className="form-select"
+                            value={(() => {
+                              try { return JSON.parse(field.options || '{}').label_field || ''; }
+                              catch { return ''; }
+                            })()}
+                            onChange={(e) => setField(prev => ({
+                              ...prev,
+                              options: JSON.stringify({ ...JSON.parse(prev.options || '{}'), label_field: e.target.value })
+                            }))}
+                          >
+                            <option value="">-- Select Label Field --</option>
+                            {allTargetFields.map(f => (
+                              <option key={f.name} value={f.name}>{f.title} ({f.name})</option>
+                            ))}
+                          </select>
+                          <div className="form-text text-muted small">This field will be shown in select dropdowns and references to this record.</div>
+                        </div>
+                      )}
+                    </div>
                   ) : field.type === 'select' ? (
                     <div className="border p-3 rounded bg-light">
                       <div className="d-flex flex-wrap gap-2 mb-2">

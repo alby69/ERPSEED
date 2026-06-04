@@ -67,6 +67,7 @@ class Tenant(BaseModel):
     )
     members = db.relationship("TenantMember", back_populates="tenant", lazy="dynamic")
 
+
     def __repr__(self):
         return f"<Tenant {self.slug}>"
 

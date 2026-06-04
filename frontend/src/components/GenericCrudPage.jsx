@@ -19,7 +19,7 @@ import { message } from 'antd';
 import Layout from './Layout';
 import SearchBar from './SearchBar';
 import Pagination from './Pagination';
-import DataTable from './DataTable';
+import DataTable, { ActionsMenu } from './DataTable';
 import FormLines from './FormLines';
 import KanbanView from './KanbanView';
 import TableSearch from './TableSearch';
@@ -300,7 +300,9 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
     const newFormData = { ...initialFormData };
     formFields.forEach(field => {
       let val = item[field.name];
-      if (val === null || val === undefined) val = '';
+      if (val === null || val === undefined) {
+        val = field.type === 'lines' || field.type === 'tags' ? [] : '';
+      }
 
       // Gestione specifica per le date: estrai YYYY-MM-DD dall'ISO string
       if (field.type === 'date' && val && val.length >= 10) {
@@ -346,6 +348,24 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
         }
     });
   };
+
+  // Carica dati esistenti per i campi lines (Master-Detail) quando si modifica un record
+  useEffect(() => {
+    if (!editingId) return;
+    formFields.forEach(async field => {
+      if (field.type === 'lines' && field.fetchUrl && field.filterField) {
+        try {
+          const res = await apiFetch(`${field.fetchUrl}?${field.filterField}=${editingId}`);
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : (data.items || []);
+          console.log(`[FormLines] Fetched ${field.name} (${field.filterField}=${editingId}):`, items);
+          setFormData(prev => ({ ...prev, [field.name]: items }));
+        } catch (e) {
+          console.error(`Failed to fetch lines data for ${field.name}`, e);
+        }
+      }
+    });
+  }, [editingId]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this item?")) return;
@@ -592,6 +612,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
       return (
         <FormLines
           name={field.name}
+          label={field.label}
           value={formData[field.name]}
           onChange={handleInputChange}
           columns={field.columns}
@@ -626,9 +647,24 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
         <select className="form-select" {...commonProps}>
           <option value="">Select...</option>
           {options.map(opt => {
-            // Determina valore e etichetta: supporta config custom (valueKey/labelKey) o default (id/name o value/label)
+            if (typeof opt === 'string' || typeof opt === 'number') {
+              return <option key={opt} value={opt}>{opt}</option>;
+            }
             const value = field.valueKey ? opt[field.valueKey] : (opt.value !== undefined ? opt.value : opt.id);
-            const label = field.labelKey ? opt[field.labelKey] : (opt.label !== undefined ? opt.label : opt.name);
+            let label;
+            if (field.labelKey) {
+              label = opt[field.labelKey];
+            } else if (opt.label !== undefined) {
+              label = opt.label;
+            } else if (opt.name !== undefined) {
+              label = opt.name;
+            } else if (opt.title !== undefined) {
+              label = opt.title;
+            } else {
+              const labelPriority = ['plate', 'name', 'title', 'code', 'label', 'description', 'email', 'username'];
+              const strKey = labelPriority.find(k => typeof opt[k] === 'string') || Object.keys(opt).find(k => typeof opt[k] === 'string' && k !== 'id');
+              label = strKey ? opt[strKey] : opt.id;
+            }
             return <option key={value} value={value}>{label}</option>;
           })}
         </select>
@@ -778,15 +814,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
           data={data}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          actions={(row) => (
-            <button
-              className="btn btn-sm btn-outline-secondary me-2"
-              onClick={() => handleClone(row)}
-title="Duplicate"
-            >
-              <i className="bi bi-files"></i>
-            </button>
-          )}
+          onClone={handleClone}
           sortConfig={{ key: sort.field, direction: sort.order }}
           onSort={handleSort}
           selectable={true}
@@ -808,10 +836,8 @@ title="Duplicate"
                       checked={selectedIds.includes(row.id)}
                       onChange={() => handleSelectRow(row.id)}
                     />
-                    <div className="d-flex gap-1">
-                      <button className="btn btn-sm btn-outline-secondary" onClick={() => handleClone(row)} title="Duplica"><i className="bi bi-files"></i></button>
-                      <button className="btn btn-sm btn-outline-primary" onClick={() => handleEdit(row)}><i className="bi bi-pencil"></i></button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(row.id)}><i className="bi bi-trash"></i></button>
+                    <div className="position-relative">
+                      <ActionsMenu row={row} onEdit={handleEdit} onDelete={handleDelete} onClone={handleClone} />
                     </div>
                   </div>
                   {columns.map((col, index) => (

@@ -64,7 +64,7 @@ class ProjectCommandHandler:
             abort(404, message="Project not found.")
 
         user = db.session.get(User, cmd.userId)
-        if user.role != 'admin' and project.owner_id != cmd.userId:
+        if user.role != 'admin' and project.owner_id != int(cmd.userId):
             abort(403, message="Only the owner or an admin can delete the project.")
 
         project_name = project.name

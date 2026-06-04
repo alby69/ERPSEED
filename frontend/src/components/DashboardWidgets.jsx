@@ -16,6 +16,7 @@ function DashboardWidgets({ modelName, projectId }) {
           throw new Error("Failed to load metadata");
         }
         const meta = await metaRes.json();
+        meta.fields = meta.fields || meta.model_fields || [];
 
         // 2. Determina la modalità: "Righe" (KPI definiti come record) o "Colonne" (KPI come campi di un record)
         // La modalità "Righe" è quella usata da seed_kpi.py (campi: label, value, trend, color, icon)

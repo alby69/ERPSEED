@@ -24,7 +24,7 @@ class Department(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    parent = db.relationship('Department', remote_side=[id], backref='children')
+    parent = db.relationship('Department', remote_side=lambda: [Department.id], backref='children')
     employees = db.relationship('Employee', back_populates='department', lazy='dynamic', foreign_keys='Employee.department_id')
     manager = db.relationship('Employee', foreign_keys=[manager_id])
 

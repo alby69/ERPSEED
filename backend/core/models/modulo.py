@@ -61,7 +61,7 @@ class Modulo(BaseModel):
     # Relations
     versione_precedente = db.relationship(
         'Modulo',
-        remote_side=[id],
+        remote_side=lambda: [Modulo.id],
         backref='versioni_successive'
     )
     attivazioni = db.relationship(
@@ -147,7 +147,7 @@ class ModuloAttivato(BaseModel):
     )
 
     # Relations
-    tenant = db.relationship('Tenant', back_populates='moduli_attivati')
+    tenant = db.relationship('Tenant', backref='moduli_attivati')
     modulo = db.relationship('Modulo', back_populates='attivazioni')
     attivato_da = db.relationship('User')
 

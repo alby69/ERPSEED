@@ -126,7 +126,7 @@ class ProjectSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
         model = Project
         # Fields managed automatically by the server
-        dump_only = ("id",)
+        dump_only = ("id", "owner_id")
 
 
 class ProjectUpdateSchema(BaseSchema):

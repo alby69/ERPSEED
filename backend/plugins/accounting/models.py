@@ -27,7 +27,7 @@ class ChartOfAccounts(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    parent = db.relationship('ChartOfAccounts', remote_side=[id], backref='children')
+    parent = db.relationship('ChartOfAccounts', remote_side=lambda: [ChartOfAccounts.id], backref='children')
     accounts = db.relationship('Account', back_populates='coa', lazy='dynamic', foreign_keys='Account.coa_id')
     tenant = db.relationship('Tenant', backref=db.backref('coa_accounts', lazy='dynamic'))
 

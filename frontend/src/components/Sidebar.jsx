@@ -79,13 +79,28 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     const allAppItems = [...appMenuItems];
     if (projectMenuItems.length > 0) {
         projectMenuItems.forEach(item => {
-            // Avoid duplicates
-            if (!allAppItems.find(i => i.key === item.path)) {
-                allAppItems.push({
-                    key: item.path,
-                    label: item.label,
-                    icon: <AppstoreOutlined />
-                });
+            if (item.children) {
+                // Item with sub-items (e.g., project with models)
+                if (!allAppItems.find(i => i.key === item.key)) {
+                    allAppItems.push({
+                        key: item.key,
+                        label: item.label,
+                        icon: <ProjectOutlined />,
+                        children: item.children.map(child => ({
+                            key: child.path,
+                            label: child.label,
+                        }))
+                    });
+                }
+            } else {
+                // Flat item (e.g., module)
+                if (!allAppItems.find(i => i.key === item.path)) {
+                    allAppItems.push({
+                        key: item.path,
+                        label: item.label,
+                        icon: <AppstoreOutlined />
+                    });
+                }
             }
         });
     }
@@ -97,8 +112,8 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         children: allAppItems,
     });
 
-    // Add the administration section if the user is an admin
-    if (user?.role === 'admin') {
+    // Add the administration section if the user is an admin/owner
+    if (user?.role && ['admin', 'owner'].includes(user.role)) {
         items.push({ type: 'divider' });
         items.push({
             key: 'admin-section',

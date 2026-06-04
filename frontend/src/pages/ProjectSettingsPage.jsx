@@ -235,13 +235,13 @@ function ChartLibrarySettings() {
     const fetchLibraries = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await apiFetch('/chart-libraries');
+            const res = await apiFetch('/analytics/chart-libraries');
             if (res.ok) {
                 const data = await res.json();
                 if (Array.isArray(data) && data.length > 0) {
                     setLibraries(data);
                 } else {
-                    const resPost = await apiFetch('/chart-libraries', {
+                    const resPost = await apiFetch('/analytics/chart-libraries', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(defaultLibraries[0])
@@ -265,7 +265,7 @@ function ChartLibrarySettings() {
     const handleToggleActive = async (record) => {
         setSaving(true);
         try {
-            const res = await apiFetch(`/chart-libraries/${record.id}`, {
+            const res = await apiFetch(`/analytics/chart-libraries/${record.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ is_active: !record.is_active }),
@@ -292,7 +292,7 @@ function ChartLibrarySettings() {
             }));
 
             for (const lib of updatedLibs) {
-                await apiFetch(`/chart-libraries/${lib.id}`, {
+                await apiFetch(`/analytics/chart-libraries/${lib.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ is_default: lib.is_default }),

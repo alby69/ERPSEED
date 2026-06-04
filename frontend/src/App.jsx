@@ -169,7 +169,7 @@ return (
         <Route
           path="/users"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <Users />
             </ProtectedRoute>
           }
@@ -177,7 +177,7 @@ return (
         <Route
           path="/anagrafiche"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <SoggettiPage />
             </ProtectedRoute>
           }
@@ -185,7 +185,7 @@ return (
         <Route
           path="/ruoli"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <RuoliPage />
             </ProtectedRoute>
           }
@@ -193,7 +193,7 @@ return (
         <Route
           path="/indirizzi"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <IndirizziPage />
             </ProtectedRoute>
           }
@@ -201,7 +201,7 @@ return (
         <Route
           path="/comuni"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <ComuniPage />
             </ProtectedRoute>
           }
@@ -209,7 +209,7 @@ return (
         <Route
           path="/contatti"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <ContattiPage />
             </ProtectedRoute>
           }
@@ -217,7 +217,7 @@ return (
         <Route
           path="/products"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <Products />
             </ProtectedRoute>
           }
@@ -225,7 +225,7 @@ return (
         <Route
           path="/modules"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <ModulesPage />
             </ProtectedRoute>
           }
@@ -233,7 +233,7 @@ return (
         <Route
           path="/test-runner"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <TestRunnerPage />
             </ProtectedRoute>
           }
@@ -265,7 +265,7 @@ return (
         <Route
           path="/admin/builder/:modelId"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <SysModelDetail />
             </ProtectedRoute>
           }
@@ -273,7 +273,7 @@ return (
         <Route
           path="/admin/builder"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <SysModelList />
             </ProtectedRoute>
           }
@@ -281,7 +281,7 @@ return (
         <Route
           path="/admin/custom-modules"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <CustomModulesPage />
             </ProtectedRoute>
           }
@@ -289,7 +289,7 @@ return (
         <Route
           path="/admin/project-import-export"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <ProjectImportExportPage />
             </ProtectedRoute>
           }
@@ -297,7 +297,7 @@ return (
         <Route
           path="/admin/bi-builder"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <div className="p-5 text-center"><h2>BI Builder</h2><p>Module coming soon...</p></div>
             </ProtectedRoute>
           }
@@ -305,7 +305,7 @@ return (
         <Route
           path="/admin/audit-logs"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <AuditLogs />
             </ProtectedRoute>
           }
@@ -313,7 +313,7 @@ return (
         <Route
           path="/ai-assistant"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <AIAssistantPage />
             </ProtectedRoute>
           }
@@ -321,7 +321,7 @@ return (
         <Route
           path="/admin/workflows"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <WorkflowsPage />
             </ProtectedRoute>
           }
@@ -329,7 +329,7 @@ return (
         <Route
           path="/projects/:projectId/business-rules"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <BusinessRulesPage />
             </ProtectedRoute>
           }
@@ -337,7 +337,7 @@ return (
         <Route
           path="/projects/:projectId/workflow-builder"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <WorkflowBuilder />
             </ProtectedRoute>
           }
@@ -345,7 +345,7 @@ return (
         <Route
           path="/projects/:projectId/workflow-builder/:workflowId"
           element={
-            <ProtectedRoute roles={['admin']}>
+            <ProtectedRoute roles={['admin', 'owner']}>
               <WorkflowBuilder />
             </ProtectedRoute>
           }

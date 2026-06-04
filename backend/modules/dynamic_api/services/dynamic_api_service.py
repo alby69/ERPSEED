@@ -223,6 +223,17 @@ class DynamicApiService(BaseService):
             if filters:
                 query = query.where(or_(*filters))
 
+        # Filtri per campo: applica qualsiasi query param che corrisponde a una colonna
+        for field in sys_model.fields:
+            val = request.args.get(field.name)
+            if val is not None and field.name in table.c:
+                if field.type in ('integer', 'float', 'currency'):
+                    query = query.where(table.c[field.name] == float(val))
+                elif field.type == 'relation':
+                    query = query.where(table.c[field.name] == int(val))
+                else:
+                    query = query.where(table.c[field.name].ilike(f"%{val}%"))
+
         count_query = select(func.count()).select_from(query.alias())
 
         sort_by = request.args.get("sort_by")

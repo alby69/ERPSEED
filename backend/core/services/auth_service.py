@@ -58,7 +58,7 @@ class AuthService:
             raise ValueError("Account is disabled")
 
         # Verify tenant is active
-        if not user.tenant.is_active:
+        if user.tenant_id and not user.tenant.is_active:
             AuditLog.log_login(user.id, user.tenant_id, success=False,
                               error_message="Tenant disabled")
             raise ValueError("Organization is disabled")

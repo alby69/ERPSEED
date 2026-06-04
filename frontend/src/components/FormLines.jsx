@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '../utils';
 
-function FormLines({ name, value = [], onChange, columns, fields, compute }) {
+function FormLines({ name, value = [], onChange, columns, fields, compute, label }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [lineData, setLineData] = useState({});
@@ -91,7 +91,7 @@ function FormLines({ name, value = [], onChange, columns, fields, compute }) {
 
   return (
     <div className="border rounded p-2 mb-3 bg-white">
-      <label className="form-label fw-bold">Righe Ordine</label>
+      <label className="form-label fw-bold">{label || 'Righe'}</label>
 
       <table className="table table-sm table-striped mb-2">
         <thead>
@@ -106,9 +106,9 @@ function FormLines({ name, value = [], onChange, columns, fields, compute }) {
               {columns.map((col, cIdx) => (
                 <td key={cIdx}>
                   {col.render ? col.render(row) : (
-                    fields.find(f => f.name === col.accessor && f.type === 'select')
-                      ? getOptionLabel(col.accessor, row[col.accessor])
-                      : row[col.accessor]
+                    fields.find(f => f.name === (col.key || col.accessor) && f.type === 'select')
+                      ? getOptionLabel(col.key || col.accessor, row[col.key || col.accessor])
+                      : row[col.key || col.accessor]
                   )}
                 </td>
               ))}

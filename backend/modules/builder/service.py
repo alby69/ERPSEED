@@ -1,7 +1,8 @@
 from .application.handlers import BuilderCommandHandler
 from .application.commands.builder_commands import (
     CreateModelCommand, UpdateModelCommand, DeleteModelCommand,
-    CreateFieldCommand, SyncSchemaCommand, CloneModelCommand
+    CreateFieldCommand, UpdateFieldCommand, DeleteFieldCommand,
+    SyncSchemaCommand, CloneModelCommand
 )
 from backend.models import SysModel, AuditLog
 from backend.extensions import db
@@ -39,6 +40,14 @@ class BuilderService:
     def create_field(self, modelId, name, field_type, title=None, technical_name=None, **kwargs):
         cmd = CreateFieldCommand(modelId, name, field_type, title, technical_name, kwargs)
         return self.handler.handle_create_field(cmd)
+
+    def update_field(self, field_id, data):
+        cmd = UpdateFieldCommand(field_id, data)
+        return self.handler.handle_update_field(cmd)
+
+    def delete_field(self, field_id):
+        cmd = DeleteFieldCommand(field_id)
+        return self.handler.handle_delete_field(cmd)
 
     def sync_schema(self, modelId, db_engine):
         cmd = SyncSchemaCommand(modelId, db_engine)
