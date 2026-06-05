@@ -103,23 +103,19 @@ class AIContextBuilder:
 
     def _get_blocks_info(self) -> str:
         """Get available UI blocks"""
-        blocks = BlockModel.query.filter_by(projectId=self.projectId).all()
-
-        if not blocks:
-            return "\n\nBLOCKS: No custom blocks created yet."
-
-        blocks_info = ["\n\nBLOCKS AVAILABLE:"]
-
-        for block in blocks:
-            block_desc = f"\n- {block.name}"
-            if block.title:
-                block_desc += f": {block.title}"
-            if block.block_type:
-                block_desc += f" (type: {block.block_type})"
-
-            blocks_info.append(block_desc)
-
-        return "\n".join(blocks_info)
+        try:
+            blocks = BlockModel.query.all()
+            if not blocks:
+                return "\n\nBLOCKS: No custom blocks created yet."
+            blocks_info = ["\n\nBLOCKS AVAILABLE:"]
+            for block in blocks:
+                block_desc = f"\n- {block.name}"
+                if block.title:
+                    block_desc += f": {block.title}"
+                blocks_info.append(block_desc)
+            return "\n".join(blocks_info)
+        except Exception:
+            return "\n\nBLOCKS: Unable to load blocks info."
 
     def _get_workflows_info(self) -> str:
         """Get existing workflows"""
@@ -146,7 +142,10 @@ class AIContextBuilder:
             projectId=self.projectId, status="published"
         ).count()
 
-        blocks = BlockModel.query.filter_by(projectId=self.projectId).count()
+        try:
+            blocks = BlockModel.query.count()
+        except Exception:
+            blocks = 0
 
         workflows = Workflow.query.filter_by(projectId=self.projectId).count()
 

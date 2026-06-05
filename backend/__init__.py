@@ -7,6 +7,7 @@ registers blueprints, and sets up middleware and global error handlers.
 
 import os
 from typing import Any
+from datetime import timedelta
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_babel import Babel, gettext as _
@@ -182,6 +183,8 @@ def create_app(db_url=None):
         "JWT_SECRET_KEY"
     )
     app.config["JWT_TOKEN_LOCATION"] = ["headers"]
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
 
     # --- Custom JSON Provider ---
     # Standardizes JSON serialization for Decimal and other types

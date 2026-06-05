@@ -100,7 +100,7 @@ def _get_type_mapping():
         'float': 'FLOAT', 'boolean': 'BOOLEAN', 'date': 'DATE',
         'datetime': 'TIMESTAMP', 'relation': 'INTEGER', 'select': 'VARCHAR(255)',
         'file': 'VARCHAR(255)', 'image': 'VARCHAR(255)',
-        'currency': 'FLOAT',
+        'decimal': 'NUMERIC', 'currency': 'FLOAT',
         'tags': 'TEXT',
         'color': 'VARCHAR(20)'
     }

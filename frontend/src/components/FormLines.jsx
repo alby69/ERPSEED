@@ -36,7 +36,13 @@ function FormLines({ name, value = [], onChange, columns, fields, compute, label
   };
 
   const handleEdit = (index) => {
-    setLineData(value[index]);
+    const row = { ...value[index] };
+    fields.forEach(field => {
+      if (field.apiUrl && row[field.name] && typeof row[field.name] === 'object' && !Array.isArray(row[field.name])) {
+        row[field.name] = row[field.name].id ?? row[field.name].value ?? '';
+      }
+    });
+    setLineData(row);
     setEditingIndex(index);
     setIsEditing(true);
   };

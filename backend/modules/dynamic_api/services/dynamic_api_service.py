@@ -307,6 +307,9 @@ class DynamicApiService(BaseService):
             if value is None and field.default_value:
                 value = self.evaluate_default_value(field.default_value, field.type)
 
+            if not field.required and value == "":
+                value = None
+
             if field.required and value is None:
                 from flask_smorest import abort
                 abort(400, message=f"Missing required field: '{field.name}'")
@@ -358,7 +361,10 @@ class DynamicApiService(BaseService):
             if field.type in ["formula", "summary", "lookup", "calculated", "lines"]:
                 continue
             if field.name in data:
-                validated_data[field.name] = self.validate_value(field, data[field.name])
+                value = data[field.name]
+                if not field.required and value == "":
+                    value = None
+                validated_data[field.name] = self.validate_value(field, value)
 
         for field in sys_model.fields:
             if field.is_unique and field.name in validated_data:
@@ -455,7 +461,7 @@ class DynamicApiService(BaseService):
 
     def get_model_metadata(self, projectId, model_name):
         """Get model metadata for frontend, applying translations."""
-        sys_model = self.get_model(projectId, model_name, require_published=True)
+        sys_model = self.get_model(projectId, model_name, require_published=False)
         self.check_permissions(sys_model, "read", projectId)
         return sys_model
 

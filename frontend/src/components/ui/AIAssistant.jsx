@@ -127,14 +127,14 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
     setLoading(true);
 
     try {
-      const response = await apiFetch('/api/ai/generate', {
+      const response = await apiFetch('/api/ai/generations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           request: input.trim(),
-          project_id: parseInt(projectId) || 1,
+          projectId: parseInt(projectId) || 1,
         }),
       });
 
@@ -436,14 +436,14 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
             type="primary"
             onClick={async () => {
               try {
-                const response = await apiFetch('/api/ai/apply', {
+                const response = await apiFetch('/api/ai/applications', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({
                     config: generatedConfig,
-                    project_id: parseInt(projectId) || 1,
+          projectId: parseInt(projectId) || 1,
                   }),
                 });
 

@@ -310,8 +310,11 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
       }
 
       if (field.type === 'tags') {
-         // Assicura che sia un array
          if (!Array.isArray(val)) val = [];
+      }
+
+      if (field.apiUrl && val && typeof val === 'object' && !Array.isArray(val)) {
+        val = val.id ?? val.value ?? '';
       }
 
       newFormData[field.name] = val;

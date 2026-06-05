@@ -10,7 +10,7 @@ from marshmallow import Schema, fields
 
 from backend.modules.ai.service import get_ai_service
 
-blp = Blueprint("ai", __name__, url_prefix="/api/ai", description="AI Assistant API")
+blp = Blueprint("ai", __name__, url_prefix="/api/v1/ai", description="AI Assistant API")
 
 
 class ChatRequestSchema(Schema):
@@ -400,7 +400,7 @@ class FeedbackSchema(Schema):
 class AIConversations(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
-    @blp.arguments(ConversationSchema)
+    @blp.arguments(ConversationSchema, location="query")
     @blp.response(200)
     def get(self, args):
         """Get conversation history for a project"""

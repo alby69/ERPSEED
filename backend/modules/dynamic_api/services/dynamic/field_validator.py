@@ -37,13 +37,14 @@ class FieldValidator:
                                     valid_values.append(o)
 
                         if valid_values and value not in valid_values:
-                            abort(
-                                400,
-                                message=f"Invalid value '{value}' for field '{field.name}'. Allowed: {valid_values}",
-                            )
+                            if not (value == "" or value is None):
+                                abort(
+                                    400,
+                                    message=f"Invalid value '{value}' for field '{field.name}'. Allowed: {valid_values}",
+                                )
                     except (json.JSONDecodeError, AttributeError):
                         pass
-                return str(value)
+                return str(value) if value is not None else None
 
             if field.type in ["integer", "relation"]:
                 return int(value)

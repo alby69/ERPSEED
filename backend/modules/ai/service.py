@@ -427,7 +427,50 @@ What would you like me to create or modify? I'll analyze the project context and
             if "error" in response:
                 return {"success": False, "error": response["error"]}
 
-            # Check for tool calls in response
+            # Handle already-parsed tool calls from _call_llm_with_tools
+            if "tool_calls" in response:
+                tool_calls = response["tool_calls"]
+                results = []
+
+                for tool_call in tool_calls:
+                    # Already processed result from _handle_tool_calls
+                    if "result" in tool_call:
+                        results.append(tool_call)
+                        continue
+
+                    tool_name = tool_call.get("name") or tool_call.get(
+                        "function", {}
+                    ).get("name")
+                    tool_args = tool_call.get("arguments") or json.loads(
+                        tool_call.get("function", {}).get("arguments", "{}")
+                    )
+
+                    logger.info(f"AI used tool: {tool_name}")
+
+                    if tool_name == "generate_json":
+                        result = self._generate_config_internal(
+                            tool_args.get("user_request", user_request), projectId
+                        )
+                        results.append({"tool": "generate_json", "result": result})
+
+                    elif tool_name == "apply_config":
+                        result = self._apply_config_internal(
+                            tool_args.get("config", {}), projectId, userId
+                        )
+                        results.append({"tool": "apply_config", "result": result})
+
+                if results:
+                    config = results[0].get("result", {}).get("config")
+                    return {
+                        "success": True,
+                        "config": config,
+                        "tool_calls": results,
+                        "message": f"Executed {len(results)} tool(s)",
+                    }
+
+                return {"success": False, "error": "No tool results"}
+
+            # Check for raw tool calls in response (from direct LLM output)
             if "choices" in response and len(response["choices"]) > 0:
                 message = response["choices"][0].get("message", {})
 
@@ -443,14 +486,12 @@ What would you like me to create or modify? I'll analyze the project context and
                         logger.info(f"AI used tool: {tool_name}")
 
                         if tool_name == "generate_json":
-                            # Generate JSON config
                             result = self._generate_config_internal(
                                 tool_args.get("user_request", user_request), projectId
                             )
                             results.append({"tool": "generate_json", "result": result})
 
                         elif tool_name == "apply_config":
-                            # Apply config directly
                             result = self._apply_config_internal(
                                 tool_args.get("config", {}), projectId, userId
                             )

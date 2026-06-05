@@ -47,6 +47,8 @@ services:
       - SECRET_KEY=dev-secret-key-change-in-prod
       - JWT_SECRET_KEY=a-very-secure-and-long-jwt-secret-key-for-dev-env
       - PYTHONPATH=/app
+      # Imposta OPENROUTER_API_KEY (https://openrouter.ai/keys) oppure usa un altro provider con LLM_PROVIDER=openai/anthropic/ollama
+      - OPENROUTER_API_KEY=set-your-key-here
     command: >
       sh -c "pip install -r /app/backend/requirements.txt &&
              cd /app && python -m backend.cli.create_admin admin@erpseed.it admin123 &&

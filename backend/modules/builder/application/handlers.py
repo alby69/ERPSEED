@@ -96,6 +96,42 @@ class BuilderCommandHandler:
             pass
         return field
 
+    def handle_update_field(self, cmd):
+        field = db.session.get(SysField, cmd.field_id)
+        if not field:
+            abort(404, message="Field not found.")
+
+        data = cmd.data
+        if "name" in data and data["name"] != field.name:
+            existing = SysField.query.filter(
+                SysField.modelId == field.modelId,
+                SysField.name == data["name"],
+                SysField.id != cmd.field_id
+            ).first()
+            if existing:
+                abort(409, message=f"Field with name '{data['name']}' already exists in this model.")
+
+        for key, value in data.items():
+            if hasattr(field, key):
+                setattr(field, key, value)
+
+        db.session.commit()
+        try:
+            log_audit(None, 'sys_fields', field.id, 'UPDATE', data)
+        except Exception:
+            pass
+        return field
+
+    def handle_delete_field(self, cmd):
+        field = db.session.get(SysField, cmd.field_id)
+        if not field:
+            abort(404, message="Field not found.")
+
+        log_audit(None, 'sys_fields', cmd.field_id, 'DELETE', {'name': field.name, 'modelId': field.modelId})
+        db.session.delete(field)
+        db.session.commit()
+        return True
+
     def handle_sync_schema(self, cmd):
         model = db.session.get(SysModel, cmd.modelId)
         if not model:
@@ -106,6 +142,8 @@ class BuilderCommandHandler:
             sql_commands = generate_schema_diff_sql(model, cmd.db_engine, schema=schema_name)
             for sql in sql_commands:
                 db.session.execute(text(sql))
+            if model.status != "published":
+                model.status = "published"
             db.session.commit()
             log_audit(None, 'sys_models', cmd.modelId, 'GENERATE_TABLE')
             return sql_commands

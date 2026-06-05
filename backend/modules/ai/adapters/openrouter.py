@@ -28,7 +28,7 @@ class OpenRouterAdapter(LLMAdapter):
     ):
         self.api_key = api_key or os.environ.get(
             "OPENROUTER_API_KEY",
-            "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",
+            "",
         )
         self.base_url = base_url
         self.default_model = default_model
@@ -118,8 +118,8 @@ class OpenRouterAdapter(LLMAdapter):
         if not isinstance(response_data, dict):
             return tool_calls
 
-        message = response_data.get("message", {})
-        raw_tool_calls = message.get("tool_calls", [])
+        # Support both full response and message dict
+        raw_tool_calls = response_data.get("tool_calls") or response_data.get("message", {}).get("tool_calls", [])
 
         for tc in raw_tool_calls:
             try:

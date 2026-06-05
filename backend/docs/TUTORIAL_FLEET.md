@@ -28,14 +28,15 @@ We need a model to store vehicle information.
 ### Option A: Using the Visual Builder (Manual)
 1. In the Project Dashboard, go to **Models**.
 2. Click **New Model**.
-3. Fill in **Name**: `Vehicle`, **Title**: `Vehicle` (lascia vuoto Table Name, viene generato automaticamente).
+3. Fill in **Name**: `vehicle` (solo lowercase, senza spazi), **Title**: `Vehicle` (lascia vuoto Table Name, viene generato automaticamente).
 4. Aggiungi i campi uno per uno con **Add New Field**:
    - `plate` / `Plate` (String, Required, Unique)
    - `model` / `Model` (String, Required)
    - `brand` / `Brand` (Select — valori: Fiat, Ford, Tesla, etc.)
    - `purchase_date` / `Purchase Date` (Date)
    - `mileage` / `Mileage` (Integer)
-5. Dopo aver aggiunto tutti i campi, clicca **Generate/Update DB Table** per creare la tabella nel database.
+5. Dopo aver aggiunto tutti i campi, clicca **Generate/Update DB Table** per creare la tabella nel database.  
+   Questa operazione imposta automaticamente il modello come **pubblicato**, rendendolo accessibile nell'interfaccia **Application**.
 
 ### Option B: Using the AI Assistant (Fast)
 1. Open the **AI Assistant** (usually a floating bubble or a side panel).
@@ -53,16 +54,18 @@ Now let's track maintenance for these vehicles.
 2. Add fields:
    - `Description` (Text)
    - `Date` (Date, Required)
-   - `Cost` (Integer — il tipo Decimal non è disponibile, usa Integer per i centesimi o Float)
+   - `Cost` (Integer, Float, o Currency — i tipi numerici supportano formattazione valuta, percentuale, decimali fissi, e suffissi personalizzati)
 3. Aggiungi un campo **Relation** per collegare il veicolo:
    - **Field Name**: `vehicle`
    - **Field Title**: `Vehicle`
    - **Type**: `Relation`
    - **Target Table**: seleziona `vehicles (vehicles)`.
-   - **Label Field**: seleziona il campo da usare come etichetta nei menu a tendina (es. `plate (plate)`).
+   - **Label Field**: seleziona il campo da usare come etichetta nei menu a tendina (es. `plate (plate)`).  
+     L'elenco dei campi si popola automaticamente dopo aver selezionato la **Target Table**.  
+     **Nota:** Se la tendina Label Field rimane vuota, assicurati che il modello `Vehicle` sia stato salvato con **Generate/Update DB Table** prima di procedere.
    - **Required**: spunta la casella.
 4. **Save Field**.
-5. Torna alla lista campi e clicca **Generate Table** per sincronizzare lo schema del DB.
+5. Torna alla lista campi e clicca **Generate Table** per sincronizzare lo schema del DB (anche questo pubblica il modello).
 
 ---
 
@@ -114,6 +117,40 @@ Se vuoi vedere solo le manutenzioni di un singolo veicolo, clicca **Edit** sul v
    - Mileage: `15000`
 
 I modelli e i dati sono ora gestiti tramite l'interfaccia **Application**, che espone automaticamente CRUD per ogni modello creato nel progetto.
+
+---
+
+## Step 4b: Aggiungere un modello Brand e collegarlo a Vehicle
+
+Invece di usare un campo `select` per la marca del veicolo, puoi creare un modello **Brand** separato e usare una **relation**.
+
+### Con l'AI Assistant
+
+1. Apri l'**AI Assistant** e incolla questo prompt:
+
+```
+Crea un modello Brand per le marche automobilistiche, con campi:
+- name (stringa, obbligatorio, unico): nome della marca
+- country (stringa, opzionale): paese d'origine
+
+Poi modifica Vehicle: aggiungi brand_id (relation → brand, label_field=name),
+rimuovendo il vecchio campo brand di tipo select.
+```
+
+2. L'AI genera il JSON di configurazione — **Applica**.
+3. Manualmente dal Builder UI:
+   - Vai su **Models → Vehicle** → elimina il vecchio campo `brand` (select)
+   - Vai su **Models → Brand** → clicca **Generate Table**
+   - Torna su **Vehicle** → clicca **Generate Table** per sincronizzare il DB
+4. Ora in **Application** il form Vehicle mostrerà un dropdown "Brand" popolato con i record del modello Brand
+
+### Manualmente
+
+1. Crea modello `Brand` con campi `name` (string, required, unique) e `country` (string).
+2. Genera la tabella e aggiungi qualche marca (Fiat, Ford, Tesla, etc.) tramite **Application**.
+3. Su **Vehicle**, elimina il campo `brand` (select).
+4. Aggiungi nuovo campo `brand_id` (relation → Brand, label_field = name).
+5. Genera la tabella di Vehicle.
 
 ---
 
