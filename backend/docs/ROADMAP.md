@@ -122,14 +122,16 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 2026 Q2 (Aprile - Giugno)
 ├── Fase 3: Nuove Features
 │   ├── ✅ Batch Export logic
+│   ├── ✅ Product Detail page & CRUD routes
 │   └── ⏳ Dashboard Builder
-└── Fase 4: Security & Performance
-    └── ✅ API Versioning (v1)
-```
-
----
-
-## 💡 Contributing
+├── Fase 4: Security & Performance
+│   ├── ✅ API Versioning (v1)
+│   └── ✅ Tenant middleware JWT fallback fix
+└── Bug fixes
+    ├── ✅ Entity blueprint URL alignment (/api/v1 instead of /api/v1/entities/{name})
+    ├── ✅ Products API (GetProductCommand entity_id field)
+    ├── ✅ Seed script (user.tenant_id assignment)
+    └── ✅ apiClient JSON body serialization
 
 ### PR Guidelines
 

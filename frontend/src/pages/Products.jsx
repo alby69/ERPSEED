@@ -23,11 +23,11 @@ function Products() {
         setError(null);
         try {
             const data = await apiClient.get(`/api/v1/products?page=${page}&per_page=${pageSize}`);
-            setProducts(data.items);
+            setProducts(data.items || []);
             setPagination({
-                current: data.pagination.page,
-                pageSize: data.pagination.per_page,
-                total: data.pagination.total,
+                current: data.page || 1,
+                pageSize: data.per_page || 10,
+                total: data.total || 0,
             });
         } catch (err) {
             setError(err.message || 'Failed to fetch products. The backend service might be down.');

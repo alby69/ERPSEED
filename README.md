@@ -4,42 +4,39 @@
 [![Flask](https://img.shields.io/badge/Flask-3.x-orange)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-ERPSeed è una piattaforma ERP open-source e modulare che permette alle organizzazioni di costruire e personalizzare il proprio sistema di gestione aziendale attraverso un approccio low-code.
+ERPSeed è una piattaforma ERP open-source e modulare che permette alle organizzazioni di costruire e personalizzare il proprio sistema di gestione aziendale attraverso un approccio low-code, con architettura multi-tenant e AI integrata.
 
 ---
 
-## 🚀 Quick Start
-
-Vedi [backend/docs/QUICKSTART.md](backend/docs/QUICKSTART.md) per la guida dettagliata.
+## 🚀 Quick Start (Docker)
 
 ```bash
-# Clona e entra
-git clone https://github.com/your-repo/erpseed.git
-cd erpseed
-
-# Setup Backend
-cd backend
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-# Crea .env con JWT_SECRET_KEY, poi:
-python run.py
-
-# Setup Frontend (in un altro terminale)
-cd frontend
-npm install
-npm run dev
+git clone https://github.com/your-repo/erpseed.git && cd erpseed
+docker-compose up -d --build
 ```
+
+Backend: `http://localhost:5000` | Swagger: `http://localhost:5000/swagger-ui` | Frontend: `http://localhost:5173`
+**Login**: `admin@erpseed.org` / `admin123` (cambiala subito!)
+
+Vedi [backend/docs/QUICKSTART.md](backend/docs/QUICKSTART.md) per setup manuale e comandi Docker.
 
 ---
 
 ## ✨ Features
 
-- **Low-Code Builder** - Crea entità, campi, relazioni dal browser
-- **Multi-Tenant** - Progetti isolati in un'unica installazione
-- **AI Assistant** - Genera configurazioni da linguaggio naturale
-- **Workflow Automation** - Automatizza processi aziendali
-- **Plugin System** - Estendi con moduli personalizzati
-- **Marketplace** - Condividi e installa componenti
+| Area | Funzionalità |
+|------|-------------|
+| **Low-Code Builder** | Crea modelli, campi, relazioni, viste e dashboard dal browser |
+| **Multi-Tenant** | Isolamento dati per tenant con middleware automatico (JWT/header/subdomain) |
+| **AI Assistant** | Genera modelli, workflow, regole da linguaggio naturale (OpenRouter/OpenAI/Anthropic/Ollama) |
+| **Workflow Automation** | Automatizza processi con step: delay, HTTP request, condition, webhook, notification |
+| **Dynamic API** | CRUD automatici per ogni modello creato dal builder |
+| **Module System** | Plugin CQRS per estendere funzionalità (prodotti, vendite, acquisti) |
+| **Anagrafiche** | Soggetti, Ruoli, Indirizzi, Contatti, Comuni (vision/archetype) |
+| **GDO Reconciliation** | Strumento di riconciliazione GDO con report Excel |
+| **Webhook System** | 7 event types, secret regeneration, test delivery |
+| **Audit Logging** | Tracciamento completo delle operazioni |
+| **Marketplace** | Condividi e installa componenti/moduli |
 
 ---
 
@@ -47,18 +44,38 @@ npm run dev
 
 ```
 erpseed/
-├── backend/                    # API Backend
-│   ├── models/               # Modelli Database
-│   ├── routes/               # API Endpoints
-│   ├── services/             # Logica Business
-│   ├── cli/                 # Script CLI
-│   ├── seeds/                # Database Seeds
-│   ├── core/                 # Sistema Core
-│   ├── ai_service/           # AI CQRS
-│   ├── builder_service/      # Builder CQRS
-│   └── docs/                 # Documentazione
+├── backend/                          # Flask API Backend
+│   ├── __init__.py                  # App factory (create_app)
+│   ├── models/                      # Modelli SQLAlchemy
+│   ├── core/                        # Sistema core
+│   │   ├── api/                     #   Auth, Tenant, Modules, System
+│   │   ├── models/                  #   Tenant, Audit, Module
+│   │   ├── services/                #   Auth, Tenant, Permission
+│   │   ├── middleware/              #   TenantMiddleware, ModuleMiddleware
+│   │   └── decorators/              #   @tenant_required, @admin_required
+│   ├── modules/                     # Moduli applicativi (CQRS)
+│   │   ├── entities/               #   Anagrafiche: Soggetto, Ruolo, Indirizzo, Contatto, Comune
+│   │   ├── products/               #   Prodotti (CQRS)
+│   │   ├── sales/                  #   Vendite (CQRS)
+│   │   ├── purchases/              #   Acquisti (CQRS)
+│   │   ├── analytics/              #   Dashboard e KPI
+│   │   ├── automation/             #   Workflow e Webhook
+│   │   ├── ai/                     #   AI Assistant
+│   │   ├── builder/                #   No-Code Builder
+│   │   ├── dynamic_api/            #   Dynamic CRUD engine
+│   │   ├── gdo/                    #   GDO Reconciliation
+│   │   ├── projects/               #   Progetti
+│   │   ├── users/                  #   Utenti
+│   │   └── system_tools/           #   Template, Versioning, Debug
+│   ├── seeds/                      # Database seed scripts
+│   └── docs/                       # Documentazione
 │
-└── frontend/                  # React Frontend
+└── frontend/                        # React + Vite + Ant Design
+    ├── src/
+    │   ├── pages/                  # 44 pagine (Dashboard, Anagrafiche, Prodotti, Sales, etc.)
+    │   ├── components/             # 43 componenti riutilizzabili
+    │   └── context/                # AuthContext, ThemeProvider
+    └── docker-compose.yml          # Sviluppo con hot-reload
 ```
 
 ---
@@ -67,52 +84,45 @@ erpseed/
 
 | Documento | Descrizione |
 |-----------|-------------|
-| [backend/docs/QUICKSTART.md](backend/docs/QUICKSTART.md) | Guida rapida |
-| [backend/docs/ARCHITECTURE.md](backend/docs/ARCHITECTURE.md) | Architettura |
-| [backend/docs/BRANCH_STRATEGY.md](backend/docs/BRANCH_STRATEGY.md) | Strategia Branch |
-
-## 🧪 Testing
-
-Il progetto include una suite di test completa per backend e frontend.
-
-```bash
-# Esegui tutti i test (richiede Makefile)
-make test-all
-
-# Test Backend
-cd backend
-pytest
-
-# Test Frontend
-cd frontend
-npm test
-```
+| [backend/docs/QUICKSTART.md](backend/docs/QUICKSTART.md) | Guida rapida Docker e setup manuale |
+| [backend/docs/ARCHITECTURE.md](backend/docs/ARCHITECTURE.md) | Architettura del sistema |
+| [backend/docs/API.md](backend/docs/API.md) | Riferimento API completo |
+| [backend/docs/DEVELOPER_GUIDE.md](backend/docs/DEVELOPER_GUIDE.md) | Guida per sviluppatori |
+| [backend/docs/USER_MANUAL.md](backend/docs/USER_MANUAL.md) | Manuale utente |
+| [backend/docs/ROADMAP.md](backend/docs/ROADMAP.md) | Roadmap e stato avanzamento |
+| [backend/docs/TUTORIAL_AI_ASSISTANT.md](backend/docs/TUTORIAL_AI_ASSISTANT.md) | Tutorial AI Assistant |
+| [backend/docs/TUTORIAL_FLEET.md](backend/docs/TUTORIAL_FLEET.md) | Tutorial Fleet Management |
+| [backend/docs/BRANCH_STRATEGY.md](backend/docs/BRANCH_STRATEGY.md) | Strategia branch Git |
 
 ---
 
 ## 🔧 Stack Tecnologico
 
-- **Backend**: Flask 3.x + SQLAlchemy
-- **API**: Flask-Smorest (OpenAPI 3.0)
-- **Auth**: JWT
-- **Frontend**: React + Ant Design
-- **AI**: OpenRouter, OpenAI, Anthropic, Ollama
+| Componente | Tecnologia |
+|------------|-----------|
+| Backend | Flask 3.x + Python 3.12 |
+| ORM | SQLAlchemy + Flask-SQLAlchemy |
+| API | Flask-Smorest (OpenAPI 3.0) |
+| Auth | Flask-JWT-Extended (JWT + refresh token) |
+| Serialization | Marshmallow |
+| Database | PostgreSQL 15 (dev: SQLite) |
+| Cache | Redis 7 |
+| Realtime | Flask-SocketIO + eventlet |
+| Frontend | React 19 + Vite + Ant Design |
+| AI | OpenRouter, OpenAI, Anthropic, Ollama |
+| Infrastruttura | Docker Compose, Gunicorn |
 
 ---
 
-## 🤝 Contributing
+## 🧪 Testing
 
-1. Fork il repository
-2. Crea un branch (`git checkout -b feature/nuova-feature`)
-3. Commit (`git commit -am 'Aggiunge nuova feature'`)
-4. Push (`git push origin feature/nuova-feature`)
-5. Crea una Pull Request
+```bash
+# Backend
+cd backend && pytest
 
----
-
-## 📝 Licenza
-
-MIT License - Vedi LICENSE per dettagli.
+# Frontend
+cd frontend && npm test
+```
 
 ---
 

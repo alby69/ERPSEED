@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth, ThemeProvider, useTheme } from '@/context';
-import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, SoggettiPage, RuoliPage, IndirizziPage, ComuniPage, ContattiPage, Products, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
+import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, SoggettiPage, RuoliPage, IndirizziPage, ComuniPage, ContattiPage, Products, ProductDetail, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
 import Sales from './pages/Sales';
 import SalesOrderDetail from './pages/SalesOrderDetail';
 import SysModelDetail from './pages/SysModelDetail';
@@ -105,6 +105,7 @@ return (
             <Route path="gdo-reconciliation" element={<GDOReconciliationTool />} />
             {/* Module App Dashboard - App-like experience */}
             <Route path="app/:moduleName" element={<ModuleAppPage />} />
+            <Route path="workflows" element={<WorkflowsPage />} />
             {/* You can add more project-specific routes here */}
         </Route>
 
@@ -223,6 +224,22 @@ return (
           }
         />
         <Route
+          path="/products/new"
+          element={
+            <ProtectedRoute roles={['admin', 'owner']}>
+              <ProductDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products/:id"
+          element={
+            <ProtectedRoute roles={['admin', 'owner']}>
+              <ProductDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/modules"
           element={
             <ProtectedRoute roles={['admin', 'owner']}>
@@ -315,14 +332,6 @@ return (
           element={
             <ProtectedRoute roles={['admin', 'owner']}>
               <AIAssistantPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/workflows"
-          element={
-            <ProtectedRoute roles={['admin', 'owner']}>
-              <WorkflowsPage />
             </ProtectedRoute>
           }
         />

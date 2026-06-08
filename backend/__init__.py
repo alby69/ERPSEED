@@ -395,12 +395,12 @@ def create_app(db_url=None):
     api.register_blueprint(marketplace_api_blp, url_prefix=f"{API_V1_PREFIX}/marketplace", name="api_marketplace")
 
     # Vision Entities (Archetypes)
-    api.register_blueprint(soggetto_blp, url_prefix=f"{API_V1_PREFIX}/entities/soggetti")
-    api.register_blueprint(ruolo_blp, url_prefix=f"{API_V1_PREFIX}/entities/ruoli")
-    api.register_blueprint(indirizzo_blp, url_prefix=f"{API_V1_PREFIX}/entities/indirizzi")
-    api.register_blueprint(contatto_blp, url_prefix=f"{API_V1_PREFIX}/entities/contatti")
-    api.register_blueprint(geografico_blp, url_prefix=f"{API_V1_PREFIX}/entities/geografico")
-    api.register_blueprint(comuni_blp, url_prefix=f"{API_V1_PREFIX}/entities/comuni")
+    api.register_blueprint(soggetto_blp, url_prefix=f"{API_V1_PREFIX}")
+    api.register_blueprint(ruolo_blp, url_prefix=f"{API_V1_PREFIX}")
+    api.register_blueprint(indirizzo_blp, url_prefix=f"{API_V1_PREFIX}")
+    api.register_blueprint(contatto_blp, url_prefix=f"{API_V1_PREFIX}")
+    api.register_blueprint(geografico_blp, url_prefix=f"{API_V1_PREFIX}")
+    api.register_blueprint(comuni_blp, url_prefix=f"{API_V1_PREFIX}")
 
     # --- Plugins loaded via create_plugin_manager in app initialization ---
     return app

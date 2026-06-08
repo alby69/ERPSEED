@@ -54,6 +54,9 @@ def init_db():
         db.session.add(tenant)
         db.session.flush()
 
+        # Assign owner to tenant
+        owner.tenant_id = tenant.id
+
         # Add owner as member of tenant with admin role
         print("Adding owner to tenant...")
         member = TenantMember(

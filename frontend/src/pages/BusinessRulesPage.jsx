@@ -38,7 +38,7 @@ const BusinessRulesPage = () => {
 
     const fetchRules = async () => {
         try {
-            const response = await apiFetch(`/projects/${projectId}/builder/business-rules`);
+            const response = await apiFetch(`/projects/${projectId}/business-rules`);
             const data = await response.json();
             setRules(data.rules || []);
         } catch (error) {
@@ -50,9 +50,9 @@ const BusinessRulesPage = () => {
 
     const fetchModels = async () => {
         try {
-            const response = await apiFetch(`/projects/${projectId}/builder/sys-models`);
+            const response = await apiFetch(`/sys-models`);
             const data = await response.json();
-            setModels(data.items || []);
+            setModels(data || []);
         } catch (error) {
             console.error('Error loading models:', error);
         }

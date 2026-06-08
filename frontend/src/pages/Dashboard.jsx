@@ -21,6 +21,7 @@ function Dashboard() {
   const [dashboardCharts, setDashboardCharts] = useState([]);
   const [dashboardLayout, setDashboardLayout] = useState([]);
   const [dateFilters, setDateFilters] = useState({ from: '', to: '' });
+  const [kpiProjectId, setKpiProjectId] = useState(null);
 
   useEffect(() => {
     if (user?.role && ['admin', 'owner'].includes(user.role)) {
@@ -28,6 +29,13 @@ function Dashboard() {
     }
     loadDashboards();
   }, [user]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    apiFetch(`/api/v1/system/resolve-model/dashboard_kpi`).then(r => r.json()).then(data => {
+      if (data.found) setKpiProjectId(data.projectId);
+    });
+  }, [projectId]);
 
   const loadDashboards = () => {
     apiFetch('/analytics/sys-dashboards').then(res => res.json()).then(data => {
@@ -98,7 +106,7 @@ function Dashboard() {
       <hr />
 
       {/* Widget Dinamici dal Builder (Modello: dashboard_kpi) */}
-      <DashboardWidgets modelName="dashboard_kpi" projectId={projectId} />
+      <DashboardWidgets modelName="dashboard_kpi" projectId={kpiProjectId} />
 
       {/* Selettore Dashboard */}
       {dashboards.length > 0 && (

@@ -53,6 +53,13 @@ const ProjectLayout = () => {
                     });
 
                     // Group models under the project name
+                    // Add workflows entry for this project
+                    menuItems.push({
+                        key: `project-${projectId}-workflows`,
+                        label: 'Workflows',
+                        path: `/projects/${projectId}/workflows`
+                    });
+
                     if (models.length > 0) {
                         menuItems.push({
                             key: `project-${projectId}-models`,

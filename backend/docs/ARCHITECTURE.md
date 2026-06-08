@@ -136,77 +136,47 @@ backend/
 │       ├── tenant_middleware.py
 │       └── module_middleware.py
 │
-├── entities/               # VISION ARCHETYPES
-│   ├── __init__.py
-│   ├── soggetto.py        # Soggetto (Cliente/Fornitore)
-│   ├── ruolo.py
-│   ├── indirizzo.py
-│   ├── indirizzo_geografico.py
-│   ├── contatto.py
-│   ├── routes.py
-│   ├── comuni_routes.py
-│   └── schemas.py
-│
-├── ai/                     # AI ASSISTANT (Legacy)
-│   ├── __init__.py
-│   ├── service.py         # AIService (800+ lines)
-│   ├── api.py
-│   ├── context.py
-│   ├── tool_registry.py
-│   ├── tool_executors.py
-│   ├── test_generator.py
-│   └── adapters/
-│
-├── ai_service/             # AI SERVICE (CQRS Pattern)
-│   ├── __init__.py
-│   ├── application/       # CQRS Application Layer
-│   │   ├── commands.py     # Command definitions
-│   │   ├── queries.py     # Query definitions
-│   │   ├── handlers.py    # Command handlers
-│   │   └── query_handlers.py
-│   ├── domain/            # Domain Layer
-│   │   ├── services/
-│   │   │   ├── chat_service.py   # ChatService
-│   │   │   └── tool_service.py   # ToolService
-│   │   └── ports/
-│   │       ├── llm_port.py
-│   │       └── vectorstore_port.py
-│   └── infrastructure/    # Infrastructure Layer
-│       ├── adapters/
-│       │   ├── base_adapter.py
-│       │   ├── openai_adapter.py
-│       │   ├── anthropic_adapter.py
-│       │   ├── ollama_adapter.py
-│       │   └── openrouter_adapter.py
-│       └── factory.py     # AdapterFactory
-│
-├── builder_service/        # BUILDER (CQRS Pattern)
-│   ├── __init__.py
-│   ├── api.py
-│   ├── container.py
-│   ├── application/
-│   │   ├── commands/
-│   │   └── handlers/
-│   ├── domain/
-│   │   └── models/
-│   └── infrastructure/
-│       ├── persistence/
-│       └── repositories/
-│
-├── products_service/       # PRODUCTS (CQRS)
-├── sales_service/          # SALES (CQRS)
-├── purchases_service/       # PURCHASES (CQRS)
-├── analytics_service/       # ANALYTICS (CQRS)
-│
-├── builder/                # LEGACY BUILDER (deprecated)
-│   ├── models.py
-│   ├── api.py
-│   ├── cli.py
-│   └── generator.py
-│
-├── marketplace/            # MARKETPLACE
-│   ├── models.py
-│   └── api.py
+├── modules/                 # MODULI APPLICATIVI
+│   ├── entities/           # Anagrafiche (Vision Archetypes)
+│   │   ├── soggetto.py    #   Soggetto (Cliente/Fornitore)
+│   │   ├── ruolo.py
+│   │   ├── indirizzo.py
+│   │   ├── indirizzo_geografico.py
+│   │   ├── contatto.py
+│   │   ├── comune.py
+│   │   ├── routes.py      #   CRUD: soggetti, ruoli, indirizzi, contatti
+│   │   ├── comuni_routes.py  # CRUD: comuni, regioni, province
+│   │   └── schemas.py
+│   ├── products/           # Prodotti (CQRS)
+│   │   ├── service_api.py #   Entry point (execute command)
+│   │   ├── api/rest_api.py #   REST CRUD
+│   │   ├── domain/        #   Product, ProductCreatedEvent
+│   │   ├── application/   #   Handlers, Commands, Queries
+│   │   └── infrastructure/ #   ProductRepository
+│   ├── sales/              # Vendite (CQRS)
+│   │   └── (same CQRS structure)
+│   ├── purchases/          # Acquisti (CQRS)
+│   │   └── (same CQRS structure)
+│   ├── analytics/          # Dashboard e KPI
+│   │   └── api/rest_api.py, dashboard_api.py
+│   ├── automation/         # Workflow e Webhook
+│   │   └── api/workflows_api.py, webhooks_api.py
+│   ├── ai/                 # AI Assistant
+│   │   ├── service.py, api.py, context.py
+│   │   ├── tool_registry.py, tool_executors.py
+│   │   └── adapters/ (openai, anthropic, ollama, openrouter)
+│   ├── builder/            # No-Code Builder (CQRS)
+│   │   └── application/, domain/, api.py
+│   ├── dynamic_api/        # Dynamic CRUD engine
+│   │   └── api/routes/, services/field_validator, query_builder, result_processor
+│   ├── gdo/                # GDO Reconciliation
+│   │   └── services/
+│   ├── projects/           # Progetti (CQRS)
+│   │   └── api/rest_api.py, application/, service.py
+│   ├── users/              # Utenti (CQRS)
+│   │   └── api/rest_api.py, application/, service.py
+│   └── system_tools/       # Template, Versioning, Debug
+│       └── api/templates_api.py, versioning_api.py, gdo_api.py
 │
 ├── plugins/                # PLUGIN SYSTEM
 │   ├── base.py
@@ -318,8 +288,13 @@ PostgreSQL
 ### Middleware Flow
 
 ```
-Request → TenantMiddleware → Extract Tenant ID → Set Context → Route Handler
+Request → TenantMiddleware → Extract Tenant (header X-Tenant-ID / subdomain / JWT) → Set Context → Route Handler
 ```
+
+Il middleware tenta 3 metodi in ordine:
+1. **Header `X-Tenant-ID`** — esplicito, per API calls
+2. **Subdomain** — per accessi via browser (es. `tenant1.erpseed.com`)
+3. **JWT Token** — se l'utente è autenticato, usa `user.tenant` (fallback su `TenantMember`)
 
 ## Autenticazione JWT
 

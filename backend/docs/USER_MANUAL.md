@@ -64,7 +64,7 @@ Integrate ERPSeed with external systems by setting up webhooks that trigger on C
 Manage users and their roles (Admin vs. User). Admins can access the Builder, while Users can only use the generated applications.
 
 ### Multi-Tenancy
-Access different tenants via subdomains (e.g., `company1.erpseed.com`) or by providing the `X-Tenant-ID` header in API requests.
+Access different tenants via subdomains (e.g., `company1.erpseed.com`), by providing the `X-Tenant-ID` header in API requests, or automatically via JWT token (se l'utente è già autenticato, il tenant viene rilevato automaticamente).
 
 ---
 

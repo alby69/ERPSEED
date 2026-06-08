@@ -86,7 +86,7 @@ class QueryBuilder:
                 except (json.JSONDecodeError, KeyError, AttributeError):
                     pass
 
-        query = select(*columns_to_select)
+        query = select(*columns_to_select).select_from(table)
         for join_target, join_condition in joins_to_make.values():
             query = query.join(join_target, join_condition, isouter=True)
 

@@ -3,9 +3,11 @@
 ## Base URL
 
 ```
-Development: http://localhost:5002
+Development: http://localhost:5000
 Production: https://api.your-domain.com
 ```
+
+Tutti gli endpoint API sono prefissati con `/api/v1/`. Nella documentazione che segue, il prefisso `/api/v1` è omesso per brevità (es. `GET /users` equivale a `GET /api/v1/users`).
 
 ## Autenticazione
 
@@ -21,7 +23,7 @@ Authorization: Bearer <access_token>
 |--------|--------|------|
 | `Authorization` | `Bearer <token>` | Obbligatorio |
 | `Content-Type` | `application/json` | Per POST/PUT |
-| `X-Tenant-ID` | `tenant_id` | Obbligatorio per multi-tenant |
+| `X-Tenant-ID` | `tenant_id` | Opzionale se il JWT contiene tenant context (autodetected) |
 
 ---
 
@@ -423,6 +425,16 @@ GET /products?page=1&per_page=20
 Authorization: Bearer <token>
 ```
 
+**Risposta (200):**
+```json
+{
+  "items": [],
+  "page": 1,
+  "per_page": 20,
+  "total": 0
+}
+```
+
 ### Get Product
 
 ```http
@@ -438,12 +450,19 @@ Authorization: Bearer <token>
 
 {
   "name": "Prodotto Demo",
-  "sku": "DEMO-001",
-  "price": 99.99,
-  "cost": 49.99,
-  "tax_rate": 22.0,
-  "stock_quantity": 100,
-  "description": "Descrizione prodotto"
+  "code": "DEMO-001",
+  "description": "Descrizione prodotto",
+  "unit_price": 99.99,
+  "category": "Elettronica",
+  "sku": "SKU-001",
+  "barcode": "123456789",
+  "is_active": true,
+  "track_inventory": false,
+  "current_stock": 0,
+  "reorder_level": 0,
+  "unit_of_measure": "pcs",
+  "weight": null,
+  "dimensions": null
 }
 ```
 
@@ -459,13 +478,6 @@ Authorization: Bearer <token>
 ```http
 DELETE /products/{id}
 Authorization: Bearer <token>
-```
-
-### Product Variants
-
-```http
-GET /products/{id}/variants
-POST /products/{id}/variants
 ```
 
 ---

@@ -7,7 +7,7 @@ from flask.views import MethodView
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_smorest import Blueprint
 
-from backend.models import User
+from backend.models import User, SysModel
 from backend.core.services.module_service import ModuleService
 from backend.core.services.tenant_module_service import TenantModuleService
 from backend.plugins.registry import ModuleRegistry
@@ -76,6 +76,21 @@ class SystemModulesInfo(MethodView):
         result["menu"].sort(key=lambda x: x.get("menu_position", 100))
 
         return result
+
+
+@blp.route("/resolve-model/<string:model_name>")
+class ResolveModelProject(MethodView):
+    @jwt_required()
+    def get(self, model_name):
+        """
+        Returns the project where the given dynamic model is defined.
+        Useful for system models (like dashboard_kpi) that may not belong
+        to the currently active project.
+        """
+        model = SysModel.query.filter_by(name=model_name).first()
+        if not model:
+            return {"found": False, "projectId": None}
+        return {"found": True, "projectId": model.projectId}
 
 
 @blp.route("/check-module/<string:module_id>")

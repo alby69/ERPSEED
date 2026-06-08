@@ -78,7 +78,15 @@ class TenantMiddleware:
                     from backend.models import User
                     user = User.query.get(int(userId))
                     if user:
-                        return user.tenant
+                        if user.tenant:
+                            return user.tenant
+                        # Fallback: try TenantMember if user.tenant_id is null
+                        from backend.core.models import TenantMember
+                        member = TenantMember.query.filter_by(
+                            userId=user.id
+                        ).first()
+                        if member and member.tenant:
+                            return member.tenant
         except Exception:
             pass
 

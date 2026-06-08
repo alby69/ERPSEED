@@ -16,6 +16,7 @@ export { default as Login } from './Login';
 export { default as MarketplaceBrowse } from './MarketplaceBrowse';
 export { default as ModuleAppPage } from './ModuleAppPage';
 export { default as ModulesPage } from './ModulesPage';
+export { default as ProductDetail } from './ProductDetail';
 export { default as Products } from './Products';
 export { default as Profile } from './Profile';
 export { default as ProjectDetail } from './ProjectDetail';

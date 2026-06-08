@@ -50,7 +50,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
                 { key: '/modules', label: 'System Modules' },
             ]
         },
-        { key: '/admin/workflows', label: 'Workflows', icon: <ApiOutlined /> },
+        // Workflows is now per-project in the Applicazioni section
         { key: `/projects/${projectId}/business-rules`, label: 'Business Rules', icon: <SettingOutlined /> },
         { key: '/users', label: 'Users', icon: <TeamOutlined /> },
         { key: '/test-runner', label: 'Test Runner', icon: <ExperimentOutlined /> },

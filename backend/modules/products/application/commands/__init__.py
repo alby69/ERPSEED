@@ -147,6 +147,8 @@ class DeleteProductCommand(DeleteCommand):
 class GetProductCommand(QueryCommand):
     """Command to get a single product by ID."""
 
+    entity_id: int = 0
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GetProductCommand":
         return cls(
