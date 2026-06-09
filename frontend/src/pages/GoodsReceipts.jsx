@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, Popconfirm, message, Divider } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 
 const statusColors = { draft: 'default', completed: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', completed: 'Completato', cancelled: 'Annullato' };
 
-const GoodsReceipts = () => {
+export default function GoodsReceipts() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -49,7 +49,7 @@ const GoodsReceipts = () => {
             const values = await form.validateFields();
             const payload = {
                 ...values,
-                date: values.date?.format('YYYY-MM-DD'),
+                date: formatDateForApi(values.date),
                 lines: values.lines?.map(l => ({
                     product_id: l.product_id,
                     quantity: parseFloat(l.quantity || 1),
@@ -80,14 +80,14 @@ const GoodsReceipts = () => {
     };
 
     const columns = [
-        { title: 'Numero', dataIndex: 'number', key: 'number' },
-        { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => v ? dayjs(v).format('DD/MM/YYYY') : '-' },
+        { title: 'Numero', dataIndex: 'number', key: 'number' }, // No change needed here
+        { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Fornitore', dataIndex: 'supplier_id', key: 'supplier_id', render: (id) => { const s = suppliers.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
         { title: 'Stato', dataIndex: 'status', key: 'status', render: (v) => <Tag color={statusColors[v]}>{statusLabels[v] || v}</Tag> },
         { title: 'Azioni', key: 'actions', render: (_, r) => (
-            <Space>
-                {r.status === 'draft' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleComplete(r.id)}>Completa</Button>}
-                {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: r.date ? dayjs(r.date) : null }); setModalVisible(true); }} />}
+            <Space> {/* No change needed here */}
+                {r.status === 'draft' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleComplete(r.id)}>Completa</Button>} {/* No change needed here */}
+                {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: parseDateForForm(r.date) }); setModalVisible(true); }} />}
                 {r.status === 'draft' && <Popconfirm title="Eliminare?" onConfirm={() => handleDelete(r.id)}><Button type="link" danger icon={<DeleteOutlined />} /></Popconfirm>}
             </Space>
         )},
@@ -110,7 +110,7 @@ const GoodsReceipts = () => {
             <Modal title={editingRecord ? 'Modifica DDT' : 'Nuovo DDT Entrata'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>
                 <Form form={form} layout="vertical">
                     <Space style={{ width: '100%' }} size={16}>
-                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker /></Form.Item>
+                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
                         <Form.Item name="supplier_id" label="Fornitore" rules={[{ required: true }]} style={{ minWidth: 250 }}>
                             <Select showSearch placeholder="Seleziona fornitore" optionFilterProp="label"
                                 options={suppliers.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
@@ -153,5 +153,3 @@ const GoodsReceipts = () => {
         </div>
     );
 };
-
-export default GoodsReceipts;

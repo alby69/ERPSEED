@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { Layout, FormLines } from '../components';
-import { apiFetch, formatCurrency } from '../utils';
+import { apiFetch, formatCurrency } from '../utils'; // formatCurrency is not a date utility
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
 function SalesOrderDetail() {
     const { orderId } = useParams();
@@ -42,7 +43,7 @@ function SalesOrderDetail() {
     const fetchOrder = useCallback(async () => {
         if (isNew) {
             setOrder({
-                party_id: '',
+                party_id: '', // No change needed here
                 order_date: new Date().toISOString().substring(0, 10),
                 lines: [],
                 total_amount: '0.00',
@@ -163,12 +164,12 @@ function SalesOrderDetail() {
                         </div>
                         <div className="col-md-6 mb-3">
                             <label className="form-label">Order Date</label>
-                            <input type="date" name="order_date" value={(order.order_date || '').substring(0, 10)} onChange={handleHeaderChange} className="form-control" />
+                            <input type="date" name="order_date" value={formatDateForDisplay(order.order_date) || ''} onChange={handleHeaderChange} className="form-control" />
                         </div>
                     </div>
                     <hr />
                     <h5>Order Lines</h5>
-                    <FormLines name="lines" value={order.lines} onChange={handleLinesChange} columns={lineColumns} fields={lineFields} />
+                    <FormLines name="lines" value={order.lines} onChange={handleLinesChange} columns={lineColumns} fields={lineFields} /> {/* No change needed here */}
                     <div className="text-end mt-3"><h4>Totale: {formatCurrency(order.total_amount)}</h4></div>
                 </div>
             </div>

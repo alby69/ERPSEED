@@ -269,7 +269,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     };
 
     return (
-        <div className="sidebar" style={{ background: themeConfig.mode === 'dark' ? token.colorBgContainer : '#fff' }}>
+        <div className="sidebar" style={{ background: themeConfig.mode === 'dark' ? token.colorBgContainer : themeConfig.surface }}>
             <Menu
                 theme={themeConfig.mode === 'dark' ? 'dark' : 'light'}
                 mode="inline"

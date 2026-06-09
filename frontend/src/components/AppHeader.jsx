@@ -136,7 +136,7 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '8px 24px',
-      background: themeConfig.mode === 'dark' ? '#1f1f1f' : '#e6e6e6',
+      background: themeConfig.mode === 'dark' ? '#1f1f1f' : '#fff',
       borderBottom: `3px solid ${themeConfig.primaryColor}`,
       minHeight: 56,
       marginBottom: 0,

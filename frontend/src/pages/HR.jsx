@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, Row, Col, Statistic } from 'antd';
 import { PlusOutlined, EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs'; // Keep dayjs for time-only operations and diffs
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
-const statusColors = { active: 'green', inactive: 'orange', terminated: 'red', present: 'green', absent: 'red', late: 'orange', leave: 'blue', pending: 'orange', approved: 'green', rejected: 'red', draft: 'default', submitted: 'blue' };
+const statusColors = { active: 'green', inactive: 'orange', terminated: 'red', present: 'green', absent: 'red', late: 'orange', leave: 'blue', pending: 'orange', approved: 'green', rejected: 'red', draft: 'default', submitted: 'blue' }; // This line was outside the component, moving it inside the export default function
 
 // ========== Employees Tab ==========
 const EmployeesTab = () => {
@@ -33,7 +34,7 @@ const EmployeesTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.hire_date = values.hire_date?.format('YYYY-MM-DD');
+            values.hire_date = formatDateForApi(values.hire_date);
             let res;
             if (editingRecord) res = await apiFetch(`/hr/employees/${editingRecord.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/hr/employees', { method: 'POST', body: JSON.stringify(values) });
@@ -50,7 +51,7 @@ const EmployeesTab = () => {
         { title: 'Mansione', dataIndex: 'job_title' },
         { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
         { title: 'Azioni', render: (_, r) => (
-            <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, hire_date: r.hire_date ? dayjs(r.hire_date) : null }); setModalVisible(true); }}>Modifica</Button>
+            <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, hire_date: parseDateForForm(r.hire_date) }); setModalVisible(true); }}>Modifica</Button>
         )},
     ];
 
@@ -82,8 +83,8 @@ const EmployeesTab = () => {
                         <Form.Item name="employee_type" label="Tipo">
                             <Select options={[{ value: 'full-time', label: 'Full Time' }, { value: 'part-time', label: 'Part Time' }, { value: 'contractor', label: 'Consulente' }]} />
                         </Form.Item>
-                        <Form.Item name="salary" label="Stipendio"><InputNumber min={0} step={100} prefix="€" /></Form.Item>
-                        <Form.Item name="hire_date" label="Data Assunzione"><DatePicker /></Form.Item>
+                        <Form.Item name="salary" label="Stipendio"><InputNumber min={0} step={100} prefix="€" /></Form.Item> {/* Use formatDateForDisplay for DatePicker format */}
+                        <Form.Item name="hire_date" label="Data Assunzione"><DatePicker format={formatDateForDisplay} /></Form.Item>
                     </Space>
                 </Form>
             </Modal>
@@ -170,9 +171,9 @@ const AttendanceTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.date = values.date?.format('YYYY-MM-DD');
-            values.check_in = values.check_in?.format('HH:mm');
-            values.check_out = values.check_out?.format('HH:mm');
+            values.date = formatDateForApi(values.date); // Use utility for date
+            values.check_in = values.check_in ? dayjs(values.check_in).format('HH:mm') : null; // Time only, dayjs still needed
+            values.check_out = values.check_out ? dayjs(values.check_out).format('HH:mm') : null; // Time only, dayjs still needed
             let res;
             if (editing) res = await apiFetch(`/hr/attendance/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/hr/attendance', { method: 'POST', body: JSON.stringify(values) });
@@ -182,15 +183,15 @@ const AttendanceTab = () => {
     };
 
     const columns = [
-        { title: 'Data', dataIndex: 'date' },
-        { title: 'Dipendente', dataIndex: 'employee_id', render: (id) => { const e = employees.find(x => x.id === id); return e ? `${e.first_name} ${e.last_name}` : '-'; } },
-        { title: 'Entrata', dataIndex: 'check_in', render: (v) => v || '-' },
-        { title: 'Uscita', dataIndex: 'check_out', render: (v) => v || '-' },
-        { title: 'Ore Lavorate', key: 'hours', render: (_, r) => r.check_in && r.check_out ? `${((new Date(`2000-01-01T${r.check_out}`) - new Date(`2000-01-01T${r.check_in}`)) / 3600000 - (r.break_duration || 0) / 60).toFixed(1)}h` : '-' },
+        { title: 'Data', dataIndex: 'date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Dipendente', dataIndex: 'employee_id', render: (id) => { const e = employees.find(x => x.id === id); return e ? `${e.first_name} ${e.last_name}` : '-'; } }, // No change needed here
+        { title: 'Entrata', dataIndex: 'check_in', render: (v) => v || '-' }, // No change needed here
+        { title: 'Uscita', dataIndex: 'check_out', render: (v) => v || '-' }, // No change needed here
+        { title: 'Ore Lavorate', key: 'hours', render: (_, r) => r.check_in && r.check_out ? `${((dayjs(`2000-01-01T${r.check_out}`).diff(dayjs(`2000-01-01T${r.check_in}`), 'minute')) / 60 - (r.break_duration || 0) / 60).toFixed(1)}h` : '-' }, // dayjs still needed for time diff
         { title: 'Straordinario', dataIndex: 'overtime_hours' },
         { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
         { title: 'Azioni', render: (_, r) => (
-            <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, date: r.date ? dayjs(r.date) : null, check_in: r.check_in ? dayjs(r.check_in, 'HH:mm') : null, check_out: r.check_out ? dayjs(r.check_out, 'HH:mm') : null }); setModalVisible(true); }}>Modifica</Button>
+            <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, date: parseDateForForm(r.date), check_in: r.check_in ? dayjs(r.check_in, 'HH:mm') : null, check_out: r.check_out ? dayjs(r.check_out, 'HH:mm') : null }); setModalVisible(true); }}>Modifica</Button>
         )},
     ];
 
@@ -204,7 +205,7 @@ const AttendanceTab = () => {
                         <Form.Item name="employee_id" label="Dipendente" rules={[{ required: true }]}>
                             <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))} />
                         </Form.Item>
-                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker /></Form.Item>
+                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
                     </Space>
                     <Space size={16}>
                         <Form.Item name="check_in" label="Entrata"><DatePicker picker="time" format="HH:mm" /></Form.Item>
@@ -251,8 +252,8 @@ const LeaveTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.start_date = values.start_date?.format('YYYY-MM-DD');
-            values.end_date = values.end_date?.format('YYYY-MM-DD');
+            values.start_date = formatDateForApi(values.start_date);
+            values.end_date = formatDateForApi(values.end_date);
             let res;
             if (editing) res = await apiFetch(`/hr/leave/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/hr/leave', { method: 'POST', body: JSON.stringify(values) });
@@ -271,14 +272,14 @@ const LeaveTab = () => {
 
     const columns = [
         { title: 'Dipendente', dataIndex: 'employee_id', render: (id) => { const e = employees.find(x => x.id === id); return e ? `${e.first_name} ${e.last_name}` : '-'; } },
-        { title: 'Tipo', dataIndex: 'leave_type' },
-        { title: 'Dal', dataIndex: 'start_date' },
-        { title: 'Al', dataIndex: 'end_date' },
-        { title: 'Giorni', dataIndex: 'days' },
+        { title: 'Tipo', dataIndex: 'leave_type' }, // No change needed here
+        { title: 'Dal', dataIndex: 'start_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Al', dataIndex: 'end_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Giorni', dataIndex: 'days' }, // No change needed here
         { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
         { title: 'Azioni', render: (_, r) => (
             <Space>
-                <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, start_date: r.start_date ? dayjs(r.start_date) : null, end_date: r.end_date ? dayjs(r.end_date) : null }); setModalVisible(true); }}>Modifica</Button>
+                <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, start_date: parseDateForForm(r.start_date), end_date: parseDateForForm(r.end_date) }); setModalVisible(true); }}>Modifica</Button>
                 {r.status === 'pending' && (
                     <>
                         <Button type="link" icon={<CheckOutlined />} style={{ color: 'green' }} onClick={() => handleApprove(r.id, 'approved')}>Approva</Button>
@@ -300,12 +301,12 @@ const LeaveTab = () => {
                             <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))} />
                         </Form.Item>
                         <Form.Item name="leave_type" label="Tipo" rules={[{ required: true }]}>
-                            <Select options={[{ value: 'vacation', label: 'Ferie' }, { value: 'sick', label: 'Malattia' }, { value: 'personal', label: 'Permesso' }, { value: 'maternity', label: 'Maternità' }, { value: 'paternity', label: 'Paternità' }]} />
-                        </Form.Item>
-                    </Space>
+                            <Select options={[{ value: 'vacation', label: 'Ferie' }, { value: 'sick', label: 'Malattia' }, { value: 'personal', label: 'Permesso' }, { value: 'maternity', label: 'Maternità' }, { value: 'paternity', label: 'Paternità' }]} /> {/* No change needed here */}
+                        </Form.Item> {/* No change needed here */}
+                    </Space> {/* Use formatDateForDisplay for DatePicker format */}
                     <Space size={16}>
-                        <Form.Item name="start_date" label="Dal" rules={[{ required: true }]}><DatePicker /></Form.Item>
-                        <Form.Item name="end_date" label="Al" rules={[{ required: true }]}><DatePicker /></Form.Item>
+                        <Form.Item name="start_date" label="Dal" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
+                        <Form.Item name="end_date" label="Al" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
                     </Space>
                     <Form.Item name="reason" label="Motivazione"><Input.TextArea rows={2} /></Form.Item>
                 </Form>
@@ -345,5 +346,3 @@ const HR = () => {
         </div>
     );
 };
-
-export default HR;

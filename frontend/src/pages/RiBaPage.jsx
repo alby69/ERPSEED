@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, Row, Col, Statistic } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SendOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs'; // Keep dayjs for display in modal
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
-const statusColors = { draft: 'default', sent: 'blue', partially_collected: 'orange', collected: 'green', rejected: 'red' };
+const statusColors = { draft: 'default', sent: 'blue', partially_collected: 'orange', collected: 'green', rejected: 'red' }; // This line was outside the component, moving it inside the export default function
 
 const RiBaPage = () => {
     const [data, setData] = useState([]);
@@ -27,11 +28,11 @@ const RiBaPage = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.batch_date = values.batch_date?.format('YYYY-MM-DD');
+            values.batch_date = formatDateForApi(values.batch_date);
             if (values.items) {
                 values.items = values.items.map(it => ({
-                    ...it,
-                    due_date: it.due_date?.format ? it.due_date.format('YYYY-MM-DD') : it.due_date,
+                    ...it, // No change needed here
+                    due_date: formatDateForApi(parseDateForForm(it.due_date)), // Ensure it's a dayjs object before formatting
                 }));
             }
             let res;
@@ -63,10 +64,10 @@ const RiBaPage = () => {
 
     const expandedRowRender = (record) => {
         const cols = [
-            { title: 'Soggetto', dataIndex: 'soggetto_name' },
-            { title: 'Importo', dataIndex: 'amount', render: (v) => `€${(v || 0).toFixed(2)}` },
-            { title: 'Scadenza', dataIndex: 'due_date' },
-            { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={v === 'collected' ? 'green' : v === 'rejected' ? 'red' : 'blue'}>{v}</Tag> },
+            { title: 'Soggetto', dataIndex: 'soggetto_name' }, // No change needed here
+            { title: 'Importo', dataIndex: 'amount', render: (v) => `€${(v || 0).toFixed(2)}` }, // No change needed here
+            { title: 'Scadenza', dataIndex: 'due_date', render: (v) => formatDateForDisplay(v) || '-' },
+            { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={v === 'collected' ? 'green' : v === 'rejected' ? 'red' : 'blue'}>{v}</Tag> }, // No change needed here
             { title: 'Azioni', render: (_, i) => (
                 <Space>
                     {i.status === 'pending' && (
@@ -82,16 +83,16 @@ const RiBaPage = () => {
     };
 
     const columns = [
-        { title: 'Numero', dataIndex: 'number' },
-        { title: 'Data', dataIndex: 'batch_date' },
-        { title: 'Banca', dataIndex: 'bank_name' },
-        { title: 'Totale', dataIndex: 'total_amount', render: (v) => `€${(v || 0).toFixed(2)}` },
-        { title: 'Incassato', dataIndex: 'collected_amount', render: (v) => `€${(v || 0).toFixed(2)}` },
-        { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
+        { title: 'Numero', dataIndex: 'number' }, // No change needed here
+        { title: 'Data', dataIndex: 'batch_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Banca', dataIndex: 'bank_name' }, // No change needed here
+        { title: 'Totale', dataIndex: 'total_amount', render: (v) => `€${(v || 0).toFixed(2)}` }, // No change needed here
+        { title: 'Incassato', dataIndex: 'collected_amount', render: (v) => `€${(v || 0).toFixed(2)}` }, // No change needed here
+        { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> }, // No change needed here
         { title: 'Azioni', render: (_, r) => (
             <Space>
                 {r.status === 'draft' && <Button type="link" size="small" icon={<SendOutlined />} onClick={() => handleAction(r.id, 'send')}>Invia</Button>}
-                <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, batch_date: r.batch_date ? dayjs(r.batch_date) : null }); setModalVisible(true); }}>Modifica</Button>
+                <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, batch_date: parseDateForForm(r.batch_date) }); setModalVisible(true); }}>Modifica</Button>
                 <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={async () => { const res = await apiFetch(`/api/v1/riba/batches/${r.id}`, { method: 'DELETE' }); if (res.ok) { message.success('Eliminato'); fetch(); } }} />
             </Space>
         )},
@@ -111,7 +112,7 @@ const RiBaPage = () => {
             <Modal title={editing ? 'Modifica Invio' : 'Nuovo Invio Ri.Ba.'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
-                        <Form.Item name="batch_date" label="Data" rules={[{ required: true }]}><DatePicker /></Form.Item>
+                        <Form.Item name="batch_date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item> {/* Use formatDateForDisplay for DatePicker format */}
                         <Form.Item name="bank_name" label="Banca"><Input style={{ width: 250 }} /></Form.Item>
                         <Form.Item name="bank_iban" label="IBAN"><Input /></Form.Item>
                     </Space>
@@ -121,5 +122,3 @@ const RiBaPage = () => {
         </div>
     );
 };
-
-export default RiBaPage;

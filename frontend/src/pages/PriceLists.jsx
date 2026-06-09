@@ -106,7 +106,7 @@ const PriceListItems = ({ listId, visible, onClose }) => {
     );
 };
 
-const PriceLists = () => {
+export default function PriceLists() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -192,5 +192,3 @@ const PriceLists = () => {
         </div>
     );
 };
-
-export default PriceLists;

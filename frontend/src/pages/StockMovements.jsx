@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, Select, Space, Tag, message, Tabs, DatePicker } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay, formatDateTimeForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
 const typeColors = { in: 'green', out: 'red', transfer: 'blue', adjustment: 'orange' };
 const typeLabels = { in: 'Carico', out: 'Scarico', transfer: 'Trasferimento', adjustment: 'Rettifica' };
@@ -124,7 +124,7 @@ const StockMovementsTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.date = values.date?.format('YYYY-MM-DD');
+            values.date = formatDateForApi(values.date);
             const res = await apiFetch('/inventory/movements', { method: 'POST', body: JSON.stringify(values) });
             if (res.ok) { message.success('Movimento creato'); setModalVisible(false); form.resetFields(); fetchData(); }
             else { const e = await res.json(); message.error(e.message || 'Errore'); }
@@ -133,7 +133,7 @@ const StockMovementsTab = () => {
 
     const columns = [
         { title: 'Nr. Movimento', dataIndex: 'movement_number', key: 'movement_number' },
-        { title: 'Data', dataIndex: 'created_at', key: 'created_at', render: (v) => v ? dayjs(v).format('DD/MM/YYYY HH:mm') : '-' },
+        { title: 'Data', dataIndex: 'created_at', key: 'created_at', render: (v) => formatDateTimeForDisplay(v) || '-' },
         { title: 'Tipo', dataIndex: 'movement_type', key: 'movement_type', render: (v) => <Tag color={typeColors[v]}>{typeLabels[v] || v}</Tag> },
         { title: 'Prodotto', dataIndex: 'product_id', key: 'product_id', render: (id) => { const p = products.find(x => x.id === id); return p ? `${p.code || ''} - ${p.name}` : `ID: ${id}`; } },
         { title: 'Ubicazione', dataIndex: 'location_id', key: 'location_id', render: (id) => { const l = locations.find(x => x.id === id); return l ? l.name : `ID: ${id}`; } },
@@ -164,8 +164,8 @@ const StockMovementsTab = () => {
                     <Space style={{ width: '100%' }} size={16}>
                         <Form.Item name="quantity" label="Quantità" rules={[{ required: true }]}>
                             <InputNumber min={0.001} step={1} />
-                        </Form.Item>
-                        <Form.Item name="date" label="Data"><DatePicker /></Form.Item>
+                        </Form.Item> {/* Use formatDateForDisplay for DatePicker format */}
+                        <Form.Item name="date" label="Data"><DatePicker format={formatDateForDisplay} /></Form.Item>
                     </Space>
                     <Form.Item name="reference_type" label="Tipo Riferimento">
                         <Input placeholder="es. ordine, ddt, inventario" />
@@ -192,5 +192,3 @@ const StockMovements = () => {
         </div>
     );
 };
-
-export default StockMovements;

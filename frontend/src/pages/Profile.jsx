@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../components';
-import { apiFetch } from '../utils';
+import { apiFetch, BASE_URL } from '../utils';
 import { useAuth } from '../context';
 
 function Profile() {
@@ -22,7 +22,7 @@ function Profile() {
         last_name: user.last_name || ''
       });
       if (user.avatar) {
-        setAvatarPreview(`http://localhost:5000/uploads/${user.avatar}`);
+        setAvatarPreview(`${BASE_URL}/uploads/${user.avatar}`);
       }
     }
   }, [user]);

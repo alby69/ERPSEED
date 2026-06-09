@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, Switch, DatePicker, Space, Tag, Popconfirm, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
 const TaxRates = () => {
+export default function TaxRates() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -34,8 +36,8 @@ const TaxRates = () => {
             const values = await form.validateFields();
             const payload = {
                 ...values,
-                valid_from: values.valid_from?.format('YYYY-MM-DD') || null,
-                valid_to: values.valid_to?.format('YYYY-MM-DD') || null,
+                valid_from: formatDateForApi(values.valid_from),
+                valid_to: formatDateForApi(values.valid_to),
             };
 
             let res;
@@ -85,8 +87,8 @@ const TaxRates = () => {
         setEditingRecord(record);
         form.setFieldsValue({
             ...record,
-            valid_from: record.valid_from ? null : null,
-            valid_to: record.valid_to ? null : null,
+            valid_from: parseDateForForm(record.valid_from),
+            valid_to: parseDateForForm(record.valid_to),
         });
         setModalVisible(true);
     };
@@ -96,8 +98,8 @@ const TaxRates = () => {
         { title: 'Nome', dataIndex: 'name', key: 'name' },
         { title: 'Aliquota', dataIndex: 'rate', key: 'rate', width: 120, render: (v) => `${v}%` },
         { title: 'Attivo', dataIndex: 'is_active', key: 'is_active', width: 80, render: (v) => <Tag color={v ? 'green' : 'red'}>{v ? 'Sì' : 'No'}</Tag> },
-        { title: 'Dal', dataIndex: 'valid_from', key: 'valid_from', width: 120, render: (v) => v || '-' },
-        { title: 'Al', dataIndex: 'valid_to', key: 'valid_to', width: 120, render: (v) => v || '-' },
+        { title: 'Dal', dataIndex: 'valid_from', key: 'valid_from', width: 120, render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Al', dataIndex: 'valid_to', key: 'valid_to', width: 120, render: (v) => formatDateForDisplay(v) || '-' },
         {
             title: 'Azioni', key: 'actions', width: 120,
             render: (_, record) => (
@@ -164,5 +166,3 @@ const TaxRates = () => {
         </div>
     );
 };
-
-export default TaxRates;

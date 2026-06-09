@@ -14,7 +14,7 @@ import HelpDrawer from '@/components/HelpDrawer';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-const ComuniPage = () => {
+export default function ComuniPage() {
   const [comuni, setComuni] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 50, total: 0 });
@@ -436,5 +436,3 @@ const ComuniPage = () => {
     </Layout>
   );
 };
-
-export default ComuniPage;

@@ -3,6 +3,7 @@ import { Card, Table, Button, Modal, Form, Input, Select, Space, Tag, message, T
 import { PlusOutlined, EditOutlined, PlayCircleOutlined, HistoryOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 
+import { formatDateTimeForDisplay } from '@/utils/dateUtils';
 const ReportDesigner = () => {
     const [reports, setReports] = useState([]);
     const [sources, setSources] = useState([]);
@@ -150,7 +151,7 @@ const ReportDesigner = () => {
                                 <Card title="Esecuzioni Recenti" size="small" style={{ marginTop: 8 }}>
                                     <Table dataSource={history} size="small" pagination={false}
                                         columns={[
-                                            { title: 'Data', dataIndex: 'created_at', render: (v) => v ? new Date(v).toLocaleString() : '-' },
+                                            { title: 'Data', dataIndex: 'created_at', render: (v) => formatDateTimeForDisplay(v) || '-' },
                                             { title: 'Righe', dataIndex: 'row_count' },
                                             { title: 'Tempo', dataIndex: 'execution_time_ms', render: (v) => `${v}ms` },
                                             { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={v === 'completed' ? 'green' : 'red'}>{v}</Tag> },

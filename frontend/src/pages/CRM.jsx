@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, Row, Col, Statistic } from 'antd';
 import { PlusOutlined, UserOutlined, DollarOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
 const stageColors = { qualification: 'blue', proposal: 'purple', negotiation: 'orange', won: 'green', lost: 'red' };
 const stageLabels = { qualification: 'Qualifica', proposal: 'Proposta', negotiation: 'Negoziazione', won: 'Vinta', lost: 'Persa' };
 const leadStatusColors = { new: 'blue', contacted: 'purple', qualified: 'green', lost: 'red' };
 
-const CRMPage = () => {
+export default function CRMPage() {
     const [leads, setLeads] = useState([]);
     const [opportunities, setOpportunities] = useState([]);
     const [pipelineSummary, setPipelineSummary] = useState([]);
@@ -51,7 +51,7 @@ const CRMPage = () => {
     const handleOppSubmit = async () => {
         try {
             const values = await oppForm.validateFields();
-            values.expected_close_date = values.expected_close_date?.format('YYYY-MM-DD');
+            values.expected_close_date = formatDateForApi(values.expected_close_date);
             let res;
             if (editingOpp) res = await apiFetch(`/api/v1/crm/opportunities/${editingOpp.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/api/v1/crm/opportunities', { method: 'POST', body: JSON.stringify(values) });
@@ -76,10 +76,10 @@ const CRMPage = () => {
         { title: 'Nome', dataIndex: 'name', key: 'name' },
         { title: 'Valore', dataIndex: 'expected_revenue', key: 'expected_revenue', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
         { title: 'Probabilità', dataIndex: 'probability', key: 'probability', render: (v) => `${v || 0}%` },
-        { title: 'Stadio', dataIndex: 'stage', key: 'stage', render: (v) => <Tag color={stageColors[v]}>{stageLabels[v] || v}</Tag> },
-        { title: 'Chiusura Prevista', dataIndex: 'expected_close_date', key: 'expected_close_date', render: (v) => v ? dayjs(v).format('DD/MM/YYYY') : '-' },
+        { title: 'Stadio', dataIndex: 'stage', key: 'stage', render: (v) => <Tag color={stageColors[v]}>{stageLabels[v] || v}</Tag> }, // No change needed here
+        { title: 'Chiusura Prevista', dataIndex: 'expected_close_date', key: 'expected_close_date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Azioni', key: 'actions', render: (_, r) => (
-            <Button type="link" onClick={() => { setEditingOpp(r); oppForm.setFieldsValue({ ...r, expected_close_date: r.expected_close_date ? dayjs(r.expected_close_date) : null }); setOppModalVisible(true); }}>Modifica</Button>
+            <Button type="link" onClick={() => { setEditingOpp(r); oppForm.setFieldsValue({ ...r, expected_close_date: parseDateForForm(r.expected_close_date) }); setOppModalVisible(true); }}>Modifica</Button>
         )},
     ];
 
@@ -148,12 +148,10 @@ const CRMPage = () => {
                     <Form.Item name="stage" label="Stadio">
                         <Select options={Object.entries(stageLabels).map(([k, v]) => ({ value: k, label: v }))} />
                     </Form.Item>
-                    <Form.Item name="expected_close_date" label="Chiusura Prevista"><DatePicker /></Form.Item>
+                    <Form.Item name="expected_close_date" label="Chiusura Prevista"><DatePicker format={formatDateForDisplay} /></Form.Item>
                     <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
                 </Form>
             </Modal>
         </div>
     );
 };
-
-export default CRMPage;

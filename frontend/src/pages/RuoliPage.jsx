@@ -11,7 +11,7 @@ import Layout from '../components/Layout';
 const { Title } = Typography;
 const { Option } = Select;
 
-const RuoliPage = () => {
+export default function RuoliPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRuolo, setEditingRuolo] = useState(null);
   const [form] = Form.useForm();
@@ -257,5 +257,3 @@ const RuoliPage = () => {
     </Layout>
   );
 };
-
-export default RuoliPage;

@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, Divider } from 'antd';
 import { PlusOutlined, EditOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
 const statusColors = { draft: 'default', confirmed: 'blue', completed: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', confirmed: 'Confermato', completed: 'Completato', cancelled: 'Annullato' };
 
-const DeliveryNotes = () => {
+export default function DeliveryNotes() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
@@ -68,15 +68,15 @@ const DeliveryNotes = () => {
     };
 
     const columns = [
-        { title: 'Numero', dataIndex: 'number', key: 'number' },
-        { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => v ? dayjs(v).format('DD/MM/YYYY') : '-' },
+        { title: 'Numero', dataIndex: 'number', key: 'number' }, // No change needed here
+        { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Cliente', dataIndex: 'customer_id', key: 'customer_id', render: (id) => { const s = customers.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
         { title: 'Totale', dataIndex: 'total_amount', key: 'total_amount', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
         { title: 'Stato', dataIndex: 'status', key: 'status', render: (v) => <Tag color={statusColors[v]}>{statusLabels[v] || v}</Tag> },
         { title: 'Azioni', key: 'actions', render: (_, r) => (
             <Space>
                 {r.status === 'draft' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleAction(r.id, 'confirm')}>Conferma</Button>}
-                {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: r.date ? dayjs(r.date) : null }); setModalVisible(true); }} />}
+                {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: parseDateForForm(r.date) }); setModalVisible(true); }} />}
             </Space>
         )},
     ];
@@ -96,7 +96,7 @@ const DeliveryNotes = () => {
             <Modal title={editingRecord ? 'Modifica DDT' : 'Nuovo DDT Vendita'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
-                        <Form.Item name="date" label="Data"><DatePicker /></Form.Item>
+                        <Form.Item name="date" label="Data"><DatePicker format={formatDateForDisplay} /></Form.Item>
                         <Form.Item name="customer_id" label="Cliente" rules={[{ required: true }]} style={{ minWidth: 250 }}>
                             <Select showSearch placeholder="Seleziona cliente" optionFilterProp="label"
                                 options={customers.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
@@ -127,5 +127,3 @@ const DeliveryNotes = () => {
         </div>
     );
 };
-
-export default DeliveryNotes;

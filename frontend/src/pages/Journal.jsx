@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, Divider } from 'antd';
 import { PlusOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
 const statusColors = { draft: 'default', posted: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', posted: 'Registrata', cancelled: 'Annullata' };
 
-const Journal = () => {
+export default function Journal() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
@@ -42,7 +42,7 @@ const Journal = () => {
         try {
             const values = await form.validateFields();
             const payload = {
-                date: values.date?.format('YYYY-MM-DD'),
+                date: formatDateForApi(values.date),
                 description: values.description,
                 reference: values.reference,
                 lines: values.lines?.map(l => ({
@@ -66,7 +66,7 @@ const Journal = () => {
 
     const columns = [
         { title: 'Nr. Registrazione', dataIndex: 'entry_number', key: 'entry_number' },
-        { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => v ? dayjs(v).format('DD/MM/YYYY') : '-' },
+        { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Descrizione', dataIndex: 'description', key: 'description' },
         { title: 'Dare', dataIndex: 'total_debit', key: 'total_debit', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
         { title: 'Avere', dataIndex: 'total_credit', key: 'total_credit', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
@@ -97,7 +97,7 @@ const Journal = () => {
             <Modal title="Nuova Scrittura Contabile" open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); }} okText="Salva" cancelText="Annulla" width={800}>
                 <Form form={form} layout="vertical">
                     <Space style={{ width: '100%' }} size={16}>
-                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker /></Form.Item>
+                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
                         <Form.Item name="reference" label="Riferimento"><Input style={{ width: 200 }} /></Form.Item>
                     </Space>
                     <Form.Item name="description" label="Descrizione" rules={[{ required: true }]}><Input.TextArea rows={2} /></Form.Item>
@@ -132,5 +132,3 @@ const Journal = () => {
         </div>
     );
 };
-
-export default Journal;

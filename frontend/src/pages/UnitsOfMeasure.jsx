@@ -3,7 +3,7 @@ import { Card, Table, Button, Modal, Form, Input, Switch, Space, Tag, Popconfirm
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 
-const UnitsOfMeasure = () => {
+export default function UnitsOfMeasure() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -86,5 +86,3 @@ const UnitsOfMeasure = () => {
         </div>
     );
 };
-
-export default UnitsOfMeasure;

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs'; // Keep dayjs for diff calculation in Tag
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
 const statusColors = { available: 'green', reserved: 'blue', sold: 'default', returned: 'orange', scrapped: 'red' };
 
@@ -33,8 +34,8 @@ const LotsTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.manufacturing_date = values.manufacturing_date?.format('YYYY-MM-DD');
-            values.expiry_date = values.expiry_date?.format('YYYY-MM-DD');
+            values.manufacturing_date = formatDateForApi(values.manufacturing_date);
+            values.expiry_date = formatDateForApi(values.expiry_date);
             let res;
             if (editing) res = await apiFetch(`/api/v1/lots/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/api/v1/lots', { method: 'POST', body: JSON.stringify(values) });
@@ -47,12 +48,12 @@ const LotsTab = () => {
         { title: 'Codice Lotto', dataIndex: 'code' },
         { title: 'Prodotto', dataIndex: 'product_name' },
         { title: 'Qtà Iniziale', dataIndex: 'initial_quantity' },
-        { title: 'Qtà Residua', dataIndex: 'quantity' },
-        { title: 'Data Prod.', dataIndex: 'manufacturing_date', render: (v) => v || '-' },
-        { title: 'Scadenza', dataIndex: 'expiry_date', render: (v) => v ? <Tag color={dayjs(v).diff(dayjs(), 'day') < 30 ? 'red' : 'default'}>{v}</Tag> : '-' },
+        { title: 'Qtà Residua', dataIndex: 'quantity' }, // No change needed here
+        { title: 'Data Prod.', dataIndex: 'manufacturing_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Scadenza', dataIndex: 'expiry_date', render: (v) => v ? <Tag color={parseDateForForm(v)?.diff(dayjs(), 'day') < 30 ? 'red' : 'default'}>{formatDateForDisplay(v)}</Tag> : '-' }, // dayjs still needed for diff
         { title: 'Azioni', render: (_, r) => (
             <Space>
-                <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, manufacturing_date: r.manufacturing_date ? dayjs(r.manufacturing_date) : null, expiry_date: r.expiry_date ? dayjs(r.expiry_date) : null }); setModalVisible(true); }}>Modifica</Button>
+                <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, manufacturing_date: parseDateForForm(r.manufacturing_date), expiry_date: parseDateForForm(r.expiry_date) }); setModalVisible(true); }}>Modifica</Button>
                 <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={async () => { const res = await apiFetch(`/api/v1/lots/${r.id}`, { method: 'DELETE' }); if (res.ok) { message.success('Eliminato'); fetch(); } }} />
             </Space>
         )},
@@ -70,10 +71,10 @@ const LotsTab = () => {
                             <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={products.map(p => ({ value: p.id, label: `${p.name}` }))} />
                         </Form.Item>
                     </Space>
-                    <Space size={16}>
+                    <Space size={16}> {/* Use formatDateForDisplay for DatePicker format */}
                         <Form.Item name="quantity" label="Quantità" rules={[{ required: true }]}><InputNumber min={0} /></Form.Item>
-                        <Form.Item name="manufacturing_date" label="Data Prod."><DatePicker /></Form.Item>
-                        <Form.Item name="expiry_date" label="Scadenza"><DatePicker /></Form.Item>
+                        <Form.Item name="manufacturing_date" label="Data Prod."><DatePicker format={formatDateForDisplay} /></Form.Item>
+                        <Form.Item name="expiry_date" label="Scadenza"><DatePicker format={formatDateForDisplay} /></Form.Item>
                     </Space>
                     <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
                 </Form>
@@ -112,7 +113,7 @@ const SerialTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.sold_date = values.sold_date?.format('YYYY-MM-DD');
+            values.sold_date = formatDateForApi(values.sold_date);
             let res;
             if (editing) res = await apiFetch(`/api/v1/serial-numbers/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/api/v1/serial-numbers', { method: 'POST', body: JSON.stringify(values) });
@@ -147,7 +148,7 @@ const SerialTab = () => {
                             <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={products.map(p => ({ value: p.id, label: p.name }))} />
                         </Form.Item>
                     </Space>
-                    <Space size={16}>
+                    <Space size={16}> {/* Use formatDateForDisplay for DatePicker format */}
                         <Form.Item name="lot_id" label="Lotto"><Select allowClear style={{ width: 200 }} options={lots.map(l => ({ value: l.id, label: l.code }))} /></Form.Item>
                         <Form.Item name="status" label="Stato">
                             <Select options={[

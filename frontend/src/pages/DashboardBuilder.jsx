@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
+import 'react-resizable/css/styles.css'; // No date fields in this page
 import { Button, Card, Modal, Form, Input, Select, Space, Table, message, Tooltip, Dropdown, Tag, DatePicker } from 'antd';
 import { PlusOutlined, DeleteOutlined, SaveOutlined, ExportOutlined, SettingOutlined, FullscreenOutlined, DownloadOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';

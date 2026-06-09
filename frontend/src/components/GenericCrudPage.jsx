@@ -22,6 +22,7 @@ import Pagination from './Pagination';
 import DataTable, { ActionsMenu } from './DataTable';
 import FormLines from './FormLines';
 import KanbanView from './KanbanView';
+import DateRangePicker from './DateRangePicker';
 import TableSearch from './TableSearch';
 import { apiFetch, getNestedValue } from '../utils';
 import { useCrudData } from '../hooks/useCrudData.js';
@@ -744,19 +745,12 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
             </div>
             {enableDateFilter && (
               <div className="d-flex gap-1">
-                <input
-                  type="date"
-                  className="form-control"
-                  value={dateFilters.from}
-                  onChange={(e) => handleDateFilterChange('from', e.target.value)}
-                  title="Start Date"
-                />
-                <input
-                  type="date"
-                  className="form-control"
-                  value={dateFilters.to}
-                  onChange={(e) => handleDateFilterChange('to', e.target.value)}
-                  title="End Date"
+                <DateRangePicker
+                  value={[dateFilters.from, dateFilters.to]}
+                  onChange={(dates) => {
+                    handleDateFilterChange('from', dates[0]);
+                    handleDateFilterChange('to', dates[1]);
+                  }}
                 />
               </div>
             )}

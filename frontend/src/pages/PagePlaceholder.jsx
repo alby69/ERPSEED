@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Typography, Tag } from 'antd';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom'; // No date fields in this page
 import { ToolOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;

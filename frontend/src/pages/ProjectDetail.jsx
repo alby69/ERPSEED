@@ -7,6 +7,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { io } from 'socket.io-client';
 import { Layout } from '../components';
 import { useAuth } from '../context';
+import { formatDateForDisplay } from '@/utils/dateUtils';
 import { apiFetch, BASE_URL } from '../utils';
 
 const TASK_STATUSES = ['todo', 'in_progress', 'review', 'done'];
@@ -387,8 +388,8 @@ const TaskCard = React.memo(function TaskCard({ task, onDelete, onClick }) {
           <p className="small text-muted">{task.description}</p>
           <div className="d-flex justify-content-between align-items-center mt-2">
             <small className="text-muted">
-              {task.due_date ? `Due: ${new Date(task.due_date).toLocaleDateString()}` : ''}
-            </small>
+              {task.due_date ? `Due: ${formatDateForDisplay(task.due_date)}` : ''}
+            </small> {/* Use formatDateForDisplay */}
             {assignedUser && (
               <img
                 src={assignedUser.avatar_url || `https://ui-avatars.com/api/?name=${assignedUser.full_name}&background=random`}

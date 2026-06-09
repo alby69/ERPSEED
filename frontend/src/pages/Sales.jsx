@@ -3,6 +3,7 @@ import { Table, Spin, Alert, Button, Tag, Typography, Space } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from './api';
+import { formatDateForDisplay } from '@/utils/dateUtils';
 
 function Sales() {
     const [orders, setOrders] = useState([]);
@@ -50,7 +51,7 @@ function Sales() {
     const columns = [
         { title: 'Order Number', dataIndex: 'order_number', key: 'order_number' },
         { title: 'Customer', dataIndex: 'customer_name', key: 'customer_name', render: (text, record) => record.customer?.name || 'N/A' },
-        { title: 'Order Date', dataIndex: 'order_date', key: 'order_date', render: (date) => new Date(date).toLocaleDateString() },
+        { title: 'Order Date', dataIndex: 'order_date', key: 'order_date', render: (date) => formatDateForDisplay(date) || '-' },
         { title: 'Total', dataIndex: 'total_amount', key: 'total_amount', render: (amount) => `$${(amount || 0).toFixed(2)}` },
         { title: 'Status', dataIndex: 'status', key: 'status', render: (status) => <Tag color={getStatusColor(status)}>{status?.toUpperCase()}</Tag> },
         { title: 'Actions', key: 'actions', render: (text, record) => (<Button type="link" onClick={() => navigate(`/sales/${record.id}`)}>View Details</Button>) },

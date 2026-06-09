@@ -1,6 +1,7 @@
 import React from 'react';
 import GenericCrudPage from '../components/GenericCrudPage';
-
+import { BASE_URL } from '@/utils'; // Import BASE_URL for avatar path
+// No date fields in this page
 function Users() {
   const columns = [
     { accessor: 'id', header: 'ID' },

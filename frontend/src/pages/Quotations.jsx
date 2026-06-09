@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, Divider } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 
 const statusColors = { draft: 'default', confirmed: 'blue', completed: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', confirmed: 'Accettato', completed: 'Completato', cancelled: 'Annullato' };
 
-const Quotations = () => {
+export default function Quotations() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
@@ -48,8 +48,8 @@ const Quotations = () => {
             const values = await form.validateFields();
             const payload = {
                 type: 'quote', ...values,
-                date: values.date?.format('YYYY-MM-DD'),
-                expiry_date: values.expiry_date?.format('YYYY-MM-DD'),
+                date: formatDateForApi(values.date),
+                expiry_date: formatDateForApi(values.expiry_date),
                 lines: values.lines?.map(l => ({
                     product_id: l.product_id, description: l.description || '',
                     quantity: parseFloat(l.quantity || 1), unit_price: parseFloat(l.unit_price || 0),
@@ -69,17 +69,17 @@ const Quotations = () => {
     };
 
     const columns = [
-        { title: 'Numero', dataIndex: 'number', key: 'number' },
-        { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => v ? dayjs(v).format('DD/MM/YYYY') : '-' },
+        { title: 'Numero', dataIndex: 'number', key: 'number' }, // No change needed here
+        { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Cliente', dataIndex: 'customer_id', key: 'customer_id', render: (id) => { const s = customers.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
         { title: 'Totale', dataIndex: 'total_amount', key: 'total_amount', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
-        { title: 'Scadenza', dataIndex: 'expiry_date', key: 'expiry_date', render: (v) => v ? dayjs(v).format('DD/MM/YYYY') : '-' },
+        { title: 'Scadenza', dataIndex: 'expiry_date', key: 'expiry_date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Stato', dataIndex: 'status', key: 'status', render: (v) => <Tag color={statusColors[v]}>{statusLabels[v] || v}</Tag> },
         { title: 'Azioni', key: 'actions', render: (_, r) => (
             <Space>
                 {r.status === 'draft' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleAction(r.id, 'confirm')}>Accetta</Button>}
-                {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: r.date ? dayjs(r.date) : null, expiry_date: r.expiry_date ? dayjs(r.expiry_date) : null }); setModalVisible(true); }} />}
-                {r.status !== 'cancelled' && <Button type="link" danger icon={<StopOutlined />} onClick={() => handleAction(r.id, 'cancel')}>Annulla</Button>}
+                {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: parseDateForForm(r.date), expiry_date: parseDateForForm(r.expiry_date) }); setModalVisible(true); }} />}
+                {r.status !== 'cancelled' && <Button type="link" danger icon={<StopOutlined />} onClick={() => handleAction(r.id, 'cancel')}>Annulla</Button>} {/* No change needed here */}
             </Space>
         )},
     ];
@@ -99,8 +99,8 @@ const Quotations = () => {
             <Modal title={editingRecord ? 'Modifica Preventivo' : 'Nuovo Preventivo'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
-                        <Form.Item name="date" label="Data"><DatePicker /></Form.Item>
-                        <Form.Item name="expiry_date" label="Valido fino al"><DatePicker /></Form.Item>
+                        <Form.Item name="date" label="Data"><DatePicker format={formatDateForDisplay} /></Form.Item>
+                        <Form.Item name="expiry_date" label="Valido fino al"><DatePicker format={formatDateForDisplay} /></Form.Item>
                         <Form.Item name="customer_id" label="Cliente" rules={[{ required: true }]} style={{ minWidth: 250 }}>
                             <Select showSearch placeholder="Seleziona cliente" optionFilterProp="label"
                                 options={customers.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
@@ -132,5 +132,3 @@ const Quotations = () => {
         </div>
     );
 };
-
-export default Quotations;

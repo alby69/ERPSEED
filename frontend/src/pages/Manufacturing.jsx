@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, InputNumber as IN } from 'antd';
 import { PlusOutlined, EditOutlined, PlayCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
 const statusColors = { draft: 'default', active: 'green', archived: 'orange', planned: 'blue', released: 'geekblue', in_progress: 'processing', completed: 'green', cancelled: 'red' };
 
@@ -33,7 +33,7 @@ const BOMTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            let res;
+            let res; // No date fields in BOM, so no change to values.
             if (editing) res = await apiFetch(`/api/v1/manufacturing/bom/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/api/v1/manufacturing/bom', { method: 'POST', body: JSON.stringify(values) });
             if (res.ok) { message.success('Salvato'); setModalVisible(false); form.resetFields(); setEditing(null); fetch(); }
@@ -170,8 +170,8 @@ const ProductionOrdersTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.planned_start_date = values.planned_start_date?.format('YYYY-MM-DD');
-            values.planned_end_date = values.planned_end_date?.format('YYYY-MM-DD');
+            values.planned_start_date = formatDateForApi(values.planned_start_date);
+            values.planned_end_date = formatDateForApi(values.planned_end_date);
             let res;
             if (editing) res = await apiFetch(`/api/v1/manufacturing/production-orders/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/api/v1/manufacturing/production-orders', { method: 'POST', body: JSON.stringify(values) });
@@ -192,13 +192,13 @@ const ProductionOrdersTab = () => {
         { title: 'Numero', dataIndex: 'number' },
         { title: 'Prodotto', dataIndex: 'product_name' },
         { title: 'Q.tà', dataIndex: 'quantity' },
-        { title: 'Prodotte', dataIndex: 'quantity_produced' },
-        { title: 'Inizio Plan.', dataIndex: 'planned_start_date', render: (v) => v || '-' },
-        { title: 'Fine Plan.', dataIndex: 'planned_end_date', render: (v) => v || '-' },
+        { title: 'Prodotte', dataIndex: 'quantity_produced' }, // No change needed here
+        { title: 'Inizio Plan.', dataIndex: 'planned_start_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Fine Plan.', dataIndex: 'planned_end_date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
         { title: 'Azioni', render: (_, r) => (
             <Space>
-                <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, planned_start_date: r.planned_start_date ? dayjs(r.planned_start_date) : null, planned_end_date: r.planned_end_date ? dayjs(r.planned_end_date) : null }); setModalVisible(true); }}>Modifica</Button>
+                <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, planned_start_date: parseDateForForm(r.planned_start_date), planned_end_date: parseDateForForm(r.planned_end_date) }); setModalVisible(true); }}>Modifica</Button>
                 {r.status === 'planned' && <Button type="link" icon={<PlayCircleOutlined />} onClick={() => handleAction(r.id, 'release')}>Rilascia</Button>}
                 {r.status === 'released' && <Button type="link" icon={<PlayCircleOutlined />} onClick={() => handleAction(r.id, 'start')}>Avvia</Button>}
                 {r.status === 'in_progress' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleAction(r.id, 'complete')}>Completa</Button>}
@@ -216,12 +216,12 @@ const ProductionOrdersTab = () => {
                         <Form.Item name="product_id" label="Prodotto" rules={[{ required: true }]}>
                             <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={products.map(p => ({ value: p.id, label: `${p.code || p.name} - ${p.name}` }))} />
                         </Form.Item>
-                        <Form.Item name="quantity" label="Quantità" rules={[{ required: true }]}><IN min={1} /></Form.Item>
-                        <Form.Item name="status" label="Stato"><Select options={[{ value: 'planned', label: 'Pianificato' }, { value: 'released', label: 'Rilasciato' }]} /></Form.Item>
+                        <Form.Item name="quantity" label="Quantità" rules={[{ required: true }]}><IN min={1} /></Form.Item> {/* No change needed here */}
+                        <Form.Item name="status" label="Stato"><Select options={[{ value: 'planned', label: 'Pianificato' }, { value: 'released', label: 'Rilasciato' }]} /></Form.Item> {/* No change needed here */}
                     </Space>
-                    <Space size={16}>
-                        <Form.Item name="planned_start_date" label="Inizio Plan."><DatePicker /></Form.Item>
-                        <Form.Item name="planned_end_date" label="Fine Plan."><DatePicker /></Form.Item>
+                    <Space size={16}> {/* Use formatDateForDisplay for DatePicker format */}
+                        <Form.Item name="planned_start_date" label="Inizio Plan."><DatePicker format={formatDateForDisplay} /></Form.Item>
+                        <Form.Item name="planned_end_date" label="Fine Plan."><DatePicker format={formatDateForDisplay} /></Form.Item>
                     </Space>
                     <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
                 </Form>

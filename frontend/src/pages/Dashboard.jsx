@@ -5,6 +5,8 @@ import DashboardWidgets from '../components/DashboardWidgets';
 import ChartWidget from '../components/ChartWidget';
 import { apiFetch } from '../utils';
 import { useAuth } from '../context';
+import DateRangePicker from '@/components/DateRangePicker';
+import { formatDateForApi } from '@/utils/dateUtils';
 import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -95,10 +97,10 @@ function Dashboard() {
       <div className="d-flex justify-content-between align-items-center">
         <h2>Dashboard</h2>
         <div className="d-flex gap-2 align-items-center">
-          <span className="text-muted small">Periodo:</span>
-          <input type="date" className="form-control form-control-sm" value={dateFilters.from} onChange={e => setDateFilters({...dateFilters, from: e.target.value})} />
-          <span className="text-muted">-</span>
-          <input type="date" className="form-control form-control-sm" value={dateFilters.to} onChange={e => setDateFilters({...dateFilters, to: e.target.value})} />
+          <DateRangePicker
+            value={[dateFilters.from, dateFilters.to]}
+            onChange={(dates) => setDateFilters({ from: dates[0], to: dates[1] })}
+          />
         </div>
       </div>
 

@@ -4,7 +4,7 @@ import { GlobalOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import Layout from '@/components/Layout';
 
-const ProvincePage = () => {
+export default function ProvincePage() {
   const [province, setProvince] = useState([]);
   const [regioni, setRegioni] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -110,5 +110,3 @@ const ProvincePage = () => {
     </Layout>
   );
 };
-
-export default ProvincePage;

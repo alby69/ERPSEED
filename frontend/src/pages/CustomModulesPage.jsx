@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Tag, Modal, Form, Input, Select, message, Spin, Alert, Space, Badge, Dropdown } from 'antd';
 import { apiFetch } from '../utils';
 import { Layout } from '../components';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom'; // No date fields in this page
 import ImportExportToolbar from '../components/ui/ImportExportToolbar';
 import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
 import VisualBuilder from './VisualBuilder';

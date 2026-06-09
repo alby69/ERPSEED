@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../utils';
 import { Layout, message } from 'antd';
+import { formatDateForApi } from '@/utils/dateUtils';
+import DateRangePicker from '@/components/DateRangePicker'; // Importa il nuovo componente
 import ImportExportToolbar from '../components/ui/ImportExportToolbar';
 import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
 
@@ -98,21 +100,11 @@ alert('Model cloned successfully! Remember to generate the table in the DB.');
       <div className="container-fluid p-4">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2>System Models (Builder)</h2>
-          <div className="d-flex gap-2">
-            <div className="d-flex gap-1">
-              <input
-                type="date"
-                className="form-control"
-                value={dateFilters.from}
-                onChange={e => setDateFilters(prev => ({ ...prev, from: e.target.value }))}
-                title="Data Inizio"
-              />
-              <input
-                type="date"
-                className="form-control"
-                value={dateFilters.to}
-                onChange={e => setDateFilters(prev => ({ ...prev, to: e.target.value }))}
-                title="Data Fine"
+          <div className="d-flex gap-2 align-items-center">
+            <div style={{ width: 240 }}> {/* Contenitore per il DateRangePicker */}
+              <DateRangePicker
+                value={[dateFilters.from, dateFilters.to]}
+                onChange={(dates) => setDateFilters({ from: dates[0], to: dates[1] })}
               />
             </div>
 

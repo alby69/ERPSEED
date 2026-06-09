@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiFetch } from '../utils';
 import { Layout } from '../components';
-import SysFieldModal from '../components/SysFieldModal';
+import SysFieldModal from '../components/SysFieldModal'; // No date fields in this page
 import ResetTableButton from '../components/ResetTableButton';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';

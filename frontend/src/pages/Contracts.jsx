@@ -2,11 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Tag, Select, message, Space } from 'antd';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
 const statusColors = { draft: 'default', active: 'green', completed: 'blue', terminated: 'red', cancelled: 'orange' };
 
-const Contracts = () => {
+export default function Contracts() {
     const [data, setData] = useState([]);
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -32,8 +32,8 @@ const Contracts = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.start_date = values.start_date?.format('YYYY-MM-DD');
-            values.end_date = values.end_date?.format('YYYY-MM-DD');
+            values.start_date = formatDateForApi(values.start_date);
+            values.end_date = formatDateForApi(values.end_date);
             let res;
             if (editing) res = await apiFetch(`/api/v1/contracts/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/api/v1/contracts', { method: 'POST', body: JSON.stringify(values) });
@@ -45,13 +45,13 @@ const Contracts = () => {
     const columns = [
         { title: 'Numero', dataIndex: 'number' },
         { title: 'Nome', dataIndex: 'name' },
-        { title: 'Cliente', dataIndex: 'party_id', render: (id) => { const s = subjects.find(x => x.id === id); return s?.nome || s?.ragione_sociale || '-'; } },
-        { title: 'Inizio', dataIndex: 'start_date' },
-        { title: 'Fine', dataIndex: 'end_date', render: (v) => v || '-' },
+        { title: 'Cliente', dataIndex: 'party_id', render: (id) => { const s = subjects.find(x => x.id === id); return s?.nome || s?.ragione_sociale || '-'; } }, // No change needed here
+        { title: 'Inizio', dataIndex: 'start_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Fine', dataIndex: 'end_date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Valore', dataIndex: 'value', render: (v) => `€ ${(v || 0).toFixed(2)}` },
         { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
-        { title: 'Azioni', render: (_, r) => (
-            <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, start_date: r.start_date ? dayjs(r.start_date) : null, end_date: r.end_date ? dayjs(r.end_date) : null }); setModalVisible(true); }}>Modifica</Button>
+        { title: 'Azioni', render: (_, r) => ( // Use parseDateForForm
+            <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, start_date: parseDateForForm(r.start_date), end_date: parseDateForForm(r.end_date) }); setModalVisible(true); }}>Modifica</Button>
         )},
     ];
 
@@ -68,9 +68,9 @@ const Contracts = () => {
                                 <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={subjects.map(s => ({ value: s.id, label: s.nome || s.ragione_sociale || `${s.name || ''} ${s.last_name || ''}` }))} />
                             </Form.Item>
                         </Space>
-                        <Space size={16}>
-                            <Form.Item name="start_date" label="Data Inizio" rules={[{ required: true }]}><DatePicker /></Form.Item>
-                            <Form.Item name="end_date" label="Data Fine"><DatePicker /></Form.Item>
+                        <Space size={16}> {/* Use formatDateForDisplay for DatePicker format */}
+                            <Form.Item name="start_date" label="Data Inizio" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
+                            <Form.Item name="end_date" label="Data Fine"><DatePicker format={formatDateForDisplay} /></Form.Item>
                             <Form.Item name="value" label="Valore"><InputNumber min={0} step={100} prefix="€" /></Form.Item>
                             <Form.Item name="status" label="Stato"><Select options={[{ value: 'draft', label: 'Bozza' }, { value: 'active', label: 'Attivo' }, { value: 'completed', label: 'Completato' }, { value: 'terminated', label: 'Cessato' }, { value: 'cancelled', label: 'Annullato' }]} /></Form.Item>
                         </Space>
@@ -85,5 +85,3 @@ const Contracts = () => {
         </div>
     );
 };
-
-export default Contracts;

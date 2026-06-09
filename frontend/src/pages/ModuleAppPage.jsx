@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Row, Col, Spin, message, Typography, Button, Menu, Tabs, Empty } from 'antd';
 import { ArrowLeftOutlined, AppstoreOutlined, TableOutlined, FormOutlined, BarChartOutlined, HomeOutlined } from '@ant-design/icons';
-import { apiFetch } from '../utils';
+import { apiFetch } from '../utils'; // No date fields in this page
 import { useTheme } from '../context';
 import { StaticBlockRenderer } from '../components/BlockRenderer';
 

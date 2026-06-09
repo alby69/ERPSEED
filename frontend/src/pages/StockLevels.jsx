@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Table, Input, Select, Space, Tag, Tag as TagCol, message } from 'antd';
+import { Card, Table, Input, Select, Space, Tag, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 
@@ -55,7 +55,7 @@ const StockLevels = () => {
         { title: 'Disponibile', dataIndex: 'available_quantity', key: 'available_quantity', render: (v, r) => {
             const avail = v ?? (r.quantity || 0) - (r.reserved_quantity || 0);
             const color = avail <= 0 ? 'red' : avail < 10 ? 'orange' : 'green';
-            return <TagCol color={color}>{avail}</TagCol>;
+            return <Tag color={color}>{avail}</Tag>;
         }},
         { title: 'Livello Riordino', dataIndex: 'reorder_level', key: 'reorder_level', render: (v) => v || '-' },
         { title: 'Ultima Rilevazione', dataIndex: 'last_counted_at', key: 'last_counted_at', render: (v) => v ? new Date(v).toLocaleDateString() : '-' },

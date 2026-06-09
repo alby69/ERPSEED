@@ -4,7 +4,7 @@ import { GlobalOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import Layout from '@/components/Layout';
 
-const RegioniPage = () => {
+export default function RegioniPage() {
   const [regioni, setRegioni] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
@@ -74,5 +74,3 @@ const RegioniPage = () => {
     </Layout>
   );
 };
-
-export default RegioniPage;

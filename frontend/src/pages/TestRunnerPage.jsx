@@ -3,7 +3,8 @@ import { Card, Table, Button, Tag, Modal, Form, Input, Select, message, Spin, Al
 import { PlayCircleOutlined, PlusOutlined, DeleteOutlined, CheckCircleOutlined, CloseCircleOutlined, WarningOutlined, HistoryOutlined, ExportOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components';
-import { apiFetch } from '../utils';
+import { apiFetch, BASE_URL } from '../utils';
+import { formatDateTimeForDisplay } from '@/utils/dateUtils';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -546,7 +547,7 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
             title: 'Data',
             dataIndex: 'created_at',
             key: 'created_at',
-            render: (d) => new Date(d).toLocaleString()
+            render: (d) => formatDateTimeForDisplay(d)
         },
         {
             title: 'Azioni',

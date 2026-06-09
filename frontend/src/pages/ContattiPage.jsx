@@ -10,7 +10,7 @@ import Layout from '../components/Layout';
 
 const { Option } = Select;
 
-const ContattiPage = () => {
+export default function ContattiPage() {
   const [soggetti, setSoggetti] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingContatto, setEditingContatto] = useState(null);
@@ -299,5 +299,3 @@ const ContattiPage = () => {
     </Layout>
   );
 };
-
-export default ContattiPage;

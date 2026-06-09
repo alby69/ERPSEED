@@ -13,7 +13,7 @@ const CONTINENTI = {
   OC: { label: 'Oceania', color: 'purple' },
 };
 
-const NazioniPage = () => {
+export default function NazioniPage() {
   const [nazioni, setNazioni] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 50, total: 0 });
@@ -172,5 +172,3 @@ const NazioniPage = () => {
     </Layout>
   );
 };
-
-export default NazioniPage;

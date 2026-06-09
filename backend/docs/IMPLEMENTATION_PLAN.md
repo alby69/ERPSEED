@@ -17,6 +17,7 @@ Sono le entità fondamentali, non scomponibili, che vengono riutilizzate per cos
 
 | # | Primitivo | Modello Backend | Modulo | Stato |
 |---|-----------|----------------|--------|-------|
+| P0 | **ER Engine** | `SysModel` + `SysField` (Relazioni/FK) | `builder/` | ✅ | Gestione visiva tramite `RelationshipManagerPage` |
 | P1 | **Soggetto** | `Soggetto` (PF/PG, cod.fiscale, P.IVA) | `entities/` | ✅ |
 | P2 | **Ruolo** | `Ruolo` (cliente, fornitore, dipendente, lead) | `entities/` | ✅ |
 | P3 | **Prodotto** | `Product` (codice, nome, SKU, barcode, UM, peso) | `products/` | ✅ |
@@ -726,7 +727,7 @@ Anagrafiche → Prodotti (con IVA, UM, Categorie, Listini)
 | Contratti | ❌ | ✅ | `modules/contracts/` |
 | DDT Vendita | ❌ | ✅ | DeliveryNotesPage (via SalesOrder type=delivery_note) |
 | Fatturazione | ❌ | ✅ | `modules/invoicing/` (CQRS) |
-| Resi Vendita | ❌ | ❌ | Non ancora implementato |
+| Resi Vendita | ❌ | ✅ | `modules/sales/` |
 | CRM (Lead, Opportunità) | ❌ | ✅ | `modules/crm/` |
 
 ### Area: Magazzino e Inventory
@@ -734,9 +735,9 @@ Anagrafiche → Prodotti (con IVA, UM, Categorie, Listini)
 |--------|--------|-----|------|
 | Giacenze di Magazzino | ⚠️ | ✅ | StockLevelsPage |
 | Movimenti di Magazzino | ❌ | ✅ | `modules/inventory/` + StockMovementsPage |
-| Inventario Fisico | ❌ | ❌ | Non ancora implementato |
+| Inventario Fisico | ❌ | ✅ | `modules/inventory/` |
 | Lotto/Serial Number | ❌ | ✅ | `modules/lot/` + LotsPage |
-| Picking/Packing | ❌ | ❌ | Non ancora implementato |
+| Picking/Packing | ❌ | ✅ | `modules/inventory/` |
 
 ### Area: Contabilità e Finanza
 | Blocco | Allora | Ora | Note |
@@ -757,7 +758,7 @@ Anagrafiche → Prodotti (con IVA, UM, Categorie, Listini)
 | Ciclo di Lavoro | ❌ | ✅ | `modules/manufacturing/` |
 | Ordini di Produzione (ODP) | ❌ | ✅ | `modules/manufacturing/` |
 | MRP | ❌ | ✅ | `modules/mrp/` + MRPPage |
-| Controllo Qualità | ❌ | ❌ | Non ancora implementato |
+| Controllo Qualità | ❌ | ✅ | `modules/manufacturing/` |
 
 ### Area: HR e Payroll
 | Blocco | Allora | Ora | Note |
@@ -772,7 +773,7 @@ Anagrafiche → Prodotti (con IVA, UM, Categorie, Listini)
 | Blocco | Allora | Ora | Note |
 |--------|--------|-----|------|
 | Progetti | ✅ | ✅ | projects/ CQRS |
-| Attività/Task | ⚠️ | ⚠️ | Via Dynamic Model |
+| **ER Engine (Relazioni)**| ✅ | ✅ | Gestione visiva (XYFlow), chiavi esterne e Master-Detail |
 | Workflow Automation | ✅ | ✅ | automation/ |
 | Business Rules | ✅ | ✅ | BusinessRulesPage |
 | Timesheet | ❌ | ✅ | `modules/project_management/` |

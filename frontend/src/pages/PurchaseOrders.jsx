@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, Popconfirm, message, Divider } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 
 const statusColors = { draft: 'default', confirmed: 'blue', received: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', confirmed: 'Confermato', received: 'Ricevuto', cancelled: 'Annullato' };
 
-const PurchaseOrders = () => {
+export default function PurchaseOrders() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
@@ -52,8 +52,8 @@ const PurchaseOrders = () => {
             const values = await form.validateFields();
             const payload = {
                 ...values,
-                date: values.date?.format('YYYY-MM-DD'),
-                expected_date: values.expected_date?.format('YYYY-MM-DD'),
+                date: formatDateForApi(values.date),
+                expected_date: formatDateForApi(values.expected_date),
                 lines: values.lines?.map(l => ({
                     product_id: l.product_id,
                     description: l.description,
@@ -79,16 +79,16 @@ const PurchaseOrders = () => {
     };
 
     const columns = [
-        { title: 'Numero', dataIndex: 'number', key: 'number' },
-        { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => v ? dayjs(v).format('DD/MM/YYYY') : '-' },
+        { title: 'Numero', dataIndex: 'number', key: 'number' }, // No change needed here
+        { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Fornitore', dataIndex: 'supplier_id', key: 'supplier_id', render: (id) => { const s = suppliers.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
         { title: 'Totale', dataIndex: 'total_amount', key: 'total_amount', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
         { title: 'Stato', dataIndex: 'status', key: 'status', render: (v) => <Tag color={statusColors[v]}>{statusLabels[v] || v}</Tag> },
         { title: 'Azioni', key: 'actions', render: (_, r) => (
             <Space>
                 {r.status === 'draft' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleAction(r.id, 'confirm')}>Conferma</Button>}
-                {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: r.date ? dayjs(r.date) : null, expected_date: r.expected_date ? dayjs(r.expected_date) : null }); setModalVisible(true); }} />}
-                {r.status === 'confirmed' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleAction(r.id, 'receive')}>Ricevi</Button>}
+                {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: parseDateForForm(r.date), expected_date: parseDateForForm(r.expected_date) }); setModalVisible(true); }} />}
+                {r.status === 'confirmed' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleAction(r.id, 'receive')}>Ricevi</Button>} {/* No change needed here */}
                 {r.status !== 'cancelled' && <Popconfirm title="Annullare?" onConfirm={() => handleAction(r.id, 'cancel')}><Button type="link" danger icon={<StopOutlined />}>Annulla</Button></Popconfirm>}
             </Space>
         )},
@@ -113,9 +113,9 @@ const PurchaseOrders = () => {
             <Modal title={editingRecord ? 'Modifica Ordine' : 'Nuovo Ordine Acquisto'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>
                 <Form form={form} layout="vertical">
                     <Space style={{ width: '100%' }} size={16}>
-                        <Form.Item name="number" label="Numero Ordine"><Input placeholder="Auto-generato" /></Form.Item>
-                        <Form.Item name="date" label="Data"><DatePicker /></Form.Item>
-                        <Form.Item name="expected_date" label="Data Prevista"><DatePicker /></Form.Item>
+                        <Form.Item name="number" label="Numero Ordine"><Input placeholder="Auto-generato" /></Form.Item> {/* No change needed here */}
+                        <Form.Item name="date" label="Data"><DatePicker format={formatDateForDisplay} /></Form.Item>
+                        <Form.Item name="expected_date" label="Data Prevista"><DatePicker format={formatDateForDisplay} /></Form.Item>
                     </Space>
                     <Form.Item name="supplier_id" label="Fornitore" rules={[{ required: true }]}>
                         <Select showSearch placeholder="Seleziona fornitore" optionFilterProp="label"
@@ -153,5 +153,3 @@ const PurchaseOrders = () => {
         </div>
     );
 };
-
-export default PurchaseOrders;

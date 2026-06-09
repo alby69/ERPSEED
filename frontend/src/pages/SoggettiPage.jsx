@@ -16,7 +16,7 @@ import Layout from '../components/Layout';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-const SoggettiPage = () => {
+export default function SoggettiPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSoggetto, setEditingSoggetto] = useState(null);
   const [selectedSoggetto, setSelectedSoggetto] = useState(null);
@@ -441,5 +441,3 @@ const SoggettiPage = () => {
     </Layout>
   );
 };
-
-export default SoggettiPage;

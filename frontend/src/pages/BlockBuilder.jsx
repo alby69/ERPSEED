@@ -31,7 +31,7 @@ import {
   BlockOutlined,
 } from '@ant-design/icons';
 
-import { apiFetch } from '../utils';
+import { apiFetch } from '../utils'; // No date fields in this page
 import VisualBuilder from './VisualBuilder';
 import ImportExportToolbar from '../components/ui/ImportExportToolbar';
 import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
@@ -39,7 +39,7 @@ import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
-function BlockBuilder() {
+export default function BlockBuilder() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [blocks, setBlocks] = useState([]);
@@ -482,5 +482,3 @@ function BlockBuilder() {
     </div>
   );
 }
-
-export default BlockBuilder;

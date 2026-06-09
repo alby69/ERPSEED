@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, Popconfirm, message, Tabs, Descriptions, Divider } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined, DollarOutlined, FileTextOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 
 const statusColors = {
     draft: 'default',
@@ -18,7 +18,7 @@ const statusLabels = {
     cancelled: 'Annullata',
 };
 
-const Invoices = () => {
+export default function Invoices() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
@@ -78,8 +78,8 @@ const Invoices = () => {
             const values = await form.validateFields();
             const payload = {
                 ...values,
-                date: values.date?.format('YYYY-MM-DD'),
-                due_date: values.due_date?.format('YYYY-MM-DD'),
+                date: formatDateForApi(values.date),
+                due_date: formatDateForApi(values.due_date),
                 lines: values.lines?.map(l => ({
                     ...l,
                     product_id: l.product_id,
@@ -124,16 +124,16 @@ const Invoices = () => {
     };
 
     const columns = [
-        { title: 'Numero', dataIndex: 'invoice_number', key: 'invoice_number', width: 160 },
-        { title: 'Data', dataIndex: 'date', key: 'date', width: 110, render: (v) => v ? dayjs(v).format('DD/MM/YYYY') : '-' },
+        { title: 'Numero', dataIndex: 'invoice_number', key: 'invoice_number', width: 160 }, // No change needed here
+        { title: 'Data', dataIndex: 'date', key: 'date', width: 110, render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Cliente', dataIndex: 'party_id', key: 'party_id', render: (id) => { const s = soggetti.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
         { title: 'Totale', dataIndex: 'total', key: 'total', width: 120, align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
         { title: 'Stato', dataIndex: 'status', key: 'status', width: 100, render: (v) => <Tag color={statusColors[v] || 'default'}>{statusLabels[v] || v}</Tag> },
         { title: 'Azioni', key: 'actions', width: 280, render: (_, r) => (
             <Space>
                 {r.status === 'draft' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleAction(r.id, 'issue')}>Emitti</Button>}
-                {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: r.date ? dayjs(r.date) : null, due_date: r.due_date ? dayjs(r.due_date) : null }); setModalVisible(true); }} />}
-                {r.status === 'sent' && <Button type="link" icon={<DollarOutlined />} onClick={() => handleAction(r.id, 'pay', { amount: r.total })}>Paga</Button>}
+                {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: parseDateForForm(r.date), due_date: parseDateForForm(r.due_date) }); setModalVisible(true); }} />}
+                {r.status === 'sent' && <Button type="link" icon={<DollarOutlined />} onClick={() => handleAction(r.id, 'pay', { amount: r.total })}>Paga</Button>} {/* No change needed here */}
                 {r.status !== 'cancelled' && r.status !== 'paid' && (
                     <Popconfirm title="Annullare la fattura?" onConfirm={() => handleAction(r.id, 'cancel', { reason: 'Annullamento manuale' })}>
                         <Button type="link" danger icon={<StopOutlined />}>Annulla</Button>
@@ -165,8 +165,8 @@ const Invoices = () => {
                 okText="Salva" cancelText="Annulla" width={800}>
                 <Form form={form} layout="vertical">
                     <Space style={{ width: '100%' }} size={16}>
-                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker /></Form.Item>
-                        <Form.Item name="due_date" label="Scadenza"><DatePicker /></Form.Item>
+                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
+                        <Form.Item name="due_date" label="Scadenza"><DatePicker format={formatDateForDisplay} /></Form.Item>
                         <Form.Item name="party_id" label="Cliente" rules={[{ required: true }]} style={{ minWidth: 250 }}>
                             <Select showSearch placeholder="Seleziona cliente" optionFilterProp="label"
                                 options={soggetti.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
@@ -208,5 +208,3 @@ const Invoices = () => {
         </div>
     );
 };
-
-export default Invoices;

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { List, Avatar, Button, Typography, Spin, Alert, Modal, Input, Select, Radio, Row, Col, Card, message } from 'antd';
 import { PlusOutlined, ProjectOutlined, AppstoreOutlined, UnorderedListOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons';
-import { apiFetch } from '../utils';
+import { apiFetch } from '../utils'; // No date fields in this page
 import { useAuth } from '../context';
 import { Layout } from '../components';
 import ProjectForm from '../components/ProjectForm';

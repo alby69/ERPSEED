@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Form, Input, InputNumber, Switch, Button, Card, Space, Spin, Alert, Typography, Select } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
-import { apiClient } from './api';
+import { apiClient } from './api'; // No date fields in this page
 
 function ProductDetail() {
   const { id } = useParams();

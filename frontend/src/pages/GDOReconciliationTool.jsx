@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, Upload, Button, Table, Space, Typography, Form, InputNumber, Select, message, Tabs, Statistic, Row, Col } from 'antd';
 import { UploadOutlined, PlayCircleOutlined, DownloadOutlined, SaveOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom'; // No date fields in this page
 import { Line, Pie } from '@ant-design/charts';
 
 const { Title, Text } = Typography;

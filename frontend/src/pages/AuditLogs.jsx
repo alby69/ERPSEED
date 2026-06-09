@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components';
 import { apiFetch } from '../utils';
+import { formatDateTimeForDisplay } from '@/utils/dateUtils';
 
 function AuditLogs() {
   const [logs, setLogs] = useState([]);
@@ -43,8 +44,8 @@ function AuditLogs() {
           </thead>
           <tbody>
             {logs.map(log => (
-              <tr key={log.id}>
-                <td>{new Date(log.timestamp).toLocaleString()}</td>
+              <tr key={log.id}> {/* Use formatDateTimeForDisplay */}
+                <td>{formatDateTimeForDisplay(log.timestamp)}</td>
                 <td>{log.user ? log.user.email : 'System'}</td>
                 <td><span className={`badge bg-${log.action === 'DELETE' ? 'danger' : log.action === 'CREATE' ? 'success' : 'warning'}`}>{log.action}</span></td>
                 <td><code>{log.model_name}</code></td>

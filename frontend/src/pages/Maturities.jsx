@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, Row, Col, Statistic } from 'antd';
 import { PlusOutlined, DollarOutlined, WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 
 const statusColors = { open: 'orange', partial: 'blue', paid: 'green', overdue: 'red', cancelled: 'default' };
 const statusLabels = { open: 'Aperta', partial: 'Parziale', paid: 'Pagata', overdue: 'Scaduta', cancelled: 'Annullata' };
 
-const Maturities = () => {
+export default function Maturities() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [summary, setSummary] = useState(null);
@@ -54,7 +54,7 @@ const Maturities = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.due_date = values.due_date?.format('YYYY-MM-DD');
+            values.due_date = formatDateForApi(values.due_date);
             const res = await apiFetch('/api/v1/maturities', { method: 'POST', body: JSON.stringify(values) });
             if (res.ok) { message.success('Scadenza creata'); setModalVisible(false); form.resetFields(); fetchData(); }
             else { const e = await res.json(); message.error(e.message || 'Errore'); }
@@ -76,12 +76,12 @@ const Maturities = () => {
     };
 
     const isOverdue = (dueDate, status) => {
-        return dayjs(dueDate).isBefore(dayjs(), 'day') && ['open', 'partial'].includes(status);
+        return parseDateForForm(dueDate)?.isBefore(dayjs(), 'day') && ['open', 'partial'].includes(status);
     };
 
     const columns = [
-        { title: 'Scadenza', dataIndex: 'due_date', key: 'due_date', render: (v, r) => {
-            const overdue = isOverdue(v, r.status);
+        { title: 'Scadenza', dataIndex: 'due_date', key: 'due_date', render: (v, r) => { // v is already a string here
+            const overdue = isOverdue(v, r.status); // Use isOverdue utility
             return <span style={{ color: overdue ? '#ff4d4f' : undefined, fontWeight: overdue ? 600 : undefined }}>{dayjs(v).format('DD/MM/YYYY')}</span>;
         }},
         { title: 'Soggetto', dataIndex: 'party_id', key: 'party_id', render: (id) => { const s = soggetti.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
@@ -134,7 +134,7 @@ const Maturities = () => {
                         <Select showSearch placeholder="Seleziona" optionFilterProp="label"
                             options={soggetti.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
                     </Form.Item>
-                    <Space style={{ width: '100%' }} size={16}>
+                    <Space style={{ width: '100%' }} size={16}> {/* Use formatDateForDisplay for DatePicker format */}
                         <Form.Item name="due_date" label="Data Scadenza" rules={[{ required: true }]}><DatePicker /></Form.Item>
                         <Form.Item name="amount" label="Importo" rules={[{ required: true }]}><InputNumber min={0.01} step={0.01} prefix="€" /></Form.Item>
                     </Space>
@@ -145,7 +145,7 @@ const Maturities = () => {
             <Modal title="Registra Pagamento" open={payModalVisible} onOk={handlePay} onCancel={() => { setPayModalVisible(false); setSelectedMaturity(null); payForm.resetFields(); }} okText="Registra" cancelText="Annulla">
                 {selectedMaturity && (
                     <p>Scadenza: {dayjs(selectedMaturity.due_date).format('DD/MM/YYYY')} — Residuo: € {selectedMaturity.balance?.toFixed(2)}</p>
-                )}
+                )} {/* Here dayjs is still used for direct display, which is fine as it's not form interaction */}
                 <Form form={payForm} layout="vertical">
                     <Form.Item name="paid_amount" label="Importo Pagato" rules={[{ required: true }]}>
                         <InputNumber min={0.01} step={0.01} prefix="€" style={{ width: '100%' }} />
@@ -155,5 +155,3 @@ const Maturities = () => {
         </div>
     );
 };
-
-export default Maturities;

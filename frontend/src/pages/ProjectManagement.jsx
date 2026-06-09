@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, Statistic, Row, Col, message } from 'antd';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 
 const statusColors = { active: 'green', closed: 'orange', archived: 'default', draft: 'default', submitted: 'blue', approved: 'green' };
 
@@ -32,8 +32,8 @@ const ProjectTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.start_date = values.start_date?.format('YYYY-MM-DD');
-            values.end_date = values.end_date?.format('YYYY-MM-DD');
+            values.start_date = formatDateForApi(values.start_date);
+            values.end_date = formatDateForApi(values.end_date);
             let res;
             if (editing) res = await apiFetch(`/api/v1/project-management/projects/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/api/v1/project-management/projects', { method: 'POST', body: JSON.stringify(values) });
@@ -45,14 +45,14 @@ const ProjectTab = () => {
     const columns = [
         { title: 'Codice', dataIndex: 'code' },
         { title: 'Nome', dataIndex: 'name' },
-        { title: 'Cliente', dataIndex: 'client_id', render: (id) => { const s = subjects.find(x => x.id === id); return s?.nome || s?.ragione_sociale || '-'; } },
-        { title: 'Inizio', dataIndex: 'start_date', render: (v) => v || '-' },
-        { title: 'Fine', dataIndex: 'end_date', render: (v) => v || '-' },
+        { title: 'Cliente', dataIndex: 'client_id', render: (id) => { const s = subjects.find(x => x.id === id); return s?.nome || s?.ragione_sociale || '-'; } }, // No change needed here
+        { title: 'Inizio', dataIndex: 'start_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Fine', dataIndex: 'end_date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Budget', dataIndex: 'budget_amount', render: (v) => `€${(v || 0).toFixed(2)}` },
         { title: 'Ore St.', dataIndex: 'estimated_hours' },
         { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
         { title: 'Azioni', render: (_, r) => (
-            <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, start_date: r.start_date ? dayjs(r.start_date) : null, end_date: r.end_date ? dayjs(r.end_date) : null }); setModalVisible(true); }}>Modifica</Button>
+            <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, start_date: parseDateForForm(r.start_date), end_date: parseDateForForm(r.end_date) }); setModalVisible(true); }}>Modifica</Button>
         )},
     ];
 
@@ -70,9 +70,9 @@ const ProjectTab = () => {
                         <Form.Item name="client_id" label="Cliente"><Select style={{ width: 200 }} allowClear showSearch optionFilterProp="label" options={subjects.map(s => ({ value: s.id, label: s.nome || s.ragione_sociale }))} /></Form.Item>
                         <Form.Item name="status" label="Stato"><Select options={[{ value: 'active', label: 'Attivo' }, { value: 'closed', label: 'Chiuso' }, { value: 'archived', label: 'Archiviato' }]} /></Form.Item>
                     </Space>
-                    <Space size={16}>
-                        <Form.Item name="start_date" label="Data Inizio"><DatePicker /></Form.Item>
-                        <Form.Item name="end_date" label="Data Fine"><DatePicker /></Form.Item>
+                    <Space size={16}> {/* Use formatDateForDisplay for DatePicker format */}
+                        <Form.Item name="start_date" label="Data Inizio"><DatePicker format={formatDateForDisplay} /></Form.Item>
+                        <Form.Item name="end_date" label="Data Fine"><DatePicker format={formatDateForDisplay} /></Form.Item>
                         <Form.Item name="budget_amount" label="Budget"><InputNumber min={0} step={100} prefix="€" /></Form.Item>
                         <Form.Item name="estimated_hours" label="Ore Stimate"><InputNumber min={0} /></Form.Item>
                     </Space>
@@ -115,7 +115,7 @@ const TimesheetTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.date = values.date?.format('YYYY-MM-DD');
+            values.date = formatDateForApi(values.date);
             let res;
             if (editing) res = await apiFetch(`/api/v1/project-management/timesheets/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) });
             else res = await apiFetch('/api/v1/project-management/timesheets', { method: 'POST', body: JSON.stringify(values) });
@@ -133,13 +133,13 @@ const TimesheetTab = () => {
     };
 
     const columns = [
-        { title: 'Data', dataIndex: 'date' },
-        { title: 'Dipendente', dataIndex: 'employee_id', render: (id) => { const e = employees.find(x => x.id === id); return e ? `${e.first_name} ${e.last_name}` : '-'; } },
-        { title: 'Ore', key: 'hours', render: (_, r) => (r.lines || []).reduce((s, l) => s + (l.hours || 0), 0) },
-        { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
+        { title: 'Data', dataIndex: 'date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Dipendente', dataIndex: 'employee_id', render: (id) => { const e = employees.find(x => x.id === id); return e ? `${e.first_name} ${e.last_name}` : '-'; } }, // No change needed here
+        { title: 'Ore', key: 'hours', render: (_, r) => (r.lines || []).reduce((s, l) => s + (l.hours || 0), 0) }, // No change needed here
+        { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> }, // No change needed here
         { title: 'Azioni', render: (_, r) => (
             <Space>
-                <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, date: r.date ? dayjs(r.date) : null }); setModalVisible(true); }}>Modifica</Button>
+                <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, date: parseDateForForm(r.date) }); setModalVisible(true); }}>Modifica</Button>
                 {r.status === 'draft' && <Button type="link" onClick={() => handleAction(r.id, 'submit')}>Invia</Button>}
                 {r.status === 'submitted' && <Button type="link" onClick={() => handleAction(r.id, 'approve')}>Approva</Button>}
             </Space>
@@ -165,7 +165,7 @@ const TimesheetTab = () => {
                         <Form.Item name="employee_id" label="Dipendente" rules={[{ required: true }]}>
                             <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))} />
                         </Form.Item>
-                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker /></Form.Item>
+                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
                         <Form.Item name="status" label="Stato"><Select options={[{ value: 'draft', label: 'Bozza' }, { value: 'submitted', label: 'Inviato' }]} /></Form.Item>
                     </Space>
                     <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
@@ -201,5 +201,3 @@ const ProjectManagement = () => {
         </div>
     );
 };
-
-export default ProjectManagement;

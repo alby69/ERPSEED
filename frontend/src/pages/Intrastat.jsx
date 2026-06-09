@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 const statusColors = { draft: 'default', submitted: 'green' };
 const natureOptions = [{ value: 'A', label: 'Beni' }, { value: 'B', label: 'Servizi' }];
 const typeOptions = [{ value: 'sales', label: 'Cessioni' }, { value: 'purchases', label: 'Acquisti' }];
 
-const IntrastatPage = () => {
+export default function IntrastatPage() {
     const [data, setData] = useState([]);
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -84,8 +84,8 @@ const IntrastatPage = () => {
                 <Modal title={editing ? 'Modifica Dichiarazione' : 'Nuova Dichiarazione Intrastat'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
                     <Form form={form} layout="vertical">
                         <Space size={16}>
-                            <Form.Item name="fiscal_year" label="Anno" rules={[{ required: true }]}><InputNumber min={2020} max={2030} /></Form.Item>
-                            <Form.Item name="period" label="Periodo" rules={[{ required: true }]}><Input placeholder="YYYY-MM" /></Form.Item>
+                        <Form.Item name="fiscal_year" label="Anno" rules={[{ required: true }]}><InputNumber min={2020} max={2030} /></Form.Item> {/* No change needed here */}
+                        <Form.Item name="period" label="Periodo" rules={[{ required: true }]}><Input placeholder="YYYY-MM" /></Form.Item> {/* Period is a string, not a date */}
                             <Form.Item name="type" label="Tipo" rules={[{ required: true }]}>
                                 <Select options={typeOptions} />
                             </Form.Item>
@@ -118,5 +118,3 @@ const IntrastatPage = () => {
         </div>
     );
 };
-
-export default IntrastatPage;

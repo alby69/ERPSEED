@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, Row, Col, Statistic, Spin } from 'antd';
 import { PlusOutlined, ThunderboltOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-
+import { parseDateForForm, formatDateForApi, formatDateTimeForDisplay } from '@/utils/dateUtils'; // Import date utilities
 const statusColors = { open: 'blue', in_progress: 'processing', fulfilled: 'green', cancelled: 'red' };
 
-const MRPPage = () => {
+export default function MRPPage() {
     const [runs, setRuns] = useState([]);
     const [selectedRun, setSelectedRun] = useState(null);
     const [suggestions, setSuggestions] = useState([]);
@@ -41,7 +41,7 @@ const MRPPage = () => {
         try {
             const values = await form.validateFields();
             const res = await apiFetch('/api/v1/mrp/runs', {
-                method: 'POST', body: JSON.stringify({ notes: values.notes, horizon_date: values.horizon_date?.format('YYYY-MM-DD') })
+                method: 'POST', body: JSON.stringify({ notes: values.notes, horizon_date: formatDateForApi(values.horizon_date) })
             });
             if (res.ok) { const d = await res.json(); message.success(`MRP completato: ${d.suggestions_created} suggerimenti`); fetch(); setModalVisible(false); }
             else { const e = await res.json(); message.error(e.message || 'Errore'); }
@@ -57,7 +57,7 @@ const MRPPage = () => {
     };
 
     const runColumns = [
-        { title: 'Data', dataIndex: 'run_date', render: (v) => v ? new Date(v).toLocaleString() : '-' },
+        { title: 'Data', dataIndex: 'run_date', render: (v) => formatDateTimeForDisplay(v) || '-' },
         { title: 'Suggerimenti', dataIndex: 'total_suggestions' },
         { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={v === 'completed' ? 'green' : 'red'}>{v}</Tag> },
         { title: 'Azioni', render: (_, r) => (
@@ -118,5 +118,3 @@ const MRPPage = () => {
         </div>
     );
 };
-
-export default MRPPage;

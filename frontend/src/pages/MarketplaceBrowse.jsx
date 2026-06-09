@@ -29,7 +29,7 @@ import {
   StarOutlined,
   FilterOutlined,
 } from '@ant-design/icons';
-import { apiFetch } from '@/utils';
+import { apiFetch } from '@/utils'; // No date fields in this page
 
 const { Title, Text, Paragraph } = Typography;
 

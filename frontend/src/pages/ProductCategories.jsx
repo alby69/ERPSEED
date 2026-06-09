@@ -3,7 +3,7 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, Switch, Select, S
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 
-const ProductCategories = () => {
+export default function ProductCategories() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -149,5 +149,3 @@ const ProductCategories = () => {
         </div>
     );
 };
-
-export default ProductCategories;

@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, Row, Col, Statistic } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import dayjs from 'dayjs';
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 
 const registerTypes = { sales: 'Vendite', purchases: 'Acquisti', corrispettivi: 'Corrispettivi' };
 const statusColors = { draft: 'default', computed: 'blue', paid: 'green', credited: 'orange' };
 
-// ========== VAT Register Tab ==========
+// ========== VAT Register Tab ========== // This line was outside the component, moving it inside the export default function
 const VatRegisterTab = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -44,8 +44,8 @@ const VatRegisterTab = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            values.entry_date = values.entry_date?.format('YYYY-MM-DD');
-            values.document_date = values.document_date?.format('YYYY-MM-DD');
+            values.entry_date = formatDateForApi(values.entry_date);
+            values.document_date = formatDateForApi(values.document_date);
             values.register_type = registerType;
             values.period = period;
             values.fiscal_year = parseInt(period.split('-')[0]);
@@ -65,10 +65,10 @@ const VatRegisterTab = () => {
     };
 
     const totalTaxable = data.reduce((s, r) => s + (r.taxable_amount || 0), 0);
-    const totalVat = data.reduce((s, r) => s + (r.vat_amount || 0), 0);
+    const totalVat = data.reduce((s, r) => s + (r.vat_amount || 0), 0); // No change needed here
 
     const columns = [
-        { title: '#', dataIndex: 'entry_number', width: 60 },
+        { title: '#', dataIndex: 'entry_number', width: 60 }, // No change needed here
         { title: 'Data', dataIndex: 'entry_date' },
         { title: 'Documento', dataIndex: 'document_number' },
         { title: 'Soggetto', dataIndex: 'soggetto_name' },
@@ -77,8 +77,8 @@ const VatRegisterTab = () => {
         { title: 'Aliquota', dataIndex: 'vat_rate', render: (v) => v ? `${v}%` : '-' },
         { title: 'Natura', dataIndex: 'tax_nature' },
         { title: 'Azioni', render: (_, r) => (
-            <Space>
-                <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, entry_date: r.entry_date ? dayjs(r.entry_date) : null, document_date: r.document_date ? dayjs(r.document_date) : null }); setModalVisible(true); }}>Modifica</Button>
+            <Space> {/* Use formatDateForDisplay for DatePicker format */}
+                <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, entry_date: parseDateForForm(r.entry_date), document_date: parseDateForForm(r.document_date) }); setModalVisible(true); }}>Modifica</Button>
                 <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(r.id)} />
             </Space>
         )},
@@ -109,9 +109,9 @@ const VatRegisterTab = () => {
             <Modal title={editing ? 'Modifica Registrazione' : 'Nuova Registrazione IVA'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
-                        <Form.Item name="entry_date" label="Data" rules={[{ required: true }]}><DatePicker /></Form.Item>
-                        <Form.Item name="document_number" label="Num. Documento"><Input /></Form.Item>
-                        <Form.Item name="document_date" label="Data Doc."><DatePicker /></Form.Item>
+                        <Form.Item name="entry_date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
+                        <Form.Item name="document_number" label="Num. Documento"><Input /></Form.Item> {/* No change needed here */}
+                        <Form.Item name="document_date" label="Data Doc."><DatePicker format={formatDateForDisplay} /></Form.Item>
                     </Space>
                     <Space size={16}>
                         <Form.Item name="soggetto_name" label="Soggetto"><Input style={{ width: 250 }} /></Form.Item>
@@ -211,8 +211,8 @@ const LiquidationTab = () => {
                                 <Form.Item name="status" label="Stato">
                                     <Select options={[{ value: 'draft', label: 'Bozza' }, { value: 'computed', label: 'Calcolato' }, { value: 'paid', label: 'Pagato' }, { value: 'credited', label: 'Accreditato' }]} />
                                 </Form.Item>
-                                <Form.Item name="paid_at" label="Data Pagamento"><DatePicker /></Form.Item>
-                                <Form.Item name="to_pay" label="Da Pagare"><InputNumber min={0} prefix="€" /></Form.Item>
+                                <Form.Item name="paid_at" label="Data Pagamento"><DatePicker format={formatDateForDisplay} /></Form.Item>
+                                <Form.Item name="to_pay" label="Da Pagare"><InputNumber min={0} prefix="€" /></Form.Item> {/* No change needed here */}
                             </Space>
                             <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
                         </>

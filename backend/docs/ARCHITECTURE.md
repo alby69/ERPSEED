@@ -376,6 +376,11 @@ Trigger (event/time) → Workflow Definition → Steps Execution
 
 ## Dynamic Builder (No-Code)
 
+### Visual Relationship Manager
+Consente la gestione visiva del modello Entity-Relationship (ER) tramite un'interfaccia a nodi (**XYFlow**), permettendo di:
+- Visualizzare e mappare le relazioni tra modelli dinamici.
+- Gestire graficamente chiavi esterne e vincoli di integrità.
+
 ### Field Types
 
 | Type | Database | Validation |

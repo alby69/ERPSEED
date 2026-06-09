@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { apiFetch } from '../utils';
 import LanguageSelector from '../components/LanguageSelector';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'; // No date fields in this page
 import { useAuth, useTheme } from '../context';
 import { Button } from 'antd';
 

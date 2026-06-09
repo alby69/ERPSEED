@@ -1,11 +1,7 @@
 import React, { useState, useCallback, useEffect, memo } from 'react';
 import { ReactFlow, Background, Controls, MiniMap, Handle, Position, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Card, Tabs, Table, Button, Tag, Space, Modal, Form, Select, message, Drawer } from 'antd';
-import { ScanOutlined, PlusOutlined, DeleteOutlined, ReloadOutlined, ApartmentOutlined, DatabaseOutlined, LinkOutlined } from '@ant-design/icons';
-import { apiFetch } from '@/utils';
-import '@xyflow/react/dist/style.css';
-import { Card, Tabs, Table, Button, Tag, Space, Modal, Form, Select, Tooltip, Spin, message, Drawer } from 'antd';
+import { Card, Tabs, Table, Button, Tag, Space, Modal, Form, Select, Tooltip, Spin, message, Drawer, Input } from 'antd';
 import { ScanOutlined, PlusOutlined, DeleteOutlined, ReloadOutlined, ApartmentOutlined, DatabaseOutlined, LinkOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 

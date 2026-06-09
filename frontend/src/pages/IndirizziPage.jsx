@@ -11,7 +11,7 @@ import HelpDrawer from '@/components/HelpDrawer';
 
 const { Option } = Select;
 
-const IndirizziPage = () => {
+export default function IndirizziPage() {
   const [soggetti, setSoggetti] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingIndirizzo, setEditingIndirizzo] = useState(null);
@@ -541,5 +541,3 @@ const IndirizziPage = () => {
     </Layout>
   );
 };
-
-export default IndirizziPage;
