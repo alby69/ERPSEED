@@ -1,0 +1,64 @@
+.help-markdown h1 {
+  font-size: 1.5em;
+  margin-top: 0;
+  margin-bottom: 0.5em;
+}
+.help-markdown h2 {
+  font-size: 1.2em;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.3em;
+}
+.help-markdown h3 {
+  font-size: 1.1em;
+  margin-top: 1.2em;
+  margin-bottom: 0.3em;
+}
+.help-markdown p {
+  margin-bottom: 0.8em;
+  line-height: 1.6;
+}
+.help-markdown ul,
+.help-markdown ol {
+  margin-bottom: 0.8em;
+  padding-left: 1.5em;
+}
+.help-markdown li {
+  margin-bottom: 0.3em;
+}
+.help-markdown code {
+  background: #f5f5f5;
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+.help-markdown pre {
+  background: #f5f5f5;
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 1em;
+}
+.help-markdown pre code {
+  background: none;
+  padding: 0;
+}
+.help-markdown table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1em;
+}
+.help-markdown th,
+.help-markdown td {
+  border: 1px solid #f0f0f0;
+  padding: 0.5em 0.8em;
+  text-align: left;
+}
+.help-markdown th {
+  background: #fafafa;
+  font-weight: 600;
+}
+.help-markdown strong {
+  font-weight: 600;
+}

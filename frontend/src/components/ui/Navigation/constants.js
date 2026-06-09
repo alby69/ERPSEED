@@ -46,7 +46,7 @@ export const DEFAULT_ICONS = {
   roles: 'TeamOutlined',
   categories: 'TagsOutlined',
   tax: 'PercentageOutlined',
-  uom: 'RulerOutlined',
+  uom: 'LineHeightOutlined',
   pricelists: 'DollarOutlined',
   coa: 'BookOutlined',
   quotations: 'FileTextOutlined',
@@ -57,7 +57,7 @@ export const DEFAULT_ICONS = {
   contracts: 'FileProtectOutlined',
   stock: 'InboxOutlined',
   movements: 'SwapOutlined',
-  inventoryCounts: 'ClipboardOutlined',
+  inventoryCounts: 'ProfileOutlined',
   lots: 'BarcodeOutlined',
   journal: 'BookOutlined',
   maturities: 'CalendarOutlined',
@@ -73,6 +73,7 @@ export const DEFAULT_ICONS = {
   timesheet: 'FieldTimeOutlined',
   budget: 'FundOutlined',
   reports: 'FileSearchOutlined',
+  relationships: 'ApartmentOutlined',
 };
 
 // Permission levels
@@ -135,7 +136,6 @@ export const DEFAULT_NAVIGATIONS = {
             { id: 'soggetti', label: 'Soggetti', path: '/anagrafiche', icon: DEFAULT_ICONS.users },
             { id: 'ruoli', label: 'Ruoli', path: '/ruoli', icon: DEFAULT_ICONS.roles },
             { id: 'indirizzi', label: 'Indirizzi', path: '/indirizzi', icon: DEFAULT_ICONS.addresses },
-            { id: 'comuni', label: 'Comuni', path: '/comuni', icon: DEFAULT_ICONS.cities },
             { id: 'contatti', label: 'Contatti', path: '/contatti', icon: DEFAULT_ICONS.contacts },
             { id: 'products', label: 'Prodotti', path: '/products', icon: DEFAULT_ICONS.products },
             { id: 'product-categories', label: 'Categorie Prodotto', path: '/product-categories', icon: DEFAULT_ICONS.categories },
@@ -143,6 +143,18 @@ export const DEFAULT_NAVIGATIONS = {
             { id: 'units-of-measure', label: 'Unità di Misura', path: '/units-of-measure', icon: DEFAULT_ICONS.uom },
             { id: 'price-lists', label: 'Listini Prezzo', path: '/price-lists', icon: DEFAULT_ICONS.pricelists },
             { id: 'chart-of-accounts', label: 'Piano dei Conti', path: '/chart-of-accounts', icon: DEFAULT_ICONS.coa },
+          ],
+        },
+        // Area: Geografia
+        {
+          id: 'area-geografia',
+          label: 'Geografia',
+          icon: DEFAULT_ICONS.cities,
+          children: [
+            { id: 'nazioni', label: 'Nazioni', path: '/geografia/nazioni', icon: DEFAULT_ICONS.cities },
+            { id: 'regioni-geo', label: 'Regioni', path: '/geografia/regioni', icon: DEFAULT_ICONS.cities },
+            { id: 'province-geo', label: 'Province', path: '/geografia/province', icon: DEFAULT_ICONS.cities },
+            { id: 'comuni-geo', label: 'Comuni', path: '/geografia/comuni', icon: DEFAULT_ICONS.cities },
           ],
         },
         // Area: Logistica e Acquisti

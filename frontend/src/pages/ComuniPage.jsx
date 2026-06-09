@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import Layout from '@/components/Layout';
+import HelpDrawer from '@/components/HelpDrawer';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -59,11 +60,15 @@ const ComuniPage = () => {
       const response = await apiFetch(`/api/v1/comuni?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setComuni(data.items);
+        setComuni(Array.isArray(data) ? data : (data.items || []));
         setPagination(prev => ({
           ...prev,
-          total: data.total,
-          current: data.page
+          total: Array.isArray(data)
+            ? parseInt(response.headers.get('X-Total-Count') || '0', 10)
+            : (data.total || prev.total),
+          current: Array.isArray(data)
+            ? parseInt(response.headers.get('X-Current-Page') || '1', 10)
+            : (data.page || prev.current),
         }));
       }
     } catch (error) {
@@ -200,9 +205,9 @@ const ComuniPage = () => {
 
   const columns = [
     {
-      title: 'Codice',
-      dataIndex: 'codice',
-      key: 'codice',
+      title: 'Cod. ISTAT',
+      dataIndex: 'codice_istat',
+      key: 'codice_istat',
       width: 100,
       sorter: true
     },
@@ -220,16 +225,21 @@ const ComuniPage = () => {
       )
     },
     {
-      title: 'Provincia',
-      dataIndex: 'provincia',
-      key: 'provincia',
-      width: 80
+      title: 'Prov.',
+      dataIndex: 'codice_provincia',
+      key: 'codice_provincia',
+      width: 60,
+      render: (text) => text ? <Tag>{text}</Tag> : '-'
     },
     {
       title: 'Regione',
-      dataIndex: 'regione',
       key: 'regione',
-      width: 80
+      width: 120,
+      render: (_, record) => {
+        if (!record.codice_regione) return '-';
+        const r = regioni.find(r => r.codice === record.codice_regione);
+        return r ? r.nome : record.codice_regione;
+      }
     },
     {
       title: 'CAP',
@@ -293,6 +303,7 @@ const ComuniPage = () => {
           <Space>
             <GlobalOutlined />
             <span>Gestione Comuni Italiani</span>
+            <HelpDrawer moduleName="comuni" moduleTitle="Guida Comuni" />
           </Space>
         }
         extra={

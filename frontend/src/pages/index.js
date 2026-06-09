@@ -1,4 +1,5 @@
 // Barrel file for exporting all pages
+export { default as RelationshipManagerPage } from './RelationshipManagerPage';
 export { default as AIAssistantPage } from './AIAssistantPage';
 export { default as AuditLogs } from './AuditLogs';
 export { default as BlockBuilder } from './BlockBuilder';
@@ -6,6 +7,9 @@ export { default as BusinessRulesPage } from './BusinessRulesPage';
 export { default as ComuniPage } from './ComuniPage';
 export { default as ContattiPage } from './ContattiPage';
 export { default as CustomModulesPage } from './CustomModulesPage';
+export { default as NazioniPage } from './NazioniPage';
+export { default as RegioniPage } from './RegioniPage';
+export { default as ProvincePage } from './ProvincePage';
 export { default as Dashboard } from './Dashboard';
 export { default as DashboardBuilder } from './DashboardBuilder';
 export { default as DynamicModelPage } from './DynamicModelPage';

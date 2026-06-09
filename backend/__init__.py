@@ -102,6 +102,8 @@ from .modules.mrp.api import blp as mrp_bp
 
 # Import Entities (Vision Archetypes)
 from .modules.entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
+from .modules.geografia.routes import nazioni_blp, regioni_blp, province_blp, comuni_geo_blp
+from .tutorials.routes import tutorial_blp
 from .modules.entities.indirizzo_geografico import geografico_blp
 from .modules.entities.comuni_routes import comuni_blp
 
@@ -132,6 +134,9 @@ from .marketplace.api import blp as marketplace_api_blp
 
 # Import AI Assistant API
 from .modules.ai.api import blp as ai_bp
+
+# Import Relationship Manager API
+from .modules.relationship_manager.routes import relmgr_blp as relationship_manager_bp
 
 # Import Visual Builder API
 from .modules.system_tools.api.visual_builder_api import blp as visual_builder_bp
@@ -203,6 +208,9 @@ def create_app(db_url=None):
     app.config["JWT_TOKEN_LOCATION"] = ["headers"]
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
     app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
+    app.config["GEOCODED_ME_BASE_URL"] = os.getenv(
+        "GEOCODED_ME_BASE_URL", "https://api.geocoded.me"
+    )
 
     # --- Custom JSON Provider ---
     # Standardizes JSON serialization for Decimal and other types
@@ -437,6 +445,16 @@ def create_app(db_url=None):
     api.register_blueprint(contatto_blp, url_prefix=f"{API_V1_PREFIX}")
     api.register_blueprint(geografico_blp, url_prefix=f"{API_V1_PREFIX}")
     api.register_blueprint(comuni_blp, url_prefix=f"{API_V1_PREFIX}")
+    api.register_blueprint(tutorial_blp)
+
+    # Geografia module
+    api.register_blueprint(nazioni_blp, url_prefix=f"{API_V1_PREFIX}")
+    api.register_blueprint(regioni_blp, url_prefix=f"{API_V1_PREFIX}")
+    api.register_blueprint(province_blp, url_prefix=f"{API_V1_PREFIX}")
+    api.register_blueprint(comuni_geo_blp, url_prefix=f"{API_V1_PREFIX}")
+
+    # Relationship Manager
+    api.register_blueprint(relationship_manager_bp, url_prefix=f"{API_V1_PREFIX}")
 
     # --- Plugins loaded via create_plugin_manager in app initialization ---
     return app

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth, ThemeProvider, useTheme } from '@/context';
-import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, SoggettiPage, RuoliPage, IndirizziPage, ComuniPage, ContattiPage, Products, ProductDetail, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
+import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, SoggettiPage, RuoliPage, IndirizziPage, ComuniPage, ContattiPage, NazioniPage, RegioniPage, ProvincePage, Products, ProductDetail, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
 import Sales from './pages/Sales';
 import SalesOrderDetail from './pages/SalesOrderDetail';
 import SysModelDetail from './pages/SysModelDetail';
@@ -22,6 +22,7 @@ import ModuleAppPage from './pages/ModuleAppPage';
 import ProjectImportExportPage from './pages/ProjectImportExportPage';
 import GDOReconciliationTool from './pages/GDOReconciliationTool';
 import PagePlaceholder from './pages/PagePlaceholder';
+import RelationshipManagerPage from './pages/RelationshipManagerPage';
 import TaxRates from './pages/TaxRates';
 import ProductCategories from './pages/ProductCategories';
 import UnitsOfMeasure from './pages/UnitsOfMeasure';
@@ -178,6 +179,14 @@ return (
           }
         />
         <Route
+          path="/builder/relationships"
+          element={
+            <ProtectedRoute roles={['admin', 'owner']}>
+              <RelationshipManagerPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/marketplace"
           element={
             <ProtectedRoute>
@@ -227,9 +236,37 @@ return (
         />
         <Route
           path="/comuni"
+          element={<Navigate to="/geografia/comuni" replace />}
+        />
+        <Route
+          path="/geografia/comuni"
           element={
             <ProtectedRoute roles={['admin', 'owner']}>
               <ComuniPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/geografia/nazioni"
+          element={
+            <ProtectedRoute roles={['admin', 'owner']}>
+              <NazioniPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/geografia/regioni"
+          element={
+            <ProtectedRoute roles={['admin', 'owner']}>
+              <RegioniPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/geografia/province"
+          element={
+            <ProtectedRoute roles={['admin', 'owner']}>
+              <ProvincePage />
             </ProtectedRoute>
           }
         />
@@ -318,6 +355,14 @@ return (
           element={
             <ProtectedRoute roles={['admin', 'owner']}>
               <SysModelList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/blocks"
+          element={
+            <ProtectedRoute roles={['admin', 'owner']}>
+              <BlockBuilder />
             </ProtectedRoute>
           }
         />

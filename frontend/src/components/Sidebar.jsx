@@ -25,7 +25,7 @@ import {
     ToolOutlined,
     TagsOutlined,
     PercentageOutlined,
-    RulerOutlined,
+    LineHeightOutlined,
     BookOutlined,
     FileTextOutlined,
     FileDoneOutlined,
@@ -34,7 +34,7 @@ import {
     HeartOutlined,
     FileProtectOutlined,
     SwapOutlined,
-    ClipboardOutlined,
+    ProfileOutlined,
     BarcodeOutlined,
     CalendarOutlined,
     ApartmentOutlined,
@@ -66,14 +66,24 @@ const Sidebar = ({ projectMenuItems = [] }) => {
                 { key: '/anagrafiche', label: 'Soggetti', icon: <UserOutlined /> },
                 { key: '/ruoli', label: 'Ruoli', icon: <TeamOutlined /> },
                 { key: '/indirizzi', label: 'Indirizzi', icon: <EnvironmentOutlined /> },
-                { key: '/comuni', label: 'Comuni', icon: <GlobalOutlined /> },
                 { key: '/contatti', label: 'Contatti', icon: <PhoneOutlined /> },
                 { key: '/products', label: 'Prodotti', icon: <AppstoreOutlined /> },
                 { key: '/product-categories', label: 'Categorie Prodotto', icon: <TagsOutlined /> },
                 { key: '/tax-rates', label: 'Aliquote IVA', icon: <PercentageOutlined /> },
-                { key: '/units-of-measure', label: 'Unità di Misura', icon: <RulerOutlined /> },
+                { key: '/units-of-measure', label: 'Unità di Misura', icon: <LineHeightOutlined /> },
                 { key: '/price-lists', label: 'Listini Prezzo', icon: <DollarOutlined /> },
                 { key: '/chart-of-accounts', label: 'Piano dei Conti', icon: <BookOutlined /> },
+            ],
+        },
+        {
+            key: 'area-geografia',
+            label: 'Geografia',
+            icon: <GlobalOutlined />,
+            children: [
+                { key: '/geografia/nazioni', label: 'Nazioni', icon: <GlobalOutlined /> },
+                { key: '/geografia/regioni', label: 'Regioni', icon: <GlobalOutlined /> },
+                { key: '/geografia/province', label: 'Province', icon: <GlobalOutlined /> },
+                { key: '/geografia/comuni', label: 'Comuni', icon: <GlobalOutlined /> },
             ],
         },
         {
@@ -108,7 +118,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
             children: [
                 { key: '/stock-levels', label: 'Giacenze', icon: <InboxOutlined /> },
                 { key: '/stock-movements', label: 'Movimenti', icon: <SwapOutlined /> },
-                { key: '/inventory-counts', label: 'Inventari', icon: <ClipboardOutlined /> },
+                { key: '/inventory-counts', label: 'Inventari', icon: <ProfileOutlined /> },
                 { key: '/lots', label: 'Lotti e Seriali', icon: <BarcodeOutlined /> },
             ],
         },
@@ -175,7 +185,8 @@ const Sidebar = ({ projectMenuItems = [] }) => {
             icon: <BuildOutlined />,
             children: [
                 { key: '/admin/builder', label: 'Modelli (SysModel)' },
-                { key: '/builder/blocks', label: 'Blocchi (Block)' },
+                { key: '/admin/blocks', label: 'Blocchi (Block)' },
+                { key: '/builder/relationships', label: 'Relationship Manager', icon: <ApartmentOutlined /> },
             ]
         },
         {

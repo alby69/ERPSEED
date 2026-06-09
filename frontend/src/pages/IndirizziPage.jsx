@@ -7,6 +7,7 @@ import { apiFetch } from '../utils';
 import { useTableSort } from '../hooks/useTableSort';
 import TableSearch from '../components/TableSearch';
 import Layout from '../components/Layout';
+import HelpDrawer from '@/components/HelpDrawer';
 
 const { Option } = Select;
 
@@ -331,6 +332,7 @@ const IndirizziPage = () => {
             <Space>
               <EnvironmentOutlined />
               <span>Gestione Indirizzi</span>
+              <HelpDrawer moduleName="indirizzi" moduleTitle="Guida Indirizzi" />
             </Space>
           }
           extra={
@@ -400,7 +402,7 @@ const IndirizziPage = () => {
             </Col>
             <Col span={12}>
               <Form.Item name="is_preferred" label="Preferito" valuePropName="checked">
-                <Select defaultValue={false}>
+                <Select>
                   <Option value={true}>Sì</Option>
                   <Option value={false}>No</Option>
                 </Select>
