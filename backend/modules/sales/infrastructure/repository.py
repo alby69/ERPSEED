@@ -70,6 +70,7 @@ class SalesOrderRepository:
         search: str = None,
         status: str = None,
         customer_id: int = None,
+        order_type: str = None,
         page: int = 1,
         per_page: int = 20,
         sort_by: str = "date",
@@ -87,6 +88,9 @@ class SalesOrderRepository:
 
         if customer_id:
             query = query.filter_by(customer_id=customer_id)
+
+        if order_type:
+            query = query.filter_by(type=order_type)
 
         total = query.count()
 
@@ -166,6 +170,8 @@ class SalesOrderRepository:
             "date": order.date.isoformat() if order.date else None,
             "customer_id": order.customer_id,
             "status": order.status,
+            "type": order.type if hasattr(order, 'type') else "order",
+            "expiry_date": order.expiry_date.isoformat() if hasattr(order, 'expiry_date') and order.expiry_date else None,
             "total_amount": order.total_amount,
             "notes": order.notes,
             "lines": [

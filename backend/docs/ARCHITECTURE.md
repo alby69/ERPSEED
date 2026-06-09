@@ -42,6 +42,22 @@ backend/
 │   ├── ai.py              # AIConversation
 │   ├── chart.py            # ChartLibraryConfig
 │   ├── user_role.py       # UserRole
+│   ├── tax.py             # TaxRate
+│   ├── uom.py             # UnitOfMeasure
+│   ├── pricing.py         # PriceList, PriceListItem
+│   ├── movement_reason.py # MovementReason
+│   ├── goods_receipt.py   # GoodsReceipt, GoodsReceiptLine
+│   ├── maturity.py        # Maturity
+│   ├── crm.py             # Lead, Opportunity
+│   ├── contract.py        # Contract
+│   ├── manufacturing.py   # BillOfMaterial, BOMLine, WorkCycle, WorkPhase, ProductionOrder, ProductionOrderMaterial
+│   ├── project_management.py # BusinessProject, Timesheet, TimesheetLine
+│   ├── report.py          # Report, ReportExecution
+│   ├── vat.py             # VatRegisterEntry, VatLiquidation, IntrastatDeclaration
+│   ├── riba.py            # RiBa, RiBaItem
+│   ├── lot.py             # Lot, SerialNumber
+│   ├── purchase_request.py # PurchaseRequest, RFQ, SupplierQuotation (con linee)
+│   ├── mrp.py             # MRPRun, MRPSuggestion
 │   ├── workflow.py        # Workflow, WorkflowStep, WorkflowExecution
 │   ├── webhook.py         # WebhookEndpoint, WebhookDelivery, WebhookEvent
 │   └── system/            # System models
@@ -175,8 +191,26 @@ backend/
 │   │   └── api/rest_api.py, application/, service.py
 │   ├── users/              # Utenti (CQRS)
 │   │   └── api/rest_api.py, application/, service.py
-│   └── system_tools/       # Template, Versioning, Debug
-│       └── api/templates_api.py, versioning_api.py, gdo_api.py
+│   ├── system_tools/       # Template, Versioning, Debug
+│   │   └── api/templates_api.py, versioning_api.py, gdo_api.py
+│   ├── tax/                # Aliquote IVA (CQRS)
+│   ├── product_categories/ # Categorie Prodotto
+│   ├── uom/                # Unità di Misura
+│   ├── pricing/            # Listini Prezzo
+│   ├── invoicing/          # Fatturazione Vendita (CQRS)
+│   ├── inventory/          # Magazzino (movimenti + causali)
+│   ├── goods_receipt/      # DDT Entrata Merci
+│   ├── maturities/         # Scadenzario
+│   ├── crm/                # CRM (Lead + Opportunità)
+│   ├── contracts/          # Contratti
+│   ├── manufacturing/      # Produzione (BOM, Cicli, ODP)
+│   ├── project_management/ # Timesheet + Budget Commessa
+│   ├── report_designer/    # Report Designer
+│   ├── vat/                # Registri IVA + Intrastat
+│   ├── riba/               # Ri.Ba. (Ricevute Bancarie)
+│   ├── lot/                # Lotti e Serial Number
+│   ├── purchase_requests/  # Richieste Acquisto + RFQ
+│   └── mrp/                # MRP (Material Requirements Planning)
 │
 ├── plugins/                # PLUGIN SYSTEM
 │   ├── base.py

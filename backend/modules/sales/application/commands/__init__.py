@@ -14,6 +14,8 @@ class CreateSalesOrderCommand(CreateCommand):
     number: str = ""
     date: str = ""
     customer_id: int = 0
+    type: str = "order"
+    expiry_date: str = ""
     notes: str = ""
     lines: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -22,6 +24,8 @@ class CreateSalesOrderCommand(CreateCommand):
             "number": self.number,
             "date": self.date,
             "customer_id": self.customer_id,
+            "type": self.type,
+            "expiry_date": self.expiry_date,
             "notes": self.notes,
             "lines": self.lines,
         }
@@ -35,6 +39,8 @@ class CreateSalesOrderCommand(CreateCommand):
             number=data.get("number", ""),
             date=data.get("date", ""),
             customer_id=data.get("customer_id", 0),
+            type=data.get("type", "order"),
+            expiry_date=data.get("expiry_date", ""),
             notes=data.get("notes", ""),
             lines=data.get("lines", []),
         )
@@ -134,6 +140,7 @@ class ListSalesOrdersCommand(QueryCommand):
     search: str = ""
     status: str = ""
     customer_id: Optional[int] = None
+    order_type: str = ""
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ListSalesOrdersCommand":
@@ -147,4 +154,5 @@ class ListSalesOrdersCommand(QueryCommand):
             search=data.get("search", ""),
             status=data.get("status", ""),
             customer_id=data.get("customer_id"),
+            order_type=data.get("order_type", ""),
         )

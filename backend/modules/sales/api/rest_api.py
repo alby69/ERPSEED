@@ -32,6 +32,8 @@ class SalesOrderList(MethodView):
             "command": "ListSalesOrders",
             "tenant_id": tenant_id,
             "userId": userId,
+            "order_type": request.args.get('type', ''),
+            "status": request.args.get('status', ''),
             "pagination": {
                 "page": request.args.get('page', 1, type=int),
                 "per_page": request.args.get('per_page', 20, type=int)

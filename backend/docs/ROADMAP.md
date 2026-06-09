@@ -142,4 +142,18 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 ---
 
-*Ultimo aggiornamento: 2026-03-24*
+> **Nota:** Parallelamente a questa roadmap di qualità, tutti i 24 blocchi ERP del [Piano di Implementazione](IMPLEMENTATION_PLAN.md) sono stati completati (modelli, API, frontend). Vedi [API.md](API.md) per la lista completa degli endpoint.
+
+---
+
+## Appendice — Guida al Refactoring per Sviluppatori
+
+Quando si modifica un modulo esistente:
+1. **Verificare il BaseModel**: Assicurarsi di importare da `backend.core.models.base` (non `backend.models.base`).
+2. **Usare BaseService**: Se il servizio fa CRUD semplice, non riscrivere i metodi, usa quelli ereditati da `backend.core.services.base.BaseService`.
+3. **Disaccoppiamento**: Non importare servizi direttamente se possibile; usare il pattern `ServiceProxy` o l'iniezione tramite container.
+4. **Schema unico**: Usare `backend.core.schemas.dynamic_schemas` per centralizzare gli schemi Marshmallow delle API dinamiche.
+
+---
+
+*Ultimo aggiornamento: 2026-06-09*

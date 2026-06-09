@@ -81,6 +81,24 @@ from .core.api.import_export import blp as import_export_bp
 # Import new service-based REST APIs
 from .modules.products.api.rest_api import blp as products_api_bp
 from .modules.sales.api.rest_api import blp as sales_api_bp
+from .modules.tax.api.rest_api import blp as tax_api_bp
+from .modules.product_categories.api import blp as product_categories_bp
+from .modules.uom.api import blp as uom_api_bp
+from .modules.pricing.api import blp as pricing_api_bp
+from .modules.invoicing.api.rest_api import blp as invoicing_api_bp
+from .modules.inventory.api import blp as inventory_management_bp
+from .modules.goods_receipt.api import blp as goods_receipt_bp
+from .modules.maturities.api import blp as maturities_bp
+from .modules.crm.api import blp as crm_bp
+from .modules.contracts.api import blp as contracts_bp
+from .modules.manufacturing.api import blp as manufacturing_bp
+from .modules.project_management.api import blp as project_management_bp
+from .modules.report_designer.api import blp as report_designer_bp
+from .modules.vat.api import blp as vat_bp
+from .modules.riba.api import blp as riba_bp
+from .modules.lot.api import blp as lot_bp
+from .modules.purchase_requests.api import blp as purchase_requests_bp
+from .modules.mrp.api import blp as mrp_bp
 
 # Import Entities (Vision Archetypes)
 from .modules.entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
@@ -378,6 +396,24 @@ def create_app(db_url=None):
     api.register_blueprint(ai_bp, url_prefix=f"{API_V1_PREFIX}/ai", name="api_ai")
     api.register_blueprint(products_api_bp, url_prefix=f"{API_V1_PREFIX}/products", name="api_products")
     api.register_blueprint(sales_api_bp, url_prefix=f"{API_V1_PREFIX}/sales", name="api_sales")
+    api.register_blueprint(tax_api_bp, url_prefix=f"{API_V1_PREFIX}/tax-rates", name="api_tax")
+    api.register_blueprint(product_categories_bp)
+    api.register_blueprint(uom_api_bp)
+    api.register_blueprint(pricing_api_bp)
+    api.register_blueprint(invoicing_api_bp)
+    api.register_blueprint(inventory_management_bp)
+    api.register_blueprint(goods_receipt_bp)
+    api.register_blueprint(maturities_bp)
+    api.register_blueprint(crm_bp)
+    api.register_blueprint(contracts_bp)
+    api.register_blueprint(manufacturing_bp)
+    api.register_blueprint(project_management_bp)
+    api.register_blueprint(report_designer_bp)
+    api.register_blueprint(vat_bp)
+    api.register_blueprint(riba_bp)
+    api.register_blueprint(lot_bp)
+    api.register_blueprint(purchase_requests_bp)
+    api.register_blueprint(mrp_bp)
     api.register_blueprint(purchases_bp, url_prefix=f"{API_V1_PREFIX}/purchases", name="api_purchases")
 
     # Feature APIs

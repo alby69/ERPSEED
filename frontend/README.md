@@ -1,16 +1,36 @@
-# React + Vite
+# ERPSEED Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interfaccia utente React per la piattaforma ERPSeed.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19 + Vite
+- Ant Design 5 (UI components)
+- react-router-dom v7 (routing)
+- Zustand (state management)
+- ECharts / ApexCharts (charts)
 
-## React Compiler
+## Struttura
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+src/
+├── pages/          # 44 pagine (Dashboard, Anagrafiche, Prodotti, etc.)
+├── components/     # 43 componenti riutilizzabili
+├── context/        # AuthContext, ThemeProvider
+├── locales/        # Traduzioni IT/EN
+└── utils/          # apiFetch, helpers
+```
 
-## Expanding the ESLint configuration
+## Comandi
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install        # Installa dipendenze
+npm run dev        # Avvia dev server (localhost:5173)
+npm run build      # Build produzione
+npx eslint src/    # Lint
+```
+
+## Documentazione
+
+Vedi [FRONTEND_GUIDE.md](docs/FRONTEND_GUIDE.md) per la guida sviluppatori.
+Vedi [backend/docs/](../backend/docs/) per la documentazione completa del progetto.

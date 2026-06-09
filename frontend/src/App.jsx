@@ -21,6 +21,32 @@ import AIAssistantPage from './pages/AIAssistantPage';
 import ModuleAppPage from './pages/ModuleAppPage';
 import ProjectImportExportPage from './pages/ProjectImportExportPage';
 import GDOReconciliationTool from './pages/GDOReconciliationTool';
+import PagePlaceholder from './pages/PagePlaceholder';
+import TaxRates from './pages/TaxRates';
+import ProductCategories from './pages/ProductCategories';
+import UnitsOfMeasure from './pages/UnitsOfMeasure';
+import PriceLists from './pages/PriceLists';
+import Invoices from './pages/Invoices';
+import StockMovements from './pages/StockMovements';
+import StockLevels from './pages/StockLevels';
+import PurchaseOrders from './pages/PurchaseOrders';
+import Journal from './pages/Journal';
+import GoodsReceipts from './pages/GoodsReceipts';
+import Maturities from './pages/Maturities';
+import CRMPage from './pages/CRM';
+import Quotations from './pages/Quotations';
+import DeliveryNotes from './pages/DeliveryNotes';
+import HR from './pages/HR';
+import Contracts from './pages/Contracts';
+import Manufacturing from './pages/Manufacturing';
+import ProjectManagement from './pages/ProjectManagement';
+import ReportDesigner from './pages/ReportDesigner';
+import VatRegisters from './pages/VatRegisters';
+import IntrastatPage from './pages/Intrastat';
+import RiBaPage from './pages/RiBaPage';
+import LotsPage from './pages/LotsPage';
+import PurchaseRequests from './pages/PurchaseRequests';
+import MRPPage from './pages/MRPPage';
 
 
 // Helper component to load project theme
@@ -359,6 +385,58 @@ return (
             </ProtectedRoute>
           }
         />
+        {/* === Anagrafiche e Dati Base - Nuovi Blocchi === */}
+        <Route path="/product-categories" element={<ProtectedRoute roles={['admin', 'owner']}><ProductCategories /></ProtectedRoute>} />
+        <Route path="/tax-rates" element={<ProtectedRoute roles={['admin', 'owner']}><TaxRates /></ProtectedRoute>} />
+        <Route path="/units-of-measure" element={<ProtectedRoute roles={['admin', 'owner']}><UnitsOfMeasure /></ProtectedRoute>} />
+        <Route path="/price-lists" element={<ProtectedRoute roles={['admin', 'owner']}><PriceLists /></ProtectedRoute>} />
+        <Route path="/chart-of-accounts" element={<ProtectedRoute roles={['admin', 'owner']}><PagePlaceholder title="Piano dei Conti" priority="P1" backend="modules/accounting/" /></ProtectedRoute>} />
+
+        {/* === Acquisti === */}
+        <Route path="/purchase-orders" element={<ProtectedRoute roles={['admin', 'owner']}><PurchaseOrders /></ProtectedRoute>} />
+        <Route path="/purchase-requests" element={<ProtectedRoute roles={['admin', 'owner']}><PurchaseRequests /></ProtectedRoute>} />
+        <Route path="/goods-receipts" element={<ProtectedRoute roles={['admin', 'owner']}><GoodsReceipts /></ProtectedRoute>} />
+        <Route path="/purchase-returns" element={<ProtectedRoute roles={['admin', 'owner']}><PagePlaceholder title="Resi Acquisti" priority="P2" /></ProtectedRoute>} />
+
+        {/* === Vendite === */}
+        <Route path="/quotations" element={<ProtectedRoute roles={['admin', 'owner']}><Quotations /></ProtectedRoute>} />
+        <Route path="/delivery-notes" element={<ProtectedRoute roles={['admin', 'owner']}><DeliveryNotes /></ProtectedRoute>} />
+        <Route path="/invoices" element={<ProtectedRoute roles={['admin', 'owner']}><Invoices /></ProtectedRoute>} />
+        <Route path="/sales-returns" element={<ProtectedRoute roles={['admin', 'owner']}><PagePlaceholder title="Resi Vendita" priority="P2" /></ProtectedRoute>} />
+        <Route path="/crm" element={<ProtectedRoute roles={['admin', 'owner']}><CRMPage /></ProtectedRoute>} />
+        <Route path="/contracts" element={<ProtectedRoute roles={['admin', 'owner']}><Contracts /></ProtectedRoute>} />
+
+        {/* === Magazzino === */}
+        <Route path="/stock-levels" element={<ProtectedRoute roles={['admin', 'owner']}><StockLevels /></ProtectedRoute>} />
+        <Route path="/stock-movements" element={<ProtectedRoute roles={['admin', 'owner']}><StockMovements /></ProtectedRoute>} />
+        <Route path="/inventory-counts" element={<ProtectedRoute roles={['admin', 'owner']}><PagePlaceholder title="Inventari Fisici" priority="P2" /></ProtectedRoute>} />
+        <Route path="/lots" element={<ProtectedRoute roles={['admin', 'owner']}><LotsPage /></ProtectedRoute>} />
+
+        {/* === Contabilità === */}
+        <Route path="/journal" element={<ProtectedRoute roles={['admin', 'owner']}><Journal /></ProtectedRoute>} />
+        <Route path="/maturities" element={<ProtectedRoute roles={['admin', 'owner']}><Maturities /></ProtectedRoute>} />
+        <Route path="/vat-registers" element={<ProtectedRoute roles={['admin', 'owner']}><VatRegisters /></ProtectedRoute>} />
+        <Route path="/intrastat" element={<ProtectedRoute roles={['admin', 'owner']}><IntrastatPage /></ProtectedRoute>} />
+        <Route path="/riba" element={<ProtectedRoute roles={['admin', 'owner']}><RiBaPage /></ProtectedRoute>} />
+
+        {/* === Produzione === */}
+        <Route path="/production" element={<ProtectedRoute roles={['admin', 'owner']}><Manufacturing /></ProtectedRoute>} />
+        <Route path="/mrp" element={<ProtectedRoute roles={['admin', 'owner']}><MRPPage /></ProtectedRoute>} />
+
+        {/* === HR === */}
+        <Route path="/employees" element={<ProtectedRoute roles={['admin', 'owner']}><HR /></ProtectedRoute>} />
+        <Route path="/departments" element={<ProtectedRoute roles={['admin', 'owner']}><PagePlaceholder title="Reparti" priority="P2" /></ProtectedRoute>} />
+        <Route path="/attendance" element={<ProtectedRoute roles={['admin', 'owner']}><HR /></ProtectedRoute>} />
+        <Route path="/leave-requests" element={<ProtectedRoute roles={['admin', 'owner']}><HR /></ProtectedRoute>} />
+
+        {/* === Progetti === */}
+        <Route path="/project-management" element={<ProtectedRoute roles={['admin', 'owner']}><ProjectManagement /></ProtectedRoute>} />
+        <Route path="/timesheet" element={<ProtectedRoute roles={['admin', 'owner']}><ProjectManagement /></ProtectedRoute>} />
+        <Route path="/project-budgets" element={<ProtectedRoute roles={['admin', 'owner']}><ProjectManagement /></ProtectedRoute>} />
+
+        {/* === Analytics === */}
+        <Route path="/reports" element={<ProtectedRoute roles={['admin', 'owner']}><ReportDesigner /></ProtectedRoute>} />
+
         {/* Redirect everything to the dashboard; if not logged in, ProtectedRoute will send to login */}
         <Route path="*" element={<Navigate to="/projects" replace />} />
       </Routes>

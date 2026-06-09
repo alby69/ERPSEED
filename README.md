@@ -82,17 +82,21 @@ erpseed/
 
 ## 📚 Documentazione
 
-| Documento | Descrizione |
-|-----------|-------------|
-| [backend/docs/QUICKSTART.md](backend/docs/QUICKSTART.md) | Guida rapida Docker e setup manuale |
-| [backend/docs/ARCHITECTURE.md](backend/docs/ARCHITECTURE.md) | Architettura del sistema |
-| [backend/docs/API.md](backend/docs/API.md) | Riferimento API completo |
-| [backend/docs/DEVELOPER_GUIDE.md](backend/docs/DEVELOPER_GUIDE.md) | Guida per sviluppatori |
-| [backend/docs/USER_MANUAL.md](backend/docs/USER_MANUAL.md) | Manuale utente |
-| [backend/docs/ROADMAP.md](backend/docs/ROADMAP.md) | Roadmap e stato avanzamento |
-| [backend/docs/TUTORIAL_AI_ASSISTANT.md](backend/docs/TUTORIAL_AI_ASSISTANT.md) | Tutorial AI Assistant |
-| [backend/docs/TUTORIAL_FLEET.md](backend/docs/TUTORIAL_FLEET.md) | Tutorial Fleet Management |
-| [backend/docs/BRANCH_STRATEGY.md](backend/docs/BRANCH_STRATEGY.md) | Strategia branch Git |
+La documentazione completa è organizzata in [backend/docs/INDEX.md](backend/docs/INDEX.md):
+
+| Area | Documento | Contenuto |
+|------|-----------|-----------|
+| **Panoramica** | [ARCHITECTURE.md](backend/docs/ARCHITECTURE.md) | Architettura, pattern, struttura |
+| **Guida Rapida** | [QUICKSTART.md](backend/docs/QUICKSTART.md) | Docker, setup, comandi |
+| **Sviluppo** | [DEVELOPER_GUIDE.md](backend/docs/DEVELOPER_GUIDE.md) | Setup dev, creazione moduli, testing |
+| **API** | [API.md](backend/docs/API.md) | Riferimento endpoint completo |
+| **Manuale Utente** | [USER_MANUAL.md](backend/docs/USER_MANUAL.md) | Uso piattaforma |
+| **Roadmap** | [ROADMAP.md](backend/docs/ROADMAP.md) | Stato avanzamento e priorità |
+| **Piano ERP** | [IMPLEMENTATION_PLAN.md](backend/docs/IMPLEMENTATION_PLAN.md) | Piano blocchi ERP |
+| **Tutorial AI** | [TUTORIAL_AI_ASSISTANT.md](backend/docs/TUTORIAL_AI_ASSISTANT.md) | Uso AI Assistant |
+| **Tutorial Fleet** | [TUTORIAL_FLEET.md](backend/docs/TUTORIAL_FLEET.md) | Fleet Management via GUI |
+| **Frontend** | [FRONTEND_GUIDE.md](frontend/docs/FRONTEND_GUIDE.md) | Guida sviluppo frontend |
+| **Branch Git** | [BRANCH_STRATEGY.md](backend/docs/BRANCH_STRATEGY.md) | Strategia branch |
 
 ---
 

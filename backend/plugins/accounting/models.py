@@ -154,18 +154,24 @@ class Invoice(db.Model):
     subtotal = db.Column(db.Float, default=0.0)
     tax_amount = db.Column(db.Float, default=0.0)
     total = db.Column(db.Float, default=0.0)
-    status = db.Column(db.String(20), default='draft')  # draft, sent, paid, cancelled
+    status = db.Column(db.String(20), default='draft')  # draft, sent, paid, cancelled, credit_note
+    sales_order_id = db.Column(db.Integer, db.ForeignKey('sales_orders.id'), nullable=True)
+    notes = db.Column(db.Text)
     journal_entry_id = db.Column(db.Integer, db.ForeignKey('journal_entries.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     party = db.relationship('Soggetto')
+    sales_order = db.relationship('SalesOrder', foreign_keys=[sales_order_id])
     lines = db.relationship('InvoiceLine', back_populates='invoice', cascade='all, delete-orphan')
     journal_entry = db.relationship('JournalEntry')
+    creator = db.relationship('User')
     tenant = db.relationship('Tenant', backref=db.backref('invoices', lazy='dynamic'))
 
     __table_args__ = (
         db.Index('ix_invoice_tenant_number', 'tenant_id', 'invoice_number'),
+        db.Index('ix_invoice_tenant_status', 'tenant_id', 'status'),
     )
 
     def __repr__(self):

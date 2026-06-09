@@ -19,6 +19,38 @@ const ICON_MAP = {
   LogoutOutlined: Icons.LogoutOutlined,
   HomeOutlined: Icons.HomeOutlined,
   BlockOutlined: Icons.BlockOutlined,
+  UserOutlined: Icons.UserOutlined,
+  EnvironmentOutlined: Icons.EnvironmentOutlined,
+  PhoneOutlined: Icons.PhoneOutlined,
+  GlobalOutlined: Icons.GlobalOutlined,
+  ShoppingCartOutlined: Icons.ShoppingCartOutlined,
+  InboxOutlined: Icons.InboxOutlined,
+  DollarOutlined: Icons.DollarOutlined,
+  ToolOutlined: Icons.ToolOutlined,
+  TagsOutlined: Icons.TagsOutlined,
+  PercentageOutlined: Icons.PercentageOutlined,
+  RulerOutlined: Icons.RulerOutlined,
+  BookOutlined: Icons.BookOutlined,
+  FileTextOutlined: Icons.FileTextOutlined,
+  FileDoneOutlined: Icons.FileDoneOutlined,
+  CarOutlined: Icons.CarOutlined,
+  RollbackOutlined: Icons.RollbackOutlined,
+  HeartOutlined: Icons.HeartOutlined,
+  FileProtectOutlined: Icons.FileProtectOutlined,
+  SwapOutlined: Icons.SwapOutlined,
+  ClipboardOutlined: Icons.ClipboardOutlined,
+  BarcodeOutlined: Icons.BarcodeOutlined,
+  CalendarOutlined: Icons.CalendarOutlined,
+  ApartmentOutlined: Icons.ApartmentOutlined,
+  NodeIndexOutlined: Icons.NodeIndexOutlined,
+  BellOutlined: Icons.BellOutlined,
+  ClockCircleOutlined: Icons.ClockCircleOutlined,
+  FieldTimeOutlined: Icons.FieldTimeOutlined,
+  FundOutlined: Icons.FundOutlined,
+  FileSearchOutlined: Icons.FileSearchOutlined,
+  RobotOutlined: Icons.RobotOutlined,
+  ExperimentOutlined: Icons.ExperimentOutlined,
+  AuditOutlined: Icons.AuditOutlined,
 };
 
 const getIcon = (iconName) => {
@@ -46,6 +78,21 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     }
   };
 
+  // Recursively build menu items from navigation config
+  const buildNavItems = (navItems) => {
+    return navItems.map(item => {
+      const menuItem = {
+        key: item.path || item.id,
+        icon: item.icon ? getIcon(item.icon) : null,
+        label: item.label,
+      };
+      if (item.children && item.children.length > 0) {
+        menuItem.children = buildNavItems(item.children);
+      }
+      return menuItem;
+    });
+  };
+
   // Build items from navigation config
   const items = [];
 
@@ -57,11 +104,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
       key: 'app-section',
       label: 'Applicazioni',
       icon: <Icons.AppstoreOutlined />,
-      children: appSection.children.map(child => ({
-        key: child.path,
-        label: child.label,
-        icon: child.icon ? getIcon(child.icon) : <Icons.AppstoreOutlined />,
-      })),
+      children: buildNavItems(appSection.children),
     });
   }
 
@@ -129,6 +172,22 @@ const AppSidebar = ({
     }
   };
 
+  // Recursively build menu items from navigation items
+  const buildNavItems = (navItems) => {
+    return navItems.map(item => {
+      const menuItem = {
+        key: item.path || item.id,
+        icon: item.icon ? getIcon(item.icon) : null,
+        label: item.label,
+        danger: item.danger,
+      };
+      if (item.children && item.children.length > 0) {
+        menuItem.children = buildNavItems(item.children);
+      }
+      return menuItem;
+    });
+  };
+
   // Build menu items from sections
   const buildMenuItems = () => {
     const items = [];
@@ -149,23 +208,7 @@ const AppSidebar = ({
           });
         });
       } else if (sectionItems.length > 0) {
-        sectionItems.forEach(item => {
-          const menuItem = {
-            key: item.path || item.id,
-            icon: item.icon ? getIcon(item.icon) : null,
-            label: item.label,
-          };
-
-          if (item.children && item.children.length > 0) {
-            menuItem.children = item.children.map(child => ({
-              key: child.path,
-              icon: child.icon ? getIcon(child.icon) : null,
-              label: child.label,
-            }));
-          }
-
-          items.push(menuItem);
-        });
+        buildNavItems(sectionItems).forEach(item => items.push(item));
 
         if (section !== sections[sections.length - 1]) {
           items.push({ type: 'divider', key: `${section}-divider` });

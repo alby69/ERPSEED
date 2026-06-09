@@ -266,6 +266,7 @@ class ListSalesOrdersHandler(QueryHandler):
                 search=filters.get("search", command.search),
                 status=filters.get("status", command.status),
                 customer_id=filters.get("customer_id", command.customer_id),
+                order_type=filters.get("order_type", command.order_type),
                 page=pagination.get("page", 1),
                 per_page=pagination.get("per_page", 20),
                 sort_by=pagination.get("sort_by", "date"),

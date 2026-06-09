@@ -62,6 +62,8 @@ class SalesOrder:
     date: date = field(default_factory=date.today)
     customer_id: int = 0
     status: str = "draft"
+    type: str = "order"  # order, quote, delivery_note
+    expiry_date: Optional[date] = None  # for quotes
     total_amount: float = 0.0
     notes: str = ""
     lines: List[SalesOrderLine] = field(default_factory=list)
@@ -82,6 +84,8 @@ class SalesOrder:
             "date": self.date.isoformat() if self.date else None,
             "customer_id": self.customer_id,
             "status": self.status,
+            "type": self.type,
+            "expiry_date": self.expiry_date.isoformat() if self.expiry_date else None,
             "total_amount": self.total_amount,
             "notes": self.notes,
             "lines": [line.to_dict() for line in self.lines],
@@ -92,6 +96,9 @@ class SalesOrder:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SalesOrder":
         lines = [SalesOrderLine.from_dict(l) for l in data.get("lines", [])]
+        ed = data.get("expiry_date")
+        if ed and isinstance(ed, str):
+            ed = date.fromisoformat(ed)
         return cls(
             id=data.get("id"),
             tenant_id=data.get("tenant_id", 0),
@@ -99,6 +106,8 @@ class SalesOrder:
             date=data.get("date", date.today()),
             customer_id=data.get("customer_id", 0),
             status=data.get("status", "draft"),
+            type=data.get("type", "order"),
+            expiry_date=ed,
             total_amount=data.get("total_amount", 0.0),
             notes=data.get("notes", ""),
             lines=lines,
@@ -112,6 +121,8 @@ class SalesOrder:
             errors.append("Customer is required")
         if self.status not in ["draft", "confirmed", "completed", "cancelled"]:
             errors.append(f"Invalid status: {self.status}")
+        if self.type not in ["order", "quote", "delivery_note"]:
+            errors.append(f"Invalid type: {self.type}")
         return len(errors) == 0, errors
 
 

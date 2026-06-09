@@ -16,6 +16,8 @@ class Product(BaseModel):
     description = db.Column(db.Text)
     unit_price = db.Column(db.Float)
     category = db.Column(db.String(100))
+    category_id = db.Column(db.Integer, db.ForeignKey("product_categories.id"), nullable=True)
+    category_ref = db.relationship("ProductCategory", backref="products")
     sku = db.Column(db.String(50))
     barcode = db.Column(db.String(50))
     is_active = db.Column(db.Boolean, default=True)
@@ -32,6 +34,27 @@ class Product(BaseModel):
 
     def __repr__(self):
         return f"<Product {self.name}>"
+
+
+class ProductCategory(BaseModel):
+    __tablename__ = "product_categories"
+
+    tenant_id = db.Column(db.Integer, db.ForeignKey("tenants.id"), nullable=False, index=True)
+    name = db.Column(db.String(100), nullable=False)
+    code = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text)
+    parent_id = db.Column(db.Integer, db.ForeignKey("product_categories.id"), nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    sort_order = db.Column(db.Integer, default=0)
+
+    parent = db.relationship("ProductCategory", remote_side="ProductCategory.id", backref="children")
+
+    __table_args__ = (
+        db.UniqueConstraint("tenant_id", "code", name="uq_category_tenant_code"),
+    )
+
+    def __repr__(self):
+        return f"<ProductCategory {self.name}>"
 
 
 class ProductStockModel(BaseModel):

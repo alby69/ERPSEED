@@ -771,6 +771,222 @@ Authorization: Bearer <token>
 
 ---
 
+## Moduli ERP
+
+### Aliquote IVA (`/api/v1/tax-rates`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/tax-rates` | Lista aliquote |
+| POST | `/api/v1/tax-rates` | Crea aliquota |
+| GET | `/api/v1/tax-rates/<id>` | Dettaglio |
+| PUT | `/api/v1/tax-rates/<id>` | Modifica |
+| DELETE | `/api/v1/tax-rates/<id>` | Elimina |
+
+### Categorie Prodotto (`/api/v1/product-categories`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/product-categories` | Lista categorie |
+| POST | `/api/v1/product-categories` | Crea categoria |
+| GET | `/api/v1/product-categories/<id>` | Dettaglio |
+| PUT | `/api/v1/product-categories/<id>` | Modifica |
+| DELETE | `/api/v1/product-categories/<id>` | Elimina |
+
+### Unità di Misura (`/api/v1/units-of-measure`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/units-of-measure` | Lista UDM |
+| POST | `/api/v1/units-of-measure` | Crea UDM |
+| GET | `/api/v1/units-of-measure/<id>` | Dettaglio |
+| PUT | `/api/v1/units-of-measure/<id>` | Modifica |
+| DELETE | `/api/v1/units-of-measure/<id>` | Elimina |
+
+### Listini Prezzo (`/api/v1/price-lists`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/price-lists` | Lista listini |
+| POST | `/api/v1/price-lists` | Crea listino |
+| GET | `/api/v1/price-lists/<id>` | Dettaglio con items |
+| PUT | `/api/v1/price-lists/<id>` | Modifica listino + items |
+| DELETE | `/api/v1/price-lists/<id>` | Elimina |
+
+### Fatturazione Vendita (`/api/v1/invoicing/invoices`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/invoicing/invoices` | Lista fatture |
+| POST | `/api/v1/invoicing/invoices` | Crea fattura |
+| GET | `/api/v1/invoicing/invoices/<id>` | Dettaglio |
+| PUT | `/api/v1/invoicing/invoices/<id>` | Modifica |
+| POST | `/api/v1/invoicing/invoices/<id>/issue` | Emetti |
+| POST | `/api/v1/invoicing/invoices/<id>/cancel` | Annulla |
+| POST | `/api/v1/invoicing/invoices/<id>/pay` | Paga |
+| POST | `/api/v1/invoicing/from-sales-order/<so_id>` | Crea da ordine |
+
+### Magazzino (`/api/v1/inventory/`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/inventory/movements` | Lista movimenti |
+| POST | `/api/v1/inventory/movements` | Crea movimento |
+| GET | `/api/v1/inventory/stock` | Giacenze |
+| GET | `/api/v1/inventory/movement-reasons` | Lista causali |
+| POST | `/api/v1/inventory/movement-reasons` | Crea causale |
+| PUT | `/api/v1/inventory/movement-reasons/<id>` | Modifica causale |
+| DELETE | `/api/v1/inventory/movement-reasons/<id>` | Elimina causale |
+
+### DDT Entrata (`/api/v1/goods-receipt`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/goods-receipt` | Lista DDT |
+| POST | `/api/v1/goods-receipt` | Crea DDT |
+| GET | `/api/v1/goods-receipt/<id>` | Dettaglio |
+| PUT | `/api/v1/goods-receipt/<id>` | Modifica |
+| DELETE | `/api/v1/goods-receipt/<id>` | Elimina |
+| POST | `/api/v1/goods-receipt/<id>/complete` | Completa (carica stock) |
+
+### Scadenzario (`/api/v1/maturities`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/maturities` | Lista scadenze |
+| POST | `/api/v1/maturities` | Crea scadenza |
+| PUT | `/api/v1/maturities/<id>` | Modifica |
+| DELETE | `/api/v1/maturities/<id>` | Elimina |
+| GET | `/api/v1/maturities/summary` | KPI (totale, scaduto, in scadenza, pagato) |
+| GET | `/api/v1/maturities/overdue` | Scadenze scadute |
+| GET | `/api/v1/maturities/da-invoice` | Non ancora fatturate |
+| POST | `/api/v1/maturities/<id>/pay` | Paga scadenza |
+
+### CRM (`/api/v1/crm`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/crm/leads` | Lista lead |
+| POST | `/api/v1/crm/leads` | Crea lead |
+| PUT | `/api/v1/crm/leads/<id>` | Modifica lead |
+| DELETE | `/api/v1/crm/leads/<id>` | Elimina lead |
+| GET | `/api/v1/crm/opportunities` | Lista opportunità |
+| POST | `/api/v1/crm/opportunities` | Crea opportunità |
+| PUT | `/api/v1/crm/opportunities/<id>` | Modifica |
+| DELETE | `/api/v1/crm/opportunities/<id>` | Elimina |
+| GET | `/api/v1/crm/pipeline-summary` | Riepilogo pipeline |
+
+### Contratti (`/api/v1/contracts`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/contracts` | Lista contratti |
+| POST | `/api/v1/contracts` | Crea contratto |
+| GET | `/api/v1/contracts/<id>` | Dettaglio |
+| PUT | `/api/v1/contracts/<id>` | Modifica |
+| DELETE | `/api/v1/contracts/<id>` | Elimina |
+
+### Produzione (`/api/v1/manufacturing/`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET/POST | `/api/v1/manufacturing/bom` | Lista/crea DB |
+| GET/PUT/DELETE | `/api/v1/manufacturing/bom/<id>` | Dettaglio DB |
+| GET/POST | `/api/v1/manufacturing/work-cycles` | Lista/crea cicli |
+| GET/PUT/DELETE | `/api/v1/manufacturing/work-cycles/<id>` | Dettaglio ciclo |
+| GET/POST | `/api/v1/manufacturing/production-orders` | Lista/crea ODP |
+| GET/PUT/DELETE | `/api/v1/manufacturing/production-orders/<id>` | Dettaglio ODP |
+| POST | `.../production-orders/<id>/release` | Rilascia ODP |
+| POST | `.../production-orders/<id>/start` | Avvia ODP |
+| POST | `.../production-orders/<id>/complete` | Completa ODP |
+
+### Project Management (`/api/v1/project-management/`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET/POST | `/api/v1/project-management/projects` | Lista/crea progetti |
+| GET/PUT/DELETE | `/api/v1/project-management/projects/<id>` | Dettaglio progetto |
+| GET/POST | `/api/v1/project-management/timesheets` | Lista/crea timesheet |
+| GET/PUT/DELETE | `/api/v1/project-management/timesheets/<id>` | Dettaglio timesheet |
+| POST | `.../timesheets/<id>/submit` | Invia timesheet |
+| POST | `.../timesheets/<id>/approve` | Approva timesheet |
+| GET | `/api/v1/project-management/summary` | KPI riepilogo |
+
+### Report Designer (`/api/v1/report-designer/`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/report-designer/sources` | Elenco sorgenti dati |
+| GET/POST | `/api/v1/report-designer/reports` | Lista/crea report |
+| GET/PUT/DELETE | `/api/v1/report-designer/reports/<id>` | Dettaglio report |
+| POST | `/api/v1/report-designer/reports/<id>/execute` | Esegui report |
+| GET | `/api/v1/report-designer/reports/<id>/history` | Storico esecuzioni |
+
+### HR (`/api/v1/hr/`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET/POST | `/api/v1/hr/employees` | Lista/crea dipendenti |
+| GET/PUT/DELETE | `/api/v1/hr/employees/<id>` | Dettaglio dipendente |
+| GET/POST | `/api/v1/hr/departments` | Lista/crea reparti |
+| GET/PUT/DELETE | `/api/v1/hr/departments/<id>` | Dettaglio reparto |
+| GET/POST | `/api/v1/hr/attendance` | Lista/crea presenze |
+| GET/POST | `/api/v1/hr/leave` | Lista/crea ferie |
+| POST | `/api/v1/hr/leave/<id>/approve` | Approva/rifiuta richiesta |
+| GET | `/api/v1/hr/reports/attendance-summary` | Riepilogo presenze |
+
+### Registri IVA (`/api/v1/vat/`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET/POST | `/api/v1/vat/register` | Lista/crea registrazioni IVA |
+| GET/PUT/DELETE | `/api/v1/vat/register/<id>` | Dettaglio registrazione |
+| POST | `/api/v1/vat/register/generate` | Genera da fatture periodo |
+| GET/POST | `/api/v1/vat/liquidations` | Lista/calcola liquidazioni |
+| GET/PUT | `/api/v1/vat/liquidations/<id>` | Dettaglio/modifica liquidazione |
+| GET/POST | `/api/v1/vat/intrastat` | Lista/crea dichiarazioni |
+| GET/PUT/DELETE | `/api/v1/vat/intrastat/<id>` | Dettaglio Intrastat |
+| POST | `/api/v1/vat/intrastat/<id>/submit` | Invia dichiarazione |
+
+### Ri.Ba. (`/api/v1/riba/`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET/POST | `/api/v1/riba/batches` | Lista/crea invii Ri.Ba. |
+| GET/PUT/DELETE | `/api/v1/riba/batches/<id>` | Dettaglio invio |
+| POST | `/api/v1/riba/batches/<id>/send` | Invia batch |
+| POST | `/api/v1/riba/items/<id>/collect` | Registra incasso |
+| POST | `/api/v1/riba/items/<id>/reject` | Respingi partita |
+
+### Lotti e Seriali (`/api/v1/lots`, `/api/v1/serial-numbers`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET/POST | `/api/v1/lots` | Lista/crea lotti |
+| GET/PUT/DELETE | `/api/v1/lots/<id>` | Dettaglio lotto |
+| GET/POST | `/api/v1/serial-numbers` | Lista/crea seriali |
+| GET/PUT/DELETE | `/api/v1/serial-numbers/<id>` | Dettaglio seriale |
+
+### Richieste Acquisto e RFQ (`/api/v1/purchase-requests`, `/api/v1/rfqs`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET/POST | `/api/v1/purchase-requests` | Lista/crea richieste |
+| GET/PUT/DELETE | `/api/v1/purchase-requests/<id>` | Dettaglio |
+| POST | `/api/v1/purchase-requests/<id>/approve` | Approva richiesta |
+| GET/POST | `/api/v1/rfqs` | Lista/crea RFQ |
+| GET/PUT/DELETE | `/api/v1/rfqs/<id>` | Dettaglio RFQ |
+| GET/POST | `/api/v1/rfqs/<id>/quotations` | Lista/crea preventivi |
+| POST | `/api/v1/quotations/<id>/accept` | Accetta preventivo |
+
+### MRP (`/api/v1/mrp/`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET/POST | `/api/v1/mrp/runs` | Lista/esegui MRP |
+| GET | `/api/v1/mrp/runs/<id>` | Dettaglio con suggerimenti |
+| PUT | `/api/v1/mrp/suggestions/<id>` | Aggiorna suggerimento |
+
 ## Errori
 
 ### Codici HTTP

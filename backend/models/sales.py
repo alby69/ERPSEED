@@ -14,6 +14,8 @@ class SalesOrder(BaseModel):
     date = db.Column(db.Date, default=datetime.date.today)
     customer_id = db.Column(db.Integer, db.ForeignKey("soggetti.id"), nullable=False)
     status = db.Column(db.String(20), default="draft")
+    type = db.Column(db.String(20), default="order")  # order, quote, delivery_note
+    expiry_date = db.Column(db.Date, nullable=True)  # for quotes
     total_amount = db.Column(db.Float, default=0)
     notes = db.Column(db.Text)
 
