@@ -6,6 +6,7 @@ import { apiClient } from './api';
 import { useTheme } from '../context';
 import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
 import ColumnSettingsButton from '../components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 function Products() {
     const { themeConfig } = useTheme();
@@ -71,10 +72,10 @@ function Products() {
     }
 
   return (
-    <>
+    <Layout>
       <div style={{ padding: 24, background: themeConfig.mode === 'dark' ? '#141414' : '#fff', borderBottom: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-            <Typography.Title level={4} style={{ margin: 0 }}>Products</Typography.Title>
+            <Typography.Title level={4} style={{ margin: 0 }}>Anagrafiche (Prodotti)</Typography.Title>
             <Typography.Text type="secondary">Manage your product catalog</Typography.Text>
         </div>
         <Space>
@@ -88,7 +89,7 @@ function Products() {
         {error && <Alert message="Error" description={error} type="error" showIcon className="mb-4" />}
         <Table dataSource={products} columns={colManager.processedColumns} rowKey="id" pagination={pagination} loading={loading} onChange={handleTableChange} />
       </div>
-    </>
+    </Layout>
   );
 }
 

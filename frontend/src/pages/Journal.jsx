@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const statusColors = { draft: 'default', posted: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', posted: 'Registrata', cancelled: 'Annullata' };
@@ -83,56 +84,58 @@ export default function Journal() {
     const colManager = useColumnManagerWithDrawer('journal', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            <Card title="Prima Nota Contabile" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Nuova Scrittura</Button></Space>}>
-                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
-                    pagination={{ current: page, pageSize: 20, total, onChange: setPage, showTotal: (t) => `${t} scritture` }}
-                    expandedRowRender={(r) => r.lines ? (
-                        <Table dataSource={r.lines} rowKey="id" size="small" pagination={false}
-                            columns={[
-                                { title: 'Conto', dataIndex: 'account_id', key: 'account_id', render: (id) => { const a = accounts.find(x => x.id === id); return a ? `${a.code} - ${a.name}` : `ID: ${id}`; } },
-                                { title: 'Dare', dataIndex: 'debit', key: 'debit', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
-                                { title: 'Avere', dataIndex: 'credit', key: 'credit', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
-                                { title: 'Descrizione', dataIndex: 'description', key: 'description' },
-                            ]} />
-                    ) : null}
-                />
-            </Card>
-            <Modal title="Nuova Scrittura Contabile" open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); }} okText="Salva" cancelText="Annulla" width={800}>
-                <Form form={form} layout="vertical">
-                    <Space style={{ width: '100%' }} size={16}>
-                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
-                        <Form.Item name="reference" label="Riferimento"><Input style={{ width: 200 }} /></Form.Item>
-                    </Space>
-                    <Form.Item name="description" label="Descrizione" rules={[{ required: true }]}><Input.TextArea rows={2} /></Form.Item>
-                    <Divider>Righe (Dare/Avere)</Divider>
-                    <Form.List name="lines">
-                        {(fields, { add, remove }) => (
-                            <>
-                                {fields.map(({ key, name, ...rest }) => (
-                                    <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                                        <Form.Item {...rest} name={[name, 'account_id']} rules={[{ required: true }]}>
-                                            <Select showSearch placeholder="Conto" style={{ width: 250 }} optionFilterProp="label"
-                                                options={accounts.map(a => ({ value: a.id, label: `${a.code} - ${a.name}` }))} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'debit']}>
-                                            <InputNumber min={0} step={0.01} prefix="Dare" style={{ width: 120 }} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'credit']}>
-                                            <InputNumber min={0} step={0.01} prefix="Avere" style={{ width: 120 }} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'description']}>
-                                            <Input placeholder="Descrizione riga" style={{ width: 200 }} />
-                                        </Form.Item>
-                                        <Button type="link" danger onClick={() => remove(name)}>Rimuovi</Button>
-                                    </Space>
-                                ))}
-                                <Button type="dashed" onClick={() => add({ debit: 0, credit: 0 })} icon={<PlusOutlined />}>Aggiungi Riga</Button>
-                            </>
-                        )}
-                    </Form.List>
-                </Form>
-            </Modal>
-        </div>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card title="Contabilità (Prima Nota)" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Nuova Scrittura</Button></Space>}>
+                    <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
+                        pagination={{ current: page, pageSize: 20, total, onChange: setPage, showTotal: (t) => `${t} scritture` }}
+                        expandedRowRender={(r) => r.lines ? (
+                            <Table dataSource={r.lines} rowKey="id" size="small" pagination={false}
+                                columns={[
+                                    { title: 'Conto', dataIndex: 'account_id', key: 'account_id', render: (id) => { const a = accounts.find(x => x.id === id); return a ? `${a.code} - ${a.name}` : `ID: ${id}`; } },
+                                    { title: 'Dare', dataIndex: 'debit', key: 'debit', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
+                                    { title: 'Avere', dataIndex: 'credit', key: 'credit', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
+                                    { title: 'Descrizione', dataIndex: 'description', key: 'description' },
+                                ]} />
+                        ) : null}
+                    />
+                </Card>
+                <Modal title="Nuova Scrittura Contabile" open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); }} okText="Salva" cancelText="Annulla" width={800}>
+                    <Form form={form} layout="vertical">
+                        <Space style={{ width: '100%' }} size={16}>
+                            <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
+                            <Form.Item name="reference" label="Riferimento"><Input style={{ width: 200 }} /></Form.Item>
+                        </Space>
+                        <Form.Item name="description" label="Descrizione" rules={[{ required: true }]}><Input.TextArea rows={2} /></Form.Item>
+                        <Divider>Righe (Dare/Avere)</Divider>
+                        <Form.List name="lines">
+                            {(fields, { add, remove }) => (
+                                <>
+                                    {fields.map(({ key, name, ...rest }) => (
+                                        <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                                            <Form.Item {...rest} name={[name, 'account_id']} rules={[{ required: true }]}>
+                                                <Select showSearch placeholder="Conto" style={{ width: 250 }} optionFilterProp="label"
+                                                    options={accounts.map(a => ({ value: a.id, label: `${a.code} - ${a.name}` }))} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'debit']}>
+                                                <InputNumber min={0} step={0.01} prefix="Dare" style={{ width: 120 }} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'credit']}>
+                                                <InputNumber min={0} step={0.01} prefix="Avere" style={{ width: 120 }} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'description']}>
+                                                <Input placeholder="Descrizione riga" style={{ width: 200 }} />
+                                            </Form.Item>
+                                            <Button type="link" danger onClick={() => remove(name)}>Rimuovi</Button>
+                                        </Space>
+                                    ))}
+                                    <Button type="dashed" onClick={() => add({ debit: 0, credit: 0 })} icon={<PlusOutlined />}>Aggiungi Riga</Button>
+                                </>
+                            )}
+                        </Form.List>
+                    </Form>
+                </Modal>
+            </div>
+        </Layout>
     );
 };

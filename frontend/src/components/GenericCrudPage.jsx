@@ -24,8 +24,8 @@ import FormLines from './FormLines';
 import KanbanView from './KanbanView';
 import DateRangePicker from './DateRangePicker';
 import TableSearch from './TableSearch';
+import ColumnsControl from './ColumnsControl';
 import { apiFetch, getNestedValue } from '../utils';
-import { useCrudData } from '../hooks/useCrudData.js';
 
 const evaluateFormula = (formula, data) => {
   try {
@@ -84,7 +84,8 @@ const TagInput = ({ value = [], onChange, disabled }) => {
  * @param {object} kanbanConfig - Configuration for Kanban board (columns, status field).
  * @param {boolean} embedded - If true, renders without the global Layout.
  */
-function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, defaultView = 'table', defaultSort, enableDateFilter = false, kanbanConfig, embedded = false }) {
+// Rimuovo il Layout da qui, ogni pagina deve wrappare GenericCrudPage nel suo Layout se lo desidera.
+function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, filterTabs, defaultView = 'table', defaultSort, enableDateFilter = false, kanbanConfig, embedded = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const outletContext = useOutletContext() || {};
@@ -704,6 +705,8 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
   };
 
   const renderContent = () => (
+    <ColumnsControl pageKey={apiPath.replace(/\//g, '_')} columns={rawColumns}>
+      {({ columns, button }) => (
     <>
     <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>{pageTitle}</h2>
@@ -755,6 +758,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
               </div>
             )}
             <SearchBar onSearch={handleSearch} />
+            {button}
             <input
               type="file"
               ref={fileInputRef}
@@ -911,17 +915,12 @@ function GenericCrudPage({ pageTitle, apiPath, columns, formFields, filterTabs, 
         </div>
       )}
     </>
+    )}
+    </ColumnsControl>
   );
 
-  if (renderWithoutLayout) {
-    return renderContent();
-  }
-
-  return (
-    <Layout breadcrumbs={breadcrumbs}>
-      {renderContent()}
-    </Layout>
-  );
+  // GenericCrudPage non si auto-wrappa più nel Layout
+  return renderContent();
 }
 
 export default GenericCrudPage;

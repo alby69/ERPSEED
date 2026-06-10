@@ -158,7 +158,7 @@ export default function RuoliPage() {
       <div style={{ padding: '0' }}>
         <Card
           title={
-            <Space>
+            <Space>Anagrafiche (
               <span>Gestione Ruoli</span>
             </Space>
           }

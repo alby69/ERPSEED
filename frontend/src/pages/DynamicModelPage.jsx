@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiFetch } from '../utils';
 import GenericCrudPage from '../components/GenericCrudPage';
+import Layout from '../components/Layout';
 
 function DynamicModelPage() {
   const { projectId, modelName } = useParams();
@@ -179,6 +180,7 @@ function DynamicModelPage() {
   }
 
   return (
+    <Layout>
     <GenericCrudPage
       pageTitle={modelMeta.title}
       apiPath={`/projects/${projectId}/data/${modelName}`}
@@ -189,6 +191,7 @@ function DynamicModelPage() {
       enableDateFilter={true}
       kanbanConfig={kanbanConfig}
     />
+    </Layout>
   );
 }
 

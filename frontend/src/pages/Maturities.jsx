@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const statusColors = { open: 'orange', partial: 'blue', paid: 'green', overdue: 'red', cancelled: 'default' };
 const statusLabels = { open: 'Aperta', partial: 'Parziale', paid: 'Pagata', overdue: 'Scaduta', cancelled: 'Annullata' };
@@ -107,56 +108,58 @@ export default function Maturities() {
     const colManager = useColumnManagerWithDrawer('maturities', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            {summary && (
-                <Row gutter={16} style={{ marginBottom: 16 }}>
-                    <Col span={6}><Card size="small"><Statistic title="Totale Aperto" value={summary.total_open} precision={2} prefix="€" valueStyle={{ color: '#fa8c16' }} /></Card></Col>
-                    <Col span={6}><Card size="small"><Statistic title="Scaduto" value={summary.total_overdue} precision={2} prefix={<WarningOutlined />} valueStyle={{ color: '#ff4d4f' }} /></Card></Col>
-                    <Col span={6}><Card size="small"><Statistic title="In Scadenza (30gg)" value={summary.due_next_30_days} precision={2} prefix="€" /></Card></Col>
-                    <Col span={6}><Card size="small"><Statistic title="Pagato" value={summary.total_paid} precision={2} prefix={<CheckCircleOutlined />} valueStyle={{ color: '#52c41a' }} /></Card></Col>
-                </Row>
-            )}
-            <Card title="Scadenzario" extra={
-                <Space>
-                    <ColumnSettingsButton manager={colManager} />
-                    <Select allowClear placeholder="Filtra stato" style={{ width: 140 }} value={statusFilter} onChange={(v) => { setStatusFilter(v); }}
-                        options={[
-                            { value: '', label: 'Tutti' }, { value: 'open', label: 'Aperte' },
-                            { value: 'partial', label: 'Parziali' }, { value: 'paid', label: 'Pagate' },
-                            { value: 'overdue', label: 'Scadute' },
-                        ]} />
-                    <Button onClick={() => setOverdueOnly(!overdueOnly)} type={overdueOnly ? 'primary' : 'default'} icon={<WarningOutlined />}>Scadute</Button>
-                    <Button onClick={handleCreateFromInvoices}>Genera da Fatture</Button>
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Nuova Scadenza</Button>
-                </Space>
-            }>
-                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
-                    pagination={{ pageSize: 25, showTotal: (t) => `${t} scadenze` }} />
-            </Card>
-            <Modal title="Nuova Scadenza" open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); }} okText="Salva" cancelText="Annulla">
-                <Form form={form} layout="vertical">
-                    <Form.Item name="party_id" label="Soggetto" rules={[{ required: true }]}>
-                        <Select showSearch placeholder="Seleziona" optionFilterProp="label"
-                            options={soggetti.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
-                    </Form.Item>
-                    <Space style={{ width: '100%' }} size={16}> {/* Use formatDateForDisplay for DatePicker format */}
-                        <Form.Item name="due_date" label="Data Scadenza" rules={[{ required: true }]}><DatePicker /></Form.Item>
-                        <Form.Item name="amount" label="Importo" rules={[{ required: true }]}><InputNumber min={0.01} step={0.01} prefix="€" /></Form.Item>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                {summary && (
+                    <Row gutter={16} style={{ marginBottom: 16 }}>
+                        <Col span={6}><Card size="small"><Statistic title="Totale Aperto" value={summary.total_open} precision={2} prefix="€" valueStyle={{ color: '#fa8c16' }} /></Card></Col>
+                        <Col span={6}><Card size="small"><Statistic title="Scaduto" value={summary.total_overdue} precision={2} prefix={<WarningOutlined />} valueStyle={{ color: '#ff4d4f' }} /></Card></Col>
+                        <Col span={6}><Card size="small"><Statistic title="In Scadenza (30gg)" value={summary.due_next_30_days} precision={2} prefix="€" /></Card></Col>
+                        <Col span={6}><Card size="small"><Statistic title="Pagato" value={summary.total_paid} precision={2} prefix={<CheckCircleOutlined />} valueStyle={{ color: '#52c41a' }} /></Card></Col>
+                    </Row>
+                )}
+                <Card title="Scadenzario" extra={
+                    <Space>
+                        <ColumnSettingsButton manager={colManager} />
+                        <Select allowClear placeholder="Filtra stato" style={{ width: 140 }} value={statusFilter} onChange={(v) => { setStatusFilter(v); }}
+                            options={[
+                                { value: '', label: 'Tutti' }, { value: 'open', label: 'Aperte' },
+                                { value: 'partial', label: 'Parziali' }, { value: 'paid', label: 'Pagate' },
+                                { value: 'overdue', label: 'Scadute' },
+                            ]} />
+                        <Button onClick={() => setOverdueOnly(!overdueOnly)} type={overdueOnly ? 'primary' : 'default'} icon={<WarningOutlined />}>Scadute</Button>
+                        <Button onClick={handleCreateFromInvoices}>Genera da Fatture</Button>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Nuova Scadenza</Button>
                     </Space>
-                    <Form.Item name="description" label="Descrizione"><Input /></Form.Item>
-                    <Form.Item name="reference_number" label="Numero Riferimento"><Input /></Form.Item>
-                </Form>
-            </Modal>
-            <Modal title="Registra Pagamento" open={payModalVisible} onOk={handlePay} onCancel={() => { setPayModalVisible(false); setSelectedMaturity(null); payForm.resetFields(); }} okText="Registra" cancelText="Annulla">
-                {selectedMaturity && (
-                    <p>Scadenza: {dayjs(selectedMaturity.due_date).format('DD/MM/YYYY')} — Residuo: € {selectedMaturity.balance?.toFixed(2)}</p>
-                )} {/* Here dayjs is still used for direct display, which is fine as it's not form interaction */}
-                <Form form={payForm} layout="vertical">
-                    <Form.Item name="paid_amount" label="Importo Pagato" rules={[{ required: true }]}>
-                        <InputNumber min={0.01} step={0.01} prefix="€" style={{ width: '100%' }} />
-                    </Form.Item>
-                </Form>
-            </Modal>
-        </div>
+                }>
+                    <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
+                        pagination={{ pageSize: 25, showTotal: (t) => `${t} scadenze` }} />
+                </Card>
+                <Modal title="Nuova Scadenza" open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); }} okText="Salva" cancelText="Annulla">
+                    <Form form={form} layout="vertical">
+                        <Form.Item name="party_id" label="Soggetto" rules={[{ required: true }]}>
+                            <Select showSearch placeholder="Seleziona" optionFilterProp="label"
+                                options={soggetti.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
+                        </Form.Item>
+                        <Space style={{ width: '100%' }} size={16}> {/* Use formatDateForDisplay for DatePicker format */}
+                            <Form.Item name="due_date" label="Data Scadenza" rules={[{ required: true }]}><DatePicker /></Form.Item>
+                            <Form.Item name="amount" label="Importo" rules={[{ required: true }]}><InputNumber min={0.01} step={0.01} prefix="€" /></Form.Item>
+                        </Space>
+                        <Form.Item name="description" label="Descrizione"><Input /></Form.Item>
+                        <Form.Item name="reference_number" label="Numero Riferimento"><Input /></Form.Item>
+                    </Form>
+                </Modal>
+                <Modal title="Registra Pagamento" open={payModalVisible} onOk={handlePay} onCancel={() => { setPayModalVisible(false); setSelectedMaturity(null); payForm.resetFields(); }} okText="Registra" cancelText="Annulla">
+                    {selectedMaturity && (
+                        <p>Scadenza: {dayjs(selectedMaturity.due_date).format('DD/MM/YYYY')} — Residuo: € {selectedMaturity.balance?.toFixed(2)}</p>
+                    )} {/* Here dayjs is still used for direct display, which is fine as it's not form interaction */}
+                    <Form form={payForm} layout="vertical">
+                        <Form.Item name="paid_amount" label="Importo Pagato" rules={[{ required: true }]}>
+                            <InputNumber min={0.01} step={0.01} prefix="€" style={{ width: '100%' }} />
+                        </Form.Item>
+                    </Form>
+                </Modal>
+            </div>
+        </Layout>
     );
 };

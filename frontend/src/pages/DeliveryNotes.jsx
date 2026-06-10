@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const statusColors = { draft: 'default', confirmed: 'blue', completed: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', confirmed: 'Confermato', completed: 'Completato', cancelled: 'Annullato' };
@@ -86,49 +87,51 @@ export default function DeliveryNotes() {
     const colManager = useColumnManagerWithDrawer('delivery_notes', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            <Card title="DDT Vendita" extra={
-                <Space>
-                    <ColumnSettingsButton manager={colManager} />
-                    <Select allowClear placeholder="Filtra stato" style={{ width: 140 }} value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(1); }}
-                        options={[{ value: '', label: 'Tutti' }, { value: 'draft', label: 'Bozza' }, { value: 'confirmed', label: 'Confermato' }]} />
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo DDT</Button>
-                </Space>
-            }>
-                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
-                    pagination={{ current: page, pageSize: 20, total, onChange: setPage, showTotal: (t) => `${t} dd.t.` }} />
-            </Card>
-            <Modal title={editingRecord ? 'Modifica DDT' : 'Nuovo DDT Vendita'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>
-                <Form form={form} layout="vertical">
-                    <Space size={16}>
-                        <Form.Item name="date" label="Data"><DatePicker format={formatDateForDisplay} /></Form.Item>
-                        <Form.Item name="customer_id" label="Cliente" rules={[{ required: true }]} style={{ minWidth: 250 }}>
-                            <Select showSearch placeholder="Seleziona cliente" optionFilterProp="label"
-                                options={customers.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
-                        </Form.Item>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card title="DDT Vendita" extra={
+                    <Space>
+                        <ColumnSettingsButton manager={colManager} />
+                        <Select allowClear placeholder="Filtra stato" style={{ width: 140 }} value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(1); }}
+                            options={[{ value: '', label: 'Tutti' }, { value: 'draft', label: 'Bozza' }, { value: 'confirmed', label: 'Confermato' }]} />
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo DDT</Button>
                     </Space>
-                    <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
-                    <Divider>Righe</Divider>
-                    <Form.List name="lines">
-                        {(fields, { add, remove }) => (
-                            <>
-                                {fields.map(({ key, name, ...rest }) => (
-                                    <Space key={key} align="baseline" style={{ display: 'flex', marginBottom: 8 }}>
-                                        <Form.Item {...rest} name={[name, 'product_id']} rules={[{ required: true }]}>
-                                            <Select showSearch placeholder="Prodotto" style={{ width: 200 }} optionFilterProp="label"
-                                                options={products.map(p => ({ value: p.id, label: `${p.code || ''} - ${p.name}` }))} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'quantity']} rules={[{ required: true }]}><InputNumber min={0.01} step={1} placeholder="Q.tà" style={{ width: 80 }} /></Form.Item>
-                                        <Form.Item {...rest} name={[name, 'description']}><Input placeholder="Descrizione" style={{ width: 250 }} /></Form.Item>
-                                        <Button type="link" danger onClick={() => remove(name)}>Rimuovi</Button>
-                                    </Space>
-                                ))}
-                                <Button type="dashed" onClick={() => add({ quantity: 1 })} icon={<PlusOutlined />}>Aggiungi Riga</Button>
-                            </>
-                        )}
-                    </Form.List>
-                </Form>
-            </Modal>
-        </div>
+                }>
+                    <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
+                        pagination={{ current: page, pageSize: 20, total, onChange: setPage, showTotal: (t) => `${t} dd.t.` }} />
+                </Card>
+                <Modal title={editingRecord ? 'Modifica DDT' : 'Nuovo DDT Vendita'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>
+                    <Form form={form} layout="vertical">
+                        <Space size={16}>
+                            <Form.Item name="date" label="Data"><DatePicker format={formatDateForDisplay} /></Form.Item>
+                            <Form.Item name="customer_id" label="Cliente" rules={[{ required: true }]} style={{ minWidth: 250 }}>
+                                <Select showSearch placeholder="Seleziona cliente" optionFilterProp="label"
+                                    options={customers.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
+                            </Form.Item>
+                        </Space>
+                        <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
+                        <Divider>Righe</Divider>
+                        <Form.List name="lines">
+                            {(fields, { add, remove }) => (
+                                <>
+                                    {fields.map(({ key, name, ...rest }) => (
+                                        <Space key={key} align="baseline" style={{ display: 'flex', marginBottom: 8 }}>
+                                            <Form.Item {...rest} name={[name, 'product_id']} rules={[{ required: true }]}>
+                                                <Select showSearch placeholder="Prodotto" style={{ width: 200 }} optionFilterProp="label"
+                                                    options={products.map(p => ({ value: p.id, label: `${p.code || ''} - ${p.name}` }))} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'quantity']} rules={[{ required: true }]}><InputNumber min={0.01} step={1} placeholder="Q.tà" style={{ width: 80 }} /></Form.Item>
+                                            <Form.Item {...rest} name={[name, 'description']}><Input placeholder="Descrizione" style={{ width: 250 }} /></Form.Item>
+                                            <Button type="link" danger onClick={() => remove(name)}>Rimuovi</Button>
+                                        </Space>
+                                    ))}
+                                    <Button type="dashed" onClick={() => add({ quantity: 1 })} icon={<PlusOutlined />}>Aggiungi Riga</Button>
+                                </>
+                            )}
+                        </Form.List>
+                    </Form>
+                </Modal>
+            </div>
+        </Layout>
     );
 };

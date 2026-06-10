@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import dayjs from 'dayjs'; // Keep dayjs for diff calculation in Tag
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import Layout from '../components/Layout';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { available: 'green', reserved: 'blue', sold: 'default', returned: 'orange', scrapped: 'red' };
@@ -181,14 +182,16 @@ const SerialTab = () => {
 
 // ========== Main Page ==========
 const LotsPage = () => (
-    <div style={{ padding: 24 }}>
-        <Card title="Lotti e Serial Number">
-            <Tabs items={[
-                { key: 'lots', label: 'Lotti', children: <LotsTab /> },
-                { key: 'serials', label: 'Serial Number', children: <SerialTab /> },
-            ]} />
-        </Card>
-    </div>
+    <Layout>
+        <div style={{ padding: 24 }}>
+            <Card title="Magazzino (Lotti e Serial Number)">
+                <Tabs items={[
+                    { key: 'lots', label: 'Lotti', children: <LotsTab /> },
+                    { key: 'serials', label: 'Serial Number', children: <SerialTab /> },
+                ]} />
+            </Card>
+        </div>
+    </Layout>
 );
 
 export default LotsPage;

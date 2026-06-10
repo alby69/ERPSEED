@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const statusColors = { draft: 'default', pending: 'orange', approved: 'green', rejected: 'red', ordered: 'blue', sent: 'geekblue', received: 'processing' };
 
@@ -185,14 +186,16 @@ const RFQTab = () => {
 
 // ========== Main Page ==========
 const PurchaseRequests = () => (
-    <div style={{ padding: 24 }}>
-        <Card title="Richieste d'Acquisto e RFQ">
-            <Tabs items={[
-                { key: 'requests', label: 'Richieste', children: <PRTab /> },
-                { key: 'rfqs', label: 'RFQ', children: <RFQTab /> },
-            ]} />
-        </Card>
-    </div>
+    <Layout>
+        <div style={{ padding: 24 }}>
+            <Card title="Acquisti (Richieste d'Acquisto e RFQ)">
+                <Tabs items={[
+                    { key: 'requests', label: 'Richieste', children: <PRTab /> },
+                    { key: 'rfqs', label: 'RFQ', children: <RFQTab /> },
+                ]} />
+            </Card>
+        </div>
+    </Layout>
 );
 
 export default PurchaseRequests;

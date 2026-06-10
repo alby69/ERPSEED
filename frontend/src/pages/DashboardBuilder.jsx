@@ -9,6 +9,7 @@ import { apiFetch } from '../utils';
 import { ChartRenderer, getAllAdapters, CHART_LIBRARIES, CHART_LIBRARY_LABELS, CHART_TYPES_BY_LIBRARY } from '../components/charts';
 import { exportToImage } from '../utils/exportUtils';
 import { useTheme } from '../context';
+import Layout from '../components/Layout';
 
 const WIDGET_TYPES = {
   CHART: 'chart',
@@ -215,6 +216,7 @@ function DashboardBuilder() {
   ];
 
   return (
+    <Layout>
     <div className="p-3" style={{ background: themeConfig.mode === 'dark' ? '#141414' : '#f5f5f5', minHeight: '100vh' }}>
       <Card
         title={
@@ -405,6 +407,7 @@ function DashboardBuilder() {
         </Form>
       </Modal>
     </div>
+    </Layout>
   );
 }
 

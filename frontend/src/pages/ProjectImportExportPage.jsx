@@ -132,7 +132,7 @@ function ProjectImportExportPage() {
           <Col xs={24}>
             <Card
               title={<><DatabaseOutlined /> Import/Export Progetto</>}
-              extra={
+              title="Progetti (Import/Export)" extra={
                 <Button onClick={fetchProjectInfo}>
                   Aggiorna
                 </Button>

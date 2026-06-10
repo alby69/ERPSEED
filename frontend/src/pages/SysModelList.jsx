@@ -98,8 +98,8 @@ alert('Model cloned successfully! Remember to generate the table in the DB.');
   return (
     <Layout>
       <div className="container-fluid p-4">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2>System Models (Builder)</h2>
+        <div className="d-flex justify-content-between align-items-center mb-4"> Builder (
+          <h2>Modelli di Sistema)</h2>
           <div className="d-flex gap-2 align-items-center">
             <div style={{ width: 240 }}> {/* Contenitore per il DateRangePicker */}
               <DateRangePicker

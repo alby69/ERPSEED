@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 const statusColors = { draft: 'default', submitted: 'green' };
 const natureOptions = [{ value: 'A', label: 'Beni' }, { value: 'B', label: 'Servizi' }];
 const typeOptions = [{ value: 'sales', label: 'Cessioni' }, { value: 'purchases', label: 'Acquisti' }];
@@ -80,48 +81,50 @@ export default function IntrastatPage() {
     const colManager = useColumnManagerWithDrawer('intrastat', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            <Card title="Intrastat" extra={
-                <Space>
-                    <ColumnSettingsButton manager={colManager} />
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuova Dichiarazione</Button>
-                </Space>
-            }>
-                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
-                <Modal title={editing ? 'Modifica Dichiarazione' : 'Nuova Dichiarazione Intrastat'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
-                    <Form form={form} layout="vertical">
-                        <Space size={16}>
-                        <Form.Item name="fiscal_year" label="Anno" rules={[{ required: true }]}><InputNumber min={2020} max={2030} /></Form.Item> {/* No change needed here */}
-                        <Form.Item name="period" label="Periodo" rules={[{ required: true }]}><Input placeholder="YYYY-MM" /></Form.Item> {/* Period is a string, not a date */}
-                            <Form.Item name="type" label="Tipo" rules={[{ required: true }]}>
-                                <Select options={typeOptions} />
-                            </Form.Item>
-                            <Form.Item name="is_quarterly" label="Trimestrale">
-                                <Select options={[{ value: true, label: 'Sì' }, { value: false, label: 'No' }]} />
-                            </Form.Item>
-                        </Space>
-                        <Space size={16}>
-                            <Form.Item name="soggetto_id" label="Soggetto" rules={[{ required: true }]}>
-                                <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={subjects.map(s => ({ value: s.id, label: s.nome || s.ragione_sociale }))} />
-                            </Form.Item>
-                            <Form.Item name="soggetto_partita_iva" label="P.IVA"><Input /></Form.Item>
-                            <Form.Item name="soggetto_nazione" label="Nazione"><Input /></Form.Item>
-                        </Space>
-                        <Space size={16}>
-                            <Form.Item name="nature" label="Natura">
-                                <Select options={natureOptions} />
-                            </Form.Item>
-                            <Form.Item name="amount" label="Importo" rules={[{ required: true }]}><InputNumber min={0} prefix="€" /></Form.Item>
-                            <Form.Item name="vat_amount" label="IVA"><InputNumber min={0} prefix="€" /></Form.Item>
-                        </Space>
-                        <Space size={16}>
-                            <Form.Item name="delivery_terms" label="Consegna"><Input /></Form.Item>
-                            <Form.Item name="transport" label="Trasporto"><Input /></Form.Item>
-                        </Space>
-                        <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
-                    </Form>
-                </Modal>
-            </Card>
-        </div>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card title="Contabilità (Intrastat)" extra={
+                    <Space>
+                        <ColumnSettingsButton manager={colManager} />
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuova Dichiarazione</Button>
+                    </Space>
+                }>
+                    <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
+                    <Modal title={editing ? 'Modifica Dichiarazione' : 'Nuova Dichiarazione Intrastat'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
+                        <Form form={form} layout="vertical">
+                            <Space size={16}>
+                            <Form.Item name="fiscal_year" label="Anno" rules={[{ required: true }]}><InputNumber min={2020} max={2030} /></Form.Item> {/* No change needed here */}
+                            <Form.Item name="period" label="Periodo" rules={[{ required: true }]}><Input placeholder="YYYY-MM" /></Form.Item> {/* Period is a string, not a date */}
+                                <Form.Item name="type" label="Tipo" rules={[{ required: true }]}>
+                                    <Select options={typeOptions} />
+                                </Form.Item>
+                                <Form.Item name="is_quarterly" label="Trimestrale">
+                                    <Select options={[{ value: true, label: 'Sì' }, { value: false, label: 'No' }]} />
+                                </Form.Item>
+                            </Space>
+                            <Space size={16}>
+                                <Form.Item name="soggetto_id" label="Soggetto" rules={[{ required: true }]}>
+                                    <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={subjects.map(s => ({ value: s.id, label: s.nome || s.ragione_sociale }))} />
+                                </Form.Item>
+                                <Form.Item name="soggetto_partita_iva" label="P.IVA"><Input /></Form.Item>
+                                <Form.Item name="soggetto_nazione" label="Nazione"><Input /></Form.Item>
+                            </Space>
+                            <Space size={16}>
+                                <Form.Item name="nature" label="Natura">
+                                    <Select options={natureOptions} />
+                                </Form.Item>
+                                <Form.Item name="amount" label="Importo" rules={[{ required: true }]}><InputNumber min={0} prefix="€" /></Form.Item>
+                                <Form.Item name="vat_amount" label="IVA"><InputNumber min={0} prefix="€" /></Form.Item>
+                            </Space>
+                            <Space size={16}>
+                                <Form.Item name="delivery_terms" label="Consegna"><Input /></Form.Item>
+                                <Form.Item name="transport" label="Trasporto"><Input /></Form.Item>
+                            </Space>
+                            <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
+                        </Form>
+                    </Modal>
+                </Card>
+            </div>
+        </Layout>
     );
 };

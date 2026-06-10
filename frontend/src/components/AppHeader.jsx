@@ -101,6 +101,47 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
   const buildBreadcrumbs = () => {
     const paths = location.pathname.split('/').filter(Boolean);
     const crumbs = [{ title: <Link to="/projects"><HomeOutlined /></Link> }];
+    
+    // Mappa della gerarchia per iniettare i livelli applicativi
+    const hierarchyMap = {
+      'anagrafiche': ['Applicazioni', 'Anagrafiche'],
+      'ruoli': ['Applicazioni', 'Anagrafiche'],
+      'indirizzi': ['Applicazioni', 'Anagrafiche'],
+      'contatti': ['Applicazioni', 'Anagrafiche'],
+      'products': ['Applicazioni', 'Anagrafiche'],
+      'product-categories': ['Applicazioni', 'Anagrafiche'],
+      'tax-rates': ['Applicazioni', 'Anagrafiche'],
+      'units-of-measure': ['Applicazioni', 'Anagrafiche'],
+      'price-lists': ['Applicazioni', 'Anagrafiche'],
+      'sales': ['Applicazioni', 'Vendite'],
+      'quotations': ['Applicazioni', 'Vendite'],
+      'delivery-notes': ['Applicazioni', 'Vendite'],
+      'invoices': ['Applicazioni', 'Vendite'],
+      'purchase-orders': ['Applicazioni', 'Acquisti'],
+      'purchase-requests': ['Applicazioni', 'Acquisti'],
+      'goods-receipts': ['Applicazioni', 'Acquisti'],
+      'stock-levels': ['Applicazioni', 'Magazzino'],
+      'stock-movements': ['Applicazioni', 'Magazzino'],
+      'lots': ['Applicazioni', 'Magazzino'],
+      'journal': ['Applicazioni', 'Contabilità'],
+      'maturities': ['Applicazioni', 'Contabilità'],
+      'vat-registers': ['Applicazioni', 'Contabilità'],
+      'intrastat': ['Applicazioni', 'Contabilità'],
+      'bom': ['Applicazioni', 'Produzione'],
+      'work-cycles': ['Applicazioni', 'Produzione'],
+      'production-orders': ['Applicazioni', 'Produzione'],
+      'employees': ['Applicazioni', 'Risorse Umane'],
+      'departments': ['Applicazioni', 'Risorse Umane'],
+      'attendance': ['Applicazioni', 'Risorse Umane'],
+      'leave-requests': ['Applicazioni', 'Risorse Umane'],
+    };
+
+    const firstPath = paths[0];
+    if (hierarchyMap[firstPath]) {
+      hierarchyMap[firstPath].forEach(label => {
+        crumbs.push({ title: label });
+      });
+    }
 
     let currentPath = '';
     paths.forEach((path, index) => {
@@ -110,6 +151,21 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
       let label = path;
       if (path === 'projects') label = 'Progetti';
       else if (path === 'data') label = 'Dati';
+      else if (path === 'anagrafiche') label = 'Soggetti';
+      else if (path === 'ruoli') label = 'Ruoli';
+      else if (path === 'indirizzi') label = 'Indirizzi';
+      else if (path === 'contatti') label = 'Contatti';
+      else if (path === 'products') label = 'Prodotti';
+      else if (path === 'product-categories') label = 'Categorie Prodotto';
+      else if (path === 'tax-rates') label = 'Aliquote IVA';
+      else if (path === 'units-of-measure') label = 'Unità di Misura';
+      else if (path === 'price-lists') label = 'Listini Prezzo';
+      else if (path === 'sales') label = 'Ordini Vendita';
+      else if (path === 'quotations') label = 'Preventivi';
+      else if (path === 'invoices') label = 'Fatture';
+      else if (path === 'journal') label = 'Prima Nota';
+      else if (path === 'stock-levels') label = 'Giacenze';
+      else if (path === 'stock-movements') label = 'Movimenti';
       else if (path === 'admin') label = 'Admin';
       else if (path === 'settings') label = 'Impostazioni';
       else if (path === 'members') label = 'Membri';
@@ -120,6 +176,24 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
       else if (path === 'bi-builder') label = 'BI Builder';
       else if (path === 'project-import-export') label = 'Import/Export';
       else if (path === 'system') label = 'Sistema';
+      else if (path === 'sales-returns') label = 'Resi Vendita';
+      else if (path === 'purchase-returns') label = 'Resi Acquisti';
+      else if (path === 'inventory-counts') label = 'Inventari';
+      else if (path === 'bom') label = 'Distinte Base';
+      else if (path === 'work-cycles') label = 'Cicli di Lavoro';
+      else if (path === 'production-orders') label = 'Ordini Produzione';
+      else if (path === 'employees') label = 'Dipendenti';
+      else if (path === 'departments') label = 'Reparti';
+      else if (path === 'attendance') label = 'Presenze';
+      else if (path === 'leave-requests') label = 'Ferie e Permessi';
+      else if (path === 'timesheet') label = 'Timesheet';
+      else if (path === 'project-budgets') label = 'Budget Commessa';
+      else if (path === 'reports') label = 'Report Designer';
+      else if (path === 'gdo-reconciliation') label = 'Riconciliazione GDO';
+      else if (path === 'test-runner') label = 'Test Runner';
+      else if (path === 'relationship-manager') label = 'Relationship Manager';
+      else if (path === 'audit-logs') label = 'Audit Logs';
+      else if (path === 'distance-calculator') label = 'Calcolo Distanze';
       else if (!isNaN(path)) label = `#${path}`;
 
       crumbs.push({

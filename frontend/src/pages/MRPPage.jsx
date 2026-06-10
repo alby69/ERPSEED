@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateTimeForDisplay } from '@/utils/dateUtils'; // Import date utilities
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 const statusColors = { open: 'blue', in_progress: 'processing', fulfilled: 'green', cancelled: 'red' };
 
 export default function MRPPage() {
@@ -90,40 +91,42 @@ export default function MRPPage() {
     const produceSugs = suggestions.filter(s => s.suggestion_type === 'produce');
 
     return (
-        <div style={{ padding: 24 }}>
-            <Row gutter={16} style={{ marginBottom: 16 }}>
-                <Col span={4}><Card size="small"><Statistic title="Corse MRP" value={runs.length} /></Card></Col>
-                <Col span={5}><Card size="small"><Statistic title="Da Acquistare" value={purchaseSugs.reduce((s, i) => s + (i.suggested_quantity || 0), 0)} /></Card></Col>
-                <Col span={5}><Card size="small"><Statistic title="Da Produrre" value={produceSugs.reduce((s, i) => s + (i.suggested_quantity || 0), 0)} /></Card></Col>
-                <Col span={5}><Card size="small"><Statistic title="Suggerimenti Aperti" value={suggestions.filter(s => s.status === 'open').length} /></Card></Col>
-            </Row>
-            <Card title="MRP (Material Requirements Planning)" extra={
-                <Space>
-                    <ColumnSettingsButton manager={runColManager} />
-                    <ColumnSettingsButton manager={sugColManager} />
-                    <Button type="primary" icon={<ThunderboltOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Esegui MRP</Button>
-                </Space>
-            }>
-                <Row gutter={16}>
-                    <Col span={8}>
-                        <Table dataSource={runs} columns={runColManager.processedColumns} rowKey="id" loading={loading} size="small" />
-                    </Col>
-                    <Col span={16}>
-                        {selectedRun && (
-                            <Table dataSource={suggestions} columns={sugColManager.processedColumns} rowKey="id" size="small"
-                                   pagination={false} />
-                        )}
-                    </Col>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Row gutter={16} style={{ marginBottom: 16 }}>
+                    <Col span={4}><Card size="small"><Statistic title="Corse MRP" value={runs.length} /></Card></Col>
+                    <Col span={5}><Card size="small"><Statistic title="Da Acquistare" value={purchaseSugs.reduce((s, i) => s + (i.suggested_quantity || 0), 0)} /></Card></Col>
+                    <Col span={5}><Card size="small"><Statistic title="Da Produrre" value={produceSugs.reduce((s, i) => s + (i.suggested_quantity || 0), 0)} /></Card></Col>
+                    <Col span={5}><Card size="small"><Statistic title="Suggerimenti Aperti" value={suggestions.filter(s => s.status === 'open').length} /></Card></Col>
                 </Row>
-            </Card>
-            <Modal title="Esegui MRP" open={modalVisible} onOk={handleRun} onCancel={() => setModalVisible(false)} okText="Esegui" cancelText="Annulla" confirmLoading={running}>
-                <Form form={form} layout="vertical">
-                    <Form.Item name="horizon_date" label="Orizzonte (data max)">
-                        <DatePicker style={{ width: '100%' }} />
-                    </Form.Item>
-                    <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
-                </Form>
-            </Modal>
-        </div>
+                <Card title="Produzione (MRP)" extra={
+                    <Space>
+                        <ColumnSettingsButton manager={runColManager} />
+                        <ColumnSettingsButton manager={sugColManager} />
+                        <Button type="primary" icon={<ThunderboltOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Esegui MRP</Button>
+                    </Space>
+                }>
+                    <Row gutter={16}>
+                        <Col span={8}>
+                            <Table dataSource={runs} columns={runColManager.processedColumns} rowKey="id" loading={loading} size="small" />
+                        </Col>
+                        <Col span={16}>
+                            {selectedRun && (
+                                <Table dataSource={suggestions} columns={sugColManager.processedColumns} rowKey="id" size="small"
+                                    pagination={false} />
+                            )}
+                        </Col>
+                    </Row>
+                </Card>
+                <Modal title="Esegui MRP" open={modalVisible} onOk={handleRun} onCancel={() => setModalVisible(false)} okText="Esegui" cancelText="Annulla" confirmLoading={running}>
+                    <Form form={form} layout="vertical">
+                        <Form.Item name="horizon_date" label="Orizzonte (data max)">
+                            <DatePicker style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
+                    </Form>
+                </Modal>
+            </div>
+        </Layout>
     );
 };

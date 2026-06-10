@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const stageColors = { qualification: 'blue', proposal: 'purple', negotiation: 'orange', won: 'green', lost: 'red' };
 const stageLabels = { qualification: 'Qualifica', proposal: 'Proposta', negotiation: 'Negoziazione', won: 'Vinta', lost: 'Persa' };
@@ -89,79 +90,81 @@ export default function CRMPage() {
     const oppColManager = useColumnManagerWithDrawer('crm_opportunities', rawOppColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            {pipelineSummary.length > 0 && (
-                <Row gutter={16} style={{ marginBottom: 16 }}>
-                    {pipelineSummary.map(s => (
-                        <Col span={4} key={s.stage}>
-                            <Card size="small">
-                                <Statistic
-                                    title={stageLabels[s.stage] || s.stage}
-                                    value={s.count}
-                                    suffix={`€${(s.total_revenue || 0).toFixed(0)}`}
-                                    valueStyle={{ color: stageColors[s.stage] || undefined, fontSize: 18 }}
-                                />
-                            </Card>
-                        </Col>
-                    ))}
-                </Row>
-            )}
-            <Card extra={
-                <Space>
-                    <ColumnSettingsButton manager={leadColManager} />
-                    <ColumnSettingsButton manager={oppColManager} />
-                </Space>
-            }>
-                <Tabs items={[
-                    { key: 'leads', label: 'Lead', children: (
-                        <>
-                            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingLead(null); leadForm.resetFields(); setLeadModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Lead</Button>
-                            <Table dataSource={leads} columns={leadColManager.processedColumns} rowKey="id" loading={loading} />
-                        </>
-                    )},
-                    { key: 'opportunities', label: 'Opportunità', children: (
-                        <>
-                            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingOpp(null); oppForm.resetFields(); setOppModalVisible(true); }} style={{ marginBottom: 16 }}>Nuova Opportunità</Button>
-                            <Table dataSource={opportunities} columns={oppColManager.processedColumns} rowKey="id" loading={loading} />
-                        </>
-                    )},
-                ]} />
-            </Card>
-            <Modal title={editingLead ? 'Modifica Lead' : 'Nuovo Lead'} open={leadModalVisible} onOk={handleLeadSubmit} onCancel={() => { setLeadModalVisible(false); leadForm.resetFields(); setEditingLead(null); }}>
-                <Form form={leadForm} layout="vertical">
-                    <Space size={16}>
-                        <Form.Item name="first_name" label="Nome" rules={[{ required: true }]}><Input /></Form.Item>
-                        <Form.Item name="last_name" label="Cognome" rules={[{ required: true }]}><Input /></Form.Item>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                {pipelineSummary.length > 0 && (
+                    <Row gutter={16} style={{ marginBottom: 16 }}>
+                        {pipelineSummary.map(s => (
+                            <Col span={4} key={s.stage}>
+                                <Card size="small">
+                                    <Statistic
+                                        title={stageLabels[s.stage] || s.stage}
+                                        value={s.count}
+                                        suffix={`€${(s.total_revenue || 0).toFixed(0)}`}
+                                        valueStyle={{ fontSize: 18 }}
+                                    />
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
+                )}
+                <Card extra={
+                    <Space>
+                        <ColumnSettingsButton manager={leadColManager} />
+                        <ColumnSettingsButton manager={oppColManager} />
                     </Space>
-                    <Form.Item name="company" label="Azienda"><Input /></Form.Item>
-                    <Space size={16}>
-                        <Form.Item name="email" label="Email"><Input /></Form.Item>
-                        <Form.Item name="phone" label="Telefono"><Input /></Form.Item>
-                    </Space>
-                    <Form.Item name="source" label="Provenienza">
-                        <Select options={[
-                            { value: 'website', label: 'Sito Web' }, { value: 'referral', label: 'Referral' },
-                            { value: 'cold_call', label: 'Chiamata' }, { value: 'email_campaign', label: 'Email' },
-                            { value: 'trade_show', label: 'Fiera' }, { value: 'other', label: 'Altro' },
-                        ]} />
-                    </Form.Item>
-                    <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
-                </Form>
-            </Modal>
-            <Modal title={editingOpp ? 'Modifica Opportunità' : 'Nuova Opportunità'} open={oppModalVisible} onOk={handleOppSubmit} onCancel={() => { setOppModalVisible(false); oppForm.resetFields(); setEditingOpp(null); }}>
-                <Form form={oppForm} layout="vertical">
-                    <Form.Item name="name" label="Nome" rules={[{ required: true }]}><Input /></Form.Item>
-                    <Space size={16}>
-                        <Form.Item name="expected_revenue" label="Valore Previsto"><InputNumber min={0} step={100} prefix="€" /></Form.Item>
-                        <Form.Item name="probability" label="Probabilità %"><InputNumber min={0} max={100} step={5} /></Form.Item>
-                    </Space>
-                    <Form.Item name="stage" label="Stadio">
-                        <Select options={Object.entries(stageLabels).map(([k, v]) => ({ value: k, label: v }))} />
-                    </Form.Item>
-                    <Form.Item name="expected_close_date" label="Chiusura Prevista"><DatePicker format={formatDateForDisplay} /></Form.Item>
-                    <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
-                </Form>
-            </Modal>
-        </div>
+                }>
+                    <Tabs items={[
+                        { key: 'leads', label: 'Lead', children: (
+                            <>
+                                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingLead(null); leadForm.resetFields(); setLeadModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Lead</Button>
+                                <Table dataSource={leads} columns={leadColManager.processedColumns} rowKey="id" loading={loading} />
+                            </>
+                        )},
+                        { key: 'opportunities', label: 'Opportunità', children: (
+                            <>
+                                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingOpp(null); oppForm.resetFields(); setOppModalVisible(true); }} style={{ marginBottom: 16 }}>Nuova Opportunità</Button>
+                                <Table dataSource={opportunities} columns={oppColManager.processedColumns} rowKey="id" loading={loading} />
+                            </>
+                        )},
+                    ]} />
+                </Card>
+                <Modal title={editingLead ? 'Modifica Lead' : 'Nuovo Lead'} open={leadModalVisible} onOk={handleLeadSubmit} onCancel={() => { setLeadModalVisible(false); leadForm.resetFields(); setEditingLead(null); }}>
+                    <Form form={leadForm} layout="vertical">
+                        <Space size={16}>
+                            <Form.Item name="first_name" label="Nome" rules={[{ required: true }]}><Input /></Form.Item>
+                            <Form.Item name="last_name" label="Cognome" rules={[{ required: true }]}><Input /></Form.Item>
+                        </Space>
+                        <Form.Item name="company" label="Azienda"><Input /></Form.Item>
+                        <Space size={16}>
+                            <Form.Item name="email" label="Email"><Input /></Form.Item>
+                            <Form.Item name="phone" label="Telefono"><Input /></Form.Item>
+                        </Space>
+                        <Form.Item name="source" label="Provenienza">
+                            <Select options={[
+                                { value: 'website', label: 'Sito Web' }, { value: 'referral', label: 'Referral' },
+                                { value: 'cold_call', label: 'Chiamata' }, { value: 'email_campaign', label: 'Email' },
+                                { value: 'trade_show', label: 'Fiera' }, { value: 'other', label: 'Altro' },
+                            ]} />
+                        </Form.Item>
+                        <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
+                    </Form>
+                </Modal>
+                <Modal title={editingOpp ? 'Modifica Opportunità' : 'Nuova Opportunità'} open={oppModalVisible} onOk={handleOppSubmit} onCancel={() => { setOppModalVisible(false); oppForm.resetFields(); setEditingOpp(null); }}>
+                    <Form form={oppForm} layout="vertical">
+                        <Form.Item name="name" label="Nome" rules={[{ required: true }]}><Input /></Form.Item>
+                        <Space size={16}>
+                            <Form.Item name="expected_revenue" label="Valore Previsto"><InputNumber min={0} step={100} prefix="€" /></Form.Item>
+                            <Form.Item name="probability" label="Probabilità %"><InputNumber min={0} max={100} step={5} /></Form.Item>
+                        </Space>
+                        <Form.Item name="stage" label="Stadio">
+                            <Select options={Object.entries(stageLabels).map(([k, v]) => ({ value: k, label: v }))} />
+                        </Form.Item>
+                        <Form.Item name="expected_close_date" label="Chiusura Prevista"><DatePicker format={formatDateForDisplay} /></Form.Item>
+                        <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
+                    </Form>
+                </Modal>
+            </div>
+        </Layout>
     );
 };

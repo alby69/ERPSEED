@@ -95,7 +95,7 @@ function Dashboard() {
   const dashboardContent = (
     <>
       <div className="d-flex justify-content-between align-items-center">
-        <h2>Dashboard</h2>
+        <h2>Analytics (Dashboard)</h2>
         <div className="d-flex gap-2 align-items-center">
           <DateRangePicker
             value={[dateFilters.from, dateFilters.to]}

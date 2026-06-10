@@ -72,7 +72,7 @@ export default function ProvincePage() {
     <Layout>
       <div style={{ padding: '0' }}>
         <Card
-          title={<Space><GlobalOutlined /><span>Province</span></Space>}
+          title={<Space><GlobalOutlined /><span>Geografia (Province)</span></Space>}
           extra={<ColumnSettingsButton manager={colManager} />}
         >
           <Space style={{ marginBottom: 16 }}>

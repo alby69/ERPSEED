@@ -4,6 +4,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 export default function UnitsOfMeasure() {
     const [data, setData] = useState([]);
@@ -72,21 +73,23 @@ export default function UnitsOfMeasure() {
     const colManager = useColumnManagerWithDrawer('udm', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            <Card title="Unità di Misura" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova UM</Button></Space>}>
-                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
-            </Card>
-            <Modal title={editingRecord ? 'Modifica UM' : 'Nuova UM'} open={modalVisible}
-                onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}
-                okText="Salva" cancelText="Annulla">
-                <Form form={form} layout="vertical">
-                    <Form.Item name="code" label="Codice" rules={[{ required: true }]}><Input placeholder="es. KG" /></Form.Item>
-                    <Form.Item name="name" label="Nome" rules={[{ required: true }]}><Input placeholder="es. Chilogrammo" /></Form.Item>
-                    <Form.Item name="symbol" label="Simbolo"><Input placeholder="es. kg" /></Form.Item>
-                    <Form.Item name="description" label="Descrizione"><Input.TextArea rows={2} /></Form.Item>
-                    <Form.Item name="is_active" label="Attiva" valuePropName="checked"><Switch defaultChecked /></Form.Item>
-                </Form>
-            </Modal>
-        </div>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card title="Anagrafiche (Unità di Misura)" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova UM</Button></Space>}>
+                    <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
+                </Card>
+                <Modal title={editingRecord ? 'Modifica UM' : 'Nuova UM'} open={modalVisible}
+                    onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}
+                    okText="Salva" cancelText="Annulla">
+                    <Form form={form} layout="vertical">
+                        <Form.Item name="code" label="Codice" rules={[{ required: true }]}><Input placeholder="es. KG" /></Form.Item>
+                        <Form.Item name="name" label="Nome" rules={[{ required: true }]}><Input placeholder="es. Chilogrammo" /></Form.Item>
+                        <Form.Item name="symbol" label="Simbolo"><Input placeholder="es. kg" /></Form.Item>
+                        <Form.Item name="description" label="Descrizione"><Input.TextArea rows={2} /></Form.Item>
+                        <Form.Item name="is_active" label="Attiva" valuePropName="checked"><Switch defaultChecked /></Form.Item>
+                    </Form>
+                </Modal>
+            </div>
+        </Layout>
     );
 };

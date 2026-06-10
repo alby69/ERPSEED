@@ -125,7 +125,7 @@ const ProjectSelectionPage = () => {
         <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                 <Title level={2} style={{ margin: 0 }}>
-                    Select a Project
+                    Progetti (Selezione Progetto)
                 </Title>
                 <div style={{ display: 'flex', gap: '16px' }}>
                     <Radio.Group value={viewMode} onChange={handleViewChange}>

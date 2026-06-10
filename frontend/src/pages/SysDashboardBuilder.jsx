@@ -4,6 +4,7 @@ import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import ChartWidget from '../components/ChartWidget';
+import Layout from '../components/Layout';
 
 const GRID_COLS = 12;
 const ROW_HEIGHT = 80;
@@ -180,6 +181,7 @@ function SysDashboardBuilder() {
   if (loading) return <div className="p-4">Loading...</div>;
 
   return (
+    <Layout>
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>BI Builder - Dashboards</h2>
@@ -288,6 +290,7 @@ function SysDashboardBuilder() {
         </div>
       )}
     </div>
+    </Layout>
   );
 }
 

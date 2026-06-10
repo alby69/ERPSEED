@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Form, Select, InputNumber, Button, Typography, Row, Col, Spin, Alert, Space, Tag, Divider, message, Descriptions } from 'antd';
 import { SwapOutlined, EnvironmentOutlined, CarOutlined, AimOutlined, CalculatorOutlined } from '@ant-design/icons';
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
+import Layout from '../components/Layout'; // Importa Layout
 import L from 'leaflet';
 import { apiFetch } from '@/utils';
 import { useTheme } from '@/context';
 import 'leaflet/dist/leaflet.css';
 
-delete L.Icon.Default.prototype._getIconUrl;
+// delete L.Icon.Default.prototype._getIconUrl; // Non è più necessario con le ultime versioni di React-Leaflet
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -163,188 +164,119 @@ function DistanceCalculator() {
   if (endCoords) coordsArray.push(endCoords);
 
   return (
-    <div style={{ padding: 24, background: themeConfig.mode === 'dark' ? '#141414' : '#f5f5f5', minHeight: '100vh' }}>
-      <Title level={3} style={{ marginBottom: 8 }}>
-        <CalculatorOutlined /> Calcolo Distanze
-      </Title>
-      <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-        Calcola percorsi e distanze tra due punti geografici
-      </Text>
+    <Layout>
+      <div style={{ padding: 24, background: themeConfig.mode === 'dark' ? '#141414' : '#f5f5f5', minHeight: '100vh' }}>
+        <Title level={3} style={{ marginBottom: 8 }}>Logistica (
+          <CalculatorOutlined /> Calcolo Distanze
+        </Title>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
+          Calcola percorsi e distanze tra due punti geografici
+        </Text>
 
-      <Row gutter={24}>
-        <Col xs={24} lg={8}>
-          <Card title="Percorso" size="small" style={{ marginBottom: 16 }}>
-            <Form form={form} layout="vertical" onFinish={handleCalculate} initialValues={{ profile: 'driving-car' }}>
-              <Form.Item label="Partenza — Indirizzo" name="start_address_id">
-                <Select
-                  showSearch
-                  allowClear
-                  placeholder="Cerca indirizzo..."
-                  optionFilterProp="label"
-                  loading={searchingStart}
-                  options={addresses
-                    .filter(a => a.latitudine && a.longitudine)
-                    .map(a => ({
-                      label: `${a.denominazione || ''}, ${a['città'] || ''}${a['città'] ? ', ' : ''}${a.provincia || ''}`,
-                      value: a.id,
-                    }))}
-                />
-              </Form.Item>
+        <Row gutter={24}>
+          <Col xs={24} lg={8}>
+            <Card title="Percorso" size="small" style={{ marginBottom: 16 }}>
+              <Form form={form} layout="vertical" onFinish={handleCalculate} initialValues={{ profile: 'driving-car' }}>
+                <Form.Item label="Partenza — Indirizzo" name="start_address_id">
+                  <Select
+                    showSearch
+                    allowClear
+                    placeholder="Cerca indirizzo..."
+                    optionFilterProp="label"
+                    loading={searchingStart}
+                    options={addresses
+                      .filter(a => a.latitudine && a.longitudine)
+                      .map(a => ({
+                        label: `${a.denominazione || ''}, ${a['città'] || ''}${a['città'] ? ', ' : ''}${a.provincia || ''}`,
+                        value: a.id,
+                      }))}
+                  />
+                </Form.Item>
 
-              <Text type="secondary" style={{ fontSize: 12 }}>— oppure coordinate manuali —</Text>
-              <Row gutter={8}>
-                <Col span={12}>
-                  <Form.Item name="start_lat" label="Lat." size="small">
-                    <InputNumber step={0.0001} style={{ width: '100%' }} size="small" />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item name="start_lng" label="Lng." size="small">
-                    <InputNumber step={0.0001} style={{ width: '100%' }} size="small" />
-                  </Form.Item>
-                </Col>
-              </Row>
+                <Text type="secondary" style={{ fontSize: 12 }}>— oppure coordinate manuali —</Text>
+                <Row gutter={8}>
+                  <Col span={12}>
+                    <Form.Item name="start_lat" label="Lat." size="small">
+                      <InputNumber step={0.0001} style={{ width: '100%' }} size="small" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item name="start_lng" label="Lng." size="small">
+                      <InputNumber step={0.0001} style={{ width: '100%' }} size="small" />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-              <Divider style={{ margin: '8px 0' }} />
+                <Divider style={{ margin: '8px 0' }} />
+                <div style={{ textAlign: 'center', marginBottom: 8 }}><Button icon={<SwapOutlined />} onClick={handleSwap} size="small">Scambia A↔B</Button></div>
+                <Divider style={{ margin: '8px 0' }} />
 
-              <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                <Button icon={<SwapOutlined />} onClick={handleSwap} size="small">
-                  Scambia A↔B
-                </Button>
-              </div>
-
-              <Divider style={{ margin: '8px 0' }} />
-
-              <Form.Item label="Arrivo — Indirizzo" name="end_address_id">
-                <Select
-                  showSearch
-                  allowClear
-                  placeholder="Cerca indirizzo..."
-                  optionFilterProp="label"
-                  loading={searchingEnd}
-                  options={addresses
-                    .filter(a => a.latitudine && a.longitudine)
-                    .map(a => ({
-                      label: `${a.denominazione || ''}, ${a['città'] || ''}${a['città'] ? ', ' : ''}${a.provincia || ''}`,
-                      value: a.id,
-                    }))}
-                />
-              </Form.Item>
-
-              <Text type="secondary" style={{ fontSize: 12 }}>— oppure coordinate manuali —</Text>
-              <Row gutter={8}>
-                <Col span={12}>
-                  <Form.Item name="end_lat" label="Lat." size="small">
-                    <InputNumber step={0.0001} style={{ width: '100%' }} size="small" />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item name="end_lng" label="Lng." size="small">
-                    <InputNumber step={0.0001} style={{ width: '100%' }} size="small" />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Form.Item name="profile" label="Mezzo">
-                <Select>
-                  <Select.Option value="driving-car">Auto</Select.Option>
-                  <Select.Option value="driving-hgv">Camion</Select.Option>
-                  <Select.Option value="cycling-regular">Bici</Select.Option>
-                  <Select.Option value="foot-walking">Pedoni</Select.Option>
-                </Select>
-              </Form.Item>
-
-              <Button type="primary" htmlType="submit" loading={loading} block icon={<CarOutlined />}>
-                Calcola Percorso
-              </Button>
-            </Form>
-          </Card>
-
-          {error && (
-            <Alert message={error} type="error" showIcon closable style={{ marginBottom: 16 }}
-              onClose={() => setError(null)} />
-          )}
-
-          {result && (
-            <Card title="Risultati" size="small">
-              <Descriptions column={1} size="small">
-                {(startName || endName) && (
-                  <>
-                    <Descriptions.Item label="Partenza">
-                      <Text>{startName || '-'}</Text>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Arrivo">
-                      <Text>{endName || '-'}</Text>
-                    </Descriptions.Item>
-                  </>
-                )}
-                <Descriptions.Item label="Distanza">
-                  <Text strong style={{ fontSize: 18, color: themeConfig.primaryColor }}>
-                    {formatDistance(result.distance)}
-                  </Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Durata">
-                  <Text strong>{formatDuration(result.duration)}</Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Fonte">
-                  <Tag>{result.provider === 'haversine' ? 'Stima lineare' : 'OpenRouteService'}</Tag>
-                </Descriptions.Item>
-              </Descriptions>
-
-              {result.provider === 'haversine' && (
-                <Alert
-                  message="Stima lineare"
-                  description="Il risultato è una distanza in linea d'aria. Per percorsi reali, imposta OPENROUTESERVICE_API_KEY."
-                  type="warning" showIcon style={{ marginTop: 8, fontSize: 12 }}
-                />
+                <Form.Item label="Arrivo — Indirizzo" name="end_address_id">
+                  <Select
+                    showSearch
+                    allowClear
+                    placeholder="Cerca indirizzo..."
+                    optionFilterProp="label"
+                    loading={searchingEnd}
+                    options={addresses
+                      .filter(a => a.latitudine && a.longitudine)
+                      .map(a => ({
+                        label: `${a.denominazione || ''}, ${a['città'] || ''}${a['città'] ? ', ' : ''}${a.provincia || ''}`,
+                        value: a.id,
+                      }))}
+                  />
+                </Form.Item>
+                <Text type="secondary" style={{ fontSize: 12 }}>— oppure coordinate manuali —</Text>
+                <Row gutter={8}>
+                  <Col span={12}><Form.Item name="end_lat" label="Lat." size="small"><InputNumber step={0.0001} style={{ width: '100%' }} size="small" /></Form.Item></Col>
+                  <Col span={12}><Form.Item name="end_lng" label="Lng." size="small"><InputNumber step={0.0001} style={{ width: '100%' }} size="small" /></Form.Item></Col>
+                </Row>
+                <Form.Item name="profile" label="Mezzo">
+                  <Select>
+                    <Select.Option value="driving-car">Auto</Select.Option>
+                    <Select.Option value="driving-hgv">Camion</Select.Option>
+                    <Select.Option value="cycling-regular">Bici</Select.Option>
+                    <Select.Option value="foot-walking">Pedoni</Select.Option>
+                  </Select>
+                </Form.Item>
+                <Button type="primary" htmlType="submit" loading={loading} block icon={<CarOutlined />}>Calcola Percorso</Button>
+              </Form>
+            </Card>
+            {error && <Alert message={error} type="error" showIcon closable style={{ marginBottom: 16 }} onClose={() => setError(null)} />}
+            {result && (
+              <Card title="Risultati" size="small">
+                <Descriptions column={1} size="small">
+                  {(startName || endName) && (<><Descriptions.Item label="Partenza"><Text>{startName || '-'}</Text></Descriptions.Item><Descriptions.Item label="Arrivo"><Text>{endName || '-'}</Text></Descriptions.Item></>)}
+                  <Descriptions.Item label="Distanza"><Text strong style={{ fontSize: 18, color: themeConfig.primaryColor }}>{formatDistance(result.distance)}</Text></Descriptions.Item>
+                  <Descriptions.Item label="Durata"><Text strong>{formatDuration(result.duration)}</Text></Descriptions.Item>
+                  <Descriptions.Item label="Fonte"><Tag>{result.provider === 'haversine' ? 'Stima lineare' : 'OpenRouteService'}</Tag></Descriptions.Item>
+                </Descriptions>
+                {result.provider === 'haversine' && <Alert message="Stima lineare" description="Il risultato è una distanza in linea d'aria. Per percorsi reali, imposta OPENROUTESERVICE_API_KEY." type="warning" showIcon style={{ marginTop: 8, fontSize: 12 }} />}
+              </Card>
+            )}
+          </Col>
+          <Col xs={24} lg={16}>
+            <Card bodyStyle={{ padding: 0 }} style={{ height: 600 }}>
+              {coordsArray.length > 0 ? (
+                <MapContainer center={[41.9, 12.5]} zoom={6} style={{ height: '100%', width: '100%' }}>
+                  <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  <FitBounds points={coordsArray} />
+                  {startCoords && <Marker position={[startCoords[1], startCoords[0]]} icon={createColoredIcon(START_COLOR)}><Popup>Partenza</Popup></Marker>}
+                  {endCoords && <Marker position={[endCoords[1], endCoords[0]]} icon={createColoredIcon(END_COLOR)}><Popup>Arrivo</Popup></Marker>}
+                  {startCoords && endCoords && (
+                    <Polyline positions={[[startCoords[1], startCoords[0]], [endCoords[1], endCoords[0]]]} color={themeConfig.primaryColor || '#1677ff'} weight={3} dashArray={result?.provider === 'haversine' ? '10, 10' : null} />
+                  )}
+                </MapContainer>
+              ) : (
+                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: themeConfig.mode === 'dark' ? '#1f1f1f' : '#fafafa' }}>
+                  <Space direction="vertical" align="center"><AimOutlined style={{ fontSize: 48, color: themeConfig.mode === 'dark' ? 'rgba(255,255,255,0.15)' : '#d9d9d9' }} /><Text type="secondary">Seleziona partenza e arrivo, poi calcola il percorso</Text></Space>
+                </div>
               )}
             </Card>
-          )}
-        </Col>
-
-        <Col xs={24} lg={16}>
-          <Card bodyStyle={{ padding: 0 }} style={{ height: 600 }}>
-            {coordsArray.length > 0 ? (
-              <MapContainer center={[41.9, 12.5]} zoom={6} style={{ height: '100%', width: '100%' }}>
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <FitBounds points={coordsArray} />
-                {startCoords && (
-                  <Marker position={[startCoords[1], startCoords[0]]} icon={createColoredIcon(START_COLOR)}>
-                    <Popup>Partenza</Popup>
-                  </Marker>
-                )}
-                {endCoords && (
-                  <Marker position={[endCoords[1], endCoords[0]]} icon={createColoredIcon(END_COLOR)}>
-                    <Popup>Arrivo</Popup>
-                  </Marker>
-                )}
-                {startCoords && endCoords && (
-                  <Polyline
-                    positions={[[startCoords[1], startCoords[0]], [endCoords[1], endCoords[0]]]}
-                    color={themeConfig.primaryColor || '#1677ff'}
-                    weight={3}
-                    dashArray={result?.provider === 'haversine' ? '10, 10' : null}
-                  />
-                )}
-              </MapContainer>
-            ) : (
-              <div style={{
-                height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: themeConfig.mode === 'dark' ? '#1f1f1f' : '#fafafa',
-              }}>
-                <Space direction="vertical" align="center">
-                  <AimOutlined style={{ fontSize: 48, color: themeConfig.mode === 'dark' ? 'rgba(255,255,255,0.15)' : '#d9d9d9' }} />
-                  <Text type="secondary">Seleziona partenza e arrivo, poi calcola il percorso</Text>
-                </Space>
-              </div>
-            )}
-          </Card>
-        </Col>
-      </Row>
-    </div>
+          </Col>
+        </Row>
+      </div>
+    </Layout>
   );
 }
 

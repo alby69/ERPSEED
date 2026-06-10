@@ -4,6 +4,7 @@ import { Form, Input, Button, message, Spin, Alert, Card, Modal, Divider, ColorP
 import { ExclamationCircleOutlined, RocketOutlined, SettingOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils'; // No date fields in this page
 import { useAuth, useTheme } from '../context';
+import Layout from '../components/Layout';
 import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
 import ColumnSettingsButton from '../components/ColumnSettingsButton';
 import TemplateGallery from '../components/ui/TemplateGallery';
@@ -201,8 +202,9 @@ const ProjectSettingsPage = () => {
     ];
 
     return (
-        <>
-            <Title level={3} style={{ marginBottom: 24 }}>Project Settings: {project?.title}</Title>
+        <Layout>
+            <div style={{ padding: 24 }}>
+            <Title level={3} style={{ marginBottom: 24 }}>Progetti (Impostazioni Progetto) - {project?.title}</Title>
 
             <Tabs defaultActiveKey="general" items={settingsTabs} />
 
@@ -219,7 +221,8 @@ const ProjectSettingsPage = () => {
                     </Button>
                 </div>
             </Card>
-        </>
+            </div>
+        </Layout>
     );
 };
 

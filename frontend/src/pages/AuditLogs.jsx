@@ -29,7 +29,7 @@ function AuditLogs() {
 
   return (
     <Layout>
-      <h2>Audit Logs</h2>
+      <h2>Amministrazione (Log di Audit)</h2>
       <div className="table-responsive bg-white rounded shadow-sm mt-3">
         <table className="table table-striped mb-0">
           <thead>

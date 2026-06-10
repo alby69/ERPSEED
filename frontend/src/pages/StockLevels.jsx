@@ -3,6 +3,7 @@ import { Card, Table, Input, Select, Space, Tag, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import Layout from '../components/Layout';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const StockLevels = () => {
@@ -66,16 +67,18 @@ const StockLevels = () => {
     const colManager = useColumnManagerWithDrawer('stock_levels', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            <Card title="Giacenze di Magazzino" extra={<ColumnSettingsButton manager={colManager} />}>
-                <Space style={{ marginBottom: 16 }}>
-                    <Input placeholder="Cerca prodotto..." prefix={<SearchOutlined />} value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 300 }} allowClear />
-                    <Select allowClear placeholder="Filtra ubicazione" style={{ width: 200 }} value={locationFilter} onChange={setLocationFilter}
-                        options={locations.map(l => ({ value: l.id, label: l.name }))} />
-                </Space>
-                <Table dataSource={filtered} columns={colManager.processedColumns} rowKey={(r) => `${r.product_id}-${r.location_id}`} loading={loading} />
-            </Card>
-        </div>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card title="Magazzino (Giacenze)" extra={<ColumnSettingsButton manager={colManager} />}>
+                    <Space style={{ marginBottom: 16 }}>
+                        <Input placeholder="Cerca prodotto..." prefix={<SearchOutlined />} value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 300 }} allowClear />
+                        <Select allowClear placeholder="Filtra ubicazione" style={{ width: 200 }} value={locationFilter} onChange={setLocationFilter}
+                            options={locations.map(l => ({ value: l.id, label: l.name }))} />
+                    </Space>
+                    <Table dataSource={filtered} columns={colManager.processedColumns} rowKey={(r) => `${r.product_id}-${r.location_id}`} loading={loading} />
+                </Card>
+            </div>
+        </Layout>
     );
 };
 

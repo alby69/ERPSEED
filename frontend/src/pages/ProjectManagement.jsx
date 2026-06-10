@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '@/components/Layout';
 
 const statusColors = { active: 'green', closed: 'orange', archived: 'default', draft: 'default', submitted: 'blue', approved: 'green' };
 
@@ -195,6 +196,7 @@ const ProjectManagement = () => {
     }, []);
 
     return (
+        <Layout>
         <div style={{ padding: 24 }}>
             {summary && (
                 <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -204,13 +206,14 @@ const ProjectManagement = () => {
                     <Col span={5}><Card><Statistic title="Ore Registrate" value={summary.total_logged_hours} /></Card></Col>
                 </Row>
             )}
-            <Card title="Progetti e Timesheet">
+            <Card title="Progetti (Gestione Progetti e Timesheet)">
                 <Tabs items={[
                     { key: 'projects', label: 'Progetti', children: <ProjectTab /> },
                     { key: 'timesheets', label: 'Timesheet', children: <TimesheetTab /> },
                 ]} />
             </Card>
         </div>
+        </Layout>
     );
 };
 

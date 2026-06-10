@@ -5,6 +5,7 @@ import { Card, Tabs, Table, Button, Tag, Space, Modal, Form, Select, Tooltip, Sp
 import { ScanOutlined, PlusOutlined, DeleteOutlined, ReloadOutlined, ApartmentOutlined, DatabaseOutlined, LinkOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { useTheme } from '@/context';
+import Layout from '../components/Layout';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
@@ -375,178 +376,180 @@ const RelationshipManagerPage = () => {
   }));
 
   return (
-    <div style={{ padding: 24, minHeight: '100%' }}>
-      <Card
-        title={
-          <Space>
-            <ApartmentOutlined style={{ color: primaryColor }} />
-            <span style={{ fontWeight: 600 }}>Relationship Manager</span>
-          </Space>
-        }
-        extra={
-          <Space>
-            <Button icon={<ScanOutlined />} onClick={handleScan} loading={scanning}>
-              Scansiona Modelli Statici
-            </Button>
-          </Space>
-        }
-        styles={{ body: { padding: 16 } }}
-      >
-        <Tabs items={tabItems} />
-      </Card>
-
-      <Modal
-        title={<span><PlusOutlined style={{ color: primaryColor }} /> Nuova Relazione</span>}
-        open={createModalOpen}
-        onOk={handleCreate}
-        onCancel={() => { setCreateModalOpen(false); createForm.resetFields(); }}
-        width={500}
-        okButtonProps={{ style: { background: primaryColor, borderColor: primaryColor } }}
-      >
-        <Form form={createForm} layout="vertical">
-          <Form.Item name="source_type" label="Tipo Sorgente" rules={[{ required: true }]}>
-            <Select options={[
-              { label: 'Modello (SysModel)', value: 'model' },
-              { label: 'Blocco (Block)', value: 'block' },
-            ]} />
-          </Form.Item>
-          <Form.Item noStyle shouldUpdate={(prev, cur) => prev.source_type !== cur.source_type}>
-            {({ getFieldValue }) => {
-              const st = getFieldValue('source_type');
-              const opts = st === 'block' ? blockOptions : modelOptions;
-              return (
-                <Form.Item name="source_id" label="Sorgente" rules={[{ required: true }]}>
-                  <Select showSearch optionFilterProp="label" options={opts} />
-                </Form.Item>
-              );
-            }}
-          </Form.Item>
-          <Form.Item name="source_field_id" label="Campo Sorgente (opzionale)">
-            <Select allowClear
-              options={(models.find(m => m.id === createForm.getFieldValue('source_id') && m.type !== 'block')?.fields || []).map(f => ({
-                label: `${f.technical_name} (${f.type})`,
-                value: f.id,
-              }))}
-            />
-          </Form.Item>
-          <Form.Item name="rel_type" label="Tipo Relazione" rules={[{ required: true }]}>
-            <Select options={[
-              { label: 'many2one', value: 'many2one' },
-              { label: 'one2many', value: 'one2many' },
-              { label: 'many2many', value: 'many2many' },
-              { label: 'requires (blocco)', value: 'requires' },
-              { label: 'recommends (blocco)', value: 'recommends' },
-              { label: 'conflicts (blocco)', value: 'conflicts' },
-            ]} />
-          </Form.Item>
-          <Form.Item name="target_type" label="Tipo Target" rules={[{ required: true }]}>
-            <Select options={[
-              { label: 'Modello (SysModel)', value: 'model' },
-              { label: 'Blocco (Block)', value: 'block' },
-            ]} />
-          </Form.Item>
-          <Form.Item noStyle shouldUpdate={(prev, cur) => prev.target_type !== cur.target_type}>
-            {({ getFieldValue }) => {
-              const tt = getFieldValue('target_type');
-              const opts = tt === 'block' ? blockOptions : modelOptions;
-              return (
-                <Form.Item name="target_id" label="Target" rules={[{ required: true }]}>
-                  <Select showSearch optionFilterProp="label" options={opts} />
-                </Form.Item>
-              );
-            }}
-          </Form.Item>
-          <Form.Item name="name" label="Nome (opzionale, solo per nuovi campi)">
-            <Input placeholder="e.g. categoria_id" />
-          </Form.Item>
-          <Form.Item name="title" label="Titolo (opzionale)">
-            <Input placeholder="e.g. Categoria" />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Drawer
-        title={<span style={{ color: primaryColor }}>{selectedNode?.data?.label || 'Dettaglio'}</span>}
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        width={420}
-      >
-        {selectedNode && (
-          <div>
-            <Space direction="vertical" style={{ width: '100%' }} size={12}>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Tag color={selectedNode.data?.nodeType === 'block' ? 'green' : 'blue'} style={{ fontSize: 12, padding: '2px 8px' }}>
-                  {selectedNode.data?.nodeType === 'block' ? 'Blocco' : 'Modello'}
-                </Tag>
-                {selectedNode.data?.origin && (
-                  <Tag>{selectedNode.data?.origin === 'scanned' ? 'Scansionato' : 'Dinamico'}</Tag>
-                )}
-              </div>
-
-              {selectedNode.data?.table_name && (
-                <div>
-                  <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>TABELLA</div>
-                  <code style={{ fontSize: 13 }}>{selectedNode.data.table_name}</code>
-                </div>
-              )}
-
-              {selectedNode.data?.fields && (
-                <div>
-                  <div style={{ fontSize: 11, color: '#999', marginBottom: 6 }}>
-                    CAMPI ({selectedNode.data.fields.length})
-                  </div>
-                  <div style={{ maxHeight: 260, overflow: 'auto' }}>
-                    {selectedNode.data.fields.map(f => (
-                      <div key={f.id} style={{ padding: '5px 0', borderBottom: '1px solid #f0f0f0' }}>
-                        <Space>
-                          <Tag color={['many2one','one2many','many2many'].includes(f.type) ? 'blue' : 'default'} style={{ margin: 0 }}>{f.type}</Tag>
-                          <strong style={{ fontSize: 12 }}>{f.technical_name}</strong>
-                        </Space>
-                        {f.relation_model && (
-                          <div style={{ fontSize: 11, color: '#888', marginLeft: 4, marginTop: 2 }}>
-                            → {f.relation_model}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {(nodeRelationships.incoming.length > 0 || nodeRelationships.outgoing.length > 0) && (
-                <div>
-                  <div style={{ fontSize: 11, color: '#999', marginBottom: 6 }}>RELAZIONI</div>
-                  {nodeRelationships.outgoing.length > 0 && (
-                    <div style={{ marginBottom: 8 }}>
-                      <div style={{ fontSize: 11, color: '#52c41a', marginBottom: 4 }}>In uscita ({nodeRelationships.outgoing.length})</div>
-                      {nodeRelationships.outgoing.map(e => (
-                        <div key={e.id} style={{ fontSize: 12, padding: '2px 0', display: 'flex', gap: 4 }}>
-                          <span>→</span>
-                          <Tag style={{ fontSize: 10 }}>{e.label || e.id}</Tag>
-                          <span style={{ color: '#888' }}>{e.target}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {nodeRelationships.incoming.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: 11, color: primaryColor, marginBottom: 4 }}>In entrata ({nodeRelationships.incoming.length})</div>
-                      {nodeRelationships.incoming.map(e => (
-                        <div key={e.id} style={{ fontSize: 12, padding: '2px 0', display: 'flex', gap: 4 }}>
-                          <span>←</span>
-                          <Tag style={{ fontSize: 10 }}>{e.label || e.id}</Tag>
-                          <span style={{ color: '#888' }}>{e.source}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+    <Layout>
+      <div style={{ padding: 24, minHeight: '100%' }}>
+        <Card
+          title={
+            <Space>
+              <ApartmentOutlined style={{ color: primaryColor }} /> Builder (
+              <span style={{ fontWeight: 600 }}>Relationship Manager</span>
             </Space>
-          </div>
-        )}
-      </Drawer>
-    </div>
+          }
+          extra={
+            <Space>
+              <Button icon={<ScanOutlined />} onClick={handleScan} loading={scanning}>
+                Scansiona Modelli Statici
+              </Button>
+            </Space>
+          }
+          styles={{ body: { padding: 16 } }}
+        >
+          <Tabs items={tabItems} />
+        </Card>
+
+        <Modal
+          title={<span><PlusOutlined style={{ color: primaryColor }} /> Nuova Relazione</span>}
+          open={createModalOpen}
+          onOk={handleCreate}
+          onCancel={() => { setCreateModalOpen(false); createForm.resetFields(); }}
+          width={500}
+          okButtonProps={{ style: { background: primaryColor, borderColor: primaryColor } }}
+        >
+          <Form form={createForm} layout="vertical">
+            <Form.Item name="source_type" label="Tipo Sorgente" rules={[{ required: true }]}>
+              <Select options={[
+                { label: 'Modello (SysModel)', value: 'model' },
+                { label: 'Blocco (Block)', value: 'block' },
+              ]} />
+            </Form.Item>
+            <Form.Item noStyle shouldUpdate={(prev, cur) => prev.source_type !== cur.source_type}>
+              {({ getFieldValue }) => {
+                const st = getFieldValue('source_type');
+                const opts = st === 'block' ? blockOptions : modelOptions;
+                return (
+                  <Form.Item name="source_id" label="Sorgente" rules={[{ required: true }]}>
+                    <Select showSearch optionFilterProp="label" options={opts} />
+                  </Form.Item>
+                );
+              }}
+            </Form.Item>
+            <Form.Item name="source_field_id" label="Campo Sorgente (opzionale)">
+              <Select allowClear
+                options={(models.find(m => m.id === createForm.getFieldValue('source_id') && m.type !== 'block')?.fields || []).map(f => ({
+                  label: `${f.technical_name} (${f.type})`,
+                  value: f.id,
+                }))}
+              />
+            </Form.Item>
+            <Form.Item name="rel_type" label="Tipo Relazione" rules={[{ required: true }]}>
+              <Select options={[
+                { label: 'many2one', value: 'many2one' },
+                { label: 'one2many', value: 'one2many' },
+                { label: 'many2many', value: 'many2many' },
+                { label: 'requires (blocco)', value: 'requires' },
+                { label: 'recommends (blocco)', value: 'recommends' },
+                { label: 'conflicts (blocco)', value: 'conflicts' },
+              ]} />
+            </Form.Item>
+            <Form.Item name="target_type" label="Tipo Target" rules={[{ required: true }]}>
+              <Select options={[
+                { label: 'Modello (SysModel)', value: 'model' },
+                { label: 'Blocco (Block)', value: 'block' },
+              ]} />
+            </Form.Item>
+            <Form.Item noStyle shouldUpdate={(prev, cur) => prev.target_type !== cur.target_type}>
+              {({ getFieldValue }) => {
+                const tt = getFieldValue('target_type');
+                const opts = tt === 'block' ? blockOptions : modelOptions;
+                return (
+                  <Form.Item name="target_id" label="Target" rules={[{ required: true }]}>
+                    <Select showSearch optionFilterProp="label" options={opts} />
+                  </Form.Item>
+                );
+              }}
+            </Form.Item>
+            <Form.Item name="name" label="Nome (opzionale, solo per nuovi campi)">
+              <Input placeholder="e.g. categoria_id" />
+            </Form.Item>
+            <Form.Item name="title" label="Titolo (opzionale)">
+              <Input placeholder="e.g. Categoria" />
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        <Drawer
+          title={<span style={{ color: primaryColor }}>{selectedNode?.data?.label || 'Dettaglio'}</span>}
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          width={420}
+        >
+          {selectedNode && (
+            <div>
+              <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <Tag color={selectedNode.data?.nodeType === 'block' ? 'green' : 'blue'} style={{ fontSize: 12, padding: '2px 8px' }}>
+                    {selectedNode.data?.nodeType === 'block' ? 'Blocco' : 'Modello'}
+                  </Tag>
+                  {selectedNode.data?.origin && (
+                    <Tag>{selectedNode.data?.origin === 'scanned' ? 'Scansionato' : 'Dinamico'}</Tag>
+                  )}
+                </div>
+
+                {selectedNode.data?.table_name && (
+                  <div>
+                    <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>TABELLA</div>
+                    <code style={{ fontSize: 13 }}>{selectedNode.data.table_name}</code>
+                  </div>
+                )}
+
+                {selectedNode.data?.fields && (
+                  <div>
+                    <div style={{ fontSize: 11, color: '#999', marginBottom: 6 }}>
+                      CAMPI ({selectedNode.data.fields.length})
+                    </div>
+                    <div style={{ maxHeight: 260, overflow: 'auto' }}>
+                      {selectedNode.data.fields.map(f => (
+                        <div key={f.id} style={{ padding: '5px 0', borderBottom: '1px solid #f0f0f0' }}>
+                          <Space>
+                            <Tag color={['many2one','one2many','many2many'].includes(f.type) ? 'blue' : 'default'} style={{ margin: 0 }}>{f.type}</Tag>
+                            <strong style={{ fontSize: 12 }}>{f.technical_name}</strong>
+                          </Space>
+                          {f.relation_model && (
+                            <div style={{ fontSize: 11, color: '#888', marginLeft: 4, marginTop: 2 }}>
+                              → {f.relation_model}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(nodeRelationships.incoming.length > 0 || nodeRelationships.outgoing.length > 0) && (
+                  <div>
+                    <div style={{ fontSize: 11, color: '#999', marginBottom: 6 }}>RELAZIONI</div>
+                    {nodeRelationships.outgoing.length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ fontSize: 11, color: '#52c41a', marginBottom: 4 }}>In uscita ({nodeRelationships.outgoing.length})</div>
+                        {nodeRelationships.outgoing.map(e => (
+                          <div key={e.id} style={{ fontSize: 12, padding: '2px 0', display: 'flex', gap: 4 }}>
+                            <span>→</span>
+                            <Tag style={{ fontSize: 10 }}>{e.label || e.id}</Tag>
+                            <span style={{ color: '#888' }}>{e.target}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {nodeRelationships.incoming.length > 0 && (
+                      <div>
+                        <div style={{ fontSize: 11, color: primaryColor, marginBottom: 4 }}>In entrata ({nodeRelationships.incoming.length})</div>
+                        {nodeRelationships.incoming.map(e => (
+                          <div key={e.id} style={{ fontSize: 12, padding: '2px 0', display: 'flex', gap: 4 }}>
+                            <span>←</span>
+                            <Tag style={{ fontSize: 10 }}>{e.label || e.id}</Tag>
+                            <span style={{ color: '#888' }}>{e.source}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Space>
+            </div>
+          )}
+        </Drawer>
+      </div>
+    </Layout>
   );
 };
 

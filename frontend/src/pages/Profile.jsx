@@ -97,7 +97,7 @@ function Profile() {
 
   return (
     <Layout>
-      <h2>User Profile</h2>
+      <h2>Utente (Profilo)</h2>
       <hr />
 
       <div className="row">

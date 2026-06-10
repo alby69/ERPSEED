@@ -3,6 +3,7 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, Switch, Select, S
 import { PlusOutlined, EditOutlined, DeleteOutlined, DollarOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import Layout from '../components/Layout';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const PriceListItems = ({ listId, visible, onClose }) => {
@@ -177,22 +178,24 @@ export default function PriceLists() {
     const colManager = useColumnManagerWithDrawer('pricelists', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            <Card title="Listini Prezzo" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo Listino</Button></Space>}>
-                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
-            </Card>
-            <Modal title={editingRecord ? 'Modifica Listino' : 'Nuovo Listino'} open={modalVisible}
-                onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}
-                okText="Salva" cancelText="Annulla">
-                <Form form={form} layout="vertical">
-                    <Form.Item name="code" label="Codice" rules={[{ required: true }]}><Input placeholder="es. LISTINO_BASE" /></Form.Item>
-                    <Form.Item name="name" label="Nome" rules={[{ required: true }]}><Input placeholder="es. Listino Base" /></Form.Item>
-                    <Form.Item name="currency" label="Valuta"><Input placeholder="EUR" /></Form.Item>
-                    <Form.Item name="description" label="Descrizione"><Input.TextArea rows={2} /></Form.Item>
-                    <Form.Item name="is_active" label="Attivo" valuePropName="checked"><Switch defaultChecked /></Form.Item>
-                </Form>
-            </Modal>
-            <PriceListItems listId={selectedListId} visible={itemsModalVisible} onClose={() => { setItemsModalVisible(false); setSelectedListId(null); fetchData(); }} />
-        </div>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card title="Anagrafiche (Listini Prezzo)" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo Listino</Button></Space>}>
+                    <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
+                </Card>
+                <Modal title={editingRecord ? 'Modifica Listino' : 'Nuovo Listino'} open={modalVisible}
+                    onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}
+                    okText="Salva" cancelText="Annulla">
+                    <Form form={form} layout="vertical">
+                        <Form.Item name="code" label="Codice" rules={[{ required: true }]}><Input placeholder="es. LISTINO_BASE" /></Form.Item>
+                        <Form.Item name="name" label="Nome" rules={[{ required: true }]}><Input placeholder="es. Listino Base" /></Form.Item>
+                        <Form.Item name="currency" label="Valuta"><Input placeholder="EUR" /></Form.Item>
+                        <Form.Item name="description" label="Descrizione"><Input.TextArea rows={2} /></Form.Item>
+                        <Form.Item name="is_active" label="Attivo" valuePropName="checked"><Switch defaultChecked /></Form.Item>
+                    </Form>
+                </Modal>
+                <PriceListItems listId={selectedListId} visible={itemsModalVisible} onClose={() => { setItemsModalVisible(false); setSelectedListId(null); fetchData(); }} />
+            </div>
+        </Layout>
     );
 };

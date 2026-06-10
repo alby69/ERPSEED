@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { useParams } from 'react-router-dom'; // No date fields in this page
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 import { Line, Pie } from '@ant-design/charts';
 
 const { Title, Text } = Typography;
@@ -161,182 +162,184 @@ const GDOReconciliationTool = () => {
   ]) || [];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Title level={2}>Tool Riconciliazione GDO</Title>
+    <Layout>
+      <div style={{ padding: '24px' }}>
+        <Title level={2}>Analytics (Riconciliazione GDO)</Title>
 
-      <Row gutter={[16, 16]}>
-        <Col span={8}>
-          <Card title="Configurazione" size="small">
-            <Form layout="vertical" initialValues={config} onValuesChange={(_, all) => setConfig(all)}>
-              <Form.Item name="algorithm" label="Algoritmo">
-                <Select options={[
-                  { label: 'Progressive Balance', value: 'progressive_balance' },
-                  { label: 'Subset Sum', value: 'subset_sum' }
-                ]} />
-              </Form.Item>
-              <Form.Item name="tolerance" label="Tolleranza (€)">
-                <InputNumber min={0} step={0.1} style={{ width: '100%' }} />
-              </Form.Item>
-              <Form.Item name="days_window" label="Finestra Temporale (Giorni)">
-                <InputNumber min={1} style={{ width: '100%' }} />
-              </Form.Item>
-              <Space>
-                <Upload beforeUpload={handleUpload} maxCount={1} showUploadList={!!file}>
-                  <Button icon={<UploadOutlined />}>Scegli File</Button>
-                </Upload>
-                <Button type="primary" icon={<PlayCircleOutlined />} onClick={runReconciliation} loading={loading}>
-                  Esegui
-                </Button>
-              </Space>
-            </Form>
-          </Card>
-        </Col>
+        <Row gutter={[16, 16]}>
+          <Col span={8}>
+            <Card title="Configurazione" size="small">
+              <Form layout="vertical" initialValues={config} onValuesChange={(_, all) => setConfig(all)}>
+                <Form.Item name="algorithm" label="Algoritmo">
+                  <Select options={[
+                    { label: 'Progressive Balance', value: 'progressive_balance' },
+                    { label: 'Subset Sum', value: 'subset_sum' }
+                  ]} />
+                </Form.Item>
+                <Form.Item name="tolerance" label="Tolleranza (€)">
+                  <InputNumber min={0} step={0.1} style={{ width: '100%' }} />
+                </Form.Item>
+                <Form.Item name="days_window" label="Finestra Temporale (Giorni)">
+                  <InputNumber min={1} style={{ width: '100%' }} />
+                </Form.Item>
+                <Space>
+                  <Upload beforeUpload={handleUpload} maxCount={1} showUploadList={!!file}>
+                    <Button icon={<UploadOutlined />}>Scegli File</Button>
+                  </Upload>
+                  <Button type="primary" icon={<PlayCircleOutlined />} onClick={runReconciliation} loading={loading}>
+                    Esegui
+                  </Button>
+                </Space>
+              </Form>
+            </Card>
+          </Col>
+
+          {results && (
+            <Col span={16}>
+              <Row gutter={[16, 16]}>
+                <Col span={8}>
+                  <Card>
+                    <Statistic
+                      title="Incassi (€)"
+                      value={results.stats.total_debit || 0}
+                      precision={2}
+                      valueStyle={{ fontSize: '1.2em' }}
+                      formatter={() => formatCurrencyWithSymbol(results.stats.total_debit)}
+                    />
+                    <div style={{ marginTop: 8, textAlign: 'center', color: '#888' }}>
+                      Num: {formatNumber(results.stats.count_debit || 0)}
+                    </div>
+                  </Card>
+                </Col>
+                <Col span={8}>
+                  <Card>
+                    <Statistic
+                      title="Versamenti (€)"
+                      value={results.stats.total_credit || 0}
+                      precision={2}
+                      valueStyle={{ fontSize: '1.2em' }}
+                      formatter={() => formatCurrencyWithSymbol(results.stats.total_credit)}
+                    />
+                    <div style={{ marginTop: 8, textAlign: 'center', color: '#888' }}>
+                      Num: {formatNumber(results.stats.count_credit || 0)}
+                    </div>
+                  </Card>
+                </Col>
+                <Col span={8}>
+                  <Card>
+                    <Statistic
+                      title="Delta (€)"
+                      value={results.stats.total_difference || 0}
+                      precision={2}
+                      valueStyle={{
+                        fontSize: '1.2em',
+                        color: (results.stats.total_difference || 0) >= 0 ? '#3f9142' : '#cf1322'
+                      }}
+                      formatter={() => formatCurrencyWithSymbol(results.stats.total_difference)}
+                    />
+                    <div style={{ marginTop: 8, textAlign: 'center', color: '#888' }}>
+                      Delta Num: {formatNumber((results.stats.count_debit || 0) - (results.stats.count_credit || 0))}
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+            </Col>
+          )}
+        </Row>
 
         {results && (
-          <Col span={16}>
-            <Row gutter={[16, 16]}>
-              <Col span={8}>
-                <Card>
-                  <Statistic
-                    title="Incassi (€)"
-                    value={results.stats.total_debit || 0}
-                    precision={2}
-                    valueStyle={{ fontSize: '1.2em' }}
-                    formatter={() => formatCurrencyWithSymbol(results.stats.total_debit)}
-                  />
-                  <div style={{ marginTop: 8, textAlign: 'center', color: '#888' }}>
-                    Num: {formatNumber(results.stats.count_debit || 0)}
-                  </div>
-                </Card>
-              </Col>
-              <Col span={8}>
-                <Card>
-                  <Statistic
-                    title="Versamenti (€)"
-                    value={results.stats.total_credit || 0}
-                    precision={2}
-                    valueStyle={{ fontSize: '1.2em' }}
-                    formatter={() => formatCurrencyWithSymbol(results.stats.total_credit)}
-                  />
-                  <div style={{ marginTop: 8, textAlign: 'center', color: '#888' }}>
-                    Num: {formatNumber(results.stats.count_credit || 0)}
-                  </div>
-                </Card>
-              </Col>
-              <Col span={8}>
-                <Card>
-                  <Statistic
-                    title="Delta (€)"
-                    value={results.stats.total_difference || 0}
-                    precision={2}
-                    valueStyle={{
-                      fontSize: '1.2em',
-                      color: (results.stats.total_difference || 0) >= 0 ? '#3f9142' : '#cf1322'
-                    }}
-                    formatter={() => formatCurrencyWithSymbol(results.stats.total_difference)}
-                  />
-                  <div style={{ marginTop: 8, textAlign: 'center', color: '#888' }}>
-                    Delta Num: {formatNumber((results.stats.count_debit || 0) - (results.stats.count_credit || 0))}
-                  </div>
-                </Card>
-              </Col>
-            </Row>
-          </Col>
+          <div style={{ marginTop: 24 }}>
+            <Tabs defaultActiveKey="1" items={[
+              {
+                key: '1',
+                label: 'Riconciliati',
+                children: (
+                  <Row gutter={[16, 16]}>
+                    <Col span={24}>
+                      <Card title="Grafici">
+                        <Row gutter={[16, 16]}>
+                          <Col span={12}>
+                            <Card title="Trend Mensile Incassi vs Versamenti" size="small">
+                              <Line
+                                data={trendData}
+                                xField="month"
+                                yField="value"
+                                seriesField="type"
+                                smooth
+                                legend={{ position: 'top' }}
+                              />
+                            </Card>
+                          </Col>
+                          <Col span={12}>
+                            <Card title="Distribuzione Match" size="small">
+                              <Pie
+                                data={results.matches.reduce((acc, curr) => {
+                                  const type = curr.match_type;
+                                  const existing = acc.find(i => i.type === type);
+                                  if (existing) existing.value++;
+                                  else acc.push({ type, value: 1 });
+                                  return acc;
+                                }, [])}
+                                angleField="value"
+                                colorField="type"
+                                radius={0.8}
+                                label={false}
+                                legend={{ position: 'bottom' }}
+                              />
+                            </Card>
+                          </Col>
+                        </Row>
+                      </Card>
+                    </Col>
+                    <Col span={24}>
+                      <Card title="Quadrature Trovate" style={{ marginTop: 16 }} extra={<ColumnSettingsButton manager={matchColManager} />}>
+                        <Table
+                          dataSource={results.matches}
+                          columns={matchColManager.processedColumns}
+                          rowKey={(record) => record.credit?.orig_index}
+                          pagination={{ pageSize: 10 }}
+                          size="small"
+                        />
+                      </Card>
+                    </Col>
+                  </Row>
+                )
+              },
+              {
+                key: '2',
+                label: 'Non Riconciliati',
+                children: (
+                  <Row gutter={[16, 16]}>
+                    <Col span={12}>
+                      <Card title="Incassi Non Riconciliati" extra={<ColumnSettingsButton manager={debitColManager} />}>
+                        <Table
+                          dataSource={results.unreconciled_debit}
+                          columns={debitColManager.processedColumns}
+                          rowKey={(record) => record.orig_index}
+                          pagination={{ pageSize: 10 }}
+                          size="small"
+                        />
+                      </Card>
+                    </Col>
+                    <Col span={12}>
+                      <Card title="Versamenti Non Riconciliati" extra={<ColumnSettingsButton manager={creditColManager} />}>
+                        <Table
+                          dataSource={results.unreconciled_credit}
+                          columns={creditColManager.processedColumns}
+                          rowKey={(record) => record.orig_index}
+                          pagination={{ pageSize: 10 }}
+                          size="small"
+                        />
+                      </Card>
+                    </Col>
+                  </Row>
+                )
+              }
+            ]} />
+          </div>
         )}
-      </Row>
-
-      {results && (
-        <div style={{ marginTop: 24 }}>
-          <Tabs defaultActiveKey="1" items={[
-            {
-              key: '1',
-              label: 'Riconciliati',
-              children: (
-                <Row gutter={[16, 16]}>
-                  <Col span={24}>
-                    <Card title="Grafici">
-                      <Row gutter={[16, 16]}>
-                        <Col span={12}>
-                          <Card title="Trend Mensile Incassi vs Versamenti" size="small">
-                            <Line
-                              data={trendData}
-                              xField="month"
-                              yField="value"
-                              seriesField="type"
-                              smooth
-                              legend={{ position: 'top' }}
-                            />
-                          </Card>
-                        </Col>
-                        <Col span={12}>
-                          <Card title="Distribuzione Match" size="small">
-                            <Pie
-                              data={results.matches.reduce((acc, curr) => {
-                                const type = curr.match_type;
-                                const existing = acc.find(i => i.type === type);
-                                if (existing) existing.value++;
-                                else acc.push({ type, value: 1 });
-                                return acc;
-                              }, [])}
-                              angleField="value"
-                              colorField="type"
-                              radius={0.8}
-                              label={false}
-                              legend={{ position: 'bottom' }}
-                            />
-                          </Card>
-                        </Col>
-                      </Row>
-                    </Card>
-                  </Col>
-                  <Col span={24}>
-                    <Card title="Quadrature Trovate" style={{ marginTop: 16 }} extra={<ColumnSettingsButton manager={matchColManager} />}>
-                      <Table
-                        dataSource={results.matches}
-                        columns={matchColManager.processedColumns}
-                        rowKey={(record) => record.credit?.orig_index}
-                        pagination={{ pageSize: 10 }}
-                        size="small"
-                      />
-                    </Card>
-                  </Col>
-                </Row>
-              )
-            },
-            {
-              key: '2',
-              label: 'Non Riconciliati',
-              children: (
-                <Row gutter={[16, 16]}>
-                  <Col span={12}>
-                    <Card title="Incassi Non Riconciliati" extra={<ColumnSettingsButton manager={debitColManager} />}>
-                      <Table
-                        dataSource={results.unreconciled_debit}
-                        columns={debitColManager.processedColumns}
-                        rowKey={(record) => record.orig_index}
-                        pagination={{ pageSize: 10 }}
-                        size="small"
-                      />
-                    </Card>
-                  </Col>
-                  <Col span={12}>
-                    <Card title="Versamenti Non Riconciliati" extra={<ColumnSettingsButton manager={creditColManager} />}>
-                      <Table
-                        dataSource={results.unreconciled_credit}
-                        columns={creditColManager.processedColumns}
-                        rowKey={(record) => record.orig_index}
-                        pagination={{ pageSize: 10 }}
-                        size="small"
-                      />
-                    </Card>
-                  </Col>
-                </Row>
-              )
-            }
-          ]} />
-        </div>
-      )}
-    </div>
+      </div>
+    </Layout>
   );
 };
 

@@ -4,6 +4,7 @@ import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Avatar,
 import { DeleteOutlined, UserAddOutlined, UserOutlined, MailOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useAuth } from '../context/AuthContext';
+import Layout from '../components/Layout';
 import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
 import ColumnSettingsButton from '../components/ColumnSettingsButton';
 
@@ -155,70 +156,72 @@ const ProjectMembersPage = () => {
     const colManager = useColumnManagerWithDrawer('project_members', rawColumns);
 
     return (
-        <div style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h2>Team Members</h2>
-                <Space>
-                    <ColumnSettingsButton manager={colManager} />
-                    <Button type="primary" icon={<UserAddOutlined />} onClick={handleOpenModal}>
-                        Add Member
-                    </Button>
-                </Space>
-            </div>
+        <Layout>
+            <div style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <h2>Progetti (Membri Team)</h2>
+                    <Space>
+                        <ColumnSettingsButton manager={colManager} />
+                        <Button type="primary" icon={<UserAddOutlined />} onClick={handleOpenModal}>
+                            Add Member
+                        </Button>
+                    </Space>
+                </div>
 
-            <Table
-                columns={colManager.processedColumns}
-                dataSource={members}
-                rowKey="id"
-                loading={loading}
-                pagination={false}
-            />
+                <Table
+                    columns={colManager.processedColumns}
+                    dataSource={members}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={false}
+                />
 
-            <Modal
-                title="Add Member to Project"
-                open={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
-                onOk={() => form.submit()}
-                confirmLoading={loadingUsers}
-            >
-                <Form form={form} layout="vertical" onFinish={handleAddMember}>
-                    {isAdmin ? (
-                        <Form.Item
-                            name="user_id"
-                            label="Select User"
-                            rules={[{ required: true, message: 'Select a user' }]}
-                        >
-                            <Select
-                                placeholder="Search user..."
-                                showSearch
-                                optionFilterProp="children"
-                                loading={loadingUsers}
-                            >
-                                {availableUsers.map(u => (
-                                    <Option key={u.id} value={u.id}>
-                                        {u.first_name} {u.last_name} ({u.email})
-                                    </Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
-                    ) : (
-                        <>
+                <Modal
+                    title="Add Member to Project"
+                    open={isModalVisible}
+                    onCancel={() => setIsModalVisible(false)}
+                    onOk={() => form.submit()}
+                    confirmLoading={loadingUsers}
+                >
+                    <Form form={form} layout="vertical" onFinish={handleAddMember}>
+                        {isAdmin ? (
                             <Form.Item
                                 name="user_id"
-                                label="User ID"
-                                rules={[{ required: true, message: 'Enter the user ID' }]}
-                                help="Enter the numeric ID of the user to invite."
+                                label="Select User"
+                                rules={[{ required: true, message: 'Select a user' }]}
                             >
-                                <Input type="number" placeholder="e.g., 5" />
+                                <Select
+                                    placeholder="Search user..."
+                                    showSearch
+                                    optionFilterProp="children"
+                                    loading={loadingUsers}
+                                >
+                                    {availableUsers.map(u => (
+                                        <Option key={u.id} value={u.id}>
+                                            {u.first_name} {u.last_name} ({u.email})
+                                        </Option>
+                                    ))}
+                                </Select>
                             </Form.Item>
-                            <div style={{ marginBottom: 16, color: '#faad14', fontSize: '12px' }}>
-                                Note: As an owner, you need to know the user's ID. Contact an administrator to search for users by name.
-                            </div>
-                        </>
-                    )}
-                </Form>
-            </Modal>
-        </div>
+                        ) : (
+                            <>
+                                <Form.Item
+                                    name="user_id"
+                                    label="User ID"
+                                    rules={[{ required: true, message: 'Enter the user ID' }]}
+                                    help="Enter the numeric ID of the user to invite."
+                                >
+                                    <Input type="number" placeholder="e.g., 5" />
+                                </Form.Item>
+                                <div style={{ marginBottom: 16, color: '#faad14', fontSize: '12px' }}>
+                                    Note: As an owner, you need to know the user's ID. Contact an administrator to search for users by name.
+                                </div>
+                            </>
+                        )}
+                    </Form>
+                </Modal>
+            </div>
+        </Layout>
     );
 };
 

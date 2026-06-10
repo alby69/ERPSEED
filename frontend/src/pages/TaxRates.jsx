@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const TaxRatesPage = () => {
     const [data, setData] = useState([]);
@@ -117,9 +118,9 @@ const TaxRatesPage = () => {
     const colManager = useColumnManagerWithDrawer('taxrates', rawColumns);
 
     return (
+        <Layout>
         <div style={{ padding: 24 }}>
-            <Card
-                title="Aliquote IVA"
+            <Card title="Anagrafiche (Aliquote IVA)"
                 extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Aliquota</Button></Space>}
             >
                 <Table
@@ -167,6 +168,7 @@ const TaxRatesPage = () => {
                 </Form>
             </Modal>
         </div>
+        </Layout>
     );
 };
 

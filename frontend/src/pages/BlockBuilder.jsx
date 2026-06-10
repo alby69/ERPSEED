@@ -31,6 +31,7 @@ import {
   BlockOutlined,
 } from '@ant-design/icons';
 
+import Layout from '@/components/Layout';
 import { apiFetch } from '../utils'; // No date fields in this page
 import VisualBuilder from './VisualBuilder';
 import ImportExportToolbar from '../components/ui/ImportExportToolbar';
@@ -336,19 +337,11 @@ export default function BlockBuilder() {
     );
   }
 
-  const breadcrumbs = [
-    { title: <Link to="/projects">Progetti</Link> },
-    { title: <Link to={`/projects/${projectId || 1}`}>Demo Project</Link> },
-    { title: 'Builder' },
-    { title: 'Block Builder' },
-  ];
-
   return (
-    <div>
-      <AppHeader breadcrumbs={breadcrumbs} />
+    <Layout>
       <div className="block-builder-page" style={{ padding: 24 }}>
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
+          <div>Builder (
             <Title level={2} style={{ margin: 0 }}>
               <BlockOutlined /> Block Builder
             </Title>
@@ -479,6 +472,6 @@ export default function BlockBuilder() {
         </Form>
       </Modal>
       </div>
-    </div>
+    </Layout>
   );
 }

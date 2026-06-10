@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const statusColors = { draft: 'default', active: 'green', archived: 'orange', planned: 'blue', released: 'geekblue', in_progress: 'processing', completed: 'green', cancelled: 'red' };
 
@@ -249,15 +250,17 @@ const ProductionOrdersTab = () => {
 
 // ============== Main Page ==============
 const Manufacturing = () => (
-    <div style={{ padding: 24 }}>
-        <Card title="Produzione">
-            <Tabs items={[
-                { key: 'bom', label: 'Distinte Base', children: <BOMTab /> },
-                { key: 'workcycles', label: 'Cicli di Lavoro', children: <WorkCyclesTab /> },
-                { key: 'production-orders', label: 'ODP', children: <ProductionOrdersTab /> },
-            ]} />
-        </Card>
-    </div>
+    <Layout>
+        <div style={{ padding: 24 }}>
+            <Card title="Produzione (Gestione Produzione)">
+                <Tabs items={[
+                    { key: 'bom', label: 'Distinte Base', children: <BOMTab /> },
+                    { key: 'workcycles', label: 'Cicli di Lavoro', children: <WorkCyclesTab /> },
+                    { key: 'production-orders', label: 'ODP', children: <ProductionOrdersTab /> },
+                ]} />
+            </Card>
+        </div>
+    </Layout>
 );
 
 export default Manufacturing;

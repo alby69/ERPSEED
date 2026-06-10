@@ -3,6 +3,7 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, Switch, Select, S
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import Layout from '../components/Layout';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 export default function ProductCategories() {
@@ -114,42 +115,44 @@ export default function ProductCategories() {
     const colManager = useColumnManagerWithDrawer('product_categories', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            <Card
-                title="Categorie Prodotto"
-                extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Categoria</Button></Space>}
-            >
-                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
-            </Card>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card
+                    title="Anagrafiche (Categorie Prodotto)"
+                    extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Categoria</Button></Space>}
+                >
+                    <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
+                </Card>
 
-            <Modal
-                title={editingRecord ? 'Modifica Categoria' : 'Nuova Categoria'}
-                open={modalVisible}
-                onOk={handleSubmit}
-                onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}
-                okText="Salva" cancelText="Annulla"
-            >
-                <Form form={form} layout="vertical">
-                    <Form.Item name="code" label="Codice" rules={[{ required: true }]}>
-                        <Input placeholder="es. ELETTRONICA" />
-                    </Form.Item>
-                    <Form.Item name="name" label="Nome" rules={[{ required: true }]}>
-                        <Input placeholder="es. Elettronica" />
-                    </Form.Item>
-                    <Form.Item name="description" label="Descrizione">
-                        <Input.TextArea rows={2} />
-                    </Form.Item>
-                    <Form.Item name="parent_id" label="Categoria Padre">
-                        <Select allowClear placeholder="Nessuna (categoria radice)" options={parentOptions} />
-                    </Form.Item>
-                    <Form.Item name="sort_order" label="Ordine">
-                        <InputNumber min={0} style={{ width: '100%' }} />
-                    </Form.Item>
-                    <Form.Item name="is_active" label="Attiva" valuePropName="checked">
-                        <Switch defaultChecked />
-                    </Form.Item>
-                </Form>
-            </Modal>
-        </div>
+                <Modal
+                    title={editingRecord ? 'Modifica Categoria' : 'Nuova Categoria'}
+                    open={modalVisible}
+                    onOk={handleSubmit}
+                    onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}
+                    okText="Salva" cancelText="Annulla"
+                >
+                    <Form form={form} layout="vertical">
+                        <Form.Item name="code" label="Codice" rules={[{ required: true }]}>
+                            <Input placeholder="es. ELETTRONICA" />
+                        </Form.Item>
+                        <Form.Item name="name" label="Nome" rules={[{ required: true }]}>
+                            <Input placeholder="es. Elettronica" />
+                        </Form.Item>
+                        <Form.Item name="description" label="Descrizione">
+                            <Input.TextArea rows={2} />
+                        </Form.Item>
+                        <Form.Item name="parent_id" label="Categoria Padre">
+                            <Select allowClear placeholder="Nessuna (categoria radice)" options={parentOptions} />
+                        </Form.Item>
+                        <Form.Item name="sort_order" label="Ordine">
+                            <InputNumber min={0} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Form.Item name="is_active" label="Attiva" valuePropName="checked">
+                            <Switch defaultChecked />
+                        </Form.Item>
+                    </Form>
+                </Modal>
+            </div>
+        </Layout>
     );
 };

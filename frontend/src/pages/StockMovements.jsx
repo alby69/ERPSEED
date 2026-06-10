@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay, formatDateTimeForDisplay } from '@/utils/dateUtils'; // Import date utilities
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const typeColors = { in: 'green', out: 'red', transfer: 'blue', adjustment: 'orange' };
 const typeLabels = { in: 'Carico', out: 'Scarico', transfer: 'Trasferimento', adjustment: 'Rettifica' };
@@ -197,11 +198,13 @@ const StockMovements = () => {
         { key: 'reasons', label: 'Cause di Movimento', children: <MovementReasonsTab /> },
     ];
     return (
-        <div style={{ padding: 24 }}>
-            <Card title="Movimenti di Magazzino">
-                <Tabs items={items} />
-            </Card>
-        </div>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card title="Magazzino (Movimenti)">
+                    <Tabs items={items} />
+                </Card>
+            </div>
+        </Layout>
     );
 };
 

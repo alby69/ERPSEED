@@ -10,9 +10,8 @@ import {
 } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useTableSort } from '../hooks/useTableSort';
-import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
 import TableSearch from '../components/TableSearch';
-import ColumnSettingsButton from '../components/ColumnSettingsButton';
+import ColumnsControl from '../components/ColumnsControl';
 import Layout from '../components/Layout';
 
 const { Title, Text } = Typography;
@@ -226,8 +225,6 @@ export default function SoggettiPage() {
     },
   ];
 
-  const colManager = useColumnManagerWithDrawer('soggetti', rawColumns);
-
   const ruoloOptions = ruoli.map(r => (
     <Option key={r.id} value={r.id}>{r.nome}</Option>
   ));
@@ -422,50 +419,54 @@ export default function SoggettiPage() {
   return (
     <Layout>
       <div style={{ padding: '0' }}>
-        <Card
-          title={
-            <Space>
-              <UserOutlined />
-              <span>Anagrafiche (Soggetti)</span>
-            </Space>
-          }
-          extra={
-            <Space>
-              <ColumnSettingsButton manager={colManager} />
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                Nuovo Soggetto
-              </Button>
-            </Space>
-          }
-        >
-        <div className="mb-3">
-          <TableSearch
-            columns={colManager.processedColumns}
-            searchField={searchField}
-            searchValue={searchValue}
-            searchTerm={searchTerm}
-            globalSearchValue={searchTerm}
-            onSearchFieldChange={handleSearchField}
-            onSearchValueChange={(val) => handleSearchField(searchField, val)}
-            onSearchSubmit={handleSearchSubmit}
-            onClearSearch={handleClearSearch}
-            onGlobalSearch={handleSearch}
-          />
-        </div>
-        <Table
-          columns={colManager.processedColumns}
-          dataSource={soggetti}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            current: pagination.page,
-            pageSize: pagination.perPage,
-            total: pagination.totalItems,
-            onChange: handlePageChange,
-            showSizeChanger: false
-          }}
-        />
-      </Card>
+        <ColumnsControl pageKey="soggetti" columns={rawColumns}>
+          {({ columns, button }) => (
+            <Card
+              title={
+                <Space>
+                  <UserOutlined /> Anagrafiche (
+                  <span>Anagrafiche (Soggetti)</span>
+                </Space>
+              }
+              extra={
+                <Space>
+                  {button}
+                  <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                    Nuovo Soggetto
+                  </Button>
+                </Space>
+              }
+            >
+              <div className="mb-3">
+                <TableSearch
+                  columns={columns}
+                  searchField={searchField}
+                  searchValue={searchValue}
+                  searchTerm={searchTerm}
+                  globalSearchValue={searchTerm}
+                  onSearchFieldChange={handleSearchField}
+                  onSearchValueChange={(val) => handleSearchField(searchField, val)}
+                  onSearchSubmit={handleSearchSubmit}
+                  onClearSearch={handleClearSearch}
+                  onGlobalSearch={handleSearch}
+                />
+              </div>
+              <Table
+                columns={columns}
+                dataSource={soggetti}
+                rowKey="id"
+                loading={loading}
+                pagination={{
+                  current: pagination.page,
+                  pageSize: pagination.perPage,
+                  total: pagination.totalItems,
+                  onChange: handlePageChange,
+                  showSizeChanger: false
+                }}
+              />
+            </Card>
+          )}
+        </ColumnsControl>
 
       <Modal
         title={editingSoggetto ? 'Modifica Soggetto' : 'Nuovo Soggetto'}

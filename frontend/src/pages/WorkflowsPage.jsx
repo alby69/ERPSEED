@@ -4,6 +4,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, ApiOutl
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch } from '../utils';
 import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
+import Layout from '../components/Layout';
 import ColumnSettingsButton from '../components/ColumnSettingsButton';
 
 const { TextArea } = Input;
@@ -211,174 +212,176 @@ const WorkflowsPage = () => {
     const executionColumns = [
         {
             title: 'ID',
-            dataIndex: 'id',
-            key: 'id',
+            dataIndex: 'id', // No change needed here
+            key: 'id', // No change needed here
         },
         {
             title: 'Event',
-            dataIndex: 'trigger_event',
-            key: 'trigger_event',
+            dataIndex: 'trigger_event', // No change needed here
+            key: 'trigger_event', // No change needed here
         },
         {
             title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
+            dataIndex: 'status', // No change needed here
+            key: 'status', // No change needed here
             render: (status) => {
                 const colors = {
                     completed: 'green',
                     failed: 'red',
                     running: 'blue',
                     cancelled: 'orange',
-                };
+                }; // No change needed here
                 return <Tag color={colors[status] || 'default'}>{status}</Tag>;
             },
         },
         {
             title: 'Started',
-            dataIndex: 'started_at',
-            key: 'started_at',
+            dataIndex: 'started_at', // No change needed here
+            key: 'started_at', // No change needed here
             render: (text) => text ? new Date(text).toLocaleString() : '-',
         },
         {
             title: 'Completed',
-            dataIndex: 'completed_at',
-            key: 'completed_at',
+            dataIndex: 'completed_at', // No change needed here
+            key: 'completed_at', // No change needed here
             render: (text) => text ? new Date(text).toLocaleString() : '-',
         },
         {
             title: 'Error',
-            dataIndex: 'error_message',
-            key: 'error_message',
+            dataIndex: 'error_message', // No change needed here
+            key: 'error_message', // No change needed here
             render: (text) => text ? <span style={{ color: 'red' }}>{text}</span> : '-',
         },
     ];
 
     return (
-        <>
-            <h1>Workflow Automation</h1>
-            <Alert
-                message="Workflows allow you to automate actions based on events. Create a workflow and add steps to define automation logic."
-                type="info"
-                showIcon
-                style={{ marginBottom: '16px' }}
-            />
+        <Layout>
+            <>
+                <h1>Automazione (Workflow)</h1>
+                <Alert
+                    message="Workflows allow you to automate actions based on events. Create a workflow and add steps to define automation logic."
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: '16px' }}
+                />
 
-            <Tabs
-                activeKey={activeTab}
-                onChange={setActiveTab}
-                items={[
-                    {
-                        key: 'list',
-                        label: 'Workflows',
-                        children: (
-                            <Card
-                                extra={<ColumnSettingsButton manager={colManager} />}
-                            >
-                                <Space style={{ marginBottom: 16 }}>
-                                    <Button
-                                        type="primary"
-                                        icon={<PlusOutlined />}
-                                        onClick={handleCreate}
-                                    >
-                                        Nuovo Workflow
-                                    </Button>
-                                    <Button
-                                        icon={<BuildOutlined />}
-                                        onClick={() => navigate(`/projects/${projectId}/workflow-builder`)}
-                                    >
-                                        Builder Visivo
-                                    </Button>
-                                </Space>
-                                <Table
-                                    columns={colManager.processedColumns}
-                                    dataSource={workflows}
-                                    loading={loading}
-                                    rowKey="id"
-                                />
-                            </Card>
-                        ),
-                    },
-                    {
-                        key: 'detail',
-                        label: 'Workflow Details',
-                        disabled: !selectedWorkflow,
-                        children: selectedWorkflow ? (
-                            <Card>
-                                <h2>{selectedWorkflow.name}</h2>
-                                <p>{selectedWorkflow.description}</p>
-                                <p><strong>Trigger:</strong> <Tag color="blue">{selectedWorkflow.trigger_event}</Tag></p>
-                                <p><strong>Status:</strong> {selectedWorkflow.is_active ? 'Active' : 'Inactive'}</p>
-
-                                <h3>Steps</h3>
-                                {selectedWorkflow.steps && selectedWorkflow.steps.length > 0 ? (
+                <Tabs
+                    activeKey={activeTab}
+                    onChange={setActiveTab}
+                    items={[
+                        {
+                            key: 'list',
+                            label: 'Workflows',
+                            children: (
+                                <Card
+                                    extra={<ColumnSettingsButton manager={colManager} />}
+                                >
+                                    <Space style={{ marginBottom: 16 }}>
+                                        <Button
+                                            type="primary"
+                                            icon={<PlusOutlined />}
+                                            onClick={handleCreate}
+                                        >
+                                            Nuovo Workflow
+                                        </Button>
+                                        <Button
+                                            icon={<BuildOutlined />}
+                                            onClick={() => navigate(`/projects/${projectId}/workflow-builder`)}
+                                        >
+                                            Builder Visivo
+                                        </Button>
+                                    </Space>
                                     <Table
-                                        dataSource={selectedWorkflow.steps}
+                                        columns={colManager.processedColumns}
+                                        dataSource={workflows}
+                                        loading={loading}
                                         rowKey="id"
-                                        pagination={false}
-                                        columns={[
-                                            { title: 'Order', dataIndex: 'order', key: 'order' },
-                                            { title: 'Name', dataIndex: 'name', key: 'name' },
-                                            { title: 'Type', dataIndex: 'step_type', key: 'step_type' },
-                                            { title: 'Configuration', dataIndex: 'config', key: 'config',
-                                              render: (config) => <pre>{JSON.stringify(config, null, 2)}</pre> },
-                                        ]}
                                     />
-                                ) : (
-                                    <p>No steps defined</p>
-                                )}
+                                </Card>
+                            ),
+                        },
+                        {
+                            key: 'detail',
+                            label: 'Workflow Details',
+                            disabled: !selectedWorkflow,
+                            children: selectedWorkflow ? (
+                                <Card>
+                                    <h2>{selectedWorkflow.name}</h2>
+                                    <p>{selectedWorkflow.description}</p>
+                                    <p><strong>Trigger:</strong> <Tag color="blue">{selectedWorkflow.trigger_event}</Tag></p>
+                                    <p><strong>Status:</strong> {selectedWorkflow.is_active ? 'Active' : 'Inactive'}</p>
 
-                                <h3 style={{ marginTop: '24px' }}>Recent Executions</h3>
-                                <Table
-                                    dataSource={executions}
-                                    rowKey="id"
-                                    pagination={{ pageSize: 10 }}
-                                    columns={executionColumns}
-                                />
-                            </Card>
-                        ) : (
-                            <p>Select a workflow to view details</p>
-                        ),
-                    },
-                ]}
-            />
+                                    <h3>Steps</h3>
+                                    {selectedWorkflow.steps && selectedWorkflow.steps.length > 0 ? (
+                                        <Table
+                                            dataSource={selectedWorkflow.steps}
+                                            rowKey="id"
+                                            pagination={false}
+                                            columns={[
+                                                { title: 'Order', dataIndex: 'order', key: 'order' },
+                                                { title: 'Name', dataIndex: 'name', key: 'name' },
+                                                { title: 'Type', dataIndex: 'step_type', key: 'step_type' },
+                                                { title: 'Configuration', dataIndex: 'config', key: 'config',
+                                                render: (config) => <pre>{JSON.stringify(config, null, 2)}</pre> },
+                                            ]}
+                                        />
+                                    ) : (
+                                        <p>No steps defined</p>
+                                    )}
 
-            <Modal
-                title={editingWorkflow ? 'Edit Workflow' : 'New Workflow'}
-                open={modalVisible}
-                onCancel={() => setModalVisible(false)}
-                onOk={form.submit}
-            >
-                <Form form={form} layout="vertical" onFinish={handleSubmit}>
-                    <Form.Item
-                        name="name"
-                        label="Name"
-                        rules={[{ required: true, message: 'Enter workflow name' }]}
-                    >
-                        <Input />
-                    </Form.Item>
-                    <Form.Item
-                        name="description"
-                        label="Description"
-                    >
-                        <TextArea rows={3} />
-                    </Form.Item>
-                    <Form.Item
-                        name="trigger_event"
-                        label="Trigger Event"
-                        rules={[{ required: true, message: 'Select a trigger event' }]}
-                    >
-                        <Select>
-                            <Select.Option value="*">Any event</Select.Option>
-                            {triggers.map((trigger) => (
-                                <Select.Option key={trigger} value={trigger}>
-                                    {trigger}
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-                </Form>
-            </Modal>
-        </>
+                                    <h3 style={{ marginTop: '24px' }}>Recent Executions</h3>
+                                    <Table
+                                        dataSource={executions}
+                                        rowKey="id"
+                                        pagination={{ pageSize: 10 }}
+                                        columns={executionColumns}
+                                    />
+                                </Card>
+                            ) : (
+                                <p>Select a workflow to view details</p>
+                            ),
+                        },
+                    ]}
+                />
+
+                <Modal
+                    title={editingWorkflow ? 'Edit Workflow' : 'New Workflow'}
+                    open={modalVisible}
+                    onCancel={() => setModalVisible(false)}
+                    onOk={form.submit}
+                >
+                    <Form form={form} layout="vertical" onFinish={handleSubmit}>
+                        <Form.Item
+                            name="name"
+                            label="Name"
+                            rules={[{ required: true, message: 'Enter workflow name' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+                        <Form.Item
+                            name="description"
+                            label="Description"
+                        >
+                            <TextArea rows={3} />
+                        </Form.Item>
+                        <Form.Item
+                            name="trigger_event"
+                            label="Trigger Event"
+                            rules={[{ required: true, message: 'Select a trigger event' }]}
+                        >
+                            <Select>
+                                <Select.Option value="*">Any event</Select.Option>
+                                {triggers.map((trigger) => (
+                                    <Select.Option key={trigger} value={trigger}>
+                                        {trigger}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Form>
+                </Modal>
+            </>
+        </Layout>
     );
 };
 

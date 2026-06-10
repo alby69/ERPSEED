@@ -1,6 +1,8 @@
 import React from 'react';
 import GenericCrudPage from '../components/GenericCrudPage';
 import { BASE_URL } from '@/utils'; // Import BASE_URL for avatar path
+import Layout from '../components/Layout';
+
 // No date fields in this page
 function Users() {
   const columns = [
@@ -33,12 +35,14 @@ function Users() {
   ];
 
   return (
+    <Layout>
     <GenericCrudPage
       pageTitle="Gestione Utenti"
       apiPath="/users"
       columns={columns}
       formFields={formFields}
     />
+    </Layout>
   );
 }
 

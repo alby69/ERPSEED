@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../utils';
 import ChartWidget from '../components/ChartWidget';
+import Layout from '../components/Layout';
 
 const CHART_TYPES = [
   { value: 'bar', label: 'Bar Chart' },
@@ -235,26 +236,27 @@ function SysChartBuilder() {
   if (loading) return <div className="p-4">Loading...</div>;
 
   return (
-    <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>BI Builder - Charts</h2>
-        <button className="btn btn-primary" onClick={() => { setEditingChart(null); setNewChart({ title: '', type: 'bar', model_id: '', x_axis: '', y_axis: '', aggregation: 'sum', filters: '', filters_config: [] }); setShowModal(true); }}>+ New Chart</button>
-      </div>
+    <Layout>
+      <div className="container mt-4">
+        <div className="d-flex justify-content-between align-items-center mb-4"> Analytics (
+          <h2>Chart Builder)</h2>
+          <button className="btn btn-primary" onClick={() => { setEditingChart(null); setNewChart({ title: '', type: 'bar', model_id: '', x_axis: '', y_axis: '', aggregation: 'sum', filters: '', filters_config: [] }); setShowModal(true); }}>+ New Chart</button>
+        </div>
 
-      <div className="row">
-        {charts.map(chart => (
-          <div key={chart.id} className="col-md-6 mb-4">
-            <div className="card h-100 shadow-sm">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">{chart.title}</h5>
-                <div>
-                  <button className="btn btn-sm btn-outline-secondary me-1" onClick={() => openFiltersConfig(chart)} title="Configure Filters">
-                    <span>⚙️</span>
-                  </button>
-                  <button className="btn btn-sm btn-outline-primary me-1" onClick={() => handleEdit(chart)}>Edit</button>
-                  <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(chart.id)}>&times;</button>
+        <div className="row">
+          {charts.map(chart => (
+            <div key={chart.id} className="col-md-6 mb-4">
+              <div className="card h-100 shadow-sm">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                  <h5 className="mb-0">{chart.title}</h5>
+                  <div>
+                    <button className="btn btn-sm btn-outline-secondary me-1" onClick={() => openFiltersConfig(chart)}>
+                      <span>⚙️</span>
+                    </button>
+                    <button className="btn btn-sm btn-outline-primary me-1" onClick={() => handleEdit(chart)}>Edit</button>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(chart.id)}>&times;</button>
+                  </div>
                 </div>
-              </div>
               <div className="card-body" style={{ minHeight: '300px' }}>
                 <ChartWidget chartId={chart.id} />
               </div>
@@ -412,7 +414,8 @@ function SysChartBuilder() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   );
 }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiFetch } from '../utils';
 import GenericCrudPage from '../components/GenericCrudPage';
+import Layout from '../components/Layout';
 
 // Funzione helper per valutare formule frontend
 const evaluateFrontendFormula = (formula, row) => {
@@ -249,12 +250,14 @@ function DynamicPageWrapper() {
   if (!config) return <div>Model configuration not found.</div>;
 
   return (
-    <GenericCrudPage
-      pageTitle={config.pageTitle}
-      apiPath={config.apiPath}
-      columns={config.columns}
-      formFields={config.formFields}
-    />
+    <Layout>
+      <GenericCrudPage
+        pageTitle={config.pageTitle}
+        apiPath={config.apiPath}
+        columns={config.columns}
+        formFields={config.formFields}
+      />
+    </Layout>
   );
 }
 

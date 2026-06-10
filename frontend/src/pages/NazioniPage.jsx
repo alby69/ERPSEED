@@ -102,8 +102,7 @@ export default function NazioniPage() {
   return (
     <Layout>
       <div style={{ padding: '0' }}>
-        <Card
-          title={<Space><GlobalOutlined /><span>Nazioni</span></Space>}
+        <Card title={<Space><GlobalOutlined /><span>Geografia (Nazioni)</span></Space>}
           extra={
             <Space>
               <ColumnSettingsButton manager={colManager} />

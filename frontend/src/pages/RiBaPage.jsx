@@ -6,6 +6,7 @@ import dayjs from 'dayjs'; // Keep dayjs for display in modal
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '@/components/Layout';
 
 const statusColors = { draft: 'default', sent: 'blue', partially_collected: 'orange', collected: 'green', rejected: 'red' }; // This line was outside the component, moving it inside the export default function
 
@@ -103,12 +104,13 @@ const RiBaPage = () => {
     const colManager = useColumnManagerWithDrawer('riba', rawColumns);
 
     return (
+        <Layout>
         <div style={{ padding: 24 }}>
             <Row gutter={16} style={{ marginBottom: 16 }}>
                 <Col span={6}><Card size="small"><Statistic title="Totale Invii" value={totalAmount} precision={2} prefix="€" /></Card></Col>
                 <Col span={6}><Card size="small"><Statistic title="Incassato" value={collectedAmount} precision={2} prefix="€" /></Card></Col>
             </Row>
-            <Card title="Ri.Ba. (Ricevute Bancarie)" extra={
+            <Card title="Contabilità (Ri.Ba. - Ricevute Bancarie)" extra={
                 <Space>
                     <ColumnSettingsButton manager={colManager} />
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuovo Invio</Button>
@@ -127,6 +129,7 @@ const RiBaPage = () => {
                 </Form>
             </Modal>
         </div>
+        </Layout>
     );
 };
 

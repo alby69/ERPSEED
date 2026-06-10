@@ -7,6 +7,7 @@ import { formatDateForDisplay } from '@/utils/dateUtils';
 import { useTheme } from '../context';
 import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
 import ColumnSettingsButton from '../components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 function Sales() {
     const { themeConfig } = useTheme();
@@ -68,24 +69,26 @@ function Sales() {
     }
 
   return (
-    <>
-      <div style={{ padding: 24, background: themeConfig.mode === 'dark' ? '#141414' : '#fff', borderBottom: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-            <Typography.Title level={4} style={{ margin: 0 }}>Sales Orders</Typography.Title>
-            <Typography.Text type="secondary">Manage all sales orders</Typography.Text>
+    <Layout>
+      <>
+        <div style={{ padding: 24, background: themeConfig.mode === 'dark' ? '#141414' : '#fff', borderBottom: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+              <Typography.Title level={4} style={{ margin: 0 }}>Vendite (Ordini Vendita)</Typography.Title>
+              <Typography.Text type="secondary">Manage all sales orders</Typography.Text>
+          </div>
+          <Space>
+              <ColumnSettingsButton manager={colManager} />
+              <Button key="1" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/sales/new')}>
+                  New Sales Order
+              </Button>
+          </Space>
         </div>
-        <Space>
-            <ColumnSettingsButton manager={colManager} />
-            <Button key="1" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/sales/new')}>
-                New Sales Order
-            </Button>
-        </Space>
-      </div>
-      <div style={{ padding: 24 }}>
-        {error && <Alert message="Error" description={error} type="error" showIcon className="mb-4" />}
-        <Table dataSource={orders} columns={colManager.processedColumns} rowKey="id" pagination={pagination} loading={loading} onChange={handleTableChange} />
-      </div>
-    </>
+        <div style={{ padding: 24 }}>
+          {error && <Alert message="Error" description={error} type="error" showIcon className="mb-4" />}
+          <Table dataSource={orders} columns={colManager.processedColumns} rowKey="id" pagination={pagination} loading={loading} onChange={handleTableChange} />
+        </div>
+      </>
+    </Layout>
   );
 }
 

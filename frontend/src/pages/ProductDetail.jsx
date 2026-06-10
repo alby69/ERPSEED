@@ -4,6 +4,7 @@ import { Form, Input, InputNumber, Switch, Button, Card, Space, Spin, Alert, Typ
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { apiClient } from './api';
 import { useTheme } from '../context';
+import Layout from '../components/Layout';
 
 function ProductDetail() {
   const { themeConfig } = useTheme();
@@ -48,11 +49,12 @@ function ProductDetail() {
   }
 
   return (
-    <>
+    <Layout>
+      <div className="product-detail-page">
       <div style={{ padding: 24, background: themeConfig.mode === 'dark' ? '#141414' : '#fff', borderBottom: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Space>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/products')} />
-          <Typography.Title level={4} style={{ margin: 0 }}>{isNew ? 'New Product' : 'Edit Product'}</Typography.Title>
+          <Typography.Title level={4} style={{ margin: 0 }}>{isNew ? 'Anagrafiche (Nuovo Prodotto)' : `Anagrafiche (Modifica Prodotto: ${form.getFieldValue('name')})`}</Typography.Title>
         </Space>
         <Button type="primary" icon={<SaveOutlined />} onClick={() => form.submit()} loading={saving}>
           Save
@@ -156,7 +158,8 @@ function ProductDetail() {
           </Form>
         </Card>
       </div>
-    </>
+      </div>
+    </Layout>
   );
 }
 

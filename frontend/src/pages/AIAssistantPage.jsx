@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AIAssistant from '../components/ui/AIAssistant';
+import Layout from '../components/Layout';
 
 const AIAssistantPage = () => {
   const { projectId } = useParams();
@@ -25,6 +26,7 @@ const AIAssistantPage = () => {
   };
 
   return (
+    <Layout>
     <div style={{ height: '100%', padding: 0 }}>
       <AIAssistant
         visible={true}
@@ -33,6 +35,7 @@ const AIAssistantPage = () => {
         onConfigApplied={handleConfigApplied}
       />
     </div>
+    </Layout>
   );
 };
 

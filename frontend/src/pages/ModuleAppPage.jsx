@@ -267,7 +267,7 @@ function ModuleAppPage() {
             onClick={() => navigate(`/projects/${projectId}`)}
             style={{ color: '#fff' }}
           />
-          <AppstoreOutlined style={{ fontSize: 24 }} />
+          <AppstoreOutlined style={{ fontSize: 24 }} /> Applicazioni (
           <div>
             <Title level={4} style={{ color: '#fff', margin: 0 }}>
               {module.title || module.name}

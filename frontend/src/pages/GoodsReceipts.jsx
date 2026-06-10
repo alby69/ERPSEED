@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const statusColors = { draft: 'default', completed: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', completed: 'Completato', cancelled: 'Annullato' };
@@ -98,62 +99,64 @@ export default function GoodsReceipts() {
     const colManager = useColumnManagerWithDrawer('goods_receipts', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            <Card title="DDT Entrata Merci" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo DDT</Button></Space>}>
-                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
-                    expandedRowRender={(r) => r.lines ? (
-                        <Table dataSource={r.lines} rowKey="id" size="small" pagination={false}
-                            columns={[
-                                { title: 'Prodotto', dataIndex: 'product_id', key: 'product_id', render: (id) => { const p = products.find(x => x.id === id); return p ? `${p.code || ''} - ${p.name}` : `ID: ${id}`; } },
-                                { title: 'Q.tà', dataIndex: 'quantity', key: 'quantity' },
-                                { title: 'Descrizione', dataIndex: 'description', key: 'description' },
-                            ]} />
-                    ) : null}
-                />
-            </Card>
-            <Modal title={editingRecord ? 'Modifica DDT' : 'Nuovo DDT Entrata'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>
-                <Form form={form} layout="vertical">
-                    <Space style={{ width: '100%' }} size={16}>
-                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
-                        <Form.Item name="supplier_id" label="Fornitore" rules={[{ required: true }]} style={{ minWidth: 250 }}>
-                            <Select showSearch placeholder="Seleziona fornitore" optionFilterProp="label"
-                                options={suppliers.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
-                        </Form.Item>
-                        <Form.Item name="purchase_order_id" label="Ordine Acquisto">
-                            <Select allowClear showSearch placeholder="(opzionale)" style={{ width: 200 }} optionFilterProp="label"
-                                options={purchaseOrders.map(po => ({ value: po.id, label: po.number }))} />
-                        </Form.Item>
-                    </Space>
-                    <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
-                    <Divider>Righe Carico</Divider>
-                    <Form.List name="lines">
-                        {(fields, { add, remove }) => (
-                            <>
-                                {fields.map(({ key, name, ...rest }) => (
-                                    <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                                        <Form.Item {...rest} name={[name, 'product_id']} rules={[{ required: true }]}>
-                                            <Select showSearch placeholder="Prodotto" style={{ width: 200 }} optionFilterProp="label"
-                                                options={products.map(p => ({ value: p.id, label: `${p.code || ''} - ${p.name}` }))} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'quantity']} rules={[{ required: true }]}>
-                                            <InputNumber min={0.01} step={1} placeholder="Q.tà" style={{ width: 80 }} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'description']}>
-                                            <Input placeholder="Descrizione" style={{ width: 200 }} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'location_id']}>
-                                            <Select placeholder="Ubicazione" style={{ width: 150 }} allowClear
-                                                options={locations.map(l => ({ value: l.id, label: l.name }))} />
-                                        </Form.Item>
-                                        <Button type="link" danger onClick={() => remove(name)}>Rimuovi</Button>
-                                    </Space>
-                                ))}
-                                <Button type="dashed" onClick={() => add({ quantity: 1 })} icon={<PlusOutlined />}>Aggiungi Riga</Button>
-                            </>
-                        )}
-                    </Form.List>
-                </Form>
-            </Modal>
-        </div>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card title="DDT Entrata Merci" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo DDT</Button></Space>}>
+                    <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
+                        expandedRowRender={(r) => r.lines ? (
+                            <Table dataSource={r.lines} rowKey="id" size="small" pagination={false}
+                                columns={[
+                                    { title: 'Prodotto', dataIndex: 'product_id', key: 'product_id', render: (id) => { const p = products.find(x => x.id === id); return p ? `${p.code || ''} - ${p.name}` : `ID: ${id}`; } },
+                                    { title: 'Q.tà', dataIndex: 'quantity', key: 'quantity' },
+                                    { title: 'Descrizione', dataIndex: 'description', key: 'description' },
+                                ]} />
+                        ) : null}
+                    />
+                </Card>
+                <Modal title={editingRecord ? 'Modifica DDT' : 'Nuovo DDT Entrata'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>
+                    <Form form={form} layout="vertical">
+                        <Space style={{ width: '100%' }} size={16}>
+                            <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
+                            <Form.Item name="supplier_id" label="Fornitore" rules={[{ required: true }]} style={{ minWidth: 250 }}>
+                                <Select showSearch placeholder="Seleziona fornitore" optionFilterProp="label"
+                                    options={suppliers.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
+                            </Form.Item>
+                            <Form.Item name="purchase_order_id" label="Ordine Acquisto">
+                                <Select allowClear showSearch placeholder="(opzionale)" style={{ width: 200 }} optionFilterProp="label"
+                                    options={purchaseOrders.map(po => ({ value: po.id, label: po.number }))} />
+                            </Form.Item>
+                        </Space>
+                        <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
+                        <Divider>Righe Carico</Divider>
+                        <Form.List name="lines">
+                            {(fields, { add, remove }) => (
+                                <>
+                                    {fields.map(({ key, name, ...rest }) => (
+                                        <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                                            <Form.Item {...rest} name={[name, 'product_id']} rules={[{ required: true }]}>
+                                                <Select showSearch placeholder="Prodotto" style={{ width: 200 }} optionFilterProp="label"
+                                                    options={products.map(p => ({ value: p.id, label: `${p.code || ''} - ${p.name}` }))} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'quantity']} rules={[{ required: true }]}>
+                                                <InputNumber min={0.01} step={1} placeholder="Q.tà" style={{ width: 80 }} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'description']}>
+                                                <Input placeholder="Descrizione" style={{ width: 200 }} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'location_id']}>
+                                                <Select placeholder="Ubicazione" style={{ width: 150 }} allowClear
+                                                    options={locations.map(l => ({ value: l.id, label: l.name }))} />
+                                            </Form.Item>
+                                            <Button type="link" danger onClick={() => remove(name)}>Rimuovi</Button>
+                                        </Space>
+                                    ))}
+                                    <Button type="dashed" onClick={() => add({ quantity: 1 })} icon={<PlusOutlined />}>Aggiungi Riga</Button>
+                                </>
+                            )}
+                        </Form.List>
+                    </Form>
+                </Modal>
+            </div>
+        </Layout>
     );
 };

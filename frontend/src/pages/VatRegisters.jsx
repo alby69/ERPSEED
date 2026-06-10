@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const registerTypes = { sales: 'Vendite', purchases: 'Acquisti', corrispettivi: 'Corrispettivi' };
 const statusColors = { draft: 'default', computed: 'blue', paid: 'green', credited: 'orange' };
@@ -237,14 +238,16 @@ const LiquidationTab = () => {
 
 // ========== Main Page ==========
 const VatRegisters = () => (
-    <div style={{ padding: 24 }}>
-        <Card title="Registri IVA">
-            <Tabs items={[
-                { key: 'register', label: 'Registro', children: <VatRegisterTab /> },
-                { key: 'liquidation', label: 'Liquidazioni', children: <LiquidationTab /> },
-            ]} />
-        </Card>
-    </div>
+    <Layout>
+        <div style={{ padding: 24 }}>
+            <Card title="Contabilità (Registri IVA)">
+                <Tabs items={[
+                    { key: 'register', label: 'Registro', children: <VatRegisterTab /> },
+                    { key: 'liquidation', label: 'Liquidazioni', children: <LiquidationTab /> },
+                ]} />
+            </Card>
+        </div>
+    </Layout>
 );
 
 export default VatRegisters;

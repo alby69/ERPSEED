@@ -276,7 +276,7 @@ export default function IndirizziPage() {
         <Card
           title={
             <Space>
-              <EnvironmentOutlined />
+              <EnvironmentOutlined /> Anagrafiche (
               <span>Gestione Indirizzi</span>
               <HelpDrawer moduleName="indirizzi" moduleTitle="Guida Indirizzi" />
             </Space>

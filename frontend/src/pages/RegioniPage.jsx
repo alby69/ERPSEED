@@ -49,7 +49,7 @@ export default function RegioniPage() {
     <Layout>
       <div style={{ padding: '0' }}>
         <Card
-          title={<Space><GlobalOutlined /><span>Regioni</span></Space>}
+          title={<Space><GlobalOutlined /><span>Geografia (Regioni)</span></Space>}
           extra={<ColumnSettingsButton manager={colManager} />}
         >
           <Input.Search

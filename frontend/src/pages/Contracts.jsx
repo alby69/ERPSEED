@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const statusColors = { draft: 'default', active: 'green', completed: 'blue', terminated: 'red', cancelled: 'orange' };
 
@@ -60,32 +61,34 @@ export default function Contracts() {
     const colManager = useColumnManagerWithDrawer('contracts', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            <Card title="Contratti" extra={<ColumnSettingsButton manager={colManager} />}>
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Contratto</Button>
-                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
-                <Modal title={editing ? 'Modifica Contratto' : 'Nuovo Contratto'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
-                    <Form form={form} layout="vertical">
-                        <Space size={16}>
-                            <Form.Item name="name" label="Nome" rules={[{ required: true }]}><Input style={{ width: 250 }} /></Form.Item>
-                            <Form.Item name="party_id" label="Cliente/Foraitore" rules={[{ required: true }]}>
-                                <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={subjects.map(s => ({ value: s.id, label: s.nome || s.ragione_sociale || `${s.name || ''} ${s.last_name || ''}` }))} />
-                            </Form.Item>
-                        </Space>
-                        <Space size={16}> {/* Use formatDateForDisplay for DatePicker format */}
-                            <Form.Item name="start_date" label="Data Inizio" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
-                            <Form.Item name="end_date" label="Data Fine"><DatePicker format={formatDateForDisplay} /></Form.Item>
-                            <Form.Item name="value" label="Valore"><InputNumber min={0} step={100} prefix="€" /></Form.Item>
-                            <Form.Item name="status" label="Stato"><Select options={[{ value: 'draft', label: 'Bozza' }, { value: 'active', label: 'Attivo' }, { value: 'completed', label: 'Completato' }, { value: 'terminated', label: 'Cessato' }, { value: 'cancelled', label: 'Annullato' }]} /></Form.Item>
-                        </Space>
-                        <Form.Item name="notes" label="Note"><Input.TextArea rows={3} /></Form.Item>
-                        <Space size={16}>
-                            <Form.Item name="auto_renew" label="Rinnovo Automatico"><Select options={[{ value: true, label: 'Sì' }, { value: false, label: 'No' }]} /></Form.Item>
-                            <Form.Item name="renewal_notice_days" label="Giorni Preavviso"><InputNumber min={0} /></Form.Item>
-                        </Space>
-                    </Form>
-                </Modal>
-            </Card>
-        </div>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card title="Vendite (Contratti)" extra={<ColumnSettingsButton manager={colManager} />}>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Contratto</Button>
+                    <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
+                    <Modal title={editing ? 'Modifica Contratto' : 'Nuovo Contratto'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
+                        <Form form={form} layout="vertical">
+                            <Space size={16}>
+                                <Form.Item name="name" label="Nome" rules={[{ required: true }]}><Input style={{ width: 250 }} /></Form.Item>
+                                <Form.Item name="party_id" label="Cliente/Foraitore" rules={[{ required: true }]}>
+                                    <Select style={{ width: 250 }} showSearch optionFilterProp="label" options={subjects.map(s => ({ value: s.id, label: s.nome || s.ragione_sociale || `${s.name || ''} ${s.last_name || ''}` }))} />
+                                </Form.Item>
+                            </Space>
+                            <Space size={16}> {/* Use formatDateForDisplay for DatePicker format */}
+                                <Form.Item name="start_date" label="Data Inizio" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
+                                <Form.Item name="end_date" label="Data Fine"><DatePicker format={formatDateForDisplay} /></Form.Item>
+                                <Form.Item name="value" label="Valore"><InputNumber min={0} step={100} prefix="€" /></Form.Item>
+                                <Form.Item name="status" label="Stato"><Select options={[{ value: 'draft', label: 'Bozza' }, { value: 'active', label: 'Attivo' }, { value: 'completed', label: 'Completato' }, { value: 'terminated', label: 'Cessato' }, { value: 'cancelled', label: 'Annullato' }]} /></Form.Item>
+                            </Space>
+                            <Form.Item name="notes" label="Note"><Input.TextArea rows={3} /></Form.Item>
+                            <Space size={16}>
+                                <Form.Item name="auto_renew" label="Rinnovo Automatico"><Select options={[{ value: true, label: 'Sì' }, { value: false, label: 'No' }]} /></Form.Item>
+                                <Form.Item name="renewal_notice_days" label="Giorni Preavviso"><InputNumber min={0} /></Form.Item>
+                            </Space>
+                        </Form>
+                    </Modal>
+                </Card>
+            </div>
+        </Layout>
     );
 };

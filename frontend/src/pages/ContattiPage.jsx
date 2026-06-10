@@ -194,7 +194,7 @@ export default function ContattiPage() {
         <Card
           title={
             <Space>
-              <PhoneOutlined />
+              <PhoneOutlined /> Anagrafiche (
               <span>Gestione Contatti</span>
             </Space>
           }

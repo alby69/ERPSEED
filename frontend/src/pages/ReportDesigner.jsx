@@ -4,6 +4,7 @@ import { PlusOutlined, EditOutlined, PlayCircleOutlined, HistoryOutlined, Delete
 import { apiFetch } from '@/utils';
 
 import { formatDateTimeForDisplay } from '@/utils/dateUtils';
+import Layout from '../components/Layout';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 const ReportDesigner = () => {
@@ -127,96 +128,98 @@ const ReportDesigner = () => {
     const resultColumns = results?.columns?.map(c => ({ title: c, dataIndex: c, ellipsis: true })) || [];
 
     return (
-        <div style={{ padding: 24 }}>
-            <Row gutter={16}>
-                <Col span={activeReport ? 14 : 24}>
-                    <Card title="Report Designer" extra={
-                        <Space>
-                            <ColumnSettingsButton manager={colManager} />
-                            <Button type="primary" icon={<PlusOutlined />} onClick={() => { resetForm(); setShowDesigner(true); }}>Nuovo Report</Button>
-                        </Space>
-                    }>
-                        <Table dataSource={reports} columns={colManager.processedColumns} rowKey="id" loading={loading} size="small" />
-                    </Card>
-                </Col>
-                {activeReport && (
-                    <Col span={10}>
-                        <Card title={`Risultati: ${activeReport.name}`} size="small" extra={
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Row gutter={16}>
+                    <Col span={activeReport ? 14 : 24}>
+                        <Card title="Analytics (Report Designer)" extra={
                             <Space>
-                                <Badge count={results?.row_count || 0}><Tag>{results?.execution_time_ms}ms</Tag></Badge>
-                                <Button size="small" icon={<HistoryOutlined />} onClick={() => fetchHistory(activeReport.id)}>Storico</Button>
+                                <ColumnSettingsButton manager={colManager} />
+                                <Button type="primary" icon={<PlusOutlined />} onClick={() => { resetForm(); setShowDesigner(true); }}>Nuovo Report</Button>
                             </Space>
                         }>
-                            <Spin spinning={executing}>
-                                {results ? (
-                                    <Table dataSource={results.data} columns={resultColumns} rowKey={(_, i) => i} pagination={{ pageSize: 20 }} size="small" scroll={{ x: 'max-content' }} />
-                                ) : (
-                                    <Empty description="Esegui il report per vedere i risultati" />
-                                )}
-                            </Spin>
-                            {history.length > 0 && (
-                                <Card title="Esecuzioni Recenti" size="small" style={{ marginTop: 8 }}>
-                                    <Table dataSource={history} size="small" pagination={false}
-                                        columns={[
-                                            { title: 'Data', dataIndex: 'created_at', render: (v) => formatDateTimeForDisplay(v) || '-' },
-                                            { title: 'Righe', dataIndex: 'row_count' },
-                                            { title: 'Tempo', dataIndex: 'execution_time_ms', render: (v) => `${v}ms` },
-                                            { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={v === 'completed' ? 'green' : 'red'}>{v}</Tag> },
-                                        ]} rowKey="id" />
-                                </Card>
-                            )}
+                            <Table dataSource={reports} columns={colManager.processedColumns} rowKey="id" loading={loading} size="small" />
                         </Card>
                     </Col>
-                )}
-            </Row>
-
-            <Drawer title={editing ? 'Modifica Report' : 'Nuovo Report'} open={showDesigner} onClose={() => setShowDesigner(false)} width={500} extra={<Button type="primary" onClick={handleSave}>Salva</Button>}>
-                <Form layout="vertical">
-                    <Form.Item label="Codice" required><Input value={code} onChange={e => setCode(e.target.value)} /></Form.Item>
-                    <Form.Item label="Nome" required><Input value={name} onChange={e => setName(e.target.value)} /></Form.Item>
-                    <Form.Item label="Categoria"><Select value={category} onChange={setCategory} options={[
-                        { value: 'general', label: 'Generale' }, { value: 'sales', label: 'Vendite' },
-                        { value: 'purchases', label: 'Acquisti' }, { value: 'inventory', label: 'Magazzino' },
-                        { value: 'accounting', label: 'Contabilità' }, { value: 'hr', label: 'HR' },
-                    ]} /></Form.Item>
-                    <Form.Item label="Origine Dati" required>
-                        <Select value={source} onChange={(v) => { setSource(v); setSelectedColumns([]); }}
-                            options={sources.map(s => ({ value: s.key, label: s.label }))} />
-                    </Form.Item>
-                    {currentSource && (
-                        <Form.Item label="Colonne" required>
-                            <Select mode="multiple" value={selectedColumns} onChange={setSelectedColumns}
-                                options={currentSource.columns.map(c => ({ value: c, label: c }))} />
-                        </Form.Item>
-                    )}
-                    <Form.Item label="Filtri">
-                        {filters.map((f, i) => (
-                            <Space key={i} style={{ display: 'flex', marginBottom: 8 }}>
-                                <Select value={f.field} onChange={(v) => updateFilter(i, 'field', v)} style={{ width: 140 }}
-                                    options={(currentSource?.columns || []).map(c => ({ value: c, label: c }))} placeholder="Campo" />
-                                <Select value={f.operator} onChange={(v) => updateFilter(i, 'operator', v)} style={{ width: 100 }}
-                                    options={[
-                                        { value: 'eq', label: '=' }, { value: 'neq', label: '!=' },
-                                        { value: 'gt', label: '>' }, { value: 'gte', label: '>=' },
-                                        { value: 'lt', label: '<' }, { value: 'lte', label: '<=' },
-                                        { value: 'like', label: 'contiene' }, { value: 'in', label: 'in' },
-                                        { value: 'is_null', label: 'è nullo' }, { value: 'is_not_null', label: 'non nullo' },
-                                    ]} />
-                                {!['is_null', 'is_not_null'].includes(f.operator) && (
-                                    <Input value={f.value} onChange={(e) => updateFilter(i, 'value', e.target.value)} placeholder="Valore" style={{ width: 120 }} />
+                    {activeReport && (
+                        <Col span={10}>
+                            <Card title={`Risultati: ${activeReport.name}`} size="small" extra={
+                                <Space>
+                                    <Badge count={results?.row_count || 0}><Tag>{results?.execution_time_ms}ms</Tag></Badge>
+                                    <Button size="small" icon={<HistoryOutlined />} onClick={() => fetchHistory(activeReport.id)}>Storico</Button>
+                                </Space>
+                            }>
+                                <Spin spinning={executing}>
+                                    {results ? (
+                                        <Table dataSource={results.data} columns={resultColumns} rowKey={(_, i) => i} pagination={{ pageSize: 20 }} size="small" scroll={{ x: 'max-content' }} />
+                                    ) : (
+                                        <Empty description="Esegui il report per vedere i risultati" />
+                                    )}
+                                </Spin>
+                                {history.length > 0 && (
+                                    <Card title="Esecuzioni Recenti" size="small" style={{ marginTop: 8 }}>
+                                        <Table dataSource={history} size="small" pagination={false}
+                                            columns={[
+                                                { title: 'Data', dataIndex: 'created_at', render: (v) => formatDateTimeForDisplay(v) || '-' },
+                                                { title: 'Righe', dataIndex: 'row_count' },
+                                                { title: 'Tempo', dataIndex: 'execution_time_ms', render: (v) => `${v}ms` },
+                                                { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={v === 'completed' ? 'green' : 'red'}>{v}</Tag> },
+                                            ]} rowKey="id" />
+                                    </Card>
                                 )}
-                                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeFilter(i)} />
-                            </Space>
-                        ))}
-                        <Button size="small" onClick={addFilter}>+ Aggiungi Filtro</Button>
-                    </Form.Item>
-                    <Form.Item label="Limite Righe"><Select value={limit} onChange={setLimit} options={[
-                        { value: 100, label: '100' }, { value: 500, label: '500' },
-                        { value: 1000, label: '1000' }, { value: 5000, label: '5000' },
-                    ]} /></Form.Item>
-                </Form>
-            </Drawer>
-        </div>
+                            </Card>
+                        </Col>
+                    )}
+                </Row>
+
+                <Drawer title={editing ? 'Modifica Report' : 'Nuovo Report'} open={showDesigner} onClose={() => setShowDesigner(false)} width={500} extra={<Button type="primary" onClick={handleSave}>Salva</Button>}>
+                    <Form layout="vertical">
+                        <Form.Item label="Codice" required><Input value={code} onChange={e => setCode(e.target.value)} /></Form.Item>
+                        <Form.Item label="Nome" required><Input value={name} onChange={e => setName(e.target.value)} /></Form.Item>
+                        <Form.Item label="Categoria"><Select value={category} onChange={setCategory} options={[
+                            { value: 'general', label: 'Generale' }, { value: 'sales', label: 'Vendite' },
+                            { value: 'purchases', label: 'Acquisti' }, { value: 'inventory', label: 'Magazzino' },
+                            { value: 'accounting', label: 'Contabilità' }, { value: 'hr', label: 'HR' },
+                        ]} /></Form.Item>
+                        <Form.Item label="Origine Dati" required>
+                            <Select value={source} onChange={(v) => { setSource(v); setSelectedColumns([]); }}
+                                options={sources.map(s => ({ value: s.key, label: s.label }))} />
+                        </Form.Item>
+                        {currentSource && (
+                            <Form.Item label="Colonne" required>
+                                <Select mode="multiple" value={selectedColumns} onChange={setSelectedColumns}
+                                    options={currentSource.columns.map(c => ({ value: c, label: c }))} />
+                            </Form.Item>
+                        )}
+                        <Form.Item label="Filtri">
+                            {filters.map((f, i) => (
+                                <Space key={i} style={{ display: 'flex', marginBottom: 8 }}>
+                                    <Select value={f.field} onChange={(v) => updateFilter(i, 'field', v)} style={{ width: 140 }}
+                                        options={(currentSource?.columns || []).map(c => ({ value: c, label: c }))} placeholder="Campo" />
+                                    <Select value={f.operator} onChange={(v) => updateFilter(i, 'operator', v)} style={{ width: 100 }}
+                                        options={[
+                                            { value: 'eq', label: '=' }, { value: 'neq', label: '!=' },
+                                            { value: 'gt', label: '>' }, { value: 'gte', label: '>=' },
+                                            { value: 'lt', label: '<' }, { value: 'lte', label: '<=' },
+                                            { value: 'like', label: 'contiene' }, { value: 'in', label: 'in' },
+                                            { value: 'is_null', label: 'è nullo' }, { value: 'is_not_null', label: 'non nullo' },
+                                        ]} />
+                                    {!['is_null', 'is_not_null'].includes(f.operator) && (
+                                        <Input value={f.value} onChange={(e) => updateFilter(i, 'value', e.target.value)} placeholder="Valore" style={{ width: 120 }} />
+                                    )}
+                                    <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeFilter(i)} />
+                                </Space>
+                            ))}
+                            <Button size="small" onClick={addFilter}>+ Aggiungi Filtro</Button>
+                        </Form.Item>
+                        <Form.Item label="Limite Righe"><Select value={limit} onChange={setLimit} options={[
+                            { value: 100, label: '100' }, { value: 500, label: '500' },
+                            { value: 1000, label: '1000' }, { value: 5000, label: '5000' },
+                        ]} /></Form.Item>
+                    </Form>
+                </Drawer>
+            </div>
+        </Layout>
     );
 };
 

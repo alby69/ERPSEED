@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 import dayjs from 'dayjs'; // Keep dayjs for time-only operations and diffs
+import Layout from '../components/Layout';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
 const statusColors = { active: 'green', inactive: 'orange', terminated: 'red', present: 'green', absent: 'red', late: 'orange', leave: 'blue', pending: 'orange', approved: 'green', rejected: 'red', draft: 'default', submitted: 'blue' }; // This line was outside the component, moving it inside the export default function
@@ -349,23 +350,25 @@ const HR = () => {
     const totalOvertime = summary?.reduce((s, r) => s + (r.overtime_hours || 0), 0) || 0;
 
     return (
-        <div style={{ padding: 24 }}>
-            {summary && (
-                <Row gutter={16} style={{ marginBottom: 16 }}>
-                    <Col span={6}><Card><Statistic title="Dipendenti" value={summary.length} /></Card></Col>
-                    <Col span={6}><Card><Statistic title="Giorni Presenza" value={totalDays} /></Card></Col>
-                    <Col span={6}><Card><Statistic title="Straordinario (h)" value={totalOvertime.toFixed(1)} /></Card></Col>
-                </Row>
-            )}
-            <Card title="Risorse Umane">
-                <Tabs items={[
-                    { key: 'employees', label: 'Dipendenti', children: <EmployeesTab /> },
-                    { key: 'departments', label: 'Reparti', children: <DepartmentsTab /> },
-                    { key: 'attendance', label: 'Presenze', children: <AttendanceTab /> },
-                    { key: 'leave', label: 'Ferie e Permessi', children: <LeaveTab /> },
-                ]} />
-            </Card>
-        </div>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                {summary && (
+                    <Row gutter={16} style={{ marginBottom: 16 }}>
+                        <Col span={6}><Card><Statistic title="Dipendenti" value={summary.length} /></Card></Col>
+                        <Col span={6}><Card><Statistic title="Giorni Presenza" value={totalDays} /></Card></Col>
+                        <Col span={6}><Card><Statistic title="Straordinario (h)" value={totalOvertime.toFixed(1)} /></Card></Col>
+                    </Row>
+                )}
+                <Card title="Risorse Umane">
+                    <Tabs items={[
+                        { key: 'employees', label: 'Dipendenti', children: <EmployeesTab /> },
+                        { key: 'departments', label: 'Reparti', children: <DepartmentsTab /> },
+                        { key: 'attendance', label: 'Presenze', children: <AttendanceTab /> },
+                        { key: 'leave', label: 'Ferie e Permessi', children: <LeaveTab /> },
+                    ]} />
+                </Card>
+            </div>
+        </Layout>
     );
 };
 

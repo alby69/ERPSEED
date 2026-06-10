@@ -611,7 +611,7 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
             </Modal>
             <div style={{ padding: '24px' }}>
                 <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Title level={2}>Test Runner</Title>
+                    <Title level={2}>Amministrazione (Test Runner)</Title>
                     <Space>
                         <Button
                             type="primary"

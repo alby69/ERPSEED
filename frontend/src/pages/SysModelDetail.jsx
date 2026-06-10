@@ -241,8 +241,8 @@ function SysModelDetail() {
   return (
     <Layout>
       <div className="container-fluid p-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>Model: {model.title}</h2>
+      <div className="d-flex justify-content-between align-items-center mb-3"> Builder (
+        <h2>Dettaglio Modello: {model.title})</h2>
         <Link to="/admin/builder" className="btn btn-secondary">Back to Models</Link>
       </div>
 

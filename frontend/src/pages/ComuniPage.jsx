@@ -305,7 +305,7 @@ export default function ComuniPage() {
       <Card style={{ marginTop: 16 }}
         title={
           <Space>
-            <GlobalOutlined />
+            <GlobalOutlined /> Geografia (
             <span>Gestione Comuni Italiani</span>
             <HelpDrawer moduleName="comuni" moduleTitle="Guida Comuni" />
           </Space>

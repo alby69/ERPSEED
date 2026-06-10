@@ -5,6 +5,7 @@ import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
+import Layout from '../components/Layout';
 
 const statusColors = {
     draft: 'default',
@@ -148,68 +149,70 @@ export default function Invoices() {
     const colManager = useColumnManagerWithDrawer('invoices', rawColumns);
 
     return (
-        <div style={{ padding: 24 }}>
-            <Card title="Fatture Emesse" extra={
-                <Space>
-                    <ColumnSettingsButton manager={colManager} />
-                    <Select allowClear placeholder="Filtra stato" style={{ width: 140 }} value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(1); }}
-                        options={[
-                            { value: '', label: 'Tutti' },
-                            { value: 'draft', label: 'Bozza' },
-                            { value: 'sent', label: 'Inviata' },
-                            { value: 'paid', label: 'Pagata' },
-                            { value: 'cancelled', label: 'Annullata' },
-                        ]} />
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Fattura</Button>
-                </Space>
-            }>
-                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
-                    pagination={{ current: page, pageSize: 20, total, onChange: setPage, showTotal: (t) => `${t} fatture` }} />
-            </Card>
-            <Modal title={editingRecord ? 'Modifica Fattura' : 'Nuova Fattura'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}
-                okText="Salva" cancelText="Annulla" width={800}>
-                <Form form={form} layout="vertical">
-                    <Space style={{ width: '100%' }} size={16}>
-                        <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
-                        <Form.Item name="due_date" label="Scadenza"><DatePicker format={formatDateForDisplay} /></Form.Item>
-                        <Form.Item name="party_id" label="Cliente" rules={[{ required: true }]} style={{ minWidth: 250 }}>
-                            <Select showSearch placeholder="Seleziona cliente" optionFilterProp="label"
-                                options={soggetti.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
-                        </Form.Item>
+        <Layout>
+            <div style={{ padding: 24 }}>
+                <Card title="Vendite (Fatture Emesse)" extra={
+                    <Space>
+                        <ColumnSettingsButton manager={colManager} />
+                        <Select allowClear placeholder="Filtra stato" style={{ width: 140 }} value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(1); }}
+                            options={[
+                                { value: '', label: 'Tutti' },
+                                { value: 'draft', label: 'Bozza' },
+                                { value: 'sent', label: 'Inviata' },
+                                { value: 'paid', label: 'Pagata' },
+                                { value: 'cancelled', label: 'Annullata' },
+                            ]} />
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Fattura</Button>
                     </Space>
-                    <Form.Item name="description" label="Descrizione"><Input /></Form.Item>
-                    <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
-                    <Divider>Righe Fattura</Divider>
-                    <Form.List name="lines">
-                        {(fields, { add, remove }) => (
-                            <>
-                                {fields.map(({ key, name, ...rest }) => (
-                                    <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                                        <Form.Item {...rest} name={[name, 'product_id']} rules={[{ required: true }]}>
-                                            <Select showSearch placeholder="Prodotto" style={{ width: 200 }} optionFilterProp="label"
-                                                options={products.map(p => ({ value: p.id, label: `${p.code || ''} - ${p.name}` }))} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'quantity']} rules={[{ required: true }]}>
-                                            <InputNumber min={0.01} step={1} placeholder="Q.tà" style={{ width: 80 }} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'unit_price']} rules={[{ required: true }]}>
-                                            <InputNumber min={0} step={0.01} prefix="€" placeholder="Prezzo" style={{ width: 120 }} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'discount_percent']}>
-                                            <InputNumber min={0} max={100} step={0.5} placeholder="Sconto %" style={{ width: 90 }} />
-                                        </Form.Item>
-                                        <Form.Item {...rest} name={[name, 'tax_percent']}>
-                                            <InputNumber min={0} max={100} step={0.1} placeholder="IVA %" style={{ width: 90 }} />
-                                        </Form.Item>
-                                        <Button type="link" danger onClick={() => remove(name)}>Rimuovi</Button>
-                                    </Space>
-                                ))}
-                                <Button type="dashed" onClick={() => add({ quantity: 1, unit_price: 0, discount_percent: 0, tax_percent: 22 })} icon={<PlusOutlined />}>Aggiungi Riga</Button>
-                            </>
-                        )}
-                    </Form.List>
-                </Form>
-            </Modal>
-        </div>
+                }>
+                    <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
+                        pagination={{ current: page, pageSize: 20, total, onChange: setPage, showTotal: (t) => `${t} fatture` }} />
+                </Card>
+                <Modal title={editingRecord ? 'Modifica Fattura' : 'Nuova Fattura'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}
+                    okText="Salva" cancelText="Annulla" width={800}>
+                    <Form form={form} layout="vertical">
+                        <Space style={{ width: '100%' }} size={16}>
+                            <Form.Item name="date" label="Data" rules={[{ required: true }]}><DatePicker format={formatDateForDisplay} /></Form.Item>
+                            <Form.Item name="due_date" label="Scadenza"><DatePicker format={formatDateForDisplay} /></Form.Item>
+                            <Form.Item name="party_id" label="Cliente" rules={[{ required: true }]} style={{ minWidth: 250 }}>
+                                <Select showSearch placeholder="Seleziona cliente" optionFilterProp="label"
+                                    options={soggetti.map(s => ({ value: s.id, label: s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` }))} />
+                            </Form.Item>
+                        </Space>
+                        <Form.Item name="description" label="Descrizione"><Input /></Form.Item>
+                        <Form.Item name="notes" label="Note"><Input.TextArea rows={2} /></Form.Item>
+                        <Divider>Righe Fattura</Divider>
+                        <Form.List name="lines">
+                            {(fields, { add, remove }) => (
+                                <>
+                                    {fields.map(({ key, name, ...rest }) => (
+                                        <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                                            <Form.Item {...rest} name={[name, 'product_id']} rules={[{ required: true }]}>
+                                                <Select showSearch placeholder="Prodotto" style={{ width: 200 }} optionFilterProp="label"
+                                                    options={products.map(p => ({ value: p.id, label: `${p.code || ''} - ${p.name}` }))} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'quantity']} rules={[{ required: true }]}>
+                                                <InputNumber min={0.01} step={1} placeholder="Q.tà" style={{ width: 80 }} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'unit_price']} rules={[{ required: true }]}>
+                                                <InputNumber min={0} step={0.01} prefix="€" placeholder="Prezzo" style={{ width: 120 }} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'discount_percent']}>
+                                                <InputNumber min={0} max={100} step={0.5} placeholder="Sconto %" style={{ width: 90 }} />
+                                            </Form.Item>
+                                            <Form.Item {...rest} name={[name, 'tax_percent']}>
+                                                <InputNumber min={0} max={100} step={0.1} placeholder="IVA %" style={{ width: 90 }} />
+                                            </Form.Item>
+                                            <Button type="link" danger onClick={() => remove(name)}>Rimuovi</Button>
+                                        </Space>
+                                    ))}
+                                    <Button type="dashed" onClick={() => add({ quantity: 1, unit_price: 0, discount_percent: 0, tax_percent: 22 })} icon={<PlusOutlined />}>Aggiungi Riga</Button>
+                                </>
+                            )}
+                        </Form.List>
+                    </Form>
+                </Modal>
+            </div>
+        </Layout>
     );
 };
