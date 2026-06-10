@@ -4,6 +4,8 @@ import { Form, Input, Button, message, Spin, Alert, Card, Modal, Divider, ColorP
 import { ExclamationCircleOutlined, RocketOutlined, SettingOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils'; // No date fields in this page
 import { useAuth, useTheme } from '../context';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 import TemplateGallery from '../components/ui/TemplateGallery';
 import { CHART_LIBRARIES, CHART_LIBRARY_LABELS } from '../components/charts';
 
@@ -308,7 +310,7 @@ function ChartLibrarySettings() {
         }
     };
 
-    const columns = [
+    const rawColumns = [
         {
             title: 'Libreria',
             dataIndex: 'library_name',
@@ -344,16 +346,22 @@ function ChartLibrarySettings() {
             ),
         },
     ];
+    const colManager = useColumnManagerWithDrawer('project_settings', rawColumns);
 
     return (
-        <Table
-            dataSource={libraries}
-            columns={columns}
-            rowKey="id"
-            loading={loading}
-            pagination={false}
-            size="small"
-        />
+        <>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                <ColumnSettingsButton manager={colManager} />
+            </div>
+            <Table
+                dataSource={libraries}
+                columns={colManager.processedColumns}
+                rowKey="id"
+                loading={loading}
+                pagination={false}
+                size="small"
+            />
+        </>
     );
 }
 

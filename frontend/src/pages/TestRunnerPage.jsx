@@ -4,6 +4,8 @@ import { PlayCircleOutlined, PlusOutlined, DeleteOutlined, CheckCircleOutlined, 
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components';
 import { apiFetch, BASE_URL } from '../utils';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 import { formatDateTimeForDisplay } from '@/utils/dateUtils';
 
 const { Title, Text } = Typography;
@@ -412,7 +414,7 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
         a.click();
     };
 
-    const suiteColumns = [
+    const rawSuiteColumns = [
         {
             title: 'Nome',
             dataIndex: 'nome',
@@ -505,7 +507,7 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
         }
     ];
 
-    const executionColumns = [
+    const rawExecutionColumns = [
         {
             title: 'ID',
             dataIndex: 'id',
@@ -575,6 +577,9 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
             )
         }
     ];
+
+    const suiteColManager = useColumnManagerWithDrawer('test_runner_suites', rawSuiteColumns);
+    const executionColManager = useColumnManagerWithDrawer('test_runner_executions', rawExecutionColumns);
 
     if (loading) return <Spin size="large" />;
 
@@ -668,12 +673,15 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
                             children: (
                                 <>
                                     <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-                                        <Input.Search
-                                            placeholder="Cerca per nome..."
-                                            allowClear
-                                            onSearch={(val) => { setSearchTerm(val); setSuitesPage(1); }}
-                                            style={{ width: 300 }}
-                                        />
+                                        <Space>
+                                            <ColumnSettingsButton manager={suiteColManager} />
+                                            <Input.Search
+                                                placeholder="Cerca per nome..."
+                                                allowClear
+                                                onSearch={(val) => { setSearchTerm(val); setSuitesPage(1); }}
+                                                style={{ width: 300 }}
+                                            />
+                                        </Space>
                                         {selectedSuiteIds.length > 0 && (
                                             <Button
                                                 danger
@@ -698,7 +706,7 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
                                             onChange: (keys) => setSelectedSuiteIds(keys)
                                         }}
                                         dataSource={suites}
-                                        columns={suiteColumns}
+                                        columns={suiteColManager.processedColumns}
                                         rowKey="id"
                                         pagination={{
                                             current: suitesPage,
@@ -715,7 +723,8 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
                             label: 'Storico Esecuzioni',
                             children: (
                                 <div>
-                                    <div style={{ marginBottom: 16, textAlign: 'right' }}>
+                                    <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+                                        <ColumnSettingsButton manager={executionColManager} />
                                         <Button
                                             danger
                                             icon={<DeleteOutlined />}
@@ -727,7 +736,7 @@ ${execution.errori?.length > 0 ? '\nRIEPILOGO ERRORI:\n' + JSON.stringify(execut
                                     </div>
                                     <Table
                                         dataSource={executions}
-                                        columns={executionColumns}
+                                        columns={executionColManager.processedColumns}
                                         rowKey="id"
                                         pagination={{ pageSize: 10 }}
                                     />

@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Selec
 import { PlusOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { draft: 'default', posted: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', posted: 'Registrata', cancelled: 'Annullata' };
@@ -64,7 +66,7 @@ export default function Journal() {
         else { const e = await res.json(); message.error(e.message || 'Errore'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Nr. Registrazione', dataIndex: 'entry_number', key: 'entry_number' },
         { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Descrizione', dataIndex: 'description', key: 'description' },
@@ -78,10 +80,12 @@ export default function Journal() {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('journal', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
-            <Card title="Prima Nota Contabile" extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Nuova Scrittura</Button>}>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+            <Card title="Prima Nota Contabile" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Nuova Scrittura</Button></Space>}>
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
                     pagination={{ current: page, pageSize: 20, total, onChange: setPage, showTotal: (t) => `${t} scritture` }}
                     expandedRowRender={(r) => r.lines ? (
                         <Table dataSource={r.lines} rowKey="id" size="small" pagination={false}

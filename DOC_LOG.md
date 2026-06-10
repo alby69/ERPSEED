@@ -9,6 +9,14 @@
 - Aggiornati: root README.md, backend/docs/README.md (indice sintetico con rinvio a INDEX.md)
 - Verifica finale backend: 16/16 test passano; frontend lint: 0 errori
 
+## [2026-06-10] Personalizza Colonne su tutte le pagine
+- Creata `useColumnManagerWithDrawer` hook (convenience wrapper con drawer state)
+- Creato `ColumnSettingsButton` componente (pulsante + drawer in unico componente)
+- Refactoring IndirizziPage per usare i nuovi helper
+- Aggiunta personalizzazione colonne a tutte le 44 pagine con tabelle
+- Pages DRY: hook e componente condivisi, ogni pagina chiama 1 hook + 1 componente
+- Escluse DashboardBuilder (tabelle dinamiche) e ModuleAppPage (tabelle da metadata)
+
 ## [2026-06-10] Aggiornamento documentazione — Soggetti form tab merge
 - Uniti tab "Dati Principali" e "Dati Anagrafici" in unico tab "Dati Anagrafici" nel form Soggetto
 - Aggiunti campi Cognome e Ragione Sociale al tab unificato

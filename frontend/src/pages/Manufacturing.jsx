@@ -3,6 +3,8 @@ import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker,
 import { PlusOutlined, EditOutlined, PlayCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { draft: 'default', active: 'green', archived: 'orange', planned: 'blue', released: 'geekblue', in_progress: 'processing', completed: 'green', cancelled: 'red' };
 
@@ -41,7 +43,7 @@ const BOMTab = () => {
         } catch { message.error('Validation'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Codice', dataIndex: 'code' },
         { title: 'Nome', dataIndex: 'name' },
         { title: 'Prodotto', dataIndex: 'product_name' },
@@ -52,10 +54,15 @@ const BOMTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('manufacturing_bom', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuova D.B.</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuova D.B.</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             <Modal title={editing ? 'Modifica D.B.' : 'Nuova Distinta Base'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={800}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
@@ -102,7 +109,7 @@ const WorkCyclesTab = () => {
         } catch { message.error('Validation'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Codice', dataIndex: 'code' },
         { title: 'Nome', dataIndex: 'name' },
         { title: 'Setup (min)', dataIndex: 'total_setup_time' },
@@ -125,10 +132,15 @@ const WorkCyclesTab = () => {
         return <Table dataSource={record.phases || []} columns={cols} rowKey="id" pagination={false} size="small" />;
     };
 
+    const colManager = useColumnManagerWithDrawer('manufacturing_workcycles', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Ciclo</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} expandable={{ expandedRowRender }} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuovo Ciclo</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} expandable={{ expandedRowRender }} />
             <Modal title={editing ? 'Modifica Ciclo' : 'Nuovo Ciclo di Lavoro'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
@@ -188,7 +200,7 @@ const ProductionOrdersTab = () => {
         } catch { message.error('Error'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Numero', dataIndex: 'number' },
         { title: 'Prodotto', dataIndex: 'product_name' },
         { title: 'Q.tà', dataIndex: 'quantity' },
@@ -206,10 +218,15 @@ const ProductionOrdersTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('manufacturing_production_orders', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo ODP</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuovo ODP</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             <Modal title={editing ? 'Modifica ODP' : 'Nuovo Ordine di Produzione'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>

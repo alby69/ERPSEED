@@ -4,6 +4,8 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, SendOutlined, CheckOutlined
 import { apiFetch } from '@/utils';
 import dayjs from 'dayjs'; // Keep dayjs for display in modal
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { draft: 'default', sent: 'blue', partially_collected: 'orange', collected: 'green', rejected: 'red' }; // This line was outside the component, moving it inside the export default function
 
@@ -82,7 +84,7 @@ const RiBaPage = () => {
         return <Table dataSource={record.items || []} columns={cols} rowKey="id" pagination={false} size="small" />;
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Numero', dataIndex: 'number' }, // No change needed here
         { title: 'Data', dataIndex: 'batch_date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Banca', dataIndex: 'bank_name' }, // No change needed here
@@ -98,6 +100,8 @@ const RiBaPage = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('riba', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
             <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -105,9 +109,12 @@ const RiBaPage = () => {
                 <Col span={6}><Card size="small"><Statistic title="Incassato" value={collectedAmount} precision={2} prefix="€" /></Card></Col>
             </Row>
             <Card title="Ri.Ba. (Ricevute Bancarie)" extra={
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuovo Invio</Button>
+                <Space>
+                    <ColumnSettingsButton manager={colManager} />
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuovo Invio</Button>
+                </Space>
             }>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading} expandable={{ expandedRowRender }} />
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} expandable={{ expandedRowRender }} />
             </Card>
             <Modal title={editing ? 'Modifica Invio' : 'Nuovo Invio Ri.Ba.'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
                 <Form form={form} layout="vertical">

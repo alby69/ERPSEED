@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Selec
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 const statusColors = { draft: 'default', submitted: 'green' };
 const natureOptions = [{ value: 'A', label: 'Beni' }, { value: 'B', label: 'Servizi' }];
 const typeOptions = [{ value: 'sales', label: 'Cessioni' }, { value: 'purchases', label: 'Acquisti' }];
@@ -56,7 +58,7 @@ export default function IntrastatPage() {
         } catch { message.error('Error'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Periodo', dataIndex: 'period' },
         { title: 'Tipo', dataIndex: 'type', render: (v) => typeOptions.find(t => t.value === v)?.label || v },
         { title: 'Soggetto', dataIndex: 'soggetto_id', render: (id) => { const s = subjects.find(x => x.id === id); return s?.nome || s?.ragione_sociale || '-'; } },
@@ -75,12 +77,17 @@ export default function IntrastatPage() {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('intrastat', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
             <Card title="Intrastat" extra={
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuova Dichiarazione</Button>
+                <Space>
+                    <ColumnSettingsButton manager={colManager} />
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuova Dichiarazione</Button>
+                </Space>
             }>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
                 <Modal title={editing ? 'Modifica Dichiarazione' : 'Nuova Dichiarazione Intrastat'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
                     <Form form={form} layout="vertical">
                         <Space size={16}>

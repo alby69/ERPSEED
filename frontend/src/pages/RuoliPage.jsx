@@ -5,7 +5,9 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useTableSort } from '../hooks/useTableSort';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
 import TableSearch from '../components/TableSearch';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 import Layout from '../components/Layout';
 
 const { Title } = Typography;
@@ -54,7 +56,7 @@ export default function RuoliPage() {
     </span>
   );
 
-  const columns = [
+  const rawColumns = [
     {
       title: sortableHeader('Codice', 'codice'),
       dataIndex: 'codice',
@@ -99,6 +101,8 @@ export default function RuoliPage() {
       ),
     },
   ];
+
+  const colManager = useColumnManagerWithDrawer('ruoli', rawColumns);
 
   const handleCreate = () => {
     setEditingRuolo(null);
@@ -160,6 +164,7 @@ export default function RuoliPage() {
           }
           extra={
             <Space>
+              <ColumnSettingsButton manager={colManager} />
               <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
                 Nuovo Ruolo
               </Button>
@@ -168,7 +173,7 @@ export default function RuoliPage() {
       >
         <div className="mb-3">
           <TableSearch
-            columns={columns}
+            columns={colManager.processedColumns}
             searchField={searchField}
             searchValue={searchValue}
             searchTerm={searchTerm}
@@ -181,7 +186,7 @@ export default function RuoliPage() {
           />
         </div>
         <Table
-          columns={columns}
+          columns={colManager.processedColumns}
           dataSource={ruoli}
           rowKey="id"
           loading={loading}

@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Selec
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined, DollarOutlined, FileTextOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = {
     draft: 'default',
@@ -123,8 +125,8 @@ export default function Invoices() {
         }
     };
 
-    const columns = [
-        { title: 'Numero', dataIndex: 'invoice_number', key: 'invoice_number', width: 160 }, // No change needed here
+    const rawColumns = [
+        { title: 'Numero', dataIndex: 'invoice_number', key: 'invoice_number', width: 160 },
         { title: 'Data', dataIndex: 'date', key: 'date', width: 110, render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Cliente', dataIndex: 'party_id', key: 'party_id', render: (id) => { const s = soggetti.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
         { title: 'Totale', dataIndex: 'total', key: 'total', width: 120, align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
@@ -133,7 +135,7 @@ export default function Invoices() {
             <Space>
                 {r.status === 'draft' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleAction(r.id, 'issue')}>Emitti</Button>}
                 {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: parseDateForForm(r.date), due_date: parseDateForForm(r.due_date) }); setModalVisible(true); }} />}
-                {r.status === 'sent' && <Button type="link" icon={<DollarOutlined />} onClick={() => handleAction(r.id, 'pay', { amount: r.total })}>Paga</Button>} {/* No change needed here */}
+                {r.status === 'sent' && <Button type="link" icon={<DollarOutlined />} onClick={() => handleAction(r.id, 'pay', { amount: r.total })}>Paga</Button>}
                 {r.status !== 'cancelled' && r.status !== 'paid' && (
                     <Popconfirm title="Annullare la fattura?" onConfirm={() => handleAction(r.id, 'cancel', { reason: 'Annullamento manuale' })}>
                         <Button type="link" danger icon={<StopOutlined />}>Annulla</Button>
@@ -143,10 +145,13 @@ export default function Invoices() {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('invoices', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
             <Card title="Fatture Emesse" extra={
                 <Space>
+                    <ColumnSettingsButton manager={colManager} />
                     <Select allowClear placeholder="Filtra stato" style={{ width: 140 }} value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(1); }}
                         options={[
                             { value: '', label: 'Tutti' },
@@ -158,7 +163,7 @@ export default function Invoices() {
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Fattura</Button>
                 </Space>
             }>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
                     pagination={{ current: page, pageSize: 20, total, onChange: setPage, showTotal: (t) => `${t} fatture` }} />
             </Card>
             <Modal title={editingRecord ? 'Modifica Fattura' : 'Nuova Fattura'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}

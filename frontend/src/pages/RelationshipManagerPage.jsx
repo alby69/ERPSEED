@@ -5,6 +5,8 @@ import { Card, Tabs, Table, Button, Tag, Space, Modal, Form, Select, Tooltip, Sp
 import { ScanOutlined, PlusOutlined, DeleteOutlined, ReloadOutlined, ApartmentOutlined, DatabaseOutlined, LinkOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { useTheme } from '@/context';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const BASE_COLORS = {
   model: { bg: '#e6f4ff', border: '#1677ff', headerBg: '#1677ff', headerText: '#fff' },
@@ -266,7 +268,7 @@ const RelationshipManagerPage = () => {
     fetchModels();
   }, [fetchGraph, fetchRelationships, fetchModels]);
 
-  const relColumns = [
+  const rawRelColumns = [
     { title: 'Tipo', dataIndex: 'type', key: 'type', width: 100,
       render: (t) => <Tag color={t === 'block' ? 'green' : 'blue'}>{t === 'block' ? 'Blocco' : 'Campo'}</Tag>
     },
@@ -284,6 +286,7 @@ const RelationshipManagerPage = () => {
       ),
     },
   ];
+  const colManager = useColumnManagerWithDrawer('relationship_manager', rawRelColumns);
 
   const tabItems = [
     {
@@ -340,6 +343,7 @@ const RelationshipManagerPage = () => {
       children: (
         <div>
           <div style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
+            <ColumnSettingsButton manager={colManager} />
             <Button type="primary" icon={<PlusOutlined />} style={{ background: primaryColor, borderColor: primaryColor }} onClick={() => setCreateModalOpen(true)}>
               Nuova Relazione
             </Button>
@@ -349,7 +353,7 @@ const RelationshipManagerPage = () => {
           </div>
           <Table
             dataSource={relationships}
-            columns={relColumns}
+            columns={colManager.processedColumns}
             rowKey="id"
             loading={relLoading}
             size="small"

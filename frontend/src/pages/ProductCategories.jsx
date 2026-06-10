@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, Switch, Select, Space, Tag, Popconfirm, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 export default function ProductCategories() {
     const [data, setData] = useState([]);
@@ -71,7 +73,7 @@ export default function ProductCategories() {
         }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Codice', dataIndex: 'code', key: 'code', width: 120 },
         { title: 'Nome', dataIndex: 'name', key: 'name' },
         {
@@ -109,13 +111,15 @@ export default function ProductCategories() {
         label: c.name,
     }));
 
+    const colManager = useColumnManagerWithDrawer('product_categories', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
             <Card
                 title="Categorie Prodotto"
-                extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Categoria</Button>}
+                extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Categoria</Button></Space>}
             >
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             </Card>
 
             <Modal

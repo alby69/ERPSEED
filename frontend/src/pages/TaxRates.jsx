@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, Switch, DatePicker, Space, Tag, Popconfirm, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
-import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const TaxRatesPage = () => {
     const [data, setData] = useState([]);
@@ -92,7 +94,7 @@ const TaxRatesPage = () => {
         setModalVisible(true);
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Codice', dataIndex: 'code', key: 'code', width: 100 },
         { title: 'Nome', dataIndex: 'name', key: 'name' },
         { title: 'Aliquota', dataIndex: 'rate', key: 'rate', width: 120, render: (v) => `${v}%` },
@@ -112,15 +114,17 @@ const TaxRatesPage = () => {
         },
     ];
 
+    const colManager = useColumnManagerWithDrawer('taxrates', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
             <Card
                 title="Aliquote IVA"
-                extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Aliquota</Button>}
+                extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Aliquota</Button></Space>}
             >
                 <Table
                     dataSource={data}
-                    columns={columns}
+                    columns={colManager.processedColumns}
                     rowKey="id"
                     loading={loading}
                     pagination={{

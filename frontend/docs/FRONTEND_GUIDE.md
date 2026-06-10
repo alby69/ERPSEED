@@ -23,6 +23,12 @@
 
 ## Key Concepts
 
+### Column Customization (Personalizza Colonne)
+All pages with data tables support column customization via:
+- `useColumnManagerWithDrawer(pageKey, rawColumns)` hook — manages visibility, order, localStorage persistence
+- `ColumnSettingsButton` component — renders "Colonne" button + settings drawer
+- Pattern: define `rawColumns`, call hook, use `colManager.processedColumns` in `<Table>`, add `<ColumnSettingsButton manager={colManager} />` in Card extra
+
 ### Dynamic Rendering
 ERPSeed uses metadata from the backend (`SysView`, `SysComponent`) to render UIs at runtime. The `ComponentRenderer` is responsible for transforming this metadata into React components.
 

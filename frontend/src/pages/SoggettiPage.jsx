@@ -10,7 +10,9 @@ import {
 } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useTableSort } from '../hooks/useTableSort';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
 import TableSearch from '../components/TableSearch';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 import Layout from '../components/Layout';
 
 const { Title, Text } = Typography;
@@ -167,7 +169,7 @@ export default function SoggettiPage() {
     </span>
   );
 
-  const columns = [
+  const rawColumns = [
     {
       title: sortableHeader('Codice', 'codice'),
       dataIndex: 'codice',
@@ -223,6 +225,8 @@ export default function SoggettiPage() {
       ),
     },
   ];
+
+  const colManager = useColumnManagerWithDrawer('soggetti', rawColumns);
 
   const ruoloOptions = ruoli.map(r => (
     <Option key={r.id} value={r.id}>{r.nome}</Option>
@@ -426,14 +430,17 @@ export default function SoggettiPage() {
             </Space>
           }
           extra={
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-              Nuovo Soggetto
-            </Button>
+            <Space>
+              <ColumnSettingsButton manager={colManager} />
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                Nuovo Soggetto
+              </Button>
+            </Space>
           }
         >
         <div className="mb-3">
           <TableSearch
-            columns={columns}
+            columns={colManager.processedColumns}
             searchField={searchField}
             searchValue={searchValue}
             searchTerm={searchTerm}
@@ -446,7 +453,7 @@ export default function SoggettiPage() {
           />
         </div>
         <Table
-          columns={columns}
+          columns={colManager.processedColumns}
           dataSource={soggetti}
           rowKey="id"
           loading={loading}

@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, Select, Space, message, Tag } 
 import { PlusOutlined, EditOutlined, SearchOutlined, GlobalOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import Layout from '@/components/Layout';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const CONTINENTI = {
   AF: { label: 'Africa', color: 'orange' },
@@ -73,7 +75,7 @@ export default function NazioniPage() {
     }
   };
 
-  const columns = [
+  const rawColumns = [
     { title: 'ISO', dataIndex: 'codice_iso', key: 'codice_iso', width: 70 },
     { title: 'ISO2', dataIndex: 'codice_iso2', key: 'codice_iso2', width: 60 },
     { title: 'Nome', dataIndex: 'nome', key: 'nome', width: 200 },
@@ -95,15 +97,20 @@ export default function NazioniPage() {
     },
   ];
 
+  const colManager = useColumnManagerWithDrawer('nazioni', rawColumns);
+
   return (
     <Layout>
       <div style={{ padding: '0' }}>
         <Card
           title={<Space><GlobalOutlined /><span>Nazioni</span></Space>}
           extra={
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-              Nuova Nazione
-            </Button>
+            <Space>
+              <ColumnSettingsButton manager={colManager} />
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                Nuova Nazione
+              </Button>
+            </Space>
           }
         >
           <Input.Search
@@ -114,7 +121,7 @@ export default function NazioniPage() {
           />
           <Table
             dataSource={nazioni}
-            columns={columns}
+            columns={colManager.processedColumns}
             rowKey="codice_iso"
             loading={loading}
             pagination={{

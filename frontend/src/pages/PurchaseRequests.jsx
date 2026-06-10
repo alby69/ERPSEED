@@ -3,6 +3,8 @@ import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker,
 import { PlusOutlined, EditOutlined, DeleteOutlined, SendOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { draft: 'default', pending: 'orange', approved: 'green', rejected: 'red', ordered: 'blue', sent: 'geekblue', received: 'processing' };
 
@@ -46,12 +48,12 @@ const PRTab = () => {
         } catch { message.error('Error'); }
     };
 
-    const columns = [
-        { title: '#', dataIndex: 'number' },
-        { title: 'Data Richiesta', dataIndex: 'request_date', render: (v) => formatDateForDisplay(v) || '-' },
-        { title: 'Data Richiesta', render: (_, r) => (r.lines || []).reduce((s, l) => s + (l.quantity || 0), 0), hidden: true }, // No change needed here
-        { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> }, // No change needed here
-        { title: 'Azioni', render: (_, r) => (
+    const rawColumns = [
+        { title: '#', dataIndex: 'number', key: 'number' },
+        { title: 'Data Richiesta', dataIndex: 'request_date', key: 'request_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Data Richiesta', key: '_qty_total', render: (_, r) => (r.lines || []).reduce((s, l) => s + (l.quantity || 0), 0), hidden: true },
+        { title: 'Stato', dataIndex: 'status', key: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
+        { title: 'Azioni', key: 'actions', render: (_, r) => (
             <Space>
                 <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, request_date: parseDateForForm(r.request_date), required_date: parseDateForForm(r.required_date) }); setModalVisible(true); }}>Modifica</Button>
                 {r.status === 'pending' && <Button type="link" size="small" icon={<CheckOutlined />} onClick={() => handleApprove(r.id)}>Approva</Button>}
@@ -59,6 +61,8 @@ const PRTab = () => {
             </Space>
         )},
     ];
+
+    const colManager = useColumnManagerWithDrawer('purchase_requests_pr', rawColumns);
 
     const expandedRowRender = (record) => {
         const cols = [
@@ -71,8 +75,11 @@ const PRTab = () => {
 
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuova Richiesta</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} expandable={{ expandedRowRender }} />
+            <Space style={{ marginBottom: 16 }}>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuova Richiesta</Button>
+                <ColumnSettingsButton manager={colManager} />
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} expandable={{ expandedRowRender }} />
             <Modal title={editing ? 'Modifica Richiesta' : 'Nuova Richiesta d\'Acquisto'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={600}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
@@ -119,19 +126,21 @@ const RFQTab = () => {
         } catch { message.error('Validation'); }
     };
 
-    const columns = [
-        { title: '#', dataIndex: 'number' }, // No change needed here
-        { title: 'Data RFQ', dataIndex: 'rfq_date', render: (v) => formatDateForDisplay(v) || '-' },
-        { title: 'Valido fino al', dataIndex: 'valid_until', render: (v) => formatDateForDisplay(v) || '-' },
-        { title: 'Preventivi', dataIndex: 'quotations', render: (q) => <Badge count={q?.length || 0} /> }, // No change needed here
-        { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> }, // No change needed here
-        { title: 'Azioni', render: (_, r) => (
+    const rawColumns = [
+        { title: '#', dataIndex: 'number', key: 'number' },
+        { title: 'Data RFQ', dataIndex: 'rfq_date', key: 'rfq_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Valido fino al', dataIndex: 'valid_until', key: 'valid_until', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Preventivi', dataIndex: 'quotations', key: 'quotations', render: (q) => <Badge count={q?.length || 0} /> },
+        { title: 'Stato', dataIndex: 'status', key: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
+        { title: 'Azioni', key: 'actions', render: (_, r) => (
             <Space>
                 <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, rfq_date: parseDateForForm(r.rfq_date), valid_until: parseDateForForm(r.valid_until) }); setModalVisible(true); }}>Modifica</Button>
                 <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={async () => { const res = await apiFetch(`/api/v1/rfqs/${r.id}`, { method: 'DELETE' }); if (res.ok) { message.success('Eliminato'); fetch(); } }} />
             </Space>
         )},
     ];
+
+    const colManager = useColumnManagerWithDrawer('purchase_requests_rfq', rawColumns);
 
     const expandedRowRender = (record) => {
         const lineCols = [
@@ -155,8 +164,11 @@ const RFQTab = () => {
 
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo RFQ</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} expandable={{ expandedRowRender }} />
+            <Space style={{ marginBottom: 16 }}>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuovo RFQ</Button>
+                <ColumnSettingsButton manager={colManager} />
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} expandable={{ expandedRowRender }} />
             <Modal title={editing ? 'Modifica RFQ' : 'Nuovo RFQ'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={600}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>

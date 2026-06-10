@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient } from './api';
 import { formatDateForDisplay } from '@/utils/dateUtils';
 import { useTheme } from '../context';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 
 function Sales() {
     const { themeConfig } = useTheme();
@@ -50,7 +52,7 @@ function Sales() {
         return 'default';
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Order Number', dataIndex: 'order_number', key: 'order_number' },
         { title: 'Customer', dataIndex: 'customer_name', key: 'customer_name', render: (text, record) => record.customer?.name || 'N/A' },
         { title: 'Order Date', dataIndex: 'order_date', key: 'order_date', render: (date) => formatDateForDisplay(date) || '-' },
@@ -58,6 +60,8 @@ function Sales() {
         { title: 'Status', dataIndex: 'status', key: 'status', render: (status) => <Tag color={getStatusColor(status)}>{status?.toUpperCase()}</Tag> },
         { title: 'Actions', key: 'actions', render: (text, record) => (<Button type="link" onClick={() => navigate(`/sales/${record.id}`)}>View Details</Button>) },
     ];
+
+    const colManager = useColumnManagerWithDrawer('sales', rawColumns);
 
     if (loading && !error) {
         return <div className="p-5 text-center"><Spin size="large" /></div>;
@@ -71,6 +75,7 @@ function Sales() {
             <Typography.Text type="secondary">Manage all sales orders</Typography.Text>
         </div>
         <Space>
+            <ColumnSettingsButton manager={colManager} />
             <Button key="1" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/sales/new')}>
                 New Sales Order
             </Button>
@@ -78,7 +83,7 @@ function Sales() {
       </div>
       <div style={{ padding: 24 }}>
         {error && <Alert message="Error" description={error} type="error" showIcon className="mb-4" />}
-        <Table dataSource={orders} columns={columns} rowKey="id" pagination={pagination} loading={loading} onChange={handleTableChange} />
+        <Table dataSource={orders} columns={colManager.processedColumns} rowKey="id" pagination={pagination} loading={loading} onChange={handleTableChange} />
       </div>
     </>
   );

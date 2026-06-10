@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Tag, Modal, Form, Input, Select, message, Spin, Alert, Space, Badge, Dropdown } from 'antd';
 import { apiFetch } from '../utils';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 import { Layout } from '../components';
 import { useParams, useNavigate } from 'react-router-dom'; // No date fields in this page
 import ImportExportToolbar from '../components/ui/ImportExportToolbar';
@@ -145,7 +147,7 @@ function CustomModulesPage() {
         deprecated: 'Obsoleto'
     };
 
-    const columns = [
+    const rawColumns = [
         {
             title: 'Nome',
             dataIndex: 'name',
@@ -241,6 +243,8 @@ function CustomModulesPage() {
         }
     ];
 
+    const colManager = useColumnManagerWithDrawer('custom_modules', rawColumns);
+
     if (loading) {
         return (
             <Layout>
@@ -258,6 +262,7 @@ function CustomModulesPage() {
                     title="Moduli Personalizzati"
                     extra={
                         <Space>
+                            <ColumnSettingsButton manager={colManager} />
                             <ImportExportToolbar
                                 type="module"
                                 projectId={projectId || localStorage.getItem('currentProjectId') || 1}
@@ -290,7 +295,7 @@ function CustomModulesPage() {
                     )}
 
                     <Table
-                        columns={columns}
+                        columns={colManager.processedColumns}
                         dataSource={modules}
                         rowKey="id"
                         pagination={false}

@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Selec
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { draft: 'default', confirmed: 'blue', completed: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', confirmed: 'Accettato', completed: 'Completato', cancelled: 'Annullato' };
@@ -68,8 +70,8 @@ export default function Quotations() {
         if (res.ok) { message.success('Operazione completata'); fetchData(); }
     };
 
-    const columns = [
-        { title: 'Numero', dataIndex: 'number', key: 'number' }, // No change needed here
+    const rawColumns = [
+        { title: 'Numero', dataIndex: 'number', key: 'number' },
         { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Cliente', dataIndex: 'customer_id', key: 'customer_id', render: (id) => { const s = customers.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
         { title: 'Totale', dataIndex: 'total_amount', key: 'total_amount', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
@@ -79,21 +81,24 @@ export default function Quotations() {
             <Space>
                 {r.status === 'draft' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleAction(r.id, 'confirm')}>Accetta</Button>}
                 {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: parseDateForForm(r.date), expiry_date: parseDateForForm(r.expiry_date) }); setModalVisible(true); }} />}
-                {r.status !== 'cancelled' && <Button type="link" danger icon={<StopOutlined />} onClick={() => handleAction(r.id, 'cancel')}>Annulla</Button>} {/* No change needed here */}
+                {r.status !== 'cancelled' && <Button type="link" danger icon={<StopOutlined />} onClick={() => handleAction(r.id, 'cancel')}>Annulla</Button>}
             </Space>
         )},
     ];
+
+    const colManager = useColumnManagerWithDrawer('quotations', rawColumns);
 
     return (
         <div style={{ padding: 24 }}>
             <Card title="Preventivi" extra={
                 <Space>
+                    <ColumnSettingsButton manager={colManager} />
                     <Select allowClear placeholder="Filtra stato" style={{ width: 140 }} value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(1); }}
                         options={[{ value: '', label: 'Tutti' }, { value: 'draft', label: 'Bozza' }, { value: 'confirmed', label: 'Accettato' }, { value: 'cancelled', label: 'Annullato' }]} />
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo Preventivo</Button>
                 </Space>
             }>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
                     pagination={{ current: page, pageSize: 20, total, onChange: setPage, showTotal: (t) => `${t} preventivi` }} />
             </Card>
             <Modal title={editingRecord ? 'Modifica Preventivo' : 'Nuovo Preventivo'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>

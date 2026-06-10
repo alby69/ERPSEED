@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Selec
 import { PlusOutlined, DollarOutlined, WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { open: 'orange', partial: 'blue', paid: 'green', overdue: 'red', cancelled: 'default' };
 const statusLabels = { open: 'Aperta', partial: 'Parziale', paid: 'Pagata', overdue: 'Scaduta', cancelled: 'Annullata' };
@@ -79,9 +81,9 @@ export default function Maturities() {
         return parseDateForForm(dueDate)?.isBefore(dayjs(), 'day') && ['open', 'partial'].includes(status);
     };
 
-    const columns = [
-        { title: 'Scadenza', dataIndex: 'due_date', key: 'due_date', render: (v, r) => { // v is already a string here
-            const overdue = isOverdue(v, r.status); // Use isOverdue utility
+    const rawColumns = [
+        { title: 'Scadenza', dataIndex: 'due_date', key: 'due_date', render: (v, r) => {
+            const overdue = isOverdue(v, r.status);
             return <span style={{ color: overdue ? '#ff4d4f' : undefined, fontWeight: overdue ? 600 : undefined }}>{dayjs(v).format('DD/MM/YYYY')}</span>;
         }},
         { title: 'Soggetto', dataIndex: 'party_id', key: 'party_id', render: (id) => { const s = soggetti.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
@@ -102,6 +104,8 @@ export default function Maturities() {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('maturities', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
             {summary && (
@@ -114,6 +118,7 @@ export default function Maturities() {
             )}
             <Card title="Scadenzario" extra={
                 <Space>
+                    <ColumnSettingsButton manager={colManager} />
                     <Select allowClear placeholder="Filtra stato" style={{ width: 140 }} value={statusFilter} onChange={(v) => { setStatusFilter(v); }}
                         options={[
                             { value: '', label: 'Tutti' }, { value: 'open', label: 'Aperte' },
@@ -125,7 +130,7 @@ export default function Maturities() {
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Nuova Scadenza</Button>
                 </Space>
             }>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
                     pagination={{ pageSize: 25, showTotal: (t) => `${t} scadenze` }} />
             </Card>
             <Modal title="Nuova Scadenza" open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); }} okText="Salva" cancelText="Annulla">

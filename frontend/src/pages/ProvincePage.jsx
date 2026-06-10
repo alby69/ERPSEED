@@ -3,6 +3,8 @@ import { Card, Table, Input, Select, Space, message, Tag } from 'antd';
 import { GlobalOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import Layout from '@/components/Layout';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 export default function ProvincePage() {
   const [province, setProvince] = useState([]);
@@ -48,7 +50,7 @@ export default function ProvincePage() {
 
   useEffect(() => { fetchProvince(); }, [fetchProvince]);
 
-  const columns = [
+  const rawColumns = [
     {
       title: 'Sigla', dataIndex: 'codice', key: 'codice', width: 70,
       render: (text) => <Tag>{text}</Tag>,
@@ -64,11 +66,14 @@ export default function ProvincePage() {
     },
   ];
 
+  const colManager = useColumnManagerWithDrawer('province', rawColumns);
+
   return (
     <Layout>
       <div style={{ padding: '0' }}>
         <Card
           title={<Space><GlobalOutlined /><span>Province</span></Space>}
+          extra={<ColumnSettingsButton manager={colManager} />}
         >
           <Space style={{ marginBottom: 16 }}>
             <Input.Search
@@ -91,7 +96,7 @@ export default function ProvincePage() {
           </Space>
           <Table
             dataSource={province}
-            columns={columns}
+            columns={colManager.processedColumns}
             rowKey="codice"
             loading={loading}
             pagination={{

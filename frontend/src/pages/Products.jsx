@@ -4,6 +4,8 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from './api';
 import { useTheme } from '../context';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 
 function Products() {
     const { themeConfig } = useTheme();
@@ -45,7 +47,7 @@ function Products() {
         fetchProducts(pagination.current, pagination.pageSize);
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Name', dataIndex: 'name', key: 'name' },
         { title: 'Code', dataIndex: 'code', key: 'code' },
         { title: 'Unit Price', dataIndex: 'unit_price', key: 'unit_price', render: (price) => `$${(price || 0).toFixed(2)}` },
@@ -62,6 +64,8 @@ function Products() {
         },
     ];
 
+    const colManager = useColumnManagerWithDrawer('products', rawColumns);
+
     if (loading && !error) {
         return <div className="p-5 text-center"><Spin size="large" /></div>;
     }
@@ -74,6 +78,7 @@ function Products() {
             <Typography.Text type="secondary">Manage your product catalog</Typography.Text>
         </div>
         <Space>
+            <ColumnSettingsButton manager={colManager} />
             <Button key="1" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/products/new')}>
                 Create Product
             </Button>
@@ -81,7 +86,7 @@ function Products() {
       </div>
       <div style={{ padding: 24 }}>
         {error && <Alert message="Error" description={error} type="error" showIcon className="mb-4" />}
-        <Table dataSource={products} columns={columns} rowKey="id" pagination={pagination} loading={loading} onChange={handleTableChange} />
+        <Table dataSource={products} columns={colManager.processedColumns} rowKey="id" pagination={pagination} loading={loading} onChange={handleTableChange} />
       </div>
     </>
   );

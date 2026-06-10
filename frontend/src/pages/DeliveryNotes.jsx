@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Selec
 import { PlusOutlined, EditOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { draft: 'default', confirmed: 'blue', completed: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', confirmed: 'Confermato', completed: 'Completato', cancelled: 'Annullato' };
@@ -67,8 +69,8 @@ export default function DeliveryNotes() {
         if (res.ok) { message.success('Completato'); fetchData(); }
     };
 
-    const columns = [
-        { title: 'Numero', dataIndex: 'number', key: 'number' }, // No change needed here
+    const rawColumns = [
+        { title: 'Numero', dataIndex: 'number', key: 'number' },
         { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Cliente', dataIndex: 'customer_id', key: 'customer_id', render: (id) => { const s = customers.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
         { title: 'Totale', dataIndex: 'total_amount', key: 'total_amount', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
@@ -81,16 +83,19 @@ export default function DeliveryNotes() {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('delivery_notes', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
             <Card title="DDT Vendita" extra={
                 <Space>
+                    <ColumnSettingsButton manager={colManager} />
                     <Select allowClear placeholder="Filtra stato" style={{ width: 140 }} value={statusFilter} onChange={(v) => { setStatusFilter(v); setPage(1); }}
                         options={[{ value: '', label: 'Tutti' }, { value: 'draft', label: 'Bozza' }, { value: 'confirmed', label: 'Confermato' }]} />
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo DDT</Button>
                 </Space>
             }>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
                     pagination={{ current: page, pageSize: 20, total, onChange: setPage, showTotal: (t) => `${t} dd.t.` }} />
             </Card>
             <Modal title={editingRecord ? 'Modifica DDT' : 'Nuovo DDT Vendita'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>

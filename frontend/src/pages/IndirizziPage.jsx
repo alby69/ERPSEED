@@ -2,14 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card, Table, Button, Modal, Form, Input, Select, Tag, Space, message, Popconfirm, Row, Col, Divider, AutoComplete
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, CaretUpOutlined, CaretDownOutlined, SettingOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useTableSort } from '../hooks/useTableSort';
-import { useColumnManager } from '../hooks/useColumnManager';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
 import TableSearch from '../components/TableSearch';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 import Layout from '../components/Layout';
 import HelpDrawer from '@/components/HelpDrawer';
-import ColumnSettingsDrawer from '@/components/ColumnSettingsDrawer';
 
 const { Option } = Select;
 
@@ -36,8 +36,6 @@ export default function IndirizziPage() {
     handleClearSearch,
     handleSearch
   } = useTableSort('/api/v1/indirizzi', { initialSortField: 'città', initialSortOrder: 'asc' });
-
-  const [columnSettingsOpen, setColumnSettingsOpen] = useState(false);
 
   // Stati per ricerca città e vie
   const [searchResults, setSearchResults] = useState([]);
@@ -266,14 +264,7 @@ export default function IndirizziPage() {
     },
   ];
 
-  const {
-    processedColumns,
-    allColumns,
-    toggleColumn,
-    moveColumn,
-    resetColumns,
-    hasChanges,
-  } = useColumnManager('indirizzi', rawColumns);
+  const colManager = useColumnManagerWithDrawer('indirizzi', rawColumns);
 
   const soggettoOptions = soggetti.map(s => (
     <Option key={s.id} value={s.id}>{s.nome}</Option>
@@ -292,9 +283,7 @@ export default function IndirizziPage() {
           }
           extra={
             <Space>
-              <Button icon={<SettingOutlined />} onClick={() => setColumnSettingsOpen(true)}>
-                Colonne
-              </Button>
+              <ColumnSettingsButton manager={colManager} />
               <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
                 Nuovo Indirizzo
               </Button>
@@ -303,7 +292,7 @@ export default function IndirizziPage() {
         >
         <div className="mb-3">
           <TableSearch
-            columns={processedColumns}
+            columns={colManager.processedColumns}
             searchField={searchField}
             searchValue={searchValue}
             searchTerm={searchTerm}
@@ -316,7 +305,7 @@ export default function IndirizziPage() {
           />
         </div>
         <Table
-          columns={processedColumns}
+          columns={colManager.processedColumns}
           dataSource={indirizzi}
           rowKey="id"
           loading={loading}
@@ -438,16 +427,6 @@ export default function IndirizziPage() {
         </Form>
       </Modal>
 
-      <ColumnSettingsDrawer
-        open={columnSettingsOpen}
-        onClose={() => setColumnSettingsOpen(false)}
-        columns={allColumns}
-        onToggle={toggleColumn}
-        onMoveUp={(key) => moveColumn(key, -1)}
-        onMoveDown={(key) => moveColumn(key, 1)}
-        onReset={resetColumns}
-        hasChanges={hasChanges}
-      />
       </div>
     </Layout>
   );

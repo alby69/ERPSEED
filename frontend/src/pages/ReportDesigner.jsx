@@ -4,6 +4,8 @@ import { PlusOutlined, EditOutlined, PlayCircleOutlined, HistoryOutlined, Delete
 import { apiFetch } from '@/utils';
 
 import { formatDateTimeForDisplay } from '@/utils/dateUtils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 const ReportDesigner = () => {
     const [reports, setReports] = useState([]);
     const [sources, setSources] = useState([]);
@@ -107,7 +109,7 @@ const ReportDesigner = () => {
         setSource(''); setSelectedColumns([]); setFilters([]); setLimit(500);
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Codice', dataIndex: 'code' },
         { title: 'Nome', dataIndex: 'name' },
         { title: 'Categoria', dataIndex: 'category' },
@@ -120,6 +122,8 @@ const ReportDesigner = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('report_designer', rawColumns);
+
     const resultColumns = results?.columns?.map(c => ({ title: c, dataIndex: c, ellipsis: true })) || [];
 
     return (
@@ -127,9 +131,12 @@ const ReportDesigner = () => {
             <Row gutter={16}>
                 <Col span={activeReport ? 14 : 24}>
                     <Card title="Report Designer" extra={
-                        <Button type="primary" icon={<PlusOutlined />} onClick={() => { resetForm(); setShowDesigner(true); }}>Nuovo Report</Button>
+                        <Space>
+                            <ColumnSettingsButton manager={colManager} />
+                            <Button type="primary" icon={<PlusOutlined />} onClick={() => { resetForm(); setShowDesigner(true); }}>Nuovo Report</Button>
+                        </Space>
                     }>
-                        <Table dataSource={reports} columns={columns} rowKey="id" loading={loading} size="small" />
+                        <Table dataSource={reports} columns={colManager.processedColumns} rowKey="id" loading={loading} size="small" />
                     </Card>
                 </Col>
                 {activeReport && (

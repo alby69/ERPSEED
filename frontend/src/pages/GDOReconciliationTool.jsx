@@ -3,6 +3,8 @@ import { Card, Upload, Button, Table, Space, Typography, Form, InputNumber, Sele
 import { UploadOutlined, PlayCircleOutlined, DownloadOutlined, SaveOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { useParams } from 'react-router-dom'; // No date fields in this page
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 import { Line, Pie } from '@ant-design/charts';
 
 const { Title, Text } = Typography;
@@ -130,13 +132,28 @@ const GDOReconciliationTool = () => {
     return record?.Date ?? record?.Data ?? '-';
   };
 
-  const getMatchColumns = [
+  const rawMatchColumns = [
     { title: 'Data Versamento', key: 'date', render: (_, record) => getDateValue(record?.credit) },
     { title: 'Importo Versato', key: 'credit', render: (_, record) => getCreditAmountSimple(record?.credit) },
     { title: 'Numero Incassi', dataIndex: 'debits', key: 'debits_count', render: (debits) => debits?.length || 0 },
     { title: 'Differenza', key: 'diff', render: (_, record) => formatCurrencyWithSymbol(record?.difference) },
     { title: 'Tipo', dataIndex: 'match_type', key: 'type' },
   ];
+
+  const rawUnreconciledDebitColumns = [
+    { title: 'Data', key: 'date', render: (_, record) => getDateValue(record) },
+    { title: 'Importo', key: 'amt', render: (_, record) => getDebitAmount(record) },
+  ];
+
+  const rawUnreconciledCreditColumns = [
+    { title: 'Data', key: 'date', render: (_, record) => getDateValue(record) },
+    { title: 'Data Valuta', key: 'valuta', render: (_, record) => record?.['Data Valuta'] ?? '-' },
+    { title: 'Importo', key: 'amt', render: (_, record) => getCreditAmountSimple(record) },
+  ];
+
+  const matchColManager = useColumnManagerWithDrawer('gdo_reconciliation_matches', rawMatchColumns);
+  const debitColManager = useColumnManagerWithDrawer('gdo_reconciliation_debit', rawUnreconciledDebitColumns);
+  const creditColManager = useColumnManagerWithDrawer('gdo_reconciliation_credit', rawUnreconciledCreditColumns);
 
   const trendData = results?.stats?.monthly_trend?.flatMap(item => [
     { month: item.month, value: item.debit || 0, type: 'Incassi (Dare)' },
@@ -273,10 +290,10 @@ const GDOReconciliationTool = () => {
                     </Card>
                   </Col>
                   <Col span={24}>
-                    <Card title="Quadrature Trovate" style={{ marginTop: 16 }}>
+                    <Card title="Quadrature Trovate" style={{ marginTop: 16 }} extra={<ColumnSettingsButton manager={matchColManager} />}>
                       <Table
                         dataSource={results.matches}
-                        columns={getMatchColumns}
+                        columns={matchColManager.processedColumns}
                         rowKey={(record) => record.credit?.orig_index}
                         pagination={{ pageSize: 10 }}
                         size="small"
@@ -292,13 +309,10 @@ const GDOReconciliationTool = () => {
               children: (
                 <Row gutter={[16, 16]}>
                   <Col span={12}>
-                    <Card title="Incassi Non Riconciliati">
+                    <Card title="Incassi Non Riconciliati" extra={<ColumnSettingsButton manager={debitColManager} />}>
                       <Table
                         dataSource={results.unreconciled_debit}
-                        columns={[
-                          { title: 'Data', key: 'date', render: (_, record) => getDateValue(record) },
-                          { title: 'Importo', key: 'amt', render: (_, record) => getDebitAmount(record) }
-                        ]}
+                        columns={debitColManager.processedColumns}
                         rowKey={(record) => record.orig_index}
                         pagination={{ pageSize: 10 }}
                         size="small"
@@ -306,14 +320,10 @@ const GDOReconciliationTool = () => {
                     </Card>
                   </Col>
                   <Col span={12}>
-                    <Card title="Versamenti Non Riconciliati">
+                    <Card title="Versamenti Non Riconciliati" extra={<ColumnSettingsButton manager={creditColManager} />}>
                       <Table
                         dataSource={results.unreconciled_credit}
-                        columns={[
-                          { title: 'Data', key: 'date', render: (_, record) => getDateValue(record) },
-                          { title: 'Data Valuta', key: 'valuta', render: (_, record) => record?.['Data Valuta'] ?? '-' },
-                          { title: 'Importo', key: 'amt', render: (_, record) => getCreditAmountSimple(record) }
-                        ]}
+                        columns={creditColManager.processedColumns}
                         rowKey={(record) => record.orig_index}
                         pagination={{ pageSize: 10 }}
                         size="small"

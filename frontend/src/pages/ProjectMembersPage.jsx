@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Avatar, Tag } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Avatar, Tag, Space } from 'antd';
 import { DeleteOutlined, UserAddOutlined, UserOutlined, MailOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useAuth } from '../context/AuthContext';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 
 const { Option } = Select;
 
@@ -108,7 +110,7 @@ const ProjectMembersPage = () => {
         }
     };
 
-    const columns = [
+    const rawColumns = [
         {
             title: 'User',
             dataIndex: 'email',
@@ -150,18 +152,22 @@ const ProjectMembersPage = () => {
             )
         }
     ];
+    const colManager = useColumnManagerWithDrawer('project_members', rawColumns);
 
     return (
         <div style={{ padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <h2>Team Members</h2>
-                <Button type="primary" icon={<UserAddOutlined />} onClick={handleOpenModal}>
-                    Add Member
-                </Button>
+                <Space>
+                    <ColumnSettingsButton manager={colManager} />
+                    <Button type="primary" icon={<UserAddOutlined />} onClick={handleOpenModal}>
+                        Add Member
+                    </Button>
+                </Space>
             </div>
 
             <Table
-                columns={columns}
+                columns={colManager.processedColumns}
                 dataSource={members}
                 rowKey="id"
                 loading={loading}

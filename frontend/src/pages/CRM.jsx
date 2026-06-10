@@ -3,6 +3,8 @@ import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker,
 import { PlusOutlined, UserOutlined, DollarOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const stageColors = { qualification: 'blue', proposal: 'purple', negotiation: 'orange', won: 'green', lost: 'red' };
 const stageLabels = { qualification: 'Qualifica', proposal: 'Proposta', negotiation: 'Negoziazione', won: 'Vinta', lost: 'Persa' };
@@ -60,7 +62,7 @@ export default function CRMPage() {
         } catch { message.error('Validation failed'); }
     };
 
-    const leadColumns = [
+    const rawLeadColumns = [
         { title: 'Nome', key: 'name', render: (_, r) => `${r.first_name} ${r.last_name}` },
         { title: 'Azienda', dataIndex: 'company', key: 'company' },
         { title: 'Email', dataIndex: 'email', key: 'email' },
@@ -72,7 +74,7 @@ export default function CRMPage() {
         )},
     ];
 
-    const oppColumns = [
+    const rawOppColumns = [
         { title: 'Nome', dataIndex: 'name', key: 'name' },
         { title: 'Valore', dataIndex: 'expected_revenue', key: 'expected_revenue', align: 'right', render: (v) => `€ ${(v || 0).toFixed(2)}` },
         { title: 'Probabilità', dataIndex: 'probability', key: 'probability', render: (v) => `${v || 0}%` },
@@ -82,6 +84,9 @@ export default function CRMPage() {
             <Button type="link" onClick={() => { setEditingOpp(r); oppForm.setFieldsValue({ ...r, expected_close_date: parseDateForForm(r.expected_close_date) }); setOppModalVisible(true); }}>Modifica</Button>
         )},
     ];
+
+    const leadColManager = useColumnManagerWithDrawer('crm_leads', rawLeadColumns);
+    const oppColManager = useColumnManagerWithDrawer('crm_opportunities', rawOppColumns);
 
     return (
         <div style={{ padding: 24 }}>
@@ -101,18 +106,23 @@ export default function CRMPage() {
                     ))}
                 </Row>
             )}
-            <Card>
+            <Card extra={
+                <Space>
+                    <ColumnSettingsButton manager={leadColManager} />
+                    <ColumnSettingsButton manager={oppColManager} />
+                </Space>
+            }>
                 <Tabs items={[
                     { key: 'leads', label: 'Lead', children: (
                         <>
                             <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingLead(null); leadForm.resetFields(); setLeadModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Lead</Button>
-                            <Table dataSource={leads} columns={leadColumns} rowKey="id" loading={loading} />
+                            <Table dataSource={leads} columns={leadColManager.processedColumns} rowKey="id" loading={loading} />
                         </>
                     )},
                     { key: 'opportunities', label: 'Opportunità', children: (
                         <>
                             <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingOpp(null); oppForm.resetFields(); setOppModalVisible(true); }} style={{ marginBottom: 16 }}>Nuova Opportunità</Button>
-                            <Table dataSource={opportunities} columns={oppColumns} rowKey="id" loading={loading} />
+                            <Table dataSource={opportunities} columns={oppColManager.processedColumns} rowKey="id" loading={loading} />
                         </>
                     )},
                 ]} />

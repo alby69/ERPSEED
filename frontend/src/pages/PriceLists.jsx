@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, InputNumber, Switch, Select, Space, Tag, Popconfirm, message, Tabs, Divider } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, DollarOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const PriceListItems = ({ listId, visible, onClose }) => {
     const [items, setItems] = useState([]);
@@ -155,7 +157,7 @@ export default function PriceLists() {
         } catch { message.error('Error deleting'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Codice', dataIndex: 'code', key: 'code', width: 120 },
         { title: 'Nome', dataIndex: 'name', key: 'name' },
         { title: 'Valuta', dataIndex: 'currency', key: 'currency', width: 80 },
@@ -172,10 +174,12 @@ export default function PriceLists() {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('pricelists', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
-            <Card title="Listini Prezzo" extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo Listino</Button>}>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Card title="Listini Prezzo" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo Listino</Button></Space>}>
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             </Card>
             <Modal title={editingRecord ? 'Modifica Listino' : 'Nuovo Listino'} open={modalVisible}
                 onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}

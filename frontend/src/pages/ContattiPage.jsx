@@ -5,7 +5,9 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined, PhoneOutlined, MailOutlined, GlobalOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useTableSort } from '../hooks/useTableSort';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
 import TableSearch from '../components/TableSearch';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 import Layout from '../components/Layout';
 
 const { Option } = Select;
@@ -137,7 +139,7 @@ export default function ContattiPage() {
     </span>
   );
 
-  const columns = [
+  const rawColumns = [
     {
       title: sortableHeader('Soggetto', 'soggetto_id'),
       dataIndex: ['soggetto', 'nome'],
@@ -180,6 +182,8 @@ export default function ContattiPage() {
     },
   ];
 
+  const colManager = useColumnManagerWithDrawer('contatti', rawColumns);
+
   const soggettoOptions = soggetti.map(s => (
     <Option key={s.id} value={s.id}>{s.nome}</Option>
   ));
@@ -195,14 +199,17 @@ export default function ContattiPage() {
             </Space>
           }
           extra={
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-              Nuovo Contatto
-            </Button>
+            <Space>
+              <ColumnSettingsButton manager={colManager} />
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                Nuovo Contatto
+              </Button>
+            </Space>
           }
         >
         <div className="mb-3">
           <TableSearch
-            columns={columns}
+            columns={colManager.processedColumns}
             searchField={searchField}
             searchValue={searchValue}
             searchTerm={searchTerm}
@@ -215,7 +222,7 @@ export default function ContattiPage() {
           />
         </div>
         <Table
-          columns={columns}
+          columns={colManager.processedColumns}
           dataSource={contatti}
           rowKey="id"
           loading={loading}

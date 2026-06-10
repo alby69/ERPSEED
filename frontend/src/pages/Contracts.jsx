@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Tag, 
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { draft: 'default', active: 'green', completed: 'blue', terminated: 'red', cancelled: 'orange' };
 
@@ -42,24 +44,26 @@ export default function Contracts() {
         } catch { message.error('Validation failed'); }
     };
 
-    const columns = [
-        { title: 'Numero', dataIndex: 'number' },
-        { title: 'Nome', dataIndex: 'name' },
-        { title: 'Cliente', dataIndex: 'party_id', render: (id) => { const s = subjects.find(x => x.id === id); return s?.nome || s?.ragione_sociale || '-'; } }, // No change needed here
-        { title: 'Inizio', dataIndex: 'start_date', render: (v) => formatDateForDisplay(v) || '-' },
-        { title: 'Fine', dataIndex: 'end_date', render: (v) => formatDateForDisplay(v) || '-' },
-        { title: 'Valore', dataIndex: 'value', render: (v) => `€ ${(v || 0).toFixed(2)}` },
-        { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
-        { title: 'Azioni', render: (_, r) => ( // Use parseDateForForm
+    const rawColumns = [
+        { title: 'Numero', dataIndex: 'number', key: 'number' },
+        { title: 'Nome', dataIndex: 'name', key: 'name' },
+        { title: 'Cliente', dataIndex: 'party_id', key: 'party_id', render: (id) => { const s = subjects.find(x => x.id === id); return s?.nome || s?.ragione_sociale || '-'; } },
+        { title: 'Inizio', dataIndex: 'start_date', key: 'start_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Fine', dataIndex: 'end_date', key: 'end_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Valore', dataIndex: 'value', key: 'value', render: (v) => `€ ${(v || 0).toFixed(2)}` },
+        { title: 'Stato', dataIndex: 'status', key: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
+        { title: 'Azioni', key: 'actions', render: (_, r) => (
             <Button type="link" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, start_date: parseDateForForm(r.start_date), end_date: parseDateForForm(r.end_date) }); setModalVisible(true); }}>Modifica</Button>
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('contracts', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
-            <Card title="Contratti">
+            <Card title="Contratti" extra={<ColumnSettingsButton manager={colManager} />}>
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Contratto</Button>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
                 <Modal title={editing ? 'Modifica Contratto' : 'Nuovo Contratto'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
                     <Form form={form} layout="vertical">
                         <Space size={16}>

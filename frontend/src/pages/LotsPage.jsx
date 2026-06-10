@@ -4,6 +4,8 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import dayjs from 'dayjs'; // Keep dayjs for diff calculation in Tag
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { available: 'green', reserved: 'blue', sold: 'default', returned: 'orange', scrapped: 'red' };
 
@@ -44,14 +46,14 @@ const LotsTab = () => {
         } catch { message.error('Validation'); }
     };
 
-    const columns = [
-        { title: 'Codice Lotto', dataIndex: 'code' },
-        { title: 'Prodotto', dataIndex: 'product_name' },
-        { title: 'Qtà Iniziale', dataIndex: 'initial_quantity' },
-        { title: 'Qtà Residua', dataIndex: 'quantity' }, // No change needed here
-        { title: 'Data Prod.', dataIndex: 'manufacturing_date', render: (v) => formatDateForDisplay(v) || '-' },
-        { title: 'Scadenza', dataIndex: 'expiry_date', render: (v) => v ? <Tag color={parseDateForForm(v)?.diff(dayjs(), 'day') < 30 ? 'red' : 'default'}>{formatDateForDisplay(v)}</Tag> : '-' }, // dayjs still needed for diff
-        { title: 'Azioni', render: (_, r) => (
+    const rawColumns = [
+        { title: 'Codice Lotto', dataIndex: 'code', key: 'code' },
+        { title: 'Prodotto', dataIndex: 'product_name', key: 'product_name' },
+        { title: 'Qtà Iniziale', dataIndex: 'initial_quantity', key: 'initial_quantity' },
+        { title: 'Qtà Residua', dataIndex: 'quantity', key: 'quantity' },
+        { title: 'Data Prod.', dataIndex: 'manufacturing_date', key: 'manufacturing_date', render: (v) => formatDateForDisplay(v) || '-' },
+        { title: 'Scadenza', dataIndex: 'expiry_date', key: 'expiry_date', render: (v) => v ? <Tag color={parseDateForForm(v)?.diff(dayjs(), 'day') < 30 ? 'red' : 'default'}>{formatDateForDisplay(v)}</Tag> : '-' },
+        { title: 'Azioni', key: 'actions', render: (_, r) => (
             <Space>
                 <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, manufacturing_date: parseDateForForm(r.manufacturing_date), expiry_date: parseDateForForm(r.expiry_date) }); setModalVisible(true); }}>Modifica</Button>
                 <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={async () => { const res = await apiFetch(`/api/v1/lots/${r.id}`, { method: 'DELETE' }); if (res.ok) { message.success('Eliminato'); fetch(); } }} />
@@ -59,10 +61,15 @@ const LotsTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('lots', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Lotto</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuovo Lotto</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             <Modal title={editing ? 'Modifica Lotto' : 'Nuovo Lotto'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={600}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
@@ -122,13 +129,13 @@ const SerialTab = () => {
         } catch { message.error('Validation'); }
     };
 
-    const columns = [
-        { title: 'Seriale', dataIndex: 'code' },
-        { title: 'Prodotto', dataIndex: 'product_name' },
-        { title: 'Lotto', dataIndex: 'lot_id', render: (id) => { const l = lots.find(x => x.id === id); return l?.code || '-'; } },
-        { title: 'Stato', dataIndex: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
-        { title: 'Data Vendita', dataIndex: 'sold_date', render: (v) => v || '-' },
-        { title: 'Azioni', render: (_, r) => (
+    const rawColumns = [
+        { title: 'Seriale', dataIndex: 'code', key: 'code' },
+        { title: 'Prodotto', dataIndex: 'product_name', key: 'product_name' },
+        { title: 'Lotto', dataIndex: 'lot_id', key: 'lot_id', render: (id) => { const l = lots.find(x => x.id === id); return l?.code || '-'; } },
+        { title: 'Stato', dataIndex: 'status', key: 'status', render: (v) => <Tag color={statusColors[v]}>{v}</Tag> },
+        { title: 'Data Vendita', dataIndex: 'sold_date', key: 'sold_date', render: (v) => v || '-' },
+        { title: 'Azioni', key: 'actions', render: (_, r) => (
             <Space>
                 <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(r); form.setFieldsValue({ ...r, sold_date: r.sold_date ? dayjs(r.sold_date) : null }); setModalVisible(true); }}>Modifica</Button>
                 <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={async () => { const res = await apiFetch(`/api/v1/serial-numbers/${r.id}`, { method: 'DELETE' }); if (res.ok) { message.success('Eliminato'); fetch(); } }} />
@@ -136,10 +143,15 @@ const SerialTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('serials', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Seriale</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuovo Seriale</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             <Modal title={editing ? 'Modifica Seriale' : 'Nuovo Seriale'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={600}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>

@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, Select, Switch, Tag, Space, me
 import { PlusOutlined, DeleteOutlined, ApiOutlined, SettingOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
 import { apiFetch } from '../utils';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 
 const { TextArea } = Input;
 
@@ -86,7 +88,7 @@ const BusinessRulesPage = () => {
         }
     };
 
-    const columns = [
+    const rawColumns = [
         {
             title: 'Rule Name',
             dataIndex: 'rule_name',
@@ -167,6 +169,8 @@ const BusinessRulesPage = () => {
         },
     ];
 
+    const colManager = useColumnManagerWithDrawer('business_rules', rawColumns);
+
     const getRulesByModel = () => {
         const byModel = {};
         rules.forEach(rule => {
@@ -207,7 +211,11 @@ const BusinessRulesPage = () => {
                             </span>
                         ),
                         children: (
-                            <Card>
+                            <Card
+                                extra={
+                                    <ColumnSettingsButton manager={colManager} />
+                                }
+                            >
                                 <Space style={{ marginBottom: 16 }}>
                                     <Button
                                         type="primary"
@@ -218,7 +226,7 @@ const BusinessRulesPage = () => {
                                     </Button>
                                 </Space>
                                 <Table
-                                    columns={columns}
+                                    columns={colManager.processedColumns}
                                     dataSource={rules}
                                     loading={loading}
                                     rowKey="id"
@@ -253,7 +261,7 @@ const BusinessRulesPage = () => {
                                                 />
                                             </h3>
                                             <Table
-                                                columns={columns}
+                                                columns={colManager.processedColumns}
                                                 dataSource={model.rules}
                                                 rowKey="id"
                                                 pagination={false}

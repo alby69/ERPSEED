@@ -3,6 +3,8 @@ import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker,
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { active: 'green', closed: 'orange', archived: 'default', draft: 'default', submitted: 'blue', approved: 'green' };
 
@@ -42,7 +44,7 @@ const ProjectTab = () => {
         } catch { message.error('Validation'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Codice', dataIndex: 'code' },
         { title: 'Nome', dataIndex: 'name' },
         { title: 'Cliente', dataIndex: 'client_id', render: (id) => { const s = subjects.find(x => x.id === id); return s?.nome || s?.ragione_sociale || '-'; } }, // No change needed here
@@ -56,10 +58,15 @@ const ProjectTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('project_management_projects', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Progetto</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuovo Progetto</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             <Modal title={editing ? 'Modifica Progetto' : 'Nuovo Progetto'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
@@ -132,7 +139,7 @@ const TimesheetTab = () => {
         } catch { message.error('Error'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Data', dataIndex: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Dipendente', dataIndex: 'employee_id', render: (id) => { const e = employees.find(x => x.id === id); return e ? `${e.first_name} ${e.last_name}` : '-'; } }, // No change needed here
         { title: 'Ore', key: 'hours', render: (_, r) => (r.lines || []).reduce((s, l) => s + (l.hours || 0), 0) }, // No change needed here
@@ -146,6 +153,8 @@ const TimesheetTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('project_management_timesheets', rawColumns);
+
     const expandedRowRender = (record) => {
         const cols = [
             { title: 'Progetto', dataIndex: 'project_id', render: (id) => { const p = projects.find(x => x.id === id); return p?.name || '-'; } },
@@ -157,8 +166,11 @@ const TimesheetTab = () => {
 
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuova Scheda Ore</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} expandable={{ expandedRowRender }} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuova Scheda Ore</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} expandable={{ expandedRowRender }} />
             <Modal title={editing ? 'Modifica Scheda Ore' : 'Nuova Scheda Ore'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }} okText="Salva" cancelText="Annulla" width={700}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker, Select, Space, Tag, message, Row, Col, Statistic } from 'antd';
 import { PlusOutlined, EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 import dayjs from 'dayjs'; // Keep dayjs for time-only operations and diffs
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
@@ -43,7 +45,7 @@ const EmployeesTab = () => {
         } catch { message.error('Validation failed'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Matricola', dataIndex: 'employee_number' },
         { title: 'Nome', key: 'name', render: (_, r) => `${r.first_name} ${r.last_name}` },
         { title: 'Email', dataIndex: 'email' },
@@ -55,10 +57,15 @@ const EmployeesTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('hr_employees', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Dipendente</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo Dipendente</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             <Modal title={editingRecord ? 'Modifica Dipendente' : 'Nuovo Dipendente'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={600}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
@@ -121,7 +128,7 @@ const DepartmentsTab = () => {
         } catch { message.error('Validation failed'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Codice', dataIndex: 'code' },
         { title: 'Nome', dataIndex: 'name' },
         { title: 'Attivo', dataIndex: 'is_active', render: (v) => <Tag color={v ? 'green' : 'red'}>{v ? 'Sì' : 'No'}</Tag> },
@@ -130,10 +137,15 @@ const DepartmentsTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('hr_departments', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Reparto</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo Reparto</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             <Modal title={editingRecord ? 'Modifica Reparto' : 'Nuovo Reparto'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}>
                 <Form form={form} layout="vertical">
                     <Form.Item name="code" label="Codice" rules={[{ required: true }]}><Input /></Form.Item>
@@ -182,7 +194,7 @@ const AttendanceTab = () => {
         } catch { message.error('Validation'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Data', dataIndex: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Dipendente', dataIndex: 'employee_id', render: (id) => { const e = employees.find(x => x.id === id); return e ? `${e.first_name} ${e.last_name}` : '-'; } }, // No change needed here
         { title: 'Entrata', dataIndex: 'check_in', render: (v) => v || '-' }, // No change needed here
@@ -195,10 +207,15 @@ const AttendanceTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('hr_attendance', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuova Presenza</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuova Presenza</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             <Modal title={editing ? 'Modifica Presenza' : 'Nuova Presenza'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
@@ -270,7 +287,7 @@ const LeaveTab = () => {
         } catch { message.error('Error'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Dipendente', dataIndex: 'employee_id', render: (id) => { const e = employees.find(x => x.id === id); return e ? `${e.first_name} ${e.last_name}` : '-'; } },
         { title: 'Tipo', dataIndex: 'leave_type' }, // No change needed here
         { title: 'Dal', dataIndex: 'start_date', render: (v) => formatDateForDisplay(v) || '-' },
@@ -290,10 +307,15 @@ const LeaveTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('hr_leave', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuova Richiesta</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuova Richiesta</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             <Modal title={editing ? 'Modifica Richiesta' : 'Nuova Richiesta Ferie/Permesso'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>

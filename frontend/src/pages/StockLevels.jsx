@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Input, Select, Space, Tag, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const StockLevels = () => {
     const [data, setData] = useState([]);
@@ -47,7 +49,7 @@ const StockLevels = () => {
         return true;
     });
 
-    const columns = [
+    const rawColumns = [
         { title: 'Prodotto', dataIndex: 'product_id', key: 'product_id', render: (id) => getProductName(id) },
         { title: 'Ubicazione', dataIndex: 'location_id', key: 'location_id', render: (id) => { const l = locations.find(x => x.id === id); return l ? l.name : `ID: ${id}`; } },
         { title: 'Quantità', dataIndex: 'quantity', key: 'quantity', render: (v) => <span style={{ fontWeight: 600, fontSize: 16 }}>{v || 0}</span> },
@@ -61,15 +63,17 @@ const StockLevels = () => {
         { title: 'Ultima Rilevazione', dataIndex: 'last_counted_at', key: 'last_counted_at', render: (v) => v ? new Date(v).toLocaleDateString() : '-' },
     ];
 
+    const colManager = useColumnManagerWithDrawer('stock_levels', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
-            <Card title="Giacenze di Magazzino">
+            <Card title="Giacenze di Magazzino" extra={<ColumnSettingsButton manager={colManager} />}>
                 <Space style={{ marginBottom: 16 }}>
                     <Input placeholder="Cerca prodotto..." prefix={<SearchOutlined />} value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 300 }} allowClear />
                     <Select allowClear placeholder="Filtra ubicazione" style={{ width: 200 }} value={locationFilter} onChange={setLocationFilter}
                         options={locations.map(l => ({ value: l.id, label: l.name }))} />
                 </Space>
-                <Table dataSource={filtered} columns={columns} rowKey={(r) => `${r.product_id}-${r.location_id}`} loading={loading} />
+                <Table dataSource={filtered} columns={colManager.processedColumns} rowKey={(r) => `${r.product_id}-${r.location_id}`} loading={loading} />
             </Card>
         </div>
     );

@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Selec
 import { PlusOutlined, ThunderboltOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateTimeForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 const statusColors = { open: 'blue', in_progress: 'processing', fulfilled: 'green', cancelled: 'red' };
 
 export default function MRPPage() {
@@ -65,7 +67,7 @@ export default function MRPPage() {
         )},
     ];
 
-    const sugColumns = [
+    const rawSugColumns = [
         { title: 'Prodotto', dataIndex: 'product_name' },
         { title: 'Tipo', dataIndex: 'suggestion_type', render: (v) => <Tag color={v === 'purchase' ? 'orange' : 'blue'}>{v === 'purchase' ? 'Acquista' : 'Produci'}</Tag> },
         { title: 'Richiesto', dataIndex: 'required_quantity' },
@@ -81,6 +83,9 @@ export default function MRPPage() {
         )},
     ];
 
+    const runColManager = useColumnManagerWithDrawer('mrp_runs', runColumns);
+    const sugColManager = useColumnManagerWithDrawer('mrp_suggestions', rawSugColumns);
+
     const purchaseSugs = suggestions.filter(s => s.suggestion_type === 'purchase');
     const produceSugs = suggestions.filter(s => s.suggestion_type === 'produce');
 
@@ -93,15 +98,19 @@ export default function MRPPage() {
                 <Col span={5}><Card size="small"><Statistic title="Suggerimenti Aperti" value={suggestions.filter(s => s.status === 'open').length} /></Card></Col>
             </Row>
             <Card title="MRP (Material Requirements Planning)" extra={
-                <Button type="primary" icon={<ThunderboltOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Esegui MRP</Button>
+                <Space>
+                    <ColumnSettingsButton manager={runColManager} />
+                    <ColumnSettingsButton manager={sugColManager} />
+                    <Button type="primary" icon={<ThunderboltOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Esegui MRP</Button>
+                </Space>
             }>
                 <Row gutter={16}>
                     <Col span={8}>
-                        <Table dataSource={runs} columns={runColumns} rowKey="id" loading={loading} size="small" />
+                        <Table dataSource={runs} columns={runColManager.processedColumns} rowKey="id" loading={loading} size="small" />
                     </Col>
                     <Col span={16}>
                         {selectedRun && (
-                            <Table dataSource={suggestions} columns={sugColumns} rowKey="id" size="small"
+                            <Table dataSource={suggestions} columns={sugColManager.processedColumns} rowKey="id" size="small"
                                    pagination={false} />
                         )}
                     </Col>

@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, DatePicker, Selec
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const statusColors = { draft: 'default', completed: 'green', cancelled: 'red' };
 const statusLabels = { draft: 'Bozza', completed: 'Completato', cancelled: 'Annullato' };
@@ -79,24 +81,26 @@ export default function GoodsReceipts() {
         if (res.ok) { message.success('Eliminato'); fetchData(); }
     };
 
-    const columns = [
-        { title: 'Numero', dataIndex: 'number', key: 'number' }, // No change needed here
+    const rawColumns = [
+        { title: 'Numero', dataIndex: 'number', key: 'number' },
         { title: 'Data', dataIndex: 'date', key: 'date', render: (v) => formatDateForDisplay(v) || '-' },
         { title: 'Fornitore', dataIndex: 'supplier_id', key: 'supplier_id', render: (id) => { const s = suppliers.find(x => x.id === id); return s ? s.ragione_sociale || `${s.nome || ''} ${s.cognome || ''}` : `ID: ${id}`; } },
         { title: 'Stato', dataIndex: 'status', key: 'status', render: (v) => <Tag color={statusColors[v]}>{statusLabels[v] || v}</Tag> },
         { title: 'Azioni', key: 'actions', render: (_, r) => (
-            <Space> {/* No change needed here */}
-                {r.status === 'draft' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleComplete(r.id)}>Completa</Button>} {/* No change needed here */}
+            <Space>
+                {r.status === 'draft' && <Button type="link" icon={<CheckCircleOutlined />} onClick={() => handleComplete(r.id)}>Completa</Button>}
                 {r.status === 'draft' && <Button type="link" icon={<EditOutlined />} onClick={() => { setEditingRecord(r); form.setFieldsValue({ ...r, date: parseDateForForm(r.date) }); setModalVisible(true); }} />}
                 {r.status === 'draft' && <Popconfirm title="Eliminare?" onConfirm={() => handleDelete(r.id)}><Button type="link" danger icon={<DeleteOutlined />} /></Popconfirm>}
             </Space>
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('goods_receipts', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
-            <Card title="DDT Entrata Merci" extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo DDT</Button>}>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+            <Card title="DDT Entrata Merci" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuovo DDT</Button></Space>}>
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
                     expandedRowRender={(r) => r.lines ? (
                         <Table dataSource={r.lines} rowKey="id" size="small" pagination={false}
                             columns={[

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Switch, Space, Tag, Popconfirm, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 export default function UnitsOfMeasure() {
     const [data, setData] = useState([]);
@@ -51,7 +53,7 @@ export default function UnitsOfMeasure() {
         } catch { message.error('Error deleting'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Codice', dataIndex: 'code', key: 'code', width: 100 },
         { title: 'Nome', dataIndex: 'name', key: 'name' },
         { title: 'Simbolo', dataIndex: 'symbol', key: 'symbol', width: 80 },
@@ -67,10 +69,12 @@ export default function UnitsOfMeasure() {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('udm', rawColumns);
+
     return (
         <div style={{ padding: 24 }}>
-            <Card title="Unità di Misura" extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova UM</Button>}>
-                <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Card title="Unità di Misura" extra={<Space><ColumnSettingsButton manager={colManager} /><Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova UM</Button></Space>}>
+                <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             </Card>
             <Modal title={editingRecord ? 'Modifica UM' : 'Nuova UM'} open={modalVisible}
                 onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }}

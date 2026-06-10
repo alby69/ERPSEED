@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Card, Table, Button, Tag, Modal, message, Spin, Alert } from 'antd';
 import { useModules } from '@/hooks/useModules';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 import { Layout } from '../components';
 
 function ModulesPage() {
@@ -58,7 +60,7 @@ function ModulesPage() {
         });
     };
 
-    const columns = [
+    const rawColumns = [
         {
             title: 'Modulo',
             dataIndex: 'name',
@@ -129,6 +131,8 @@ function ModulesPage() {
         }
     ];
 
+    const colManager = useColumnManagerWithDrawer('modules', rawColumns);
+
     if (loading) {
         return (
             <Layout>
@@ -158,9 +162,12 @@ function ModulesPage() {
                 <Card
                     title="Gestione Moduli"
                     extra={
-                        <Button onClick={refresh} loading={loading}>
-                            Aggiorna
-                        </Button>
+                        <Space>
+                            <ColumnSettingsButton manager={colManager} />
+                            <Button onClick={refresh} loading={loading}>
+                                Aggiorna
+                            </Button>
+                        </Space>
                     }
                 >
                     <p style={{ marginBottom: 16 }}>
@@ -168,7 +175,7 @@ function ModulesPage() {
                     </p>
 
                     <Table
-                    columns={columns}
+                    columns={colManager.processedColumns}
                     dataSource={available}
                     rowKey="module_id"
                     pagination={false}

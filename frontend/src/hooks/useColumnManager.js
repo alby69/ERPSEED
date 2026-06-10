@@ -147,4 +147,15 @@ export function useColumnManager(pageKey, defaultColumns) {
   };
 }
 
+export function useColumnManagerWithDrawer(pageKey, defaultColumns) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const mgr = useColumnManager(pageKey, defaultColumns);
+  return {
+    ...mgr,
+    drawerOpen,
+    openDrawer: () => setDrawerOpen(true),
+    closeDrawer: () => setDrawerOpen(false),
+  };
+}
+
 export default useColumnManager;

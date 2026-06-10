@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Select, Switch, Tag, Space, message, Tabs, Alert } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, ApiOutlined, BuildOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { apiFetch } from '../utils'; // No date fields in this page
+import { apiFetch } from '../utils';
+import { useColumnManagerWithDrawer } from '../hooks/useColumnManager';
+import ColumnSettingsButton from '../components/ColumnSettingsButton';
 
 const { TextArea } = Input;
 
@@ -153,7 +155,7 @@ const WorkflowsPage = () => {
         }
     };
 
-    const columns = [
+    const rawColumns = [
         {
             title: 'Name',
             dataIndex: 'name',
@@ -203,6 +205,8 @@ const WorkflowsPage = () => {
             ),
         },
     ];
+
+    const colManager = useColumnManagerWithDrawer('workflows', rawColumns);
 
     const executionColumns = [
         {
@@ -267,7 +271,9 @@ const WorkflowsPage = () => {
                         key: 'list',
                         label: 'Workflows',
                         children: (
-                            <Card>
+                            <Card
+                                extra={<ColumnSettingsButton manager={colManager} />}
+                            >
                                 <Space style={{ marginBottom: 16 }}>
                                     <Button
                                         type="primary"
@@ -284,7 +290,7 @@ const WorkflowsPage = () => {
                                     </Button>
                                 </Space>
                                 <Table
-                                    columns={columns}
+                                    columns={colManager.processedColumns}
                                     dataSource={workflows}
                                     loading={loading}
                                     rowKey="id"

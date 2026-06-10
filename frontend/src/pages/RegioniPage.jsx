@@ -3,6 +3,8 @@ import { Card, Table, Input, Space, message, Tag } from 'antd';
 import { GlobalOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import Layout from '@/components/Layout';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 export default function RegioniPage() {
   const [regioni, setRegioni] = useState([]);
@@ -33,7 +35,7 @@ export default function RegioniPage() {
 
   useEffect(() => { fetchRegioni(); }, [fetchRegioni]);
 
-  const columns = [
+  const rawColumns = [
     {
       title: 'Codice', dataIndex: 'codice', key: 'codice', width: 80,
       render: (text) => <Tag>{text}</Tag>,
@@ -41,11 +43,14 @@ export default function RegioniPage() {
     { title: 'Nome', dataIndex: 'nome', key: 'nome', width: 300 },
   ];
 
+  const colManager = useColumnManagerWithDrawer('regioni', rawColumns);
+
   return (
     <Layout>
       <div style={{ padding: '0' }}>
         <Card
           title={<Space><GlobalOutlined /><span>Regioni</span></Space>}
+          extra={<ColumnSettingsButton manager={colManager} />}
         >
           <Input.Search
             placeholder="Cerca regione..."
@@ -55,7 +60,7 @@ export default function RegioniPage() {
           />
           <Table
             dataSource={regioni}
-            columns={columns}
+            columns={colManager.processedColumns}
             rowKey="codice"
             loading={loading}
             pagination={{

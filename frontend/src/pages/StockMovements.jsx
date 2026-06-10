@@ -3,6 +3,8 @@ import { Card, Table, Button, Modal, Form, Input, InputNumber, Select, Space, Ta
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay, formatDateTimeForDisplay } from '@/utils/dateUtils'; // Import date utilities
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const typeColors = { in: 'green', out: 'red', transfer: 'blue', adjustment: 'orange' };
 const typeLabels = { in: 'Carico', out: 'Scarico', transfer: 'Trasferimento', adjustment: 'Rettifica' };
@@ -46,7 +48,7 @@ const MovementReasonsTab = () => {
         } catch { message.error('Error'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Codice', dataIndex: 'code', key: 'code' },
         { title: 'Nome', dataIndex: 'name', key: 'name' },
         { title: 'Tipo', dataIndex: 'movement_type', key: 'movement_type', render: (v) => <Tag color={typeColors[v]}>{typeLabels[v] || v}</Tag> },
@@ -59,10 +61,15 @@ const MovementReasonsTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('stock_movements_reasons', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuova Causale</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} size="small" />
+            <Space style={{ marginBottom: 16 }}>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingRecord(null); form.resetFields(); setModalVisible(true); }}>Nuova Causale</Button>
+                <ColumnSettingsButton manager={colManager} />
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} size="small" />
             <Modal title={editingRecord ? 'Modifica Causale' : 'Nuova Causale'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla">
                 <Form form={form} layout="vertical">
                     <Form.Item name="code" label="Codice" rules={[{ required: true }]}><Input /></Form.Item>
@@ -131,7 +138,7 @@ const StockMovementsTab = () => {
         } catch { message.error('Validation failed'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Nr. Movimento', dataIndex: 'movement_number', key: 'movement_number' },
         { title: 'Data', dataIndex: 'created_at', key: 'created_at', render: (v) => formatDateTimeForDisplay(v) || '-' },
         { title: 'Tipo', dataIndex: 'movement_type', key: 'movement_type', render: (v) => <Tag color={typeColors[v]}>{typeLabels[v] || v}</Tag> },
@@ -141,10 +148,15 @@ const StockMovementsTab = () => {
         { title: 'Riferimento', dataIndex: 'reference_type', key: 'reference_type' },
     ];
 
+    const colManager = useColumnManagerWithDrawer('stock_movements_entries', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuovo Movimento</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+            <Space style={{ marginBottom: 16 }}>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setModalVisible(true); }}>Nuovo Movimento</Button>
+                <ColumnSettingsButton manager={colManager} />
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading}
                 pagination={{ current: page, pageSize: 20, total, onChange: setPage }} />
             <Modal title="Nuovo Movimento di Magazzino" open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); }} okText="Salva" cancelText="Annulla" width={600}>
                 <Form form={form} layout="vertical">

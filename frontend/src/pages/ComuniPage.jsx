@@ -10,6 +10,8 @@ import {
 import { apiFetch } from '@/utils';
 import Layout from '@/components/Layout';
 import HelpDrawer from '@/components/HelpDrawer';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -203,7 +205,7 @@ export default function ComuniPage() {
     return false;
   };
 
-  const columns = [
+  const rawColumns = [
     {
       title: 'Cod. ISTAT',
       dataIndex: 'codice_istat',
@@ -272,6 +274,8 @@ export default function ComuniPage() {
     }
   ];
 
+  const colManager = useColumnManagerWithDrawer('comuni', rawColumns);
+
   return (
     <Layout>
       <div style={{ padding: '0' }}>
@@ -308,6 +312,7 @@ export default function ComuniPage() {
         }
         extra={
           <Space>
+            <ColumnSettingsButton manager={colManager} />
             <Upload beforeUpload={handleUpload} showUploadList={false} accept=".csv,.json,.zip">
               <Button icon={<UploadOutlined />} loading={uploadLoading}>
                 Carica Dati
@@ -364,7 +369,7 @@ export default function ComuniPage() {
         </Row>
 
         <Table
-          columns={columns}
+          columns={colManager.processedColumns}
           dataSource={comuni}
           rowKey="id"
           loading={loading}

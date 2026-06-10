@@ -3,6 +3,8 @@ import { Card, Table, Tabs, Button, Modal, Form, Input, InputNumber, DatePicker,
 import { PlusOutlined, EditOutlined, DeleteOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils';
+import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
+import ColumnSettingsButton from '@/components/ColumnSettingsButton';
 
 const registerTypes = { sales: 'Vendite', purchases: 'Acquisti', corrispettivi: 'Corrispettivi' };
 const statusColors = { draft: 'default', computed: 'blue', paid: 'green', credited: 'orange' };
@@ -67,7 +69,7 @@ const VatRegisterTab = () => {
     const totalTaxable = data.reduce((s, r) => s + (r.taxable_amount || 0), 0);
     const totalVat = data.reduce((s, r) => s + (r.vat_amount || 0), 0); // No change needed here
 
-    const columns = [
+    const rawColumns = [
         { title: '#', dataIndex: 'entry_number', width: 60 }, // No change needed here
         { title: 'Data', dataIndex: 'entry_date' },
         { title: 'Documento', dataIndex: 'document_number' },
@@ -84,6 +86,8 @@ const VatRegisterTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('vat_registers_register', rawColumns);
+
     return (
         <>
             <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -98,6 +102,9 @@ const VatRegisterTab = () => {
                     <Button icon={<ThunderboltOutlined />} onClick={handleGenerate} loading={generating}>Genera da Fatture</Button>
                 </Col>
                 <Col span={3}>
+                    <ColumnSettingsButton manager={colManager} />
+                </Col>
+                <Col span={3}>
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuovo</Button>
                 </Col>
             </Row>
@@ -105,7 +112,7 @@ const VatRegisterTab = () => {
                 <Col span={6}><Card size="small"><Statistic title="Totale Imponibile" value={totalTaxable} precision={2} prefix="€" /></Card></Col>
                 <Col span={6}><Card size="small"><Statistic title="Totale IVA" value={totalVat} precision={2} prefix="€" /></Card></Col>
             </Row>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} size="small" />
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} size="small" />
             <Modal title={editing ? 'Modifica Registrazione' : 'Nuova Registrazione IVA'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }}>
                 <Form form={form} layout="vertical">
                     <Space size={16}>
@@ -179,7 +186,7 @@ const LiquidationTab = () => {
         } catch { message.error('Error'); }
     };
 
-    const columns = [
+    const rawColumns = [
         { title: 'Periodo', dataIndex: 'period' },
         { title: 'Tipo', dataIndex: 'type' },
         { title: 'IVA Vendite', dataIndex: 'sales_vat', render: (v) => `€${(v || 0).toFixed(2)}` },
@@ -192,10 +199,15 @@ const LiquidationTab = () => {
         )},
     ];
 
+    const colManager = useColumnManagerWithDrawer('vat_registers_liquidation', rawColumns);
+
     return (
         <>
-            <Button type="primary" icon={<ThunderboltOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }} style={{ marginBottom: 16 }}>Nuova Liquidazione</Button>
-            <Table dataSource={data} columns={columns} rowKey="id" loading={loading} />
+            <Space style={{ marginBottom: 16 }}>
+                <ColumnSettingsButton manager={colManager} />
+                <Button type="primary" icon={<ThunderboltOutlined />} onClick={() => { setEditing(null); form.resetFields(); setModalVisible(true); }}>Nuova Liquidazione</Button>
+            </Space>
+            <Table dataSource={data} columns={colManager.processedColumns} rowKey="id" loading={loading} />
             <Modal title={editing ? 'Modifica Liquidazione' : 'Nuova Liquidazione IVA'} open={modalVisible} onOk={editing ? handleUpdate : handleCompute} onCancel={() => { setModalVisible(false); form.resetFields(); setEditing(null); }}>
                 <Form form={form} layout="vertical">
                     {!editing && (
