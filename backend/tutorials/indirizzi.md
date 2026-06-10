@@ -6,13 +6,23 @@ Il modulo **Indirizzi** gestisce gli indirizzi associati a soggetti
 ## Struttura
 
 Ogni indirizzo contiene:
-- **Denominazione** — via, piazza, viale, etc.
+
+- **Città/Comune** — selezionato dal database comuni (autocomplete)
+- **Via/Piazza** — autocomplete su cache locale `Via` + Nominatim fallback
 - **Numero civico**
-- **CAP** e **Città** (autocompletati dal database comuni)
-- **Provincia** e **Regione**
-- **Nazione** (ISO 3166-1 alpha-2, default IT)
-- **Coordinate** (latitudine, longitudine)
 - **Tipo** — residenza, sede legale, magazzino, fatturazione, consegna
+
+I seguenti campi vengono **auto-compilati** dal modello **Comune** alla
+selezione della città (non editabili nel form):
+
+- **CAP**, **Provincia**, **Regione**, **Nazione** (default IT)
+- **Latitudine**, **Longitudine**
+
+## Modello Via
+
+Il modello `Via` funge da **cache locale** per le strade, popolata
+automaticamente da Nominatim (OpenStreetMap) sotto richiesta.
+Ogni via è associata a un comune tramite `comune_id`.
 
 ## Come usare
 
@@ -20,17 +30,16 @@ Ogni indirizzo contiene:
 
 1. Seleziona il **soggetto** a cui associare l'indirizzo
 2. Scegli il **tipo** di indirizzo
-3. Inserisci via e numero civico
-4. Seleziona **Regione → Provincia → Comune**:
-   - La città, il CAP, la provincia e regione si compileranno automaticamente
-   - Le coordinate geografiche verranno recuperate dal database
-5. (Opzionale) Clicca **"Geocodifica"** per ottenere coordinate precise
-   da Nominatim (OpenStreetMap)
+3. **Seleziona la Città** (autocomplete sul database comuni):
+   - CAP, provincia, regione, nazione e coordinate si compileranno automaticamente
+4. **Digita la Via** (autocomplete, attivo solo dopo aver selezionato la città):
+   - Cerca nella cache locale `Via` + Nominatim fallback
+   - Se la via non è in cache, Nominatim la cerca e la salva automaticamente
+5. **Inserisci il Numero Civico**
 
 ### Modifica
 
 Clicca sul record per modificare i campi.
-La geocodifica è sempre disponibile per aggiornare le coordinate.
 
 ### Tipi di indirizzo
 
@@ -42,27 +51,29 @@ La geocodifica è sempre disponibile per aggiornare le coordinate.
 | Fatturazione | Indirizzo per fatture |
 | Consegna | Indirizzo per spedizioni |
 
-## Geocodifica
+## Colonne tabella
 
-### Forward Geocoding (indirizzo → coordinate)
-
-Inserisci un indirizzo testuale, il sistema cerca le coordinate in questo ordine:
-1. **Nominatim (OSM)** — per indirizzi con via/viale/piazza
-2. **Database comuni** — lookup per nome del comune
-3. **Nominatim (fallback)** — ricerca libera
-
-### Reverse Geocoding (coordinate → indirizzo)
-
-Inserisci latitudine e longitudine per ottenere l'indirizzo corrispondente.
+| Colonna | Descrizione |
+|---|---|
+| Cod. Soggetto | Codice identificativo del soggetto associato |
+| Soggetto | Nome/ragione sociale del soggetto |
+| Tipo | Tipologia indirizzo |
+| Città | Comune (dal database comuni) |
+| Regione | Regione (auto-compilata dal comune) |
+| Provincia | Sigla provincia (auto-compilata dal comune) |
+| Nazione | Codice nazione ISO (auto-compilato, default IT) |
 
 ## API
 
 ```
+# Indirizzi
 GET    /api/v1/indirizzi              — Lista (JWT)
 POST   /api/v1/indirizzi              — Crea (JWT)
 GET    /api/v1/indirizzi/{id}         — Dettaglio (JWT)
 PUT    /api/v1/indirizzi/{id}         — Modifica (JWT)
 DELETE /api/v1/indirizzi/{id}         — Elimina (JWT)
-GET    /api/v1/indirizzi/geocodifica  — Forward geocoding
-GET    /api/v1/indirizzi/geocodifica-inversa — Reverse geocoding
+
+# Vie (cache locale + Nominatim)
+GET    /api/v1/vie/?comune_id=X&q=nome  — Cerca strade per comune
+POST   /api/v1/vie/bulk?comune_id=X     — Pre-carica strade da Nominatim
 ```

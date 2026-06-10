@@ -4,8 +4,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { parseDateForForm, formatDateForApi, formatDateForDisplay } from '@/utils/dateUtils'; // Import date utilities
 
-const TaxRates = () => {
-export default function TaxRates() {
+const TaxRatesPage = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -166,3 +165,5 @@ export default function TaxRates() {
         </div>
     );
 };
+
+export default TaxRatesPage;

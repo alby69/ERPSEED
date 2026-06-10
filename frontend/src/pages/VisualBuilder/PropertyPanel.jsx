@@ -7,10 +7,12 @@ import { Form, Input, InputNumber, Switch, Select, Typography, Divider, Empty, R
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { registry } from '@/components/core';
 import { apiFetch } from '@/utils';
+import { useTheme } from '@/context';
 
 const { Title, Text } = Typography;
 
 const PropertyPanel = ({ component, onChange, projectId }) => {
+  const { themeConfig } = useTheme();
   const [form] = Form.useForm();
   const [models, setModels] = useState([]);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -82,7 +84,7 @@ const PropertyPanel = ({ component, onChange, projectId }) => {
       <span>
         {schema.title || key}
         <Tooltip title="Supports {{expressions}}">
-          <InfoCircleOutlined style={{ marginLeft: 4, fontSize: 10, color: '#1677ff' }} />
+          <InfoCircleOutlined style={{ marginLeft: 4, fontSize: 10, color: themeConfig.primaryColor }} />
         </Tooltip>
       </span>
     );
@@ -187,7 +189,7 @@ const PropertyPanel = ({ component, onChange, projectId }) => {
         )}
 
         <Divider orientation="left" plain style={{ fontSize: 11 }}>Data Binding Info</Divider>
-        <div style={{ fontSize: 11, background: '#f9f9f9', padding: 8, borderRadius: 4 }}>
+        <div style={{ fontSize: 11, background: themeConfig.mode === 'dark' ? '#1f1f1f' : '#f9f9f9', padding: 8, borderRadius: 4 }}>
           <Text type="secondary">Available context:</Text>
           <ul style={{ paddingLeft: 16, margin: '4px 0' }}>
             <li><code>user.name</code>, <code>user.role</code></li>

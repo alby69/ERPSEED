@@ -7,6 +7,7 @@ import { Empty, Card, Button, Space } from 'antd';
 import { DeleteOutlined, DragOutlined } from '@ant-design/icons';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { ComponentRenderer } from '@/components/core';
+import { useTheme } from '@/context';
 
 const GRID_SIZE = 32;
 
@@ -19,6 +20,7 @@ const DraggableComponent = ({
   previewMode,
   projectId
 }) => {
+  const { themeConfig } = useTheme();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: id,
     data: component
@@ -57,8 +59,8 @@ const DraggableComponent = ({
         className={`builder-component-card ${isSelected ? 'selected' : ''}`}
         style={{
           height: '100%',
-          border: isSelected ? '2px solid #1677ff' : '1px solid #d9d9d9',
-          boxShadow: isSelected ? '0 0 8px rgba(22, 119, 255, 0.2)' : 'none',
+          border: isSelected ? `2px solid ${themeConfig.primaryColor}` : `1px solid ${themeConfig.mode === 'dark' ? '#303030' : '#d9d9d9'}`,
+          boxShadow: isSelected ? `0 0 8px ${themeConfig.primaryColor}33` : 'none',
           display: 'flex',
           flexDirection: 'column'
         }}
@@ -115,13 +117,13 @@ const BuilderCanvas = ({
     width: '100%',
     minHeight: '800px',
     position: 'relative',
-    background: previewMode ? '#fff' : (isOver ? '#f0f5ff' : '#fafafa'),
+    background: previewMode ? (themeConfig.mode === 'dark' ? '#141414' : '#fff') : (isOver ? `${themeConfig.primaryColor}15` : (themeConfig.mode === 'dark' ? '#1f1f1f' : '#fafafa')),
     backgroundImage: previewMode ? 'none' : `
-      linear-gradient(to right, #eee 1px, transparent 1px),
-      linear-gradient(to bottom, #eee 1px, transparent 1px)
+      linear-gradient(to right, ${themeConfig.mode === 'dark' ? '#333' : '#eee'} 1px, transparent 1px),
+      linear-gradient(to bottom, ${themeConfig.mode === 'dark' ? '#333' : '#eee'} 1px, transparent 1px)
     `,
     backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
-    border: previewMode ? '1px solid #f0f0f0' : (isOver ? '2px dashed #1677ff' : '1px solid #d9d9d9'),
+    border: previewMode ? `1px solid ${themeConfig.mode === 'dark' ? '#303030' : '#f0f0f0'}` : (isOver ? `2px dashed ${themeConfig.primaryColor}` : `1px solid ${themeConfig.mode === 'dark' ? '#303030' : '#d9d9d9'}`),
     borderRadius: 8,
     transition: 'background-color 0.2s',
     overflow: 'hidden'

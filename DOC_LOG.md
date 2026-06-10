@@ -9,6 +9,21 @@
 - Aggiornati: root README.md, backend/docs/README.md (indice sintetico con rinvio a INDEX.md)
 - Verifica finale backend: 16/16 test passano; frontend lint: 0 errori
 
+## [2026-06-10] Aggiornamento documentazione — Soggetti form tab merge
+- Uniti tab "Dati Principali" e "Dati Anagrafici" in unico tab "Dati Anagrafici" nel form Soggetto
+- Aggiunti campi Cognome e Ragione Sociale al tab unificato
+- Aggiornati tab di dettaglio (detailTabItems) per coerenza
+- Rimossi 2 tab obsoleti: form ora ha 3 tab (Dati Anagrafici, Contatti, Ruoli)
+
+## [2026-06-10] Aggiornamento documentazione — Indirizzi/Via/Logistica
+- Aggiunto modello `Via` (cache locale strade per comune) con campi `comune_id`/`via_id` su `Indirizzo`
+- Aggiunta API `GET /api/v1/vie/` con ricerca cache + Nominatim fallback; API `POST /api/v1/vie/bulk` per pre-caricamento
+- Refactoring UX IndirizziPage: selezione città → autocomplete via → numero civico
+- DistanceCalculator: mostra città di partenza/arrivo nei risultati
+- Sidebar: spostato "Calcolo Distanze" (Logistica) dentro "Geografia"
+- Aggiornati: README.md, API.md, ROADMAP.md, DEVELOPER_GUIDE.md, IMPLEMENTATION_PLAN.md, INDEX.md, tutorials/indirizzi.md
+- docs synced with implementation
+
 ## [2026-06-09] Verifica finale e aggiornamento avanzamento
 - Eseguita verifica backend: 17/18 test passano (1 pre-esistente fallisce: test_dynamic_model_creation)
 - Eseguito lint frontend: 9 nuove pagine pulite (0 errori, 0 warning)

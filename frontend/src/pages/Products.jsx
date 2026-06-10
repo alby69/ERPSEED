@@ -3,10 +3,10 @@ import { Table, Spin, Alert, Button, Typography, Space } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from './api';
-
-
+import { useTheme } from '../context';
 
 function Products() {
+    const { themeConfig } = useTheme();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -68,7 +68,7 @@ function Products() {
 
   return (
     <>
-      <div style={{ padding: 24, background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: 24, background: themeConfig.mode === 'dark' ? '#141414' : '#fff', borderBottom: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
             <Typography.Title level={4} style={{ margin: 0 }}>Products</Typography.Title>
             <Typography.Text type="secondary">Manage your product catalog</Typography.Text>

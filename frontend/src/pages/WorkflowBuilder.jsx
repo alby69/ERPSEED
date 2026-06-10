@@ -17,6 +17,7 @@ import { nodeTypes } from '../components/workflow/WorkflowNodes';
 import WorkflowPropertiesPanel from '../components/workflow/WorkflowPropertiesPanel';
 import ImportExportToolbar from '../components/ui/ImportExportToolbar';
 import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
+import { useTheme } from '../context';
 
 const { Option } = Select;
 
@@ -43,6 +44,7 @@ const toolboxItems = [
 ];
 
 const WorkflowBuilder = () => {
+  const { themeConfig } = useTheme();
   const { projectId, workflowId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -296,8 +298,8 @@ const WorkflowBuilder = () => {
       </Card>
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        <div style={{ width: 80, background: '#fafafa', borderRight: '1px solid #f0f0f0', padding: 8 }}>
-          <div style={{ textAlign: 'center', fontSize: 11, marginBottom: 8, color: '#666' }}>
+        <div style={{ width: 80, background: themeConfig.mode === 'dark' ? '#1f1f1f' : '#fafafa', borderRight: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', padding: 8 }}>
+          <div style={{ textAlign: 'center', fontSize: 11, marginBottom: 8, color: themeConfig.mode === 'dark' ? 'rgba(255,255,255,0.45)' : '#666' }}>
             Toolbox
           </div>
           {toolboxItems.map(item => (

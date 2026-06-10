@@ -7,10 +7,12 @@ import { Card, Typography, Space, Tooltip } from 'antd';
 import * as Icons from '@ant-design/icons';
 import { useDraggable } from '@dnd-kit/core';
 import { registry } from '@/components/core';
+import { useTheme } from '@/context';
 
 const { Text } = Typography;
 
 const DraggableItem = ({ type, archetype }) => {
+  const { themeConfig } = useTheme();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `palette-${type}`,
     data: {
@@ -26,10 +28,10 @@ const DraggableItem = ({ type, archetype }) => {
     opacity: isDragging ? 0.5 : 1,
     cursor: 'grab',
     marginBottom: 8,
-    border: '1px solid #d9d9d9',
+    border: `1px solid ${themeConfig.mode === 'dark' ? '#303030' : '#d9d9d9'}`,
     borderRadius: 4,
     padding: '8px 12px',
-    background: '#fff',
+    background: themeConfig.mode === 'dark' ? '#1f1f1f' : '#fff',
     display: 'flex',
     alignItems: 'center',
     zIndex: isDragging ? 1000 : 1,

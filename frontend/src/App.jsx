@@ -23,6 +23,7 @@ import ProjectImportExportPage from './pages/ProjectImportExportPage';
 import GDOReconciliationTool from './pages/GDOReconciliationTool';
 import PagePlaceholder from './pages/PagePlaceholder';
 import RelationshipManagerPage from './pages/RelationshipManagerPage';
+import DistanceCalculator from './pages/DistanceCalculator';
 import TaxRates from './pages/TaxRates';
 import ProductCategories from './pages/ProductCategories';
 import UnitsOfMeasure from './pages/UnitsOfMeasure';
@@ -478,6 +479,9 @@ return (
         <Route path="/project-management" element={<ProtectedRoute roles={['admin', 'owner']}><ProjectManagement /></ProtectedRoute>} />
         <Route path="/timesheet" element={<ProtectedRoute roles={['admin', 'owner']}><ProjectManagement /></ProtectedRoute>} />
         <Route path="/project-budgets" element={<ProtectedRoute roles={['admin', 'owner']}><ProjectManagement /></ProtectedRoute>} />
+
+        {/* === Logistica === */}
+        <Route path="/logistics/distances" element={<ProtectedRoute roles={['admin', 'owner']}><DistanceCalculator /></ProtectedRoute>} />
 
         {/* === Analytics === */}
         <Route path="/reports" element={<ProtectedRoute roles={['admin', 'owner']}><ReportDesigner /></ProtectedRoute>} />

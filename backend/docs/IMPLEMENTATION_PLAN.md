@@ -22,7 +22,7 @@ Sono le entità fondamentali, non scomponibili, che vengono riutilizzate per cos
 | P2 | **Ruolo** | `Ruolo` (cliente, fornitore, dipendente, lead) | `entities/` | ✅ |
 | P3 | **Prodotto** | `Product` (codice, nome, SKU, barcode, UM, peso) | `products/` | ✅ |
 | P4 | **Contatto** | `Contatto` (email, tel, PEC, social) | `entities/` | ✅ |
-| P5 | **Indirizzo** | `Indirizzo` (via, civico, CAP, città, nazione) | `entities/` | ✅ |
+| P5 | **Indirizzo** | `Indirizzo` (via, civico, CAP, città, nazione, comune_id, via_id) + `Via` (cache locale strade per comune) | `entities/` | ✅ |
 | P6 | **Comune/Regione/Provincia** | `Comune`, `Regione`, `Provincia` | `entities/` | ✅ |
 | P7 | **Categoria** | `ProductCategory` (albero padre-figlio) | `products/` | 🔶 Nuovo |
 | P8 | **Aliquota IVA** | `TaxRate` (codice, %, data inizio/fine) | `modules/tax/` | ❌ Nuovo |
@@ -47,7 +47,7 @@ Ogni **Area** corrisponde a un submenu di "Applicazioni" nella sidebar. I blocch
 |--------|-------------|--------|----------|--------|
 | **Soggetti** | P1 + P2 + P4 + P5 + P6 | `entities/` ✅ | — | — |
 | **Ruoli** | P2 | `entities/` ✅ | — | — |
-| **Indirizzi** | P5 + P6 | `entities/` ✅ | — | — |
+| **Indirizzi** | P5 + P6 + `Via` (cache strade) | `entities/` ✅ | — | — |
 | **Comuni** | P6 | `entities/` ✅ | — | — |
 | **Contatti** | P4 | `entities/` ✅ | — | — |
 | **Prodotti** | P3 + P7 + P8 + P9 + P12 | `products/` ✅ | — | — |
@@ -799,4 +799,4 @@ Quando si modifica un modulo esistente:
 
 ---
 
-*Ultimo aggiornamento: 2026-06-09*
+*Ultimo aggiornamento: 2026-06-10*

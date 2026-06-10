@@ -54,7 +54,7 @@ erpseed/
 │   │   ├── middleware/              #   TenantMiddleware, ModuleMiddleware
 │   │   └── decorators/              #   @tenant_required, @admin_required
 │   ├── modules/                     # Moduli applicativi (CQRS)
-│   │   ├── entities/               #   Anagrafiche: Soggetto, Ruolo, Indirizzo, Contatto, Comune
+│   │   ├── entities/               #   Anagrafiche: Soggetto, Ruolo, Indirizzo (comune_id/via_id), Contatto, Comune, Via (cache strade), vie_routes.py (Nominatim)
 │   │   ├── products/               #   Prodotti (CQRS)
 │   │   ├── sales/                  #   Vendite (CQRS)
 │   │   ├── purchases/              #   Acquisti (CQRS)

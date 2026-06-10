@@ -127,6 +127,14 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 ├── Fase 4: Security & Performance
 │   ├── ✅ API Versioning (v1)
 │   └── ✅ Tenant middleware JWT fallback fix
+├── Anagrafiche - Indirizzi & Vie
+│   ├── ✅ Modello Via (cache locale strade per comune)
+│   ├── ✅ API /api/v1/vie/ con Nominatim fallback
+│   ├── ✅ Campi comune_id/via_id su Indirizzo
+│   └── ✅ UX IndirizziPage: città → via autocomplete → civico
+├── Logistica
+│   ├── ✅ DistanceCalculator mostra città partenza/arrivo
+│   └── ✅ Sidebar: Logistica spostata in Geografia
 └── Bug fixes
     ├── ✅ Entity blueprint URL alignment (/api/v1 instead of /api/v1/entities/{name})
     ├── ✅ Products API (GetProductCommand entity_id field)
@@ -156,4 +164,4 @@ Quando si modifica un modulo esistente:
 
 ---
 
-*Ultimo aggiornamento: 2026-06-09*
+*Ultimo aggiornamento: 2026-06-10*

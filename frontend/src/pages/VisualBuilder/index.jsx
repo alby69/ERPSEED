@@ -29,6 +29,7 @@ import BuilderPalette from './BuilderPalette';
 import BuilderCanvas from './BuilderCanvas';
 import PropertyPanel from './PropertyPanel';
 import { registry } from '@/components/core';
+import { useTheme } from '@/context';
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
@@ -48,6 +49,7 @@ const VisualBuilder = ({
   const [selectedId, setSelectedId] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [previewMode, setPreviewMode] = useState(false);
+  const { themeConfig } = useTheme();
 
   useEffect(() => {
     setComponents(initialComponents);
@@ -142,8 +144,8 @@ const VisualBuilder = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <Layout style={{ height: '100vh', background: '#fff' }}>
-        <Header style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Layout style={{ height: '100vh', background: themeConfig.mode === 'dark' ? '#141414' : '#fff' }}>
+        <Header style={{ background: themeConfig.mode === 'dark' ? '#141414' : '#fff', borderBottom: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Space>
             <Button icon={<ArrowLeftOutlined />} onClick={onBack} />
             <Title level={4} style={{ margin: 0 }}>{title}</Title>
@@ -164,12 +166,12 @@ const VisualBuilder = ({
 
         <Layout>
           {!previewMode && (
-            <Sider width={250} theme="light" style={{ borderRight: '1px solid #f0f0f0', overflow: 'auto' }}>
+            <Sider width={250} theme="light" style={{ borderRight: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', overflow: 'auto' }}>
               <BuilderPalette />
             </Sider>
           )}
 
-          <Content style={{ overflow: 'auto', background: '#f5f5f5', position: 'relative' }}>
+          <Content style={{ overflow: 'auto', background: themeConfig.mode === 'dark' ? '#1f1f1f' : '#f5f5f5', position: 'relative' }}>
             <div style={{ padding: 24 }}>
               {previewMode && (
                 <Alert
@@ -192,7 +194,7 @@ const VisualBuilder = ({
           </Content>
 
           {!previewMode && (
-            <Sider width={300} theme="light" style={{ borderLeft: '1px solid #f0f0f0', overflow: 'auto' }}>
+            <Sider width={300} theme="light" style={{ borderLeft: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', overflow: 'auto' }}>
               <PropertyPanel
                 component={selectedComponent}
                 onChange={handleUpdateComponent}

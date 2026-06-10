@@ -346,3 +346,5 @@ const HR = () => {
         </div>
     );
 };
+
+export default HR;

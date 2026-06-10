@@ -101,8 +101,19 @@ from .modules.purchase_requests.api import blp as purchase_requests_bp
 from .modules.mrp.api import blp as mrp_bp
 
 # Import Entities (Vision Archetypes)
-from .modules.entities.routes import soggetto_blp, ruolo_blp, indirizzo_blp, contatto_blp
-from .modules.geografia.routes import nazioni_blp, regioni_blp, province_blp, comuni_geo_blp
+from .modules.entities.routes import (
+    soggetto_blp,
+    ruolo_blp,
+    indirizzo_blp,
+    contatto_blp,
+)
+from .modules.entities.vie_routes import vie_blp
+from .modules.geografia.routes import (
+    nazioni_blp,
+    regioni_blp,
+    province_blp,
+    comuni_geo_blp,
+)
 from .tutorials.routes import tutorial_blp
 from .modules.entities.indirizzo_geografico import geografico_blp
 from .modules.entities.comuni_routes import comuni_blp
@@ -138,6 +149,9 @@ from .modules.ai.api import blp as ai_bp
 # Import Relationship Manager API
 from .modules.relationship_manager.routes import relmgr_blp as relationship_manager_bp
 
+# Import Logistics API
+from .modules.logistics.api import logistics_blp
+
 # Import Visual Builder API
 from .modules.system_tools.api.visual_builder_api import blp as visual_builder_bp
 
@@ -152,9 +166,13 @@ class CustomJSONProvider(DefaultJSONProvider):
             return float(o)
         if callable(o):
             import logging
-            logging.getLogger(__name__).error(f"JSON serialization error: callable type={type(o)}, obj={o}")
+
+            logging.getLogger(__name__).error(
+                f"JSON serialization error: callable type={type(o)}, obj={o}"
+            )
             return str(o)
         return super().default(o)
+
 
 def create_app(db_url=None):
     """
@@ -166,6 +184,7 @@ def create_app(db_url=None):
     Returns:
         Flask: The configured Flask application instance.
     """
+
     # Configure Marshmallow schema name resolver to avoid name conflicts in OpenAPI spec
     def schema_name_resolver(schema):
         """
@@ -196,21 +215,24 @@ def create_app(db_url=None):
     app.config["OPENAPI_SWAGGER_UI_URL"] = (
         "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     )
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv(
+        "DATABASE_URL", "sqlite:///data.db"
+    )
     jwt_secret_key = os.getenv("JWT_SECRET_KEY")
     if not jwt_secret_key or len(jwt_secret_key) < 32:
-        raise ValueError("JWT_SECRET_KEY must be set and be at least 32 characters long")
+        raise ValueError(
+            "JWT_SECRET_KEY must be set and be at least 32 characters long"
+        )
 
     app.config["PROPAGATE_EXCEPTIONS"] = True
-    app.config["JWT_SECRET_KEY"] = os.getenv(
-        "JWT_SECRET_KEY"
-    )
+    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
     app.config["JWT_TOKEN_LOCATION"] = ["headers"]
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
     app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
     app.config["GEOCODED_ME_BASE_URL"] = os.getenv(
         "GEOCODED_ME_BASE_URL", "https://api.geocoded.me"
     )
+    app.config["OPENROUTESERVICE_API_KEY"] = os.getenv("OPENROUTESERVICE_API_KEY", "")
 
     # --- Custom JSON Provider ---
     # Standardizes JSON serialization for Decimal and other types
@@ -229,9 +251,13 @@ def create_app(db_url=None):
                     "http://127.0.0.1:5173",
                     "http://0.0.0.0:5173",
                 ],
-
                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "X-Tenant-ID"],
+                "allow_headers": [
+                    "Content-Type",
+                    "Authorization",
+                    "X-Requested-With",
+                    "X-Tenant-ID",
+                ],
                 "expose_headers": [
                     "X-Total-Count",
                     "X-Pages",
@@ -254,25 +280,25 @@ def create_app(db_url=None):
 
     event_bus = EventBus()
     from .shared.events.handlers.read_model_handler import register_read_model_handlers
+
     register_read_model_handlers(event_bus)
 
-    container.register('event_bus', lambda: event_bus, singleton=True)
-    container.register('db', lambda: db, singleton=True)
+    container.register("event_bus", lambda: event_bus, singleton=True)
+    container.register("db", lambda: db, singleton=True)
 
     plugin_manager = create_plugin_manager(app=app, container=container)
-    container.register('plugin_manager', lambda: plugin_manager, singleton=True)
+    container.register("plugin_manager", lambda: plugin_manager, singleton=True)
     # --- End New System Init ---
-
 
     api.init_app(app)
 
     # Configure Marshmallow schema name resolver AFTER api.init_app to avoid serialization in spec
-    spec = getattr(api, 'spec', None)
+    spec = getattr(api, "spec", None)
     if spec is not None:
-        plugins = getattr(spec, 'plugins', None)
+        plugins = getattr(spec, "plugins", None)
         if plugins is not None:
             for plugin in plugins:
-                if hasattr(plugin, 'schema_name_resolver'):
+                if hasattr(plugin, "schema_name_resolver"):
                     plugin.schema_name_resolver = schema_name_resolver
                     break
 
@@ -299,10 +325,12 @@ def create_app(db_url=None):
                 if table_name not in inspector.get_table_names():
                     return
 
-                columns = [c['name'] for c in inspector.get_columns(table_name)]
+                columns = [c["name"] for c in inspector.get_columns(table_name)]
                 if column_name not in columns:
                     db.session.execute(
-                        text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
+                        text(
+                            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"
+                        )
                     )
                     db.session.commit()
             except Exception as e:
@@ -310,10 +338,10 @@ def create_app(db_url=None):
                 print(f"Error adding {table_name}.{column_name}: {e}")
 
         with app.app_context():
-            add_column_if_not_exists('sys_dashboards', 'updated_at', 'TIMESTAMP')
-            add_column_if_not_exists('sys_models', 'updated_at', 'TIMESTAMP')
-            add_column_if_not_exists('sys_fields', 'created_at', 'TIMESTAMP')
-            add_column_if_not_exists('sys_fields', 'updated_at', 'TIMESTAMP')
+            add_column_if_not_exists("sys_dashboards", "updated_at", "TIMESTAMP")
+            add_column_if_not_exists("sys_models", "updated_at", "TIMESTAMP")
+            add_column_if_not_exists("sys_fields", "created_at", "TIMESTAMP")
+            add_column_if_not_exists("sys_fields", "updated_at", "TIMESTAMP")
 
     # --- Initialize Middleware ---
     rate_limit_middleware(app)
@@ -364,17 +392,18 @@ def create_app(db_url=None):
 
     socketio.init_app(app, cors_allowed_origins="*")
 
-
     # --- Global Error Handler ---
     @app.errorhandler(Exception)
     def handle_exception(e):
         # Pass through HTTP errors
         if isinstance(e, HTTPException):
-            return jsonify({
-                "code": e.code,
-                "name": e.name,
-                "description": e.description,
-            }), e.code or 500
+            return jsonify(
+                {
+                    "code": e.code,
+                    "name": e.name,
+                    "description": e.description,
+                }
+            ), e.code or 500
         # Log and return JSON for 500 errors
         import traceback
 
@@ -392,19 +421,37 @@ def create_app(db_url=None):
     api.register_blueprint(system_bp, url_prefix=f"{API_V1_PREFIX}/system")
     api.register_blueprint(pdf_bp, url_prefix=f"{API_V1_PREFIX}/pdf")
     api.register_blueprint(test_runner_bp, url_prefix=f"{API_V1_PREFIX}/tests")
-    api.register_blueprint(custom_modules_bp, url_prefix=f"{API_V1_PREFIX}/custom-modules")
+    api.register_blueprint(
+        custom_modules_bp, url_prefix=f"{API_V1_PREFIX}/custom-modules"
+    )
     api.register_blueprint(module_api_bp, url_prefix=f"{API_V1_PREFIX}/module-api")
-    api.register_blueprint(import_export_bp, url_prefix=f"{API_V1_PREFIX}/import-export")
+    api.register_blueprint(
+        import_export_bp, url_prefix=f"{API_V1_PREFIX}/import-export"
+    )
 
     # Module APIs
-    api.register_blueprint(users_bp, url_prefix=f"{API_V1_PREFIX}/users", name="api_users")
-    api.register_blueprint(projects_bp, url_prefix=f"{API_V1_PREFIX}/projects", name="api_projects")
-    api.register_blueprint(builder_bp, url_prefix=f"{API_V1_PREFIX}/builder", name="api_builder")
-    api.register_blueprint(builder_init_bp, url_prefix=f"{API_V1_PREFIX}", name="api_builder_init")
+    api.register_blueprint(
+        users_bp, url_prefix=f"{API_V1_PREFIX}/users", name="api_users"
+    )
+    api.register_blueprint(
+        projects_bp, url_prefix=f"{API_V1_PREFIX}/projects", name="api_projects"
+    )
+    api.register_blueprint(
+        builder_bp, url_prefix=f"{API_V1_PREFIX}/builder", name="api_builder"
+    )
+    api.register_blueprint(
+        builder_init_bp, url_prefix=f"{API_V1_PREFIX}", name="api_builder_init"
+    )
     api.register_blueprint(ai_bp, url_prefix=f"{API_V1_PREFIX}/ai", name="api_ai")
-    api.register_blueprint(products_api_bp, url_prefix=f"{API_V1_PREFIX}/products", name="api_products")
-    api.register_blueprint(sales_api_bp, url_prefix=f"{API_V1_PREFIX}/sales", name="api_sales")
-    api.register_blueprint(tax_api_bp, url_prefix=f"{API_V1_PREFIX}/tax-rates", name="api_tax")
+    api.register_blueprint(
+        products_api_bp, url_prefix=f"{API_V1_PREFIX}/products", name="api_products"
+    )
+    api.register_blueprint(
+        sales_api_bp, url_prefix=f"{API_V1_PREFIX}/sales", name="api_sales"
+    )
+    api.register_blueprint(
+        tax_api_bp, url_prefix=f"{API_V1_PREFIX}/tax-rates", name="api_tax"
+    )
     api.register_blueprint(product_categories_bp)
     api.register_blueprint(uom_api_bp)
     api.register_blueprint(pricing_api_bp)
@@ -422,7 +469,9 @@ def create_app(db_url=None):
     api.register_blueprint(lot_bp)
     api.register_blueprint(purchase_requests_bp)
     api.register_blueprint(mrp_bp)
-    api.register_blueprint(purchases_bp, url_prefix=f"{API_V1_PREFIX}/purchases", name="api_purchases")
+    api.register_blueprint(
+        purchases_bp, url_prefix=f"{API_V1_PREFIX}/purchases", name="api_purchases"
+    )
 
     # Feature APIs
     api.register_blueprint(dashboard_bp, url_prefix=f"{API_V1_PREFIX}/dashboards")
@@ -430,13 +479,23 @@ def create_app(db_url=None):
     api.register_blueprint(dynamic_api_bp)
     api.register_blueprint(webhooks_bp, url_prefix=f"{API_V1_PREFIX}/webhooks")
     api.register_blueprint(workflows_bp, url_prefix=f"{API_V1_PREFIX}/workflows")
-    api.register_blueprint(visual_builder_bp, url_prefix=f"{API_V1_PREFIX}/visual-builder")
+    api.register_blueprint(
+        visual_builder_bp, url_prefix=f"{API_V1_PREFIX}/visual-builder"
+    )
     api.register_blueprint(template_bp, url_prefix=f"{API_V1_PREFIX}/templates")
     api.register_blueprint(gdo_reconciliation_bp, url_prefix=f"{API_V1_PREFIX}/gdo")
 
     # Marketplace
-    api.register_blueprint(builder_api_blp, url_prefix=f"{API_V1_PREFIX}/marketplace/builder", name="api_marketplace_builder")
-    api.register_blueprint(marketplace_api_blp, url_prefix=f"{API_V1_PREFIX}/marketplace", name="api_marketplace")
+    api.register_blueprint(
+        builder_api_blp,
+        url_prefix=f"{API_V1_PREFIX}/marketplace/builder",
+        name="api_marketplace_builder",
+    )
+    api.register_blueprint(
+        marketplace_api_blp,
+        url_prefix=f"{API_V1_PREFIX}/marketplace",
+        name="api_marketplace",
+    )
 
     # Vision Entities (Archetypes)
     api.register_blueprint(soggetto_blp, url_prefix=f"{API_V1_PREFIX}")
@@ -445,6 +504,7 @@ def create_app(db_url=None):
     api.register_blueprint(contatto_blp, url_prefix=f"{API_V1_PREFIX}")
     api.register_blueprint(geografico_blp, url_prefix=f"{API_V1_PREFIX}")
     api.register_blueprint(comuni_blp, url_prefix=f"{API_V1_PREFIX}")
+    api.register_blueprint(vie_blp)
     api.register_blueprint(tutorial_blp)
 
     # Geografia module
@@ -455,6 +515,9 @@ def create_app(db_url=None):
 
     # Relationship Manager
     api.register_blueprint(relationship_manager_bp, url_prefix=f"{API_V1_PREFIX}")
+
+    # Logistics
+    api.register_blueprint(logistics_blp)
 
     # --- Plugins loaded via create_plugin_manager in app initialization ---
     return app

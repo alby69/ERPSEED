@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Form, Input, InputNumber, Switch, Button, Card, Space, Spin, Alert, Typography, Select } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
-import { apiClient } from './api'; // No date fields in this page
+import { apiClient } from './api';
+import { useTheme } from '../context';
 
 function ProductDetail() {
+  const { themeConfig } = useTheme();
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === 'new';
@@ -47,7 +49,7 @@ function ProductDetail() {
 
   return (
     <>
-      <div style={{ padding: 24, background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: 24, background: themeConfig.mode === 'dark' ? '#141414' : '#fff', borderBottom: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Space>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/products')} />
           <Typography.Title level={4} style={{ margin: 0 }}>{isNew ? 'New Product' : 'Edit Product'}</Typography.Title>

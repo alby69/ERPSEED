@@ -10,15 +10,18 @@ Questi sono i mattoncini base del sistema:
 
 from .soggetto import Soggetto
 from .ruolo import Ruolo, SoggettoRuolo
-from .indirizzo import Indirizzo, SoggettoIndirizzo
+from .comune import Comune
+from .indirizzo import Indirizzo, SoggettoIndirizzo, Via
 from .contatto import Contatto, SoggettoContatto
 
 __all__ = [
-    'Soggetto',
-    'Ruolo',
-    'SoggettoRuolo',
-    'Indirizzo',
-    'SoggettoIndirizzo',
-    'Contatto',
-    'SoggettoContatto',
+    "Soggetto",
+    "Ruolo",
+    "SoggettoRuolo",
+    "Indirizzo",
+    "SoggettoIndirizzo",
+    "Via",
+    "Comune",
+    "Contatto",
+    "SoggettoContatto",
 ]

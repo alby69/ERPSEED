@@ -30,10 +30,12 @@ import {
   FilterOutlined,
 } from '@ant-design/icons';
 import { apiFetch } from '@/utils'; // No date fields in this page
+import { useTheme } from '@/context';
 
 const { Title, Text, Paragraph } = Typography;
 
 function MarketplaceBrowse() {
+  const { themeConfig } = useTheme();
   const [listings, setListings] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -180,8 +182,8 @@ function MarketplaceBrowse() {
                         style={{ height: 150, objectFit: 'cover' }}
                       />
                     ) : (
-                      <div style={{ height: 150, background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <ShopOutlined style={{ fontSize: 48, color: '#ccc' }} />
+                      <div style={{ height: 150, background: themeConfig.mode === 'dark' ? '#1f1f1f' : '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ShopOutlined style={{ fontSize: 48, color: themeConfig.mode === 'dark' ? 'rgba(255,255,255,0.25)' : '#ccc' }} />
                       </div>
                     )
                   }

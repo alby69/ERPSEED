@@ -8,6 +8,7 @@ import { PlusOutlined, DeleteOutlined, SaveOutlined, ExportOutlined, SettingOutl
 import { apiFetch } from '../utils';
 import { ChartRenderer, getAllAdapters, CHART_LIBRARIES, CHART_LIBRARY_LABELS, CHART_TYPES_BY_LIBRARY } from '../components/charts';
 import { exportToImage } from '../utils/exportUtils';
+import { useTheme } from '../context';
 
 const WIDGET_TYPES = {
   CHART: 'chart',
@@ -17,6 +18,7 @@ const WIDGET_TYPES = {
 };
 
 function DashboardBuilder() {
+  const { themeConfig } = useTheme();
   const { projectId, dashboardId } = useParams();
   const navigate = useNavigate();
   const dashboardRef = useRef(null);
@@ -213,7 +215,7 @@ function DashboardBuilder() {
   ];
 
   return (
-    <div className="p-3" style={{ background: '#f5f5f5', minHeight: '100vh' }}>
+    <div className="p-3" style={{ background: themeConfig.mode === 'dark' ? '#141414' : '#f5f5f5', minHeight: '100vh' }}>
       <Card
         title={
           <Space>
@@ -301,7 +303,7 @@ function DashboardBuilder() {
             ]}
           />
         ) : (
-          <div ref={dashboardRef} style={{ background: '#fff', padding: 16, minHeight: 500 }}>
+          <div ref={dashboardRef} style={{ background: themeConfig.mode === 'dark' ? '#141414' : '#fff', padding: 16, minHeight: 500 }}>
             <div ref={containerRef} style={{ width: '100%', minHeight: 400 }}>
               <ResponsiveGridLayout
                 className="layout"

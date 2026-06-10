@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Card, Table, Button, Modal, Form, Input, Select, Tag, Space, message, Popconfirm, Row, Col, InputNumber, Divider, AutoComplete
+  Card, Table, Button, Modal, Form, Input, Select, Tag, Space, message, Popconfirm, Row, Col, Divider, AutoComplete
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, SearchOutlined, AimOutlined, CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, EnvironmentOutlined, CaretUpOutlined, CaretDownOutlined, SettingOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { useTableSort } from '../hooks/useTableSort';
+import { useColumnManager } from '../hooks/useColumnManager';
 import TableSearch from '../components/TableSearch';
 import Layout from '../components/Layout';
 import HelpDrawer from '@/components/HelpDrawer';
+import ColumnSettingsDrawer from '@/components/ColumnSettingsDrawer';
 
 const { Option } = Select;
 
@@ -35,12 +37,15 @@ export default function IndirizziPage() {
     handleSearch
   } = useTableSort('/api/v1/indirizzi', { initialSortField: 'città', initialSortOrder: 'asc' });
 
-  // Stati per selezione gerarchica
-  const [regioni, setRegioni] = useState([]);
-  const [province, setProvince] = useState([]);
-  const [comuni, setComuni] = useState([]);
+  const [columnSettingsOpen, setColumnSettingsOpen] = useState(false);
+
+  // Stati per ricerca città e vie
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedComuneId, setSelectedComuneId] = useState(null);
+  const [viaResults, setViaResults] = useState([]);
+  const [viaLoading, setViaLoading] = useState(false);
+  const [cittaText, setCittaText] = useState('');
 
   const fetchSoggetti = useCallback(async () => {
     try {
@@ -54,127 +59,70 @@ export default function IndirizziPage() {
     }
   }, []);
 
-  const fetchRegioni = useCallback(async () => {
-    try {
-      const response = await apiFetch('/api/v1/comuni/regioni');
-      if (response.ok) {
-        const data = await response.json();
-        setRegioni(data);
-      }
-    } catch (error) {
-      console.error('Errore nel caricamento delle regioni:', error);
-    }
-  }, []);
-
-  const fetchProvince = useCallback(async (regioneCodice) => {
-    if (!regioneCodice) {
-      setProvince([]);
-      return;
-    }
-    try {
-      const response = await apiFetch(`/api/v1/comuni/province?regione=${regioneCodice}`);
-      if (response.ok) {
-        const data = await response.json();
-        setProvince(data);
-      }
-    } catch (error) {
-      console.error('Errore nel caricamento delle province:', error);
-    }
-  }, []);
-
-  const fetchComuni = useCallback(async (provinciaCodice) => {
-    if (!provinciaCodice) {
-      setComuni([]);
-      return;
-    }
-    try {
-      const response = await apiFetch(`/api/v1/comuni?provincia=${provinciaCodice}`);
-      if (response.ok) {
-        const data = await response.json();
-        setComuni(data.items || []);
-      }
-    } catch (error) {
-      console.error('Errore nel caricamento dei comuni:', error);
-    }
-  }, []);
-
-  const cercaIndirizzo = useCallback(async (testo) => {
-    if (!testo || testo.length < 2) {
+  const cercaComuni = useCallback(async (testo) => {
+    if (!testo) {
       setSearchResults([]);
       return;
     }
     setSearchLoading(true);
     try {
-      const response = await apiFetch(`/api/v1/comuni?q=${encodeURIComponent(testo)}`);
+      const response = await apiFetch(`/api/v1/comuni?q=${encodeURIComponent(testo)}&per_page=20`);
       if (response.ok) {
         const data = await response.json();
-        setSearchResults(data.items || []);
+        setSearchResults(Array.isArray(data) ? data : (data.items || []));
       }
     } catch (error) {
-      console.error('Errore nella ricerca:', error);
+      console.error('Errore nella ricerca comuni:', error);
     } finally {
       setSearchLoading(false);
     }
   }, []);
 
-  const geocodificaIndirizzo = async (values) => {
-    const indirizzo = [
-      values.via,
-      values.numero_civico,
-      values.città,
-      values.provincia,
-      values.nazione || 'Italia'
-    ].filter(Boolean).join(', ');
-
-    if (!indirizzo) {
-      message.warning('Compila almeno via e città per geocodificare');
+  const cercaVia = useCallback(async (testo) => {
+    if (!testo || testo.length < 2 || !selectedComuneId) {
+      if (!testo || testo.length < 2) setViaResults([]);
       return;
     }
-
+    setViaLoading(true);
     try {
-      const response = await apiFetch(`/api/v1/indirizzi/geocodifica?indirizzo=${encodeURIComponent(indirizzo)}`);
+      const response = await apiFetch(`/api/v1/vie/?comune_id=${selectedComuneId}&q=${encodeURIComponent(testo)}`);
       if (response.ok) {
         const data = await response.json();
-        if (data.latitudine && data.longitudine) {
-          form.setFieldsValue({
-            latitudine: data.latitudine,
-            longitudine: data.longitudine
-          });
-          message.success('Coordinate trovate automaticamente');
-        } else {
-          message.warning('Indirizzo non trovato, inserisci le coordinate manualmente');
-        }
-      } else {
-        message.error('Geocodifica fallita');
+        setViaResults(data || []);
       }
     } catch (error) {
-      message.error('Errore nella geocodifica');
+      console.error('Errore nella ricerca vie:', error);
+    } finally {
+      setViaLoading(false);
     }
-  };
+  }, [selectedComuneId]);
 
   useEffect(() => {
     fetchData();
     fetchSoggetti();
-    fetchRegioni();
-  }, [fetchData, fetchSoggetti, fetchRegioni]);
+  }, [fetchData, fetchSoggetti]);
 
   const handleCreate = () => {
     setEditingIndirizzo(null);
+    setSelectedComuneId(null);
+    setViaResults([]);
+    setCittaText('');
+    setSearchResults([]);
     form.resetFields();
     form.setFieldsValue({ nazione: 'IT' });
-    setProvince([]);
-    setComuni([]);
     setModalVisible(true);
   };
 
   const handleEdit = (record) => {
     setEditingIndirizzo(record);
-    form.setFieldsValue(record);
-    // Carica province e comuni se presenti
-    if (record.provincia) {
-      fetchProvince(record.regione);
-      fetchComuni(record.provincia);
-    }
+    setSelectedComuneId(record.comune_id || null);
+    setViaResults([]);
+    setCittaText(record.città || '');
+    setSearchResults([]);
+    form.setFieldsValue({
+      ...record,
+      cap: record.CAP,
+    });
     setModalVisible(true);
   };
 
@@ -215,35 +163,23 @@ export default function IndirizziPage() {
     }
   };
 
-  const handleRegioneChange = (value) => {
-    form.setFieldsValue({ provincia: undefined, città: undefined });
-    setProvince([]);
-    setComuni([]);
-    fetchProvince(value);
-  };
-
-  const handleProvinciaChange = (value) => {
-    form.setFieldsValue({ città: undefined });
-    setComuni([]);
-    fetchComuni(value);
-  };
-
-  const handleSearchSelect = (value, option) => {
+  const handleComuneSelect = (value, option) => {
     const comune = option.comuneData;
     if (comune) {
+      setCittaText(comune.nome);
       form.setFieldsValue({
         città: comune.nome,
-        cap: comune.CAP,
-        provincia: comune.provincia,
-        regione: comune.regione,  // Use codice regione directly
+        comune_id: comune.id,
+        cap: comune.cap,
+        provincia: comune.codice_provincia,
+        regione: comune.codice_regione,
         latitudine: comune.latitudine,
-        longitudine: comune.longitudine
+        longitudine: comune.longitudine,
+        denominazione: undefined,
+        via_id: undefined,
       });
-      // Load province for the selected region
-      if (comune.provincia) {
-        fetchProvince(comune.regione);
-        setTimeout(() => fetchComuni(comune.provincia), 100);
-      }
+      setSelectedComuneId(comune.id);
+      setViaResults([]);
     }
   };
 
@@ -269,7 +205,13 @@ export default function IndirizziPage() {
     </span>
   );
 
-  const columns = [
+  const rawColumns = [
+    {
+      title: 'Cod. Soggetto',
+      key: 'codice_soggetto',
+      width: 100,
+      render: (_, record) => record.soggetto?.codice || '-',
+    },
     {
       title: sortableHeader('Soggetto', 'soggetto_id'),
       dataIndex: ['soggetto', 'nome'],
@@ -283,27 +225,31 @@ export default function IndirizziPage() {
     },
     {
       title: sortableHeader('Città', 'città'),
-      key: 'indirizzo',
-      render: (_, record) => (
-        <span>
-          {record.denominazione}, {record.numero_civico}<br />
-          {record.cap} {record.città} ({record.provincia})
-        </span>
-      ),
+      dataIndex: 'città',
+      key: 'città',
+    },
+    {
+      title: sortableHeader('Via', 'denominazione'),
+      dataIndex: 'denominazione',
+      key: 'via',
+      render: (val) => val || '-',
+    },
+    {
+      title: sortableHeader('Regione', 'regione'),
+      dataIndex: 'regione_nome',
+      key: 'regione',
+      render: (val) => val || '-',
+    },
+    {
+      title: sortableHeader('Provincia', 'provincia'),
+      dataIndex: 'provincia_nome',
+      key: 'provincia',
+      render: (val) => val || '-',
     },
     {
       title: sortableHeader('Nazione', 'nazione'),
       dataIndex: 'nazione',
       key: 'nazione',
-    },
-    {
-      title: 'Coordinate',
-      key: 'coordinate',
-      render: (_, record) => (
-        record.latitudine && record.longitudine ? (
-          <Tag>{record.latitudine.toFixed(5)}, {record.longitudine.toFixed(5)}</Tag>
-        ) : '-'
-      ),
     },
     {
       title: 'Azioni',
@@ -319,6 +265,15 @@ export default function IndirizziPage() {
       ),
     },
   ];
+
+  const {
+    processedColumns,
+    allColumns,
+    toggleColumn,
+    moveColumn,
+    resetColumns,
+    hasChanges,
+  } = useColumnManager('indirizzi', rawColumns);
 
   const soggettoOptions = soggetti.map(s => (
     <Option key={s.id} value={s.id}>{s.nome}</Option>
@@ -336,14 +291,19 @@ export default function IndirizziPage() {
             </Space>
           }
           extra={
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-              Nuovo Indirizzo
-            </Button>
+            <Space>
+              <Button icon={<SettingOutlined />} onClick={() => setColumnSettingsOpen(true)}>
+                Colonne
+              </Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                Nuovo Indirizzo
+              </Button>
+            </Space>
           }
         >
         <div className="mb-3">
           <TableSearch
-            columns={columns}
+            columns={processedColumns}
             searchField={searchField}
             searchValue={searchValue}
             searchTerm={searchTerm}
@@ -356,7 +316,7 @@ export default function IndirizziPage() {
           />
         </div>
         <Table
-          columns={columns}
+          columns={processedColumns}
           dataSource={indirizzi}
           rowKey="id"
           loading={loading}
@@ -383,7 +343,7 @@ export default function IndirizziPage() {
           onFinish={handleSubmit}
         >
           <Form.Item name="soggetto_id" label="Soggetto" rules={[{ required: true }]}>
-            <Select showSearch placeholder="Cerca soggetto">
+            <Select showSearch placeholder="Cerca soggetto" getPopupContainer={(trigger) => trigger.closest('.ant-modal-content') || document.body}>
               {soggettoOptions}
             </Select>
           </Form.Item>
@@ -410,125 +370,65 @@ export default function IndirizziPage() {
             </Col>
           </Row>
 
-          <Divider>Ricerca Automatica</Divider>
+          <Divider>Città e Indirizzo</Divider>
 
-          <Form.Item label="Cerca indirizzo">
+          <Form.Item name="città" label="Città" rules={[{ required: true }]}>
             <AutoComplete
-              placeholder="Inizia a scrivere un indirizzo..."
+              value={cittaText}
+              placeholder="Cerca città o comune..."
+              onSearch={cercaComuni}
+              onSelect={(value, option) => {
+                handleComuneSelect(value, option);
+              }}
+              onChange={(value) => setCittaText(value)}
+              notFoundContent={searchLoading ? "Ricerca in corso..." : "Nessun comune trovato"}
+              getPopupContainer={(trigger) => trigger.closest('.ant-modal-content') || document.body}
               options={searchResults.map(r => ({
-                value: r.display,
+                value: r.nome,
+                label: `${r.nome} (${r.codice_provincia})`,
                 comuneData: r
               }))}
-              onSearch={cercaIndirizzo}
-              onSelect={handleSearchSelect}
-              loading={searchLoading}
-              style={{ width: '100%' }}
             />
           </Form.Item>
 
-          <Divider>Indirizzo</Divider>
-
           <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item name="denominazione" label="Via / Piazza" rules={[{ required: true }]}>
-                <Input placeholder="Via Roma, 1" />
-              </Form.Item>
+            <Col span={16}>
+          <Form.Item name="denominazione" label="Via / Piazza">
+            <Select
+              showSearch
+              placeholder={selectedComuneId ? "Inizia a digitare il nome della via..." : "Seleziona prima una città"}
+              loading={viaLoading}
+              onSearch={cercaVia}
+              onSelect={(value) => {
+                const found = viaResults.find(r => r.nome === value);
+                if (found) form.setFieldsValue({ denominazione: value, via_id: found.id });
+              }}
+              filterOption={false}
+              notFoundContent={null}
+              disabled={!selectedComuneId}
+              getPopupContainer={(trigger) => trigger.closest('.ant-modal-content') || document.body}
+              options={viaResults.map(r => ({ value: r.nome, label: r.nome }))}
+            />
+          </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col span={8}>
               <Form.Item name="numero_civico" label="N. Civico">
                 <Input placeholder="1" />
               </Form.Item>
             </Col>
-            <Col span={8}>
-              <Form.Item name="cap" label="CAP">
-                <Input placeholder="00100" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="nazione" label="Nazione" initialValue="IT">
-                <Select>
-                  <Option value="IT">Italia</Option>
-                </Select>
-              </Form.Item>
-            </Col>
           </Row>
 
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="regione" label="Regione">
-                <Select
-                  placeholder="Seleziona regione"
-                  onChange={handleRegioneChange}
-                  showSearch
-                  allowClear
-                >
-                  {regioni.map(r => (
-                    <Option key={r.codice} value={r.codice}>{r.nome}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="provincia" label="Provincia">
-                <Select
-                  placeholder="Seleziona provincia"
-                  onChange={handleProvinciaChange}
-                  showSearch
-                  allowClear
-                >
-                  {province.map(p => (
-                    <Option key={p.codice} value={p.codice}>{p.nome}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="città" label="Città" rules={[{ required: true }]}>
-                <Select
-                  placeholder="Seleziona comune"
-                  showSearch
-                  allowClear
-                >
-                  {comuni.map(c => (
-                    <Option key={c.codice} value={c.nome}>{c.nome}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Divider>
-            <Space>
-              <AimOutlined />
-              Geolocalizzazione
-            </Space>
-          </Divider>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="latitudine" label="Latitudine">
-                <InputNumber step={0.000001} style={{ width: '100%' }} placeholder="41.9028" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="longitudine" label="Longitudine">
-                <InputNumber step={0.000001} style={{ width: '100%' }} placeholder="12.4964" />
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.Item name="cap" hidden><Input /></Form.Item>
+          <Form.Item name="nazione" hidden initialValue="IT"><Input /></Form.Item>
+          <Form.Item name="regione" hidden><Input /></Form.Item>
+          <Form.Item name="provincia" hidden><Input /></Form.Item>
+          <Form.Item name="comune_id" hidden><Input /></Form.Item>
+          <Form.Item name="via_id" hidden><Input /></Form.Item>
+          <Form.Item name="latitudine" hidden><Input /></Form.Item>
+          <Form.Item name="longitudine" hidden><Input /></Form.Item>
 
           <Form.Item>
             <Space>
-              <Button
-                type="default"
-                icon={<SearchOutlined />}
-                onClick={() => geocodificaIndirizzo(form.getFieldsValue())}
-              >
-                Trova Coordinate
-              </Button>
               <Button type="primary" htmlType="submit">
                 {editingIndirizzo ? 'Aggiorna' : 'Crea'}
               </Button>
@@ -537,6 +437,17 @@ export default function IndirizziPage() {
           </Form.Item>
         </Form>
       </Modal>
+
+      <ColumnSettingsDrawer
+        open={columnSettingsOpen}
+        onClose={() => setColumnSettingsOpen(false)}
+        columns={allColumns}
+        onToggle={toggleColumn}
+        onMoveUp={(key) => moveColumn(key, -1)}
+        onMoveDown={(key) => moveColumn(key, 1)}
+        onReset={resetColumns}
+        hasChanges={hasChanges}
+      />
       </div>
     </Layout>
   );

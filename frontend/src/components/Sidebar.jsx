@@ -84,6 +84,8 @@ const Sidebar = ({ projectMenuItems = [] }) => {
                 { key: '/geografia/regioni', label: 'Regioni', icon: <GlobalOutlined /> },
                 { key: '/geografia/province', label: 'Province', icon: <GlobalOutlined /> },
                 { key: '/geografia/comuni', label: 'Comuni', icon: <GlobalOutlined /> },
+                { type: 'divider' },
+                { key: '/logistics/distances', label: 'Calcolo Distanze', icon: <CarOutlined /> },
             ],
         },
         {

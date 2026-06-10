@@ -122,3 +122,5 @@ const RiBaPage = () => {
         </div>
     );
 };
+
+export default RiBaPage;

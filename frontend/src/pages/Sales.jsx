@@ -4,8 +4,10 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from './api';
 import { formatDateForDisplay } from '@/utils/dateUtils';
+import { useTheme } from '../context';
 
 function Sales() {
+    const { themeConfig } = useTheme();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -63,7 +65,7 @@ function Sales() {
 
   return (
     <>
-      <div style={{ padding: 24, background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: 24, background: themeConfig.mode === 'dark' ? '#141414' : '#fff', borderBottom: themeConfig.mode === 'dark' ? '1px solid #303030' : '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
             <Typography.Title level={4} style={{ margin: 0 }}>Sales Orders</Typography.Title>
             <Typography.Text type="secondary">Manage all sales orders</Typography.Text>

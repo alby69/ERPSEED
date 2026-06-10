@@ -506,4 +506,4 @@ flask seed
 
 ---
 
-*Ultimo aggiornamento: 2026-03-18*
+*Ultimo aggiornamento: 2026-06-10*

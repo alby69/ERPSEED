@@ -81,52 +81,52 @@ class SoggettoList(MethodView):
         # Aggiungi ruoli
         for ruolo_data in ruoli_data:
             sr = SoggettoRuolo()
-            sr.soggetto_id=soggetto.id
-            sr.ruolo_id=ruolo_data.get("ruolo_id")
-            sr.stato=ruolo_data.get("stato", "attivo")
-            sr.data_inizio=ruolo_data.get("data_inizio")
+            sr.soggetto_id = soggetto.id
+            sr.ruolo_id = ruolo_data.get("ruolo_id")
+            sr.stato = ruolo_data.get("stato", "attivo")
+            sr.data_inizio = ruolo_data.get("data_inizio")
             db.session.add(sr)
 
         # Aggiungi indirizzi
         for ind_data in indirizzi_data:
             # Crea o riutilizza indirizzo
             indirizzo = Indirizzo()
-            indirizzo.tenant_id=tenant_id
-            indirizzo.denominazione=ind_data.get("denominazione")
-            indirizzo.numero_civico=ind_data.get("numero_civico")
-            indirizzo.CAP=ind_data.get("CAP")
-            indirizzo.città=ind_data.get("città")
-            indirizzo.provincia=ind_data.get("provincia")
-            indirizzo.nazione=ind_data.get("nazione", "IT")
-            indirizzo.latitudine=ind_data.get("latitudine")
-            indirizzo.longitudine=ind_data.get("longitudine")
-            indirizzo.tipo=ind_data.get("tipo")
+            indirizzo.tenant_id = tenant_id
+            indirizzo.denominazione = ind_data.get("denominazione")
+            indirizzo.numero_civico = ind_data.get("numero_civico")
+            indirizzo.CAP = ind_data.get("CAP")
+            indirizzo.città = ind_data.get("città")
+            indirizzo.provincia = ind_data.get("provincia")
+            indirizzo.nazione = ind_data.get("nazione", "IT")
+            indirizzo.latitudine = ind_data.get("latitudine")
+            indirizzo.longitudine = ind_data.get("longitudine")
+            indirizzo.tipo = ind_data.get("tipo")
             db.session.add(indirizzo)
             db.session.flush()
 
             si = SoggettoIndirizzo()
-            si.soggetto_id=soggetto.id
-            si.indirizzo_id=indirizzo.id
-            si.tipo_riferimento=ind_data.get("tipo_riferimento")
-            si.is_preferred=ind_data.get("is_preferred", False)
+            si.soggetto_id = soggetto.id
+            si.indirizzo_id = indirizzo.id
+            si.tipo_riferimento = ind_data.get("tipo_riferimento")
+            si.is_preferred = ind_data.get("is_preferred", False)
             db.session.add(si)
 
         # Aggiungi contatti
         for cont_data in contatti_data:
             contatto = Contatto()
-            contatto.tenant_id=tenant_id
-            contatto.canale=cont_data.get("canale")
-            contatto.valore=cont_data.get("valore")
-            contatto.tipo_utilizzo=cont_data.get("tipo_utilizzo")
-            contatto.is_preferred=cont_data.get("is_preferred", False)
+            contatto.tenant_id = tenant_id
+            contatto.canale = cont_data.get("canale")
+            contatto.valore = cont_data.get("valore")
+            contatto.tipo_utilizzo = cont_data.get("tipo_utilizzo")
+            contatto.is_preferred = cont_data.get("is_preferred", False)
             db.session.add(contatto)
             db.session.flush()
 
             sc = SoggettoContatto()
-            sc.soggetto_id=soggetto.id
-            sc.contatto_id=contatto.id
-            sc.tipo_riferimento=cont_data.get("tipo_riferimento")
-            sc.is_primary=cont_data.get("is_primary", False)
+            sc.soggetto_id = soggetto.id
+            sc.contatto_id = contatto.id
+            sc.tipo_riferimento = cont_data.get("tipo_riferimento")
+            sc.is_primary = cont_data.get("is_primary", False)
             db.session.add(sc)
 
         db.session.commit()
@@ -170,7 +170,9 @@ class SoggettoResource(MethodView):
         if ruoli_data is not None:
             SoggettoRuolo.query.filter_by(soggetto_id=soggetto.id).delete()
             for ruolo_data in ruoli_data:
-                ruolo = Ruolo.query.filter_by(id=ruolo_data.get("ruolo_id"), tenant_id=tenant_id).first()
+                ruolo = Ruolo.query.filter_by(
+                    id=ruolo_data.get("ruolo_id"), tenant_id=tenant_id
+                ).first()
                 if ruolo:
                     sr = SoggettoRuolo(soggetto_id=soggetto.id, ruolo_id=ruolo.id)
                     db.session.add(sr)
@@ -182,7 +184,7 @@ class SoggettoResource(MethodView):
             for ind_data in indirizzi_data:
                 indirizzo = Indirizzo()
                 for k, v in ind_data.items():
-                    if k not in ['id', 'tipo_riferimento', 'is_preferred']:
+                    if k not in ["id", "tipo_riferimento", "is_preferred"]:
                         setattr(indirizzo, k, v)
                 indirizzo.tenant_id = tenant_id
                 db.session.add(indirizzo)
@@ -201,7 +203,7 @@ class SoggettoResource(MethodView):
             for cont_data in contatti_data:
                 contatto = Contatto()
                 for k, v in cont_data.items():
-                    if k not in ['id', 'tipo_riferimento', 'is_primary']:
+                    if k not in ["id", "tipo_riferimento", "is_primary"]:
                         setattr(contatto, k, v)
                 contatto.tenant_id = tenant_id
                 db.session.add(contatto)
@@ -223,16 +225,25 @@ class SoggettoResource(MethodView):
     @soggetto_blp.response(204)
     def delete(self, soggetto_id, tenant_id):
         """Elimina soggetto"""
+
         def check_dependencies(soggetto):
             from backend.models import SalesOrder, PurchaseOrder
-            if SalesOrder.query.filter_by(customer_id=soggetto.id).first() or \
-               PurchaseOrder.query.filter_by(supplier_id=soggetto.id).first():
-                abort(409, message="Cannot delete subject with existing sales or purchase orders. Consider deactivating it.")
+
+            if (
+                SalesOrder.query.filter_by(customer_id=soggetto.id).first()
+                or PurchaseOrder.query.filter_by(supplier_id=soggetto.id).first()
+            ):
+                abort(
+                    409,
+                    message="Cannot delete subject with existing sales or purchase orders. Consider deactivating it.",
+                )
 
         generic_service.delete_tenant_resource(
-            Soggetto, soggetto_id, tenant_id,
+            Soggetto,
+            soggetto_id,
+            tenant_id,
             pre_delete_check=check_dependencies,
-            not_found_message="Soggetto not found"
+            not_found_message="Soggetto not found",
         )
         return "", 204
 
@@ -261,7 +272,9 @@ class RuoloList(MethodView):
     @ruolo_blp.response(201, RuoloSchema)
     def post(self, data, tenant_id):
         """Crea un nuovo ruolo"""
-        return generic_service.create_tenant_resource(Ruolo, data, tenant_id, unique_fields=['codice'])
+        return generic_service.create_tenant_resource(
+            Ruolo, data, tenant_id, unique_fields=["codice"]
+        )
 
 
 @ruolo_blp.route("/ruoli/<int:ruolo_id>")
@@ -293,14 +306,20 @@ class RuoloResource(MethodView):
     @ruolo_blp.response(204)
     def delete(self, ruolo_id, tenant_id):
         """Elimina ruolo"""
+
         def check_dependencies(ruolo):
             if SoggettoRuolo.query.filter_by(ruolo_id=ruolo.id).first():
-                abort(409, message="Cannot delete a role that is currently assigned to subjects.")
+                abort(
+                    409,
+                    message="Cannot delete a role that is currently assigned to subjects.",
+                )
 
         generic_service.delete_tenant_resource(
-            Ruolo, ruolo_id, tenant_id,
+            Ruolo,
+            ruolo_id,
+            tenant_id,
             pre_delete_check=check_dependencies,
-            not_found_message="Ruolo not found"
+            not_found_message="Ruolo not found",
         )
         return "", 204
 
@@ -329,7 +348,21 @@ class IndirizzoList(MethodView):
     @indirizzo_blp.response(201, IndirizzoSchema)
     def post(self, data, tenant_id):
         """Crea un nuovo indirizzo"""
-        return generic_service.create_tenant_resource(Indirizzo, data, tenant_id)
+        soggetto_id = data.pop("soggetto_id", None)
+        is_preferred = data.pop("is_preferred", False)
+
+        indirizzo = generic_service.create_tenant_resource(Indirizzo, data, tenant_id)
+
+        if soggetto_id:
+            si = SoggettoIndirizzo()
+            si.soggetto_id = soggetto_id
+            si.indirizzo_id = indirizzo.id
+            si.is_preferred = is_preferred
+            si.tenant_id = tenant_id
+            db.session.add(si)
+            db.session.commit()
+
+        return indirizzo
 
 
 @indirizzo_blp.route("/indirizzi/<int:indirizzo_id>")
@@ -351,9 +384,34 @@ class IndirizzoResource(MethodView):
     @indirizzo_blp.response(200, IndirizzoSchema)
     def put(self, data, indirizzo_id, tenant_id):
         """Aggiorna indirizzo"""
-        return generic_service.update_tenant_resource(
-            Indirizzo, indirizzo_id, tenant_id, data, not_found_message="Indirizzo not found"
+        soggetto_id = data.pop("soggetto_id", None)
+        is_preferred = data.pop("is_preferred", None)
+
+        result = generic_service.update_tenant_resource(
+            Indirizzo,
+            indirizzo_id,
+            tenant_id,
+            data,
+            not_found_message="Indirizzo not found",
         )
+
+        if soggetto_id is not None:
+            si = SoggettoIndirizzo.query.filter_by(
+                indirizzo_id=indirizzo_id, soggetto_id=soggetto_id
+            ).first()
+            if si:
+                if is_preferred is not None:
+                    si.is_preferred = is_preferred
+            else:
+                si = SoggettoIndirizzo(
+                    soggetto_id=soggetto_id,
+                    indirizzo_id=indirizzo_id,
+                    is_preferred=is_preferred or False,
+                )
+                db.session.add(si)
+            db.session.commit()
+
+        return result
 
     @indirizzo_blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -361,14 +419,20 @@ class IndirizzoResource(MethodView):
     @indirizzo_blp.response(204)
     def delete(self, indirizzo_id, tenant_id):
         """Elimina indirizzo"""
+
         def check_dependencies(indirizzo):
             if SoggettoIndirizzo.query.filter_by(indirizzo_id=indirizzo.id).first():
-                abort(409, message="Cannot delete an address that is currently assigned to a subject.")
+                abort(
+                    409,
+                    message="Cannot delete an address that is currently assigned to a subject.",
+                )
 
         generic_service.delete_tenant_resource(
-            Indirizzo, indirizzo_id, tenant_id,
+            Indirizzo,
+            indirizzo_id,
+            tenant_id,
             pre_delete_check=check_dependencies,
-            not_found_message="Indirizzo not found"
+            not_found_message="Indirizzo not found",
         )
         return "", 204
 
@@ -397,7 +461,25 @@ class ContattoList(MethodView):
     @contatto_blp.response(201, ContattoSchema)
     def post(self, data, tenant_id):
         """Crea un nuovo contatto"""
-        return generic_service.create_tenant_resource(Contatto, data, tenant_id)
+        soggetto_id = data.pop("soggetto_id", None)
+        is_primary = data.pop("is_primary", False)
+
+        contatto = Contatto()
+        for key, value in data.items():
+            setattr(contatto, key, value)
+        contatto.tenant_id = tenant_id
+        db.session.add(contatto)
+        db.session.flush()
+
+        if soggetto_id:
+            sc = SoggettoContatto()
+            sc.soggetto_id = soggetto_id
+            sc.contatto_id = contatto.id
+            sc.is_primary = is_primary
+            db.session.add(sc)
+
+        db.session.commit()
+        return contatto
 
 
 @contatto_blp.route("/contatti/<int:contatto_id>")
@@ -419,9 +501,34 @@ class ContattoResource(MethodView):
     @contatto_blp.response(200, ContattoSchema)
     def put(self, data, contatto_id, tenant_id):
         """Aggiorna contatto"""
-        return generic_service.update_tenant_resource(
-            Contatto, contatto_id, tenant_id, data, not_found_message="Contatto not found"
+        soggetto_id = data.pop("soggetto_id", None)
+        is_primary = data.pop("is_primary", False)
+
+        result = generic_service.update_tenant_resource(
+            Contatto,
+            contatto_id,
+            tenant_id,
+            data,
+            not_found_message="Contatto not found",
         )
+
+        if soggetto_id is not None:
+            sc = SoggettoContatto.query.filter_by(
+                contatto_id=contatto_id, soggetto_id=soggetto_id
+            ).first()
+            if sc:
+                if is_primary is not None:
+                    sc.is_primary = is_primary
+            else:
+                sc = SoggettoContatto(
+                    soggetto_id=soggetto_id,
+                    contatto_id=contatto_id,
+                    is_primary=is_primary or False,
+                )
+                db.session.add(sc)
+            db.session.commit()
+
+        return result
 
     @contatto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -429,13 +536,19 @@ class ContattoResource(MethodView):
     @contatto_blp.response(204)
     def delete(self, contatto_id, tenant_id):
         """Elimina contatto"""
+
         def check_dependencies(contatto):
             if SoggettoContatto.query.filter_by(contatto_id=contatto.id).first():
-                abort(409, message="Cannot delete a contact that is currently assigned to a subject.")
+                abort(
+                    409,
+                    message="Cannot delete a contact that is currently assigned to a subject.",
+                )
 
         generic_service.delete_tenant_resource(
-            Contatto, contatto_id, tenant_id,
+            Contatto,
+            contatto_id,
+            tenant_id,
             pre_delete_check=check_dependencies,
-            not_found_message="Contatto not found"
+            not_found_message="Contatto not found",
         )
         return "", 204

@@ -201,3 +201,5 @@ const ProjectManagement = () => {
         </div>
     );
 };
+
+export default ProjectManagement;

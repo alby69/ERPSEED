@@ -192,3 +192,5 @@ const StockMovements = () => {
         </div>
     );
 };
+
+export default StockMovements;

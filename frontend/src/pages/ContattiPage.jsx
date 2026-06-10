@@ -160,12 +160,6 @@ export default function ContattiPage() {
       key: 'valore',
     },
     {
-      title: 'Note',
-      dataIndex: 'note',
-      key: 'note',
-      ellipsis: true,
-    },
-    {
       title: sortableHeader('Preferito', 'is_preferred'),
       dataIndex: 'is_preferred',
       key: 'is_preferred',
@@ -279,10 +273,6 @@ export default function ContattiPage() {
 
           <Form.Item name="valore" label="Valore" rules={[{ required: true }]}>
             <Input placeholder="es. email@domain.com, +39 333 1234567" />
-          </Form.Item>
-
-          <Form.Item name="note" label="Note">
-            <Input.TextArea rows={2} />
           </Form.Item>
 
           <Form.Item>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { List, Avatar, Button, Typography, Spin, Alert, Modal, Input, Select, Radio, Row, Col, Card, message } from 'antd';
 import { PlusOutlined, ProjectOutlined, AppstoreOutlined, UnorderedListOutlined, DownloadOutlined, EditOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils'; // No date fields in this page
-import { useAuth } from '../context';
+import { useAuth, useTheme } from '../context';
 import { Layout } from '../components';
 import ProjectForm from '../components/ProjectForm';
 import ImportProjectButton from '../components/ImportProjectButton';
@@ -12,6 +12,7 @@ const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
 
 const ProjectSelectionPage = () => {
+    const { themeConfig } = useTheme();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -244,7 +245,7 @@ const ProjectSelectionPage = () => {
                 )
             ) : (
                 !loading && !error && (
-                    <div style={{ textAlign: 'center', padding: '40px', background: '#f5f5f5', borderRadius: '8px' }}>
+                    <div style={{ textAlign: 'center', padding: '40px', background: themeConfig.mode === 'dark' ? '#1f1f1f' : '#f5f5f5', borderRadius: '8px' }}>
                         <Title level={4}>No projects available</Title>
                         <Paragraph>There are no visible projects that match your search.</Paragraph>
                     </div>

@@ -68,9 +68,25 @@ export default function SoggettiPage() {
 
   const handleEdit = (record) => {
     setEditingSoggetto(record);
+    const contatti = (record.contatti || []).map(sc => ({
+      canale: sc.contatto?.canale,
+      valore: sc.contatto?.valore,
+      is_preferred: sc.contatto?.is_preferred,
+      is_primary: sc.is_primary,
+    }));
+    if (record.email_principale && !contatti.some(c => c.canale === 'email' && c.valore === record.email_principale)) {
+      contatti.push({ canale: 'email', valore: record.email_principale, is_preferred: true, is_primary: false });
+    }
+    if (record.telefono_principale && !contatti.some(c => c.canale === 'telefono' && c.valore === record.telefono_principale)) {
+      contatti.push({ canale: 'telefono', valore: record.telefono_principale, is_preferred: false, is_primary: false });
+    }
+    if (record.website && !contatti.some(c => c.canale === 'sito_web' && c.valore === record.website)) {
+      contatti.push({ canale: 'sito_web', valore: record.website, is_preferred: false, is_primary: false });
+    }
     form.setFieldsValue({
       ...record,
-      ruoli: record.ruoli?.map(r => r.id) || []
+      ruoli: record.ruoli?.map(r => r.id) || [],
+      contatti,
     });
     setModalVisible(true);
   };
@@ -100,9 +116,14 @@ export default function SoggettiPage() {
       const url = editingSoggetto ? `/soggetti/${editingSoggetto.id}` : '/soggetti';
       const method = editingSoggetto ? 'PUT' : 'POST';
 
+      const payload = {
+        ...values,
+        ruoli: (values.ruoli || []).map(id => ({ ruolo_id: id })),
+      };
+
       const response = await apiFetch(url, {
         method,
-        body: JSON.stringify(values)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
@@ -111,7 +132,10 @@ export default function SoggettiPage() {
         fetchData();
       } else {
         const err = await response.json();
-        message.error(err.message || 'Errore nel salvataggio');
+        console.error('Soggetto submit error:', err);
+        console.error('Payload sent:', payload);
+        const detail = err.errors?.json ? Object.entries(err.errors.json).map(([k, v]) => `${k}: ${v.join(', ')}`).join('; ') : err.message;
+        message.error(detail || 'Errore nel salvataggio');
       }
     } catch (error) {
       message.error('Errore nel salvataggio');
@@ -120,13 +144,13 @@ export default function SoggettiPage() {
 
   const getTipoTag = (tipo) => {
     const colors = {
-      'persona': 'blue',
-      'azienda': 'green',
+      'persona_fisica': 'blue',
+      'persona_giuridica': 'green',
       'ente': 'purple'
     };
     const labels = {
-      'persona': 'Persona Fisica',
-      'azienda': 'Azienda',
+      'persona_fisica': 'Persona Fisica',
+      'persona_giuridica': 'Azienda',
       'ente': 'Ente'
     };
     return <Tag color={colors[tipo] || 'default'}>{labels[tipo] || tipo}</Tag>;
@@ -156,20 +180,20 @@ export default function SoggettiPage() {
       key: 'nome',
     },
     {
-      title: sortableHeader('Tipo', 'tipo'),
-      dataIndex: 'tipo',
-      key: 'tipo',
+      title: sortableHeader('Tipo', 'tipo_soggetto'),
+      dataIndex: 'tipo_soggetto',
+      key: 'tipo_soggetto',
       render: (tipo) => getTipoTag(tipo),
     },
     {
-      title: sortableHeader('Email', 'email'),
-      dataIndex: 'email',
-      key: 'email',
+      title: sortableHeader('Email', 'email_principale'),
+      dataIndex: 'email_principale',
+      key: 'email_principale',
     },
     {
-      title: sortableHeader('Telefono', 'telefono'),
-      dataIndex: 'telefono',
-      key: 'telefono',
+      title: sortableHeader('Telefono', 'telefono_principale'),
+      dataIndex: 'telefono_principale',
+      key: 'telefono_principale',
     },
     {
       title: 'Ruoli',
@@ -207,18 +231,28 @@ export default function SoggettiPage() {
   const tabItems = [
     {
       key: '1',
-      label: 'Dati Principali',
-      children: (
-        <Form.Item name="nome" label="Nome / Ragione Sociale" rules={[{ required: true }]}>
-          <Input />
-        </Form.Item>
-      ),
-    },
-    {
-      key: '2',
       label: 'Dati Anagrafici',
       children: (
         <>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="nome" label="Nome" rules={[{ required: true }]}>
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="cognome" label="Cognome">
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item name="ragione_sociale" label="Ragione Sociale">
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="codice" label="Codice">
@@ -226,10 +260,10 @@ export default function SoggettiPage() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="tipo" label="Tipo" rules={[{ required: true }]}>
+              <Form.Item name="tipo_soggetto" label="Tipo" rules={[{ required: true }]}>
                 <Select>
-                  <Option value="persona">Persona Fisica</Option>
-                  <Option value="azienda">Azienda</Option>
+                  <Option value="persona_fisica">Persona Fisica</Option>
+                  <Option value="persona_giuridica">Azienda</Option>
                   <Option value="ente">Ente</Option>
                 </Select>
               </Form.Item>
@@ -251,33 +285,59 @@ export default function SoggettiPage() {
       ),
     },
     {
-      key: '3',
+      key: '2',
       label: 'Contatti',
       children: (
-        <>
-          <Form.Item name="email" label="Email">
-            <Input type="email" />
-          </Form.Item>
-          <Form.Item name="telefono" label="Telefono">
-            <Input />
-          </Form.Item>
-          <Form.Item name="cellulare" label="Cellulare">
-            <Input />
-          </Form.Item>
-          <Form.Item name="fax" label="Fax">
-            <Input />
-          </Form.Item>
-          <Form.Item name="pec" label="PEC">
-            <Input type="email" />
-          </Form.Item>
-          <Form.Item name="sitoweb" label="Sito Web">
-            <Input />
-          </Form.Item>
-        </>
+        <Form.List name="contatti">
+          {(fields, { add, remove }) => (
+            <>
+              {fields.map(({ key, name, ...rest }) => (
+                <Row gutter={8} key={key} align="middle" style={{ marginBottom: 8 }}>
+                  <Col span={7}>
+                    <Form.Item {...rest} name={[name, 'canale']} rules={[{ required: true, message: 'Obbligatorio' }]} noStyle>
+                      <Select placeholder="Canale" style={{ width: '100%' }}>
+                        <Option value="email">Email</Option>
+                        <Option value="telefono">Telefono</Option>
+                        <Option value="cellulare">Cellulare</Option>
+                        <Option value="sito_web">Sito Web</Option>
+                        <Option value="fax">Fax</Option>
+                        <Option value="whatsapp">WhatsApp</Option>
+                        <Option value="skype">Skype</Option>
+                        <Option value="telegram">Telegram</Option>
+                        <Option value="altro">Altro</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={10}>
+                    <Form.Item {...rest} name={[name, 'valore']} rules={[{ required: true, message: 'Obbligatorio' }]} noStyle>
+                      <Input placeholder="Valore" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={4}>
+                    <Form.Item {...rest} name={[name, 'is_preferred']} noStyle>
+                      <Select placeholder="Pref." style={{ width: '100%' }}>
+                        <Option value={true}>Preferito</Option>
+                        <Option value={false}>Normale</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={3}>
+                    <Button type="text" danger icon={<DeleteOutlined />} onClick={() => remove(name)} />
+                  </Col>
+                </Row>
+              ))}
+              <Form.Item>
+                <Button type="dashed" onClick={() => add({ canale: 'email', is_preferred: false })} block icon={<PlusOutlined />}>
+                  Aggiungi Contatto
+                </Button>
+              </Form.Item>
+            </>
+          )}
+        </Form.List>
       ),
     },
     {
-      key: '4',
+      key: '3',
       label: 'Ruoli',
       children: (
         <Form.Item name="ruoli" label="Assegna Ruoli">
@@ -292,19 +352,19 @@ export default function SoggettiPage() {
   const detailTabItems = [
     {
       key: '1',
-      label: 'Dati Principali',
+      label: 'Dati Anagrafici',
       children: selectedSoggetto && (
         <Descriptions bordered column={2}>
           <Descriptions.Item label="Codice">{selectedSoggetto.codice}</Descriptions.Item>
-          <Descriptions.Item label="Tipo">{getTipoTag(selectedSoggetto.tipo)}</Descriptions.Item>
+          <Descriptions.Item label="Tipo">{getTipoTag(selectedSoggetto.tipo_soggetto)}</Descriptions.Item>
           <Descriptions.Item label="Nome">{selectedSoggetto.nome}</Descriptions.Item>
-          <Descriptions.Item label="Email">{selectedSoggetto.email}</Descriptions.Item>
-          <Descriptions.Item label="Telefono">{selectedSoggetto.telefono}</Descriptions.Item>
-          <Descriptions.Item label="Cellulare">{selectedSoggetto.cellulare}</Descriptions.Item>
+          <Descriptions.Item label="Cognome">{selectedSoggetto.cognome}</Descriptions.Item>
+          <Descriptions.Item label="Ragione Sociale">{selectedSoggetto.ragione_sociale}</Descriptions.Item>
           <Descriptions.Item label="P.IVA">{selectedSoggetto.partita_iva}</Descriptions.Item>
           <Descriptions.Item label="C.F.">{selectedSoggetto.codice_fiscale}</Descriptions.Item>
-          <Descriptions.Item label="PEC">{selectedSoggetto.pec}</Descriptions.Item>
-          <Descriptions.Item label="Sito">{selectedSoggetto.sitoweb}</Descriptions.Item>
+          <Descriptions.Item label="Email">{selectedSoggetto.email_principale}</Descriptions.Item>
+          <Descriptions.Item label="Telefono">{selectedSoggetto.telefono_principale}</Descriptions.Item>
+          <Descriptions.Item label="Sito">{selectedSoggetto.website}</Descriptions.Item>
         </Descriptions>
       ),
     },
@@ -340,13 +400,17 @@ export default function SoggettiPage() {
       key: '4',
       label: 'Contatti',
       children: selectedSoggetto?.contatti?.length > 0 ? (
-        <Space direction="vertical">
-          {selectedSoggetto.contatti.map((c, i) => (
-            <Card key={i} size="small">
-              <Tag color="blue">{c.canale}</Tag>: {c.valore}
-            </Card>
-          ))}
-        </Space>
+        <Table
+          dataSource={selectedSoggetto.contatti}
+          rowKey="id"
+          pagination={false}
+          size="small"
+          columns={[
+            { title: 'Canale', dataIndex: ['contatto', 'canale'], key: 'canale', render: (v) => <Tag color="blue">{v}</Tag> },
+            { title: 'Valore', dataIndex: ['contatto', 'valore'], key: 'valore' },
+            { title: 'Preferito', dataIndex: ['contatto', 'is_preferred'], key: 'is_preferred', render: (v) => v ? <Tag color="gold">Preferito</Tag> : null },
+          ]}
+        />
       ) : <Text type="secondary">Nessun contatto associato</Text>,
     },
   ];

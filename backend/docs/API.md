@@ -958,6 +958,49 @@ Authorization: Bearer <token>
 | POST | `/api/v1/riba/items/<id>/collect` | Registra incasso |
 | POST | `/api/v1/riba/items/<id>/reject` | Respingi partita |
 
+### Vie (`/api/v1/vie`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/vie/?comune_id=X&q=via` | Cerca strade per comune (cache locale `Via` + Nominatim fallback) |
+| POST | `/api/v1/vie/bulk?comune_id=X` | Pre-carica strade da Nominatim per un comune |
+
+**Parametri GET /api/v1/vie/:**
+| Param | Type | Descrizione |
+|-------|------|-------------|
+| `comune_id` | int | ID del comune (obbligatorio) |
+| `q` | string | Almeno 2 caratteri per la ricerca |
+
+La cache locale `Via` evita query ripetute a Nominatim. I risultati provengono prima dalla tabella `vie`, poi da Nominatim (OSM) se < 5 risultati locali. Le nuove strade trovate vengono automaticamente salvate in cache.
+
+### Logistica (`/api/v1/logistics`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| POST | `/api/v1/logistics/directions` | Calcola percorso/distanza tra due punti |
+
+**Request POST /api/v1/logistics/directions:**
+```json
+{
+  "start": [12.4964, 41.9028],
+  "end": [9.1900, 45.4642],
+  "profile": "driving-car"
+}
+```
+
+**Profile values:** `driving-car` (Auto), `driving-hgv` (Camion), `cycling-regular` (Bici), `foot-walking` (Pedoni)
+
+**Risposta (200):**
+```json
+{
+  "distance": 572000,
+  "duration": 21600,
+  "provider": "openrouteservice"
+}
+```
+
+Se `OPENROUTESERVICE_API_KEY` non è configurata, viene usata una stima lineare (Haversine) con `provider: "haversine"`.
+
 ### Lotti e Seriali (`/api/v1/lots`, `/api/v1/serial-numbers`)
 
 | Method | Endpoint | Descrizione |
