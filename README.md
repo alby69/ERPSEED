@@ -31,12 +31,21 @@ Vedi [backend/docs/QUICKSTART.md](backend/docs/QUICKSTART.md) per setup manuale 
 | **AI Assistant** | Genera modelli, workflow, regole da linguaggio naturale (OpenRouter/OpenAI/Anthropic/Ollama) |
 | **Workflow Automation** | Automatizza processi con step: delay, HTTP request, condition, webhook, notification |
 | **Dynamic API** | CRUD automatici per ogni modello creato dal builder |
-| **Module System** | Plugin CQRS per estendere funzionalità (prodotti, vendite, acquisti) |
+| **Module System** | Plugin CQRS per estendere funzionalità (prodotti, vendite, acquisti, resi) |
 | **Anagrafiche** | Soggetti, Ruoli, Indirizzi, Contatti, Comuni (vision/archetype) |
+| **Contabilità** | Prima Nota, Scadenzario, Bilancio Verifica, Registri IVA, Liquidazione IVA, Intrastat, Ri.Ba. |
+| **Fattura Elettronica** | Generazione XML FatturaElettronicaPA 1.2 da fatture emesse |
+| **HR** | Dipendenti, Presenze, Ferie, Buste Paga (Payroll), Formazione, Certificazioni |
+| **Acquisti** | Ordini, Richieste, DDT Entrata, **Resi Acquisti** |
+| **Magazzino** | Giacenze, Movimenti, Inventario, Lotti/Seriali, Ubicazioni |
+| **Produzione** | BOM, Cicli, ODP, MRP |
+| **CRM** | Lead, Opportunità, Contratti |
 | **GDO Reconciliation** | Strumento di riconciliazione GDO con report Excel |
 | **Webhook System** | 7 event types, secret regeneration, test delivery |
 | **Audit Logging** | Tracciamento completo delle operazioni |
+| **Cache Redis** | Flask-Caching su endpoint GET frequenti (maturities, VAT, inventory) |
 | **Marketplace** | Condividi e installa componenti/moduli |
+| **Import/Export** | Import/Export batch di progetti (SysModel, Block, Workflow, Module) |
 
 ---
 
@@ -50,14 +59,18 @@ erpseed/
 │   ├── core/                        # Sistema core
 │   │   ├── api/                     #   Auth, Tenant, Modules, System
 │   │   ├── models/                  #   Tenant, Audit, Module
-│   │   ├── services/                #   Auth, Tenant, Permission
+│   │   ├── services/                #   Auth, Tenant, Permission, Query Filter
 │   │   ├── middleware/              #   TenantMiddleware, ModuleMiddleware
 │   │   └── decorators/              #   @tenant_required, @admin_required
 │   ├── modules/                     # Moduli applicativi (CQRS)
-│   │   ├── entities/               #   Anagrafiche: Soggetto, Ruolo, Indirizzo (comune_id/via_id), Contatto, Comune, Via (cache strade), vie_routes.py (Nominatim)
+│   │   ├── entities/               #   Anagrafiche: Soggetto, Ruolo, Indirizzo, Contatto, Comune, Via
 │   │   ├── products/               #   Prodotti (CQRS)
 │   │   ├── sales/                  #   Vendite (CQRS)
-│   │   ├── purchases/              #   Acquisti (CQRS)
+│   │   ├── purchases/              #   Acquisti + Resi (CQRS)
+│   │   ├── accounting/             #   Contabilità: Piano Conti, Prima Nota, Scadenzario, Bilancio Verifica, IVA, Intrastat, Ri.Ba.
+│   │   ├── hr/                     #   HR: Dipendenti, Presenze, Ferie, Payroll, Formazione
+│   │   ├── fattura_elettronica/    #   Fattura Elettronica XML generation
+│   │   ├── crm/                    #   Lead, Opportunità, Contratti
 │   │   ├── analytics/              #   Dashboard e KPI
 │   │   ├── automation/             #   Workflow e Webhook
 │   │   ├── ai/                     #   AI Assistant
@@ -67,13 +80,15 @@ erpseed/
 │   │   ├── projects/               #   Progetti
 │   │   ├── users/                  #   Utenti
 │   │   └── system_tools/           #   Template, Versioning, Debug
+│   ├── plugins/                    # Plugin estensibili
+│   │   └── inventory/              #   Inventory plugin (ubicazioni, stock, conteggi)
 │   ├── seeds/                      # Database seed scripts
 │   └── docs/                       # Documentazione
 │
 └── frontend/                        # React + Vite + Ant Design
     ├── src/
-    │   ├── pages/                  # 44 pagine (Dashboard, Anagrafiche, Prodotti, Sales, etc.)
-    │   ├── components/             # 43 componenti riutilizzabili
+    │   ├── pages/                  # 50+ pagine (Dashboard, Anagrafiche, Prodotti, Sales, Accounting, HR, etc.)
+    │   ├── components/             # 45+ componenti riutilizzabili
     │   └── context/                # AuthContext, ThemeProvider
     └── docker-compose.yml          # Sviluppo con hot-reload
 ```
@@ -124,9 +139,14 @@ La documentazione completa è organizzata in [backend/docs/INDEX.md](backend/doc
 # Backend
 cd backend && pytest
 
+# Backend (con coverage)
+cd backend && pytest --cov=.
+
 # Frontend
 cd frontend && npm test
 ```
+
+**Stato attuale: 134 test, 0 failures, 0 errors.**
 
 ---
 

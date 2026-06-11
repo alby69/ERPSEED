@@ -198,14 +198,14 @@ def register_plugin(plugin_class: Type[BasePlugin]):
 PluginRegistry = ModuleRegistry
 
 
-def create_plugin_manager(app=None, container=None):
+def create_plugin_manager(app=None, api=None, container=None):
     """Create a plugin manager instance with Flask app integration."""
     manager = ModuleRegistry()
     if app:
         manager.discover_plugins("backend/plugins")
         for name in manager._plugin_classes:
             try:
-                manager.enable(name, app=app, db=None, api=None)
+                manager.enable(name, app=app, db=None, api=api)
             except Exception as e:
                 print(f"Failed to enable plugin {name}: {e}")
     return manager

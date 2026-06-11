@@ -76,12 +76,11 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 |---|---------|----------|------------|-------|
 | 3.1 | Batch Import/Export UI | 🟢 MEDIA | Media | ✅ PARZIALE |
 | 3.2 | Workflow Visual Editor | 🟢 MEDIA | Alta | ⏳ TODO |
-| 3.3 | Dashboard Builder | 🟢 MEDIA | Media | ⏳ TODO |
-| 3.4 | Plugin Store | 🟢 MEDIA | Alta | ⏳ TODO |
+| 3.3 | Dashboard Builder | 🟢 MEDIA | Media | ✅ COMPLETATO |
+| 3.4 | Plugin Store | 🟢 MEDIA | Alta | ✅ COMPLETATO |
 | 3.5 | Multi-language Support | 🟢 MEDIA | Media | ⏳ TODO |
 
 ### Dettagli Fase 3
-
 #### 3.1 - Batch Import/Export
 - Implementata logica di Export in `DynamicApiService`. Endpoint `/export` aggiunto a `dynamic_io.py`.
 
@@ -123,18 +122,10 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 ├── Fase 3: Nuove Features
 │   ├── ✅ Batch Export logic
 │   ├── ✅ Product Detail page & CRUD routes
-│   └── ⏳ Dashboard Builder
+│   └── ✅ Dashboard Builder
 ├── Fase 4: Security & Performance
 │   ├── ✅ API Versioning (v1)
 │   └── ✅ Tenant middleware JWT fallback fix
-├── Anagrafiche - Indirizzi & Vie
-│   ├── ✅ Modello Via (cache locale strade per comune)
-│   ├── ✅ API /api/v1/vie/ con Nominatim fallback
-│   ├── ✅ Campi comune_id/via_id su Indirizzo
-│   └── ✅ UX IndirizziPage: città → via autocomplete → civico
-├── Logistica
-│   ├── ✅ DistanceCalculator mostra città partenza/arrivo
-│   └── ✅ Sidebar: Logistica spostata in Geografia
 └── Bug fixes
     ├── ✅ Entity blueprint URL alignment (/api/v1 instead of /api/v1/entities/{name})
     ├── ✅ Products API (GetProductCommand entity_id field)
@@ -164,4 +155,4 @@ Quando si modifica un modulo esistente:
 
 ---
 
-*Ultimo aggiornamento: 2026-06-10*
+*Ultimo aggiornamento: 2026-06-09*

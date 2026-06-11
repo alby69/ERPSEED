@@ -27,9 +27,8 @@ class HRPlugin(BasePlugin):
         self._event_handlers = []
 
     def register(self):
-        """Register HR blueprints."""
-        if self.api:
-            self.api.register_blueprint(blp)
+        """Register HR resources."""
+        pass
 
     def init_db(self):
         """Initialize HR tables."""

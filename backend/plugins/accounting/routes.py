@@ -22,16 +22,18 @@ from backend.core.schemas.schemas import BaseSchema
 from backend.core.services.generic_service import generic_service
 from backend.core.utils.utils import paginate, apply_filters, apply_sorting
 
-blp = Blueprint("accounting", __name__, url_prefix="/accounting", description="Accounting Operations")
+blp = Blueprint("accounting", __name__, description="Accounting Operations")
 
 class ChartOfAccountsSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
         model = ChartOfAccounts
+        exclude = BaseSchema.Meta.exclude + ("tenant_id",)
 
 class ChartOfAccountsUpdateSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
         model = ChartOfAccounts
         load_instance = False
+        exclude = BaseSchema.Meta.exclude + ("tenant_id",)
 
 class AccountSchema(BaseSchema):
     class Meta(BaseSchema.Meta):

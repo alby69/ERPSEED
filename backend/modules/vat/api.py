@@ -3,8 +3,9 @@ from flask.views import MethodView
 from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
+from flask_babel import gettext as _
 
-from backend.extensions import db
+from backend.extensions import db, cache
 from backend.models import VatRegisterEntry, VatLiquidation, IntrastatDeclaration, TaxRate, Invoice
 
 blp = Blueprint("vat", __name__, description="VAT & Intrastat API")
@@ -63,11 +64,17 @@ class VatRegisterList(MethodView):
         register_type = request.args.get("register_type", "sales")
         period = request.args.get("period")
         fiscal_year = request.args.get("fiscal_year", type=int)
+        cache_key = f"vat_register:{tenant_id}:{register_type}:{period}:{fiscal_year}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
         q = VatRegisterEntry.query.filter_by(
             tenant_id=tenant_id, deleted_at=None, register_type=register_type)
         if period: q = q.filter_by(period=period)
         if fiscal_year: q = q.filter_by(fiscal_year=fiscal_year)
-        return [entry_to_dict(e) for e in q.order_by(VatRegisterEntry.entry_number.asc()).all()]
+        result = [entry_to_dict(e) for e in q.order_by(VatRegisterEntry.entry_number.asc()).all()]
+        cache.set(cache_key, result, timeout=300)
+        return result
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -75,13 +82,17 @@ class VatRegisterList(MethodView):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
         data = request.get_json() or {}
         if not data.get("register_type") or not data.get("entry_date"):
-            abort(400, message="register_type and entry_date are required")
+            abort(400, message=_("register_type and entry_date are required"))
 
         entry_date = data["entry_date"]
         if isinstance(entry_date, str): entry_date = date.fromisoformat(entry_date)
         fiscal_year = data.get("fiscal_year", entry_date.year)
         period = data.get("period", entry_date.strftime("%Y-%m"))
         register_type = data["register_type"]
+
+        document_date = data.get("document_date")
+        if isinstance(document_date, str):
+            document_date = date.fromisoformat(document_date)
 
         # Auto-number
         last = VatRegisterEntry.query.filter_by(
@@ -91,12 +102,22 @@ class VatRegisterList(MethodView):
 
         e = VatRegisterEntry(
             tenant_id=tenant_id, entry_number=entry_number,
+            entry_date=entry_date, document_date=document_date,
+            register_type=register_type,
             fiscal_year=fiscal_year, period=period,
-            **{k: v for k, v in data.items() if k in (
-                "register_type", "entry_date", "document_number", "document_date",
-                "soggetto_id", "soggetto_name", "soggetto_vat", "invoice_id",
-                "taxable_amount", "vat_amount", "vat_rate", "vat_code", "tax_nature",
-                "is_liquidation", "notes")})
+            document_number=data.get("document_number"),
+            soggetto_id=data.get("soggetto_id"),
+            soggetto_name=data.get("soggetto_name"),
+            soggetto_vat=data.get("soggetto_vat"),
+            invoice_id=data.get("invoice_id"),
+            taxable_amount=data.get("taxable_amount"),
+            vat_amount=data.get("vat_amount"),
+            vat_rate=data.get("vat_rate"),
+            vat_code=data.get("vat_code"),
+            tax_nature=data.get("tax_nature"),
+            is_liquidation=data.get("is_liquidation"),
+            notes=data.get("notes"),
+        )
         db.session.add(e)
         db.session.commit()
         return entry_to_dict(e), 201
@@ -146,7 +167,7 @@ class VatRegisterGenerate(MethodView):
         data = request.get_json() or {}
         period = data.get("period")
         register_type = data.get("register_type", "sales")
-        if not period: abort(400, message="period (YYYY-MM) is required")
+        if not period: abort(400, message=_("period (YYYY-MM) is required"))
 
         year = int(period.split("-")[0])
         month = int(period.split("-")[1])
@@ -154,7 +175,7 @@ class VatRegisterGenerate(MethodView):
         # Map register type to invoice filters
         invoice_type_map = {"sales": "AR", "purchases": "AP"}
         invoice_type = invoice_type_map.get(register_type)
-        if not invoice_type: abort(400, message=f"Unsupported register type: {register_type}")
+        if not invoice_type: abort(400, message=_("Unsupported register type: %(type)s", type=register_type))
 
         invoices = Invoice.query.filter(
             Invoice.tenant_id == tenant_id,
@@ -165,7 +186,7 @@ class VatRegisterGenerate(MethodView):
         ).all()
 
         if not invoices:
-            abort(400, message="No invoices found for this period")
+            abort(400, message=_("No invoices found for this period"))
 
         created = 0
         for inv in invoices:
@@ -207,8 +228,14 @@ class VatLiquidationList(MethodView):
     @jwt_required()
     def get(self):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
+        cache_key = f"vat_liquidations:{tenant_id}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
         q = VatLiquidation.query.filter_by(tenant_id=tenant_id)
-        return [liquidation_to_dict(l) for l in q.order_by(VatLiquidation.fiscal_year.desc(), VatLiquidation.period.desc()).all()]
+        result = [liquidation_to_dict(l) for l in q.order_by(VatLiquidation.fiscal_year.desc(), VatLiquidation.period.desc()).all()]
+        cache.set(cache_key, result, timeout=300)
+        return result
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -216,7 +243,7 @@ class VatLiquidationList(MethodView):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
         data = request.get_json() or {}
         if not data.get("period") or not data.get("fiscal_year"):
-            abort(400, message="period and fiscal_year are required")
+            abort(400, message=_("period and fiscal_year are required"))
 
         # Compute from register entries
         period = data["period"]
@@ -305,7 +332,7 @@ class IntrastatList(MethodView):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
         data = request.get_json() or {}
         if not data.get("fiscal_year") or not data.get("period") or not data.get("type") or not data.get("soggetto_id"):
-            abort(400, message="fiscal_year, period, type, and soggetto_id are required")
+            abort(400, message=_("fiscal_year, period, type, and soggetto_id are required"))
         d = IntrastatDeclaration(tenant_id=tenant_id, **{k: v for k, v in data.items() if k in (
             "fiscal_year", "period", "type", "is_quarterly", "soggetto_id",
             "soggetto_partita_iva", "soggetto_nazione", "amount", "vat_amount",
@@ -344,7 +371,7 @@ class IntrastatDetail(MethodView):
         if not d: abort(404)
         db.session.delete(d)
         db.session.commit()
-        return {"message": "Deleted"}, 204
+        return {"message": _("Deleted")}, 204
 
 
 @blp.route("/api/v1/vat/intrastat/<int:d_id>/submit")

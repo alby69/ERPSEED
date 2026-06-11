@@ -150,7 +150,7 @@ class ReportExecute(MethodView):
             if not col_exprs:
                 abort(400, message="No valid columns selected")
 
-            query = db.select(col_exprs)
+            query = db.select(*col_exprs)
 
             # Apply filters
             for f in filters:
@@ -158,7 +158,7 @@ class ReportExecute(MethodView):
                 operator = f.get("operator", "eq")
                 value = f.get("value")
                 col = table.columns.get(field)
-                if col:
+                if col is not None:
                     if operator == "eq":
                         query = query.where(col == value)
                     elif operator == "neq":
@@ -178,19 +178,19 @@ class ReportExecute(MethodView):
                     elif operator == "is_null":
                         query = query.where(col.is_(None))
                     elif operator == "is_not_null":
-                        query = query.where(col.isnot(None))
+                        query = query.where(col.is_not(None))
 
             if group_by:
                 for g in group_by:
                     col = table.columns.get(g)
-                    if col: query = query.group_by(col)
+                    if col is not None: query = query.group_by(col)
 
             if order_by:
                 for ob in (order_by if isinstance(order_by, list) else [order_by]):
                     field = ob.get("field") if isinstance(ob, dict) else ob
                     direction = ob.get("direction", "asc") if isinstance(ob, dict) else "asc"
                     col = table.columns.get(field)
-                    if col:
+                    if col is not None:
                         query = query.order_by(col.asc() if direction == "asc" else col.desc())
 
             query = query.limit(limit)

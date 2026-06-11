@@ -1,7 +1,7 @@
 # Indice Documentazione ERPSEED
 
 > **Entry point unico** per tutta la documentazione del progetto.
-> Ultimo aggiornamento: 2026-06-10
+> Ultimo aggiornamento: 2026-06-11
 
 ---
 
@@ -36,7 +36,6 @@
 | [TUTORIAL_AI_ASSISTANT.md](TUTORIAL_AI_ASSISTANT.md) | Uso AI Assistant: configurazione LLM, comandi, troubleshooting |
 | [TUTORIAL_FLEET.md](TUTORIAL_FLEET.md) | Fleet Management via GUI Builder |
 | [TUTORIAL_FLEET_CLI.md](TUTORIAL_FLEET_CLI.md) | Fleet Management via CLI/curl |
-| [tutorials/indirizzi.md](../tutorials/indirizzi.md) | Gestione Indirizzi, ricerca Vie con Nominatim, geocodifica |
 
 ## 📐 Piani e Analisi
 

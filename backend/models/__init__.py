@@ -18,6 +18,7 @@ from .uom import UnitOfMeasure
 from .pricing import PriceList, PriceListItem
 from .movement_reason import MovementReason
 from .goods_receipt import GoodsReceipt, GoodsReceiptLine
+from .purchase_return import PurchaseReturn, PurchaseReturnLine
 from .maturity import Maturity
 from .crm import Lead, Opportunity
 from .contract import Contract

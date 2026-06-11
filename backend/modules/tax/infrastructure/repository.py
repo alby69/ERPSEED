@@ -6,7 +6,8 @@ logger = logging.getLogger(__name__)
 
 class TaxRateRepository:
     def __init__(self, db=None):
-        self.db = db
+        from backend.extensions import db as _db
+        self.db = db or _db
 
     def _get_model_class(self):
         from backend.models import TaxRate

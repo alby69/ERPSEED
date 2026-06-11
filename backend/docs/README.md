@@ -17,4 +17,4 @@ Benvenuto nella documentazione del backend ERPSEED.
 
 ---
 
-*Ultimo aggiornamento: 2026-06-09*
+*Ultimo aggiornamento: 2026-06-11*

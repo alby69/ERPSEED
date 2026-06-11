@@ -15,7 +15,7 @@ from werkzeug.exceptions import HTTPException
 from flask.json.provider import DefaultJSONProvider
 import decimal
 
-from .extensions import db, socketio, api, jwt, ma, migrate
+from .extensions import db, socketio, api, jwt, ma, migrate, cache # Import cache
 
 # Import Core Middleware
 from .core.middleware.tenant_middleware import TenantMiddleware
@@ -63,6 +63,10 @@ from .modules.dynamic_api.api.rest_api import blp as dynamic_api_bp
 from .modules.automation.api.webhooks_api import blp as webhooks_bp
 from .modules.automation.api.workflows_api import blp as workflows_bp
 
+# Import plugin blueprints
+from .plugins.accounting.routes import blp as accounting_bp
+from .plugins.hr.routes import blp as hr_bp
+
 # Import purchases and builder APIs
 from .modules.purchases.api.rest_api import blp as purchases_bp
 from .modules.builder.api import blp as builder_bp
@@ -98,7 +102,9 @@ from .modules.vat.api import blp as vat_bp
 from .modules.riba.api import blp as riba_bp
 from .modules.lot.api import blp as lot_bp
 from .modules.purchase_requests.api import blp as purchase_requests_bp
+from .modules.purchase_returns.api import blp as purchase_returns_bp
 from .modules.mrp.api import blp as mrp_bp
+from .modules.fattura_elettronica.api import blp as fattura_elettronica_bp
 
 # Import Entities (Vision Archetypes)
 from .modules.entities.routes import (
@@ -273,6 +279,14 @@ def create_app(db_url=None):
     # --- Initialize Extensions ---
     db.init_app(app)
     migrate.init_app(app, db)
+    api.init_app(app)
+
+    # --- Redis Cache ---
+    app.config["CACHE_TYPE"] = os.getenv("CACHE_TYPE", "RedisCache")
+    app.config["CACHE_REDIS_URL"] = os.getenv("CACHE_REDIS_URL", "redis://localhost:6379/0")
+    app.config["CACHE_DEFAULT_TIMEOUT"] = int(os.getenv("CACHE_DEFAULT_TIMEOUT", "300"))
+    app.config["CACHE_KEY_PREFIX"] = "erpseed:"
+    cache.init_app(app)
 
     # --- Initialize Core Services & New Plugin System ---
     container = ServiceContainer()
@@ -286,11 +300,9 @@ def create_app(db_url=None):
     container.register("event_bus", lambda: event_bus, singleton=True)
     container.register("db", lambda: db, singleton=True)
 
-    plugin_manager = create_plugin_manager(app=app, container=container)
+    plugin_manager = create_plugin_manager(app=app, api=api, container=container)
     container.register("plugin_manager", lambda: plugin_manager, singleton=True)
     # --- End New System Init ---
-
-    api.init_app(app)
 
     # Configure Marshmallow schema name resolver AFTER api.init_app to avoid serialization in spec
     spec = getattr(api, "spec", None)
@@ -436,6 +448,8 @@ def create_app(db_url=None):
     api.register_blueprint(
         projects_bp, url_prefix=f"{API_V1_PREFIX}/projects", name="api_projects"
     )
+    api.register_blueprint(accounting_bp, url_prefix=f"{API_V1_PREFIX}/accounting")
+    api.register_blueprint(hr_bp, url_prefix=f"{API_V1_PREFIX}/hr")
     api.register_blueprint(
         builder_bp, url_prefix=f"{API_V1_PREFIX}/builder", name="api_builder"
     )
@@ -468,7 +482,10 @@ def create_app(db_url=None):
     api.register_blueprint(riba_bp)
     api.register_blueprint(lot_bp)
     api.register_blueprint(purchase_requests_bp)
+    api.register_blueprint(purchase_returns_bp)
     api.register_blueprint(mrp_bp)
+# Register Fattura Elettronica blueprint
+    api.register_blueprint(fattura_elettronica_bp)
     api.register_blueprint(
         purchases_bp, url_prefix=f"{API_V1_PREFIX}/purchases", name="api_purchases"
     )

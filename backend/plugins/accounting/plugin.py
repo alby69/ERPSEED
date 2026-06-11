@@ -22,9 +22,8 @@ class AccountingPlugin(BasePlugin):
     dependencies = []
 
     def register(self):
-        """Register accounting blueprints."""
-        if self.api:
-            self.api.register_blueprint(blp)
+        """Register accounting resources."""
+        pass
 
     def init_db(self):
         """Initialize accounting tables."""

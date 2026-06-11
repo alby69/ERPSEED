@@ -28,6 +28,7 @@ import TaxRates from './pages/TaxRates';
 import ProductCategories from './pages/ProductCategories';
 import UnitsOfMeasure from './pages/UnitsOfMeasure';
 import PriceLists from './pages/PriceLists';
+import ChartOfAccounts from './pages/ChartOfAccounts';
 import Invoices from './pages/Invoices';
 import StockMovements from './pages/StockMovements';
 import StockLevels from './pages/StockLevels';
@@ -43,6 +44,7 @@ import Contracts from './pages/Contracts';
 import Manufacturing from './pages/Manufacturing';
 import ProjectManagement from './pages/ProjectManagement';
 import ReportDesigner from './pages/ReportDesigner';
+import TrialBalance from './pages/TrialBalance';
 import VatRegisters from './pages/VatRegisters';
 import IntrastatPage from './pages/Intrastat';
 import RiBaPage from './pages/RiBaPage';
@@ -436,7 +438,7 @@ return (
         <Route path="/tax-rates" element={<ProtectedRoute roles={['admin', 'owner']}><TaxRates /></ProtectedRoute>} />
         <Route path="/units-of-measure" element={<ProtectedRoute roles={['admin', 'owner']}><UnitsOfMeasure /></ProtectedRoute>} />
         <Route path="/price-lists" element={<ProtectedRoute roles={['admin', 'owner']}><PriceLists /></ProtectedRoute>} />
-        <Route path="/chart-of-accounts" element={<ProtectedRoute roles={['admin', 'owner']}><PagePlaceholder title="Piano dei Conti" priority="P1" backend="modules/accounting/" /></ProtectedRoute>} />
+        <Route path="/chart-of-accounts" element={<ProtectedRoute roles={['admin', 'owner']}><ChartOfAccounts /></ProtectedRoute>} />
 
         {/* === Acquisti === */}
         <Route path="/purchase-orders" element={<ProtectedRoute roles={['admin', 'owner']}><PurchaseOrders /></ProtectedRoute>} />
@@ -461,6 +463,7 @@ return (
         {/* === Contabilità === */}
         <Route path="/journal" element={<ProtectedRoute roles={['admin', 'owner']}><Journal /></ProtectedRoute>} />
         <Route path="/maturities" element={<ProtectedRoute roles={['admin', 'owner']}><Maturities /></ProtectedRoute>} />
+        <Route path="/trial-balance" element={<ProtectedRoute roles={['admin', 'owner']}><TrialBalance /></ProtectedRoute>} />
         <Route path="/vat-registers" element={<ProtectedRoute roles={['admin', 'owner']}><VatRegisters /></ProtectedRoute>} />
         <Route path="/intrastat" element={<ProtectedRoute roles={['admin', 'owner']}><IntrastatPage /></ProtectedRoute>} />
         <Route path="/riba" element={<ProtectedRoute roles={['admin', 'owner']}><RiBaPage /></ProtectedRoute>} />

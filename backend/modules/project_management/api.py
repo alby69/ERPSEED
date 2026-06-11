@@ -125,6 +125,10 @@ class TimesheetList(MethodView):
         if not data.get("employee_id") or not data.get("date"):
             abort(400, message="employee_id and date are required")
         lines_data = data.pop("lines", [])
+        date_val = data.get("date")
+        if isinstance(date_val, str):
+            from datetime import date as date_cls
+            data["date"] = date_cls.fromisoformat(date_val)
         t = Timesheet(tenant_id=tenant_id, **{k: v for k, v in data.items() if k in ("employee_id", "date", "status", "notes")})
         db.session.add(t)
         db.session.flush()

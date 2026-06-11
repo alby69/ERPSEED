@@ -27,11 +27,13 @@ blp = Blueprint("inventory", __name__, url_prefix="/inventory", description="Inv
 class InventoryLocationSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
         model = InventoryLocation
+        exclude = BaseSchema.Meta.exclude + ("tenant_id",)
 
 class InventoryLocationUpdateSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
         model = InventoryLocation
         load_instance = False
+        exclude = BaseSchema.Meta.exclude + ("tenant_id",)
 
 class ProductStockSchema(BaseSchema):
     available_quantity = fields.Function(lambda obj: obj.available_quantity, dump_only=True)
@@ -486,7 +488,6 @@ class StockSummary(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.response(200, fields.List(fields.Dict()))
     def get(self, tenant_id):
         """Get stock summary (all products with total stock levels)."""
 
@@ -527,7 +528,6 @@ class LowStockReport(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.response(200, fields.List(fields.Dict()))
     def get(self, tenant_id):
         """Get products below reorder level."""
 

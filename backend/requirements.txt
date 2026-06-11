@@ -28,6 +28,10 @@ pandas
 xlsxwriter
 openpyxl
 
+# Caching (Redis)
+Flask-Caching>=2.0.0
+redis>=5.0.0
+
 # PDF Generation
 xhtml2pdf>=0.2.11
 

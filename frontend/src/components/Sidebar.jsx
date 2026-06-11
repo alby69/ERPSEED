@@ -1,6 +1,7 @@
 import React from 'react';
 import { Menu, theme } from 'antd';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth, useTheme } from '@/context';
 import {
     AppstoreOutlined,
@@ -31,6 +32,8 @@ import {
     FileDoneOutlined,
     CarOutlined,
     RollbackOutlined,
+    ShopOutlined, // Import ShopOutlined for Marketplace
+    ShopOutlined,
     HeartOutlined,
     FileProtectOutlined,
     SwapOutlined,
@@ -52,6 +55,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     const { user, logout } = useAuth();
     const { themeConfig } = useTheme();
     const { token } = theme.useToken();
+    const { t } = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
     const { projectId } = useParams();
@@ -60,24 +64,24 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     const appMenuItems = [
         {
             key: 'area-anagrafiche',
-            label: 'Anagrafiche',
+            label: t('menu.areas.anagrafiche'),
             icon: <UserOutlined />,
             children: [
-                { key: '/anagrafiche', label: 'Soggetti', icon: <UserOutlined /> },
-                { key: '/ruoli', label: 'Ruoli', icon: <TeamOutlined /> },
-                { key: '/indirizzi', label: 'Indirizzi', icon: <EnvironmentOutlined /> },
-                { key: '/contatti', label: 'Contatti', icon: <PhoneOutlined /> },
-                { key: '/products', label: 'Prodotti', icon: <AppstoreOutlined /> },
-                { key: '/product-categories', label: 'Categorie Prodotto', icon: <TagsOutlined /> },
-                { key: '/tax-rates', label: 'Aliquote IVA', icon: <PercentageOutlined /> },
-                { key: '/units-of-measure', label: 'Unità di Misura', icon: <LineHeightOutlined /> },
-                { key: '/price-lists', label: 'Listini Prezzo', icon: <DollarOutlined /> },
-                { key: '/chart-of-accounts', label: 'Piano dei Conti', icon: <BookOutlined /> },
+                { key: '/anagrafiche', label: t('menu.blocks.soggetti'), icon: <UserOutlined /> },
+                { key: '/ruoli', label: t('menu.blocks.ruoli'), icon: <TeamOutlined /> },
+                { key: '/indirizzi', label: t('menu.blocks.indirizzi'), icon: <EnvironmentOutlined /> },
+                { key: '/contatti', label: t('menu.blocks.contatti'), icon: <PhoneOutlined /> },
+                { key: '/products', label: t('menu.blocks.prodotti'), icon: <AppstoreOutlined /> },
+                { key: '/product-categories', label: t('menu.blocks.categorie'), icon: <TagsOutlined /> },
+                { key: '/tax-rates', label: t('menu.blocks.aliquoteIva'), icon: <PercentageOutlined /> },
+                { key: '/units-of-measure', label: t('menu.blocks.unitaMisura'), icon: <LineHeightOutlined /> },
+                { key: '/price-lists', label: t('menu.blocks.listini'), icon: <DollarOutlined /> },
+                { key: '/chart-of-accounts', label: t('menu.blocks.pianoConti'), icon: <BookOutlined /> },
             ],
         },
         {
             key: 'area-geografia',
-            label: 'Geografia',
+            label: t('menu.areas.geografia'),
             icon: <GlobalOutlined />,
             children: [
                 { key: '/geografia/nazioni', label: 'Nazioni', icon: <GlobalOutlined /> },
@@ -129,10 +133,11 @@ const Sidebar = ({ projectMenuItems = [] }) => {
             label: 'Contabilità',
             icon: <DollarOutlined />,
             children: [
-                { key: '/journal', label: 'Prima Nota', icon: <BookOutlined /> },
-                { key: '/maturities', label: 'Scadenzario', icon: <CalendarOutlined /> },
+                { key: '/journal',     label: 'Prima Nota',    icon: <BookOutlined /> },
+                { key: '/maturities',  label: 'Scadenzario',  icon: <CalendarOutlined /> },
+                { key: '/trial-balance', label: 'Bilancio Verifica', icon: <DollarOutlined /> },
                 { key: '/vat-registers', label: 'Registri IVA', icon: <PercentageOutlined /> },
-                { key: '/intrastat', label: 'Intrastat', icon: <GlobalOutlined /> },
+                { key: '/intrastat',   label: 'Intrastat',    icon: <GlobalOutlined /> },
             ],
         },
         {
@@ -206,6 +211,9 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         { key: '/admin/projects', label: 'Projects Admin', icon: <ProjectOutlined /> },
         { key: '/admin/audit-logs', label: 'Audit Logs', icon: <AuditOutlined /> },
         { key: '/ai-assistant', label: 'AI Assistant', icon: <RobotOutlined /> },
+        { key: '/marketplace', label: 'Marketplace', icon: <ShopOutlined /> },
+        { key: '/admin/project-import-export', label: 'Import/Export', icon: <SwapOutlined /> }, // Import/Export menu item
+        { key: '/swagger-ui', label: 'API Docs', icon: <FileSearchOutlined /> },
     ];
 
     // Build the full menu items array
@@ -265,7 +273,11 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     const handleMenuClick = (e) => {
         if (e.key === 'logout') {
             logout();
-        } else {
+        } else if (e.key === '/swagger-ui') {
+            // Open Swagger UI in a new tab
+            window.open('/swagger-ui', '_blank');
+        }
+        else {
             navigate(e.key);
         }
     };

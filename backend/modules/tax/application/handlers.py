@@ -63,8 +63,9 @@ class UpdateTaxRateHandler(UpdateHandler):
 
 
 class DeleteTaxRateHandler(DeleteHandler):
-    def __init__(self, repository: TaxRateRepository):
+    def __init__(self, repository: TaxRateRepository, event_bus=None):
         self.repository = repository
+        self.event_bus = event_bus
 
     def handle(self, command: DeleteTaxRateCommand) -> CommandResult:
         existing = self.repository.find_by_id(command.entity_id, command.tenant_id)
@@ -77,8 +78,9 @@ class DeleteTaxRateHandler(DeleteHandler):
 
 
 class GetTaxRateHandler(QueryHandler):
-    def __init__(self, repository: TaxRateRepository):
+    def __init__(self, repository: TaxRateRepository, event_bus=None):
         self.repository = repository
+        self.event_bus = event_bus
 
     def handle(self, query: GetTaxRateQuery) -> CommandResult:
         tax_rate = self.repository.find_by_id(query.entity_id, query.tenant_id)
@@ -88,8 +90,9 @@ class GetTaxRateHandler(QueryHandler):
 
 
 class ListTaxRatesHandler(QueryHandler):
-    def __init__(self, repository: TaxRateRepository):
+    def __init__(self, repository: TaxRateRepository, event_bus=None):
         self.repository = repository
+        self.event_bus = event_bus
 
     def handle(self, query: ListTaxRatesQuery) -> CommandResult:
         result = self.repository.find_all(

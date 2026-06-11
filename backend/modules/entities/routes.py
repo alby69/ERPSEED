@@ -2,6 +2,7 @@ from flask.views import MethodView
 from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
+from flask_babel import gettext as _
 from backend.modules.entities import (
     Soggetto,
     SoggettoRuolo,
@@ -22,6 +23,7 @@ from backend.extensions import db, ma
 from backend.core.utils.utils import paginate, apply_filters, apply_sorting
 from backend.core.decorators.decorators import tenant_required
 from backend.core.services.generic_service import generic_service
+from backend.core.utils.cache_utils import cached
 
 
 soggetto_blp = Blueprint("soggetti", __name__, description="Operazioni su Soggetti")
@@ -36,6 +38,7 @@ contatto_blp = Blueprint("contatti", __name__, description="Operazioni su Contat
 @soggetto_blp.route("/soggetti")
 class SoggettoList(MethodView):
     @soggetto_blp.doc(security=[{"jwt": []}])
+    @cached(timeout=60, key_prefix="soggetti_list") # Cache for 60 seconds
     @jwt_required()
     @tenant_required
     @soggetto_blp.response(200, SoggettoSchema(many=True))
@@ -142,7 +145,7 @@ class SoggettoResource(MethodView):
     def get(self, soggetto_id, tenant_id):
         """Dettaglio soggetto"""
         return generic_service.get_tenant_resource(
-            Soggetto, soggetto_id, tenant_id, not_found_message="Soggetto not found"
+            Soggetto, soggetto_id, tenant_id, not_found_message=_("Soggetto not found")
         )
 
     @soggetto_blp.doc(security=[{"jwt": []}])
@@ -154,7 +157,7 @@ class SoggettoResource(MethodView):
         """Aggiorna soggetto"""
         soggetto = Soggetto.query.filter_by(id=soggetto_id, tenant_id=tenant_id).first()
         if not soggetto:
-            abort(404, message="Soggetto not found")
+            abort(404, message=_("Soggetto not found"))
 
         # Estrai e gestisci dati nidificati
         ruoli_data = data.pop("ruoli", None)
@@ -235,7 +238,7 @@ class SoggettoResource(MethodView):
             ):
                 abort(
                     409,
-                    message="Cannot delete subject with existing sales or purchase orders. Consider deactivating it.",
+                    message=_("Cannot delete subject with existing sales or purchase orders. Consider deactivating it."),
                 )
 
         generic_service.delete_tenant_resource(
@@ -243,7 +246,7 @@ class SoggettoResource(MethodView):
             soggetto_id,
             tenant_id,
             pre_delete_check=check_dependencies,
-            not_found_message="Soggetto not found",
+            not_found_message=_("Soggetto not found"),
         )
         return "", 204
 
@@ -286,7 +289,7 @@ class RuoloResource(MethodView):
     def get(self, ruolo_id, tenant_id):
         """Dettaglio ruolo"""
         return generic_service.get_tenant_resource(
-            Ruolo, ruolo_id, tenant_id, not_found_message="Ruolo not found"
+            Ruolo, ruolo_id, tenant_id, not_found_message=_("Ruolo not found")
         )
 
     @ruolo_blp.doc(security=[{"jwt": []}])
@@ -297,7 +300,7 @@ class RuoloResource(MethodView):
     def put(self, data, ruolo_id, tenant_id):
         """Aggiorna ruolo"""
         return generic_service.update_tenant_resource(
-            Ruolo, ruolo_id, tenant_id, data, not_found_message="Ruolo not found"
+            Ruolo, ruolo_id, tenant_id, data, not_found_message=_("Ruolo not found")
         )
 
     @ruolo_blp.doc(security=[{"jwt": []}])
@@ -311,7 +314,7 @@ class RuoloResource(MethodView):
             if SoggettoRuolo.query.filter_by(ruolo_id=ruolo.id).first():
                 abort(
                     409,
-                    message="Cannot delete a role that is currently assigned to subjects.",
+                    message=_("Cannot delete a role that is currently assigned to subjects."),
                 )
 
         generic_service.delete_tenant_resource(
@@ -319,7 +322,7 @@ class RuoloResource(MethodView):
             ruolo_id,
             tenant_id,
             pre_delete_check=check_dependencies,
-            not_found_message="Ruolo not found",
+            not_found_message=_("Ruolo not found"),
         )
         return "", 204
 
@@ -374,7 +377,7 @@ class IndirizzoResource(MethodView):
     def get(self, indirizzo_id, tenant_id):
         """Dettaglio indirizzo"""
         return generic_service.get_tenant_resource(
-            Indirizzo, indirizzo_id, tenant_id, not_found_message="Indirizzo not found"
+            Indirizzo, indirizzo_id, tenant_id, not_found_message=_("Indirizzo not found")
         )
 
     @indirizzo_blp.doc(security=[{"jwt": []}])
@@ -392,7 +395,7 @@ class IndirizzoResource(MethodView):
             indirizzo_id,
             tenant_id,
             data,
-            not_found_message="Indirizzo not found",
+            not_found_message=_("Indirizzo not found"),
         )
 
         if soggetto_id is not None:
@@ -424,7 +427,7 @@ class IndirizzoResource(MethodView):
             if SoggettoIndirizzo.query.filter_by(indirizzo_id=indirizzo.id).first():
                 abort(
                     409,
-                    message="Cannot delete an address that is currently assigned to a subject.",
+                    message=_("Cannot delete an address that is currently assigned to a subject."),
                 )
 
         generic_service.delete_tenant_resource(
@@ -432,7 +435,7 @@ class IndirizzoResource(MethodView):
             indirizzo_id,
             tenant_id,
             pre_delete_check=check_dependencies,
-            not_found_message="Indirizzo not found",
+            not_found_message=_("Indirizzo not found"),
         )
         return "", 204
 
@@ -491,7 +494,7 @@ class ContattoResource(MethodView):
     def get(self, contatto_id, tenant_id):
         """Dettaglio contatto"""
         return generic_service.get_tenant_resource(
-            Contatto, contatto_id, tenant_id, not_found_message="Contatto not found"
+            Contatto, contatto_id, tenant_id, not_found_message=_("Contatto not found")
         )
 
     @contatto_blp.doc(security=[{"jwt": []}])
@@ -509,7 +512,7 @@ class ContattoResource(MethodView):
             contatto_id,
             tenant_id,
             data,
-            not_found_message="Contatto not found",
+            not_found_message=_("Contatto not found"),
         )
 
         if soggetto_id is not None:
@@ -541,7 +544,7 @@ class ContattoResource(MethodView):
             if SoggettoContatto.query.filter_by(contatto_id=contatto.id).first():
                 abort(
                     409,
-                    message="Cannot delete a contact that is currently assigned to a subject.",
+                    message=_("Cannot delete a contact that is currently assigned to a subject."),
                 )
 
         generic_service.delete_tenant_resource(
@@ -549,6 +552,6 @@ class ContattoResource(MethodView):
             contatto_id,
             tenant_id,
             pre_delete_check=check_dependencies,
-            not_found_message="Contatto not found",
+            not_found_message=_("Contatto not found"),
         )
         return "", 204

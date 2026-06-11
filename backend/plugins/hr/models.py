@@ -6,8 +6,10 @@ Human Resources functionality:
 - Departments
 - Attendance
 - Leave Management
+- Payroll
+- Training & Skills
 """
-from datetime import datetime
+from datetime import datetime, date
 from backend.extensions import db
 
 
@@ -127,3 +129,176 @@ class LeaveRequest(db.Model):
 
     def __repr__(self):
         return f'<LeaveRequest {self.employee_id}: {self.leave_type} {self.start_date}>'
+
+
+# ──────────────────────────────────────────────
+# Payroll
+# ──────────────────────────────────────────────
+
+class PayrollPeriod(db.Model):
+    __tablename__ = 'hr_payroll_periods'
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(20), nullable=False, index=True)
+    name = db.Column(db.String(150), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    month = db.Column(db.Integer, nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    status = db.Column(db.String(20), default='open')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('year', 'month', name='uq_payroll_period'),
+    )
+
+    def __repr__(self):
+        return f'<PayrollPeriod {self.code}>'
+
+
+class Payslip(db.Model):
+    __tablename__ = 'hr_payslips'
+
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('hr_employees.id'), nullable=False)
+    period_id = db.Column(db.Integer, db.ForeignKey('hr_payroll_periods.id'), nullable=False)
+    payslip_number = db.Column(db.String(50), nullable=False, index=True)
+    gross_pay = db.Column(db.Float, default=0.0)
+    deductions = db.Column(db.Float, default=0.0)
+    net_pay = db.Column(db.Float, default=0.0)
+    taxes = db.Column(db.Float, default=0.0)
+    employer_contributions = db.Column(db.Float, default=0.0)
+    payment_date = db.Column(db.Date)
+    status = db.Column(db.String(20), default='draft')
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    employee = db.relationship('Employee', backref='payslips')
+    period = db.relationship('PayrollPeriod', backref='payslips')
+    lines = db.relationship('PayslipLine', back_populates='payslip', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<Payslip {self.payslip_number}>'
+
+
+class PayslipLine(db.Model):
+    __tablename__ = 'hr_payslip_lines'
+
+    id = db.Column(db.Integer, primary_key=True)
+    payslip_id = db.Column(db.Integer, db.ForeignKey('hr_payslips.id'), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+    type = db.Column(db.String(20), nullable=False)
+    amount = db.Column(db.Float, default=0.0)
+
+    payslip = db.relationship('Payslip', back_populates='lines')
+
+    def __repr__(self):
+        return f'<PayslipLine {self.description}: {self.amount}>'
+
+
+# ──────────────────────────────────────────────
+# Training & Skills
+# ──────────────────────────────────────────────
+
+class Course(db.Model):
+    __tablename__ = 'hr_courses'
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(50), nullable=False, index=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    provider = db.Column(db.String(200))
+    duration_hours = db.Column(db.Float)
+    cost = db.Column(db.Float)
+    category = db.Column(db.String(50))
+    is_mandatory = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    records = db.relationship('TrainingRecord', back_populates='course', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<Course {self.code}: {self.title}>'
+
+
+class TrainingRecord(db.Model):
+    __tablename__ = 'hr_training_records'
+
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('hr_employees.id'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('hr_courses.id'), nullable=False)
+    completion_date = db.Column(db.Date, nullable=False)
+    expiry_date = db.Column(db.Date)
+    score = db.Column(db.Float)
+    result = db.Column(db.String(20), default='passed')
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    employee = db.relationship('Employee', backref='training_records')
+    course = db.relationship('Course', back_populates='records')
+
+    def __repr__(self):
+        return f'<TrainingRecord emp={self.employee_id} course={self.course_id}>'
+
+
+class Certification(db.Model):
+    __tablename__ = 'hr_certifications'
+
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('hr_employees.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    issuer = db.Column(db.String(200))
+    issue_date = db.Column(db.Date, nullable=False)
+    expiry_date = db.Column(db.Date)
+    certificate_number = db.Column(db.String(100))
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    employee = db.relationship('Employee', backref='certifications')
+
+    def __repr__(self):
+        return f'<Certification {self.name} emp={self.employee_id}>'
+
+
+class Skill(db.Model):
+    __tablename__ = 'hr_skills'
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(50), nullable=False, index=True)
+    name = db.Column(db.String(150), nullable=False)
+    category = db.Column(db.String(50))
+    description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Skill {self.code}: {self.name}>'
+
+
+class SkillMatrix(db.Model):
+    __tablename__ = 'hr_skill_matrix'
+
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('hr_employees.id'), nullable=False)
+    skill_id = db.Column(db.Integer, db.ForeignKey('hr_skills.id'), nullable=False)
+    level = db.Column(db.Integer, default=1)
+    years_experience = db.Column(db.Float)
+    is_verified = db.Column(db.Boolean, default=False)
+    verified_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    employee = db.relationship('Employee', backref='skills')
+    skill = db.relationship('Skill')
+    verifier = db.relationship('User', foreign_keys=[verified_by])
+
+    __table_args__ = (
+        db.UniqueConstraint('employee_id', 'skill_id', name='uq_employee_skill'),
+    )
+
+    def __repr__(self):
+        return f'<SkillMatrix emp={self.employee_id} skill={self.skill_id} level={self.level}>'

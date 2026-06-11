@@ -37,6 +37,8 @@ class TenantMiddleware:
         tenant = TenantMiddleware._extract_tenant()
         if tenant:
             TenantContext.set_tenant(tenant)
+            g._tenant_id = tenant.id
+            g._tenant_slug = tenant.slug
 
             # Extract user if authenticated
             user = TenantMiddleware._extract_user()
@@ -109,11 +111,12 @@ class TenantMiddleware:
     @staticmethod
     def _after_request(response):
         """Run after each request."""
-        # Add tenant headers for debugging
-        tenant = TenantContext.get_tenant()
-        if tenant:
-            response.headers['X-Tenant-ID'] = str(tenant.id)
-            response.headers['X-Tenant-Slug'] = tenant.slug
+        tenant_id = getattr(g, '_tenant_id', None)
+        tenant_slug = getattr(g, '_tenant_slug', None)
+        if tenant_id:
+            response.headers['X-Tenant-ID'] = str(tenant_id)
+        if tenant_slug:
+            response.headers['X-Tenant-Slug'] = tenant_slug
         return response
 
 

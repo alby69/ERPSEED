@@ -62,7 +62,7 @@ class GoodsReceiptList(MethodView):
         gr = GoodsReceipt(
             tenant_id=tenant_id,
             number=generate_number(tenant_id),
-            date=data.get("date", date.today().isoformat()),
+            date=data.get("date") if isinstance(data.get("date"), date) else date.today(),
             supplier_id=data["supplier_id"],
             purchase_order_id=data.get("purchase_order_id"),
             notes=data.get("notes", ""),
@@ -153,9 +153,12 @@ class GoodsReceiptComplete(MethodView):
         # Create stock movements for each line
         for line in gr.lines:
             try:
+                from datetime import datetime
                 from backend.plugins.inventory.models import StockMovement, ProductStock
+                stamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
                 sm = StockMovement(
                     tenant_id=tenant_id,
+                    movement_number=f"GR-{gr.id}-{stamp}",
                     movement_type="in",
                     product_id=line.product_id,
                     location_id=line.location_id or 1,
