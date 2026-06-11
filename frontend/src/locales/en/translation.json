@@ -90,9 +90,13 @@
     "users": "Users",
     "admin": "Admin Area",
     "userManagement": "User Management (Admin Area)",
+    "applications": "Applications",
+    "administration": "Administration",
+    "logout": "Logout",
     "applicazioni": "Applications",
     "areas": {
       "anagrafiche": "Master Data",
+      "geografia": "Geography",
       "acquisti": "Purchases",
       "vendite": "Sales",
       "magazzino": "Warehouse",
@@ -108,10 +112,15 @@
       "indirizzi": "Addresses",
       "comuni": "Municipalities",
       "contatti": "Contacts",
+      "nazioni": "Countries",
+      "regioni": "Regions",
+      "province": "Provinces",
+      "calcoloDistanze": "Distance Calculator",
       "categorie": "Product Categories",
       "aliquoteIva": "Tax Rates",
       "unitaMisura": "Units of Measure",
       "listiniPrezzo": "Price Lists",
+      "listini": "Price Lists",
       "pianoConti": "Chart of Accounts",
       "ordiniAcquisto": "Purchase Orders",
       "richiesteAcquisto": "Purchase Requests",
@@ -139,9 +148,31 @@
       "reparti": "Departments",
       "presenze": "Attendance",
       "feriePermessi": "Leave Requests",
+      "dashboard": "Dashboard",
+      "dashboardBuilder": "Dashboard Builder",
+      "chartBuilder": "Chart Builder",
+      "progetti": "Projects",
       "timesheet": "Timesheet",
       "budgetCommessa": "Project Budget",
       "reportDesigner": "Report Designer"
+    },
+    "admin": {
+      "builderSection": "Builder",
+      "modulesSection": "Modules",
+      "sysModels": "Models (SysModel)",
+      "blocks": "Blocks (Block)",
+      "relationshipManager": "Relationship Manager",
+      "customModules": "All Modules",
+      "systemModules": "System Modules",
+      "businessRules": "Business Rules",
+      "users": "Users",
+      "testRunner": "Test Runner",
+      "projectsAdmin": "Projects Admin",
+      "auditLogs": "Audit Logs",
+      "aiAssistant": "AI Assistant",
+      "marketplace": "Marketplace",
+      "importExport": "Import/Export",
+      "apiDocs": "API Docs"
     }
   },
   "crud": {
@@ -249,6 +280,25 @@
     "errorTesting": "Error testing workflow",
     "errorLoadingDetails": "Error loading details",
     "errorLoadingExecutions": "Error loading executions"
+  },
+  "dashboard": {
+    "title": "Analytics (Dashboard)",
+    "roleLabel": "Role",
+    "selectorLabel": "Dashboard selector",
+    "emptyCharts": "This dashboard does not have charts yet.",
+    "adminUsersTitle": "User Management (Admin Area)",
+    "manageUsers": "Manage Users"
+  },
+  "soggetti": {
+    "title": "Master Data (Subjects)",
+    "new": "New Subject",
+    "edit": "Edit Subject",
+    "details": "Details",
+    "created": "Subject created",
+    "updated": "Subject updated",
+    "deleted": "Subject deleted",
+    "deleteError": "Delete error",
+    "saveError": "Save error"
   },
   "fields": {
     "fieldTypes": {

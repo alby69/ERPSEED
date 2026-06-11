@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card, Table, Button, Modal, Form, Input, Select, Tabs, Tag, Space,
   message, Popconfirm, Row, Col, Divider, Descriptions, Typography, Spin
@@ -13,11 +12,13 @@ import { useTableSort } from '../hooks/useTableSort';
 import TableSearch from '../components/TableSearch';
 import ColumnsControl from '../components/ColumnsControl';
 import Layout from '../components/Layout';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 export default function SoggettiPage() {
+  const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSoggetto, setEditingSoggetto] = useState(null);
   const [selectedSoggetto, setSelectedSoggetto] = useState(null);
@@ -57,8 +58,12 @@ export default function SoggettiPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-    fetchRuoli();
+    const loadData = async () => {
+      await fetchData();
+      await fetchRuoli();
+    };
+
+    void loadData();
   }, [fetchData, fetchRuoli]);
 
   const handleCreate = () => {
@@ -102,13 +107,13 @@ export default function SoggettiPage() {
     try {
       const response = await apiFetch(`/soggetti/${id}`, { method: 'DELETE' });
       if (response.ok) {
-        message.success('Soggetto eliminato');
+        message.success(t('soggetti.deleted'));
         fetchData();
       } else {
-        message.error('Errore nell\'eliminazione');
+        message.error(t('soggetti.deleteError'));
       }
-    } catch (error) {
-      message.error('Errore nell\'eliminazione');
+    } catch {
+      message.error(t('soggetti.deleteError'));
     }
   };
 
@@ -128,7 +133,7 @@ export default function SoggettiPage() {
       });
 
       if (response.ok) {
-        message.success(editingSoggetto ? 'Soggetto aggiornato' : 'Soggetto creato');
+        message.success(editingSoggetto ? t('soggetti.updated') : t('soggetti.created'));
         setModalVisible(false);
         fetchData();
       } else {
@@ -136,10 +141,10 @@ export default function SoggettiPage() {
         console.error('Soggetto submit error:', err);
         console.error('Payload sent:', payload);
         const detail = err.errors?.json ? Object.entries(err.errors.json).map(([k, v]) => `${k}: ${v.join(', ')}`).join('; ') : err.message;
-        message.error(detail || 'Errore nel salvataggio');
+        message.error(detail || t('soggetti.saveError'));
       }
-    } catch (error) {
-      message.error('Errore nel salvataggio');
+    } catch {
+      message.error(t('soggetti.saveError'));
     }
   };
 
@@ -424,15 +429,15 @@ export default function SoggettiPage() {
             <Card
               title={
                 <Space>
-                  <UserOutlined /> Anagrafiche (
-                  <span>Anagrafiche (Soggetti)</span>
+                  <UserOutlined /> {t('soggetti.title')}
+                  <span>{t('soggetti.title')}</span>
                 </Space>
               }
               extra={
                 <Space>
                   {button}
                   <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                    Nuovo Soggetto
+                    {t('soggetti.new')}
                   </Button>
                 </Space>
               }
@@ -469,7 +474,7 @@ export default function SoggettiPage() {
         </ColumnsControl>
 
       <Modal
-        title={editingSoggetto ? 'Modifica Soggetto' : 'Nuovo Soggetto'}
+        title={editingSoggetto ? t('soggetti.edit') : t('soggetti.new')}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
@@ -484,16 +489,16 @@ export default function SoggettiPage() {
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">
-                {editingSoggetto ? 'Aggiorna' : 'Crea'}
+                {editingSoggetto ? t('common.edit') : t('common.add')}
               </Button>
-              <Button onClick={() => setModalVisible(false)}>Annulla</Button>
+              <Button onClick={() => setModalVisible(false)}>{t('common.cancel')}</Button>
             </Space>
           </Form.Item>
         </Form>
       </Modal>
 
       <Modal
-        title={`Dettaglio: ${selectedSoggetto?.nome}`}
+        title={`${t('soggetti.details')}: ${selectedSoggetto?.nome || ''}`}
         open={detailVisible}
         onCancel={() => setDetailVisible(false)}
         footer={[
@@ -501,9 +506,9 @@ export default function SoggettiPage() {
             setDetailVisible(false);
             handleEdit(selectedSoggetto);
           }}>
-            Modifica
+            {t('common.edit')}
           </Button>,
-          <Button key="close" onClick={() => setDetailVisible(false)}>Chiudi</Button>
+          <Button key="close" onClick={() => setDetailVisible(false)}>{t('common.close')}</Button>
         ]}
         width={800}
       >

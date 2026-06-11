@@ -46,59 +46,138 @@ class Workflow(db.Model):
         nodes.append({
             "id": "trigger",
             "type": "trigger",
-            "data": {"label": f"Trigger: {self.trigger_event}"},
+            "data": {"label": f"Trigger: {self.trigger_event}", "triggerEvent": self.trigger_event},
             "position": {"x": 250, "y": 0}
         })
 
         steps = self.get_steps()
-        prev_node_id = "trigger"
 
         for i, step in enumerate(steps):
             node_id = f"step_{step.id}"
+            config = step.get_config()
+            canvas = config.get("_canvas", {}) if isinstance(config, dict) else {}
+            on_true = config.get("on_true", []) if isinstance(config, dict) else []
+            on_false = config.get("on_false", []) if isinstance(config, dict) else []
+            position = canvas.get("position") or {"x": 250, "y": (i + 1) * 100}
+
             nodes.append({
                 "id": node_id,
                 "type": step.step_type,
                 "data": {
                     "label": step.name,
-                    "config": step.get_config(),
-                    "stepId": step.id
+                    "config": {
+                        **{k: v for k, v in config.items() if k not in ("_canvas", "on_true", "on_false")},
+                        "_canvas": canvas,
+                    },
+                    "stepId": step.id,
                 },
-                "position": {"x": 250, "y": (i + 1) * 100}
+                "position": position,
             })
 
-            edges.append({
-                "id": f"edge_{prev_node_id}_{node_id}",
-                "source": prev_node_id,
-                "target": node_id
-            })
-            prev_node_id = node_id
+            if on_true or on_false:
+                for target_id in on_true:
+                    edges.append({
+                        "id": f"edge_{node_id}_{target_id}_true",
+                        "source": node_id,
+                        "target": target_id,
+                        "type": "smoothstep",
+                        "data": {"branch": "true"},
+                        "label": "True",
+                    })
+                for target_id in on_false:
+                    edges.append({
+                        "id": f"edge_{node_id}_{target_id}_false",
+                        "source": node_id,
+                        "target": target_id,
+                        "type": "smoothstep",
+                        "data": {"branch": "false"},
+                        "label": "False",
+                    })
+            elif i == 0:
+                edges.append({
+                    "id": f"edge_trigger_{node_id}",
+                    "source": "trigger",
+                    "target": node_id,
+                    "type": "smoothstep",
+                })
+            else:
+                prev_node_id = f"step_{steps[i - 1].id}"
+                edges.append({
+                    "id": f"edge_{prev_node_id}_{node_id}",
+                    "source": prev_node_id,
+                    "target": node_id,
+                    "type": "smoothstep",
+                })
 
         return {"nodes": nodes, "edges": edges}
 
     def from_graph(self, graph_data):
         """Update workflow steps from a graph representation."""
-        # This is a simplified version. A real implementation would handle branches and conditions.
-        nodes = graph_data.get("nodes", [])
+        nodes = graph_data.get("nodes", []) or []
+        edges = graph_data.get("edges", []) or []
 
-        # Identify steps and their order based on connections or position
-        # For now, we assume a linear sequence based on nodes excluding trigger
-        step_nodes = [n for n in nodes if n["type"] != "trigger"]
+        trigger_node = next((n for n in nodes if n.get("type") == "trigger"), None)
+        if trigger_node:
+            trigger_event = trigger_node.get("data", {}).get("triggerEvent")
+            if trigger_event:
+                self.trigger_event = trigger_event
 
-        # Remove existing steps and recreate? Or update?
-        # Recreating is simpler for this POC
+        step_nodes = sorted(
+            [n for n in nodes if n.get("type") != "trigger"],
+            key=lambda node: (
+                node.get("position", {}).get("y", 0),
+                node.get("position", {}).get("x", 0),
+            ),
+        )
+
         from backend.extensions import db
-        for step in self.steps:
+        current_steps = self.get_steps()
+        for step in current_steps:
             db.session.delete(step)
+        db.session.flush()
+
+        created_steps = {}
 
         for i, node in enumerate(step_nodes):
+            node_id = node.get("id") or f"step-{i}"
+            node_data = node.get("data", {}) or {}
+            node_config = node_data.get("config", {}) or {}
+            canvas_config = {
+                "node_id": node_id,
+                "position": node.get("position", {"x": 250, "y": (i + 1) * 100}),
+            }
+
             new_step = WorkflowStep(
                 workflowId=self.id,
-                name=node["data"].get("label", f"Step {i}"),
-                step_type=node["type"],
-                order=i
+                name=node_data.get("label", f"Step {i}"),
+                step_type=node.get("type"),
+                order=i,
             )
-            new_step.set_config(node["data"].get("config", {}))
+            new_step.set_config({
+                **node_config,
+                "_canvas": canvas_config,
+            })
             db.session.add(new_step)
+            created_steps[node_id] = new_step
+
+        outgoing = {node_id: {"true": [], "false": []} for node_id in created_steps}
+        for edge in edges:
+            source = edge.get("source")
+            target = edge.get("target")
+            if source not in outgoing or target not in created_steps:
+                continue
+
+            branch = edge.get("data", {}).get("branch")
+            if branch == "false":
+                outgoing[source]["false"].append(target)
+            else:
+                outgoing[source]["true"].append(target)
+
+        for node_id, step in created_steps.items():
+            config = step.get_config()
+            config["on_true"] = outgoing[node_id]["true"]
+            config["on_false"] = outgoing[node_id]["false"]
+            step.set_config(config)
 
         db.session.commit()
 

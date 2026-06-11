@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { ReactFlow, Background, Controls, MiniMap, addEdge } from '@xyflow/react';
+import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
-  Card, Button, Form, Input, Select, Space, message,
+  Card, Button, Input, Select, Space, message,
   Drawer, List, Tag, Modal, Spin, Divider
 } from 'antd';
 import {
@@ -51,7 +51,6 @@ const WorkflowBuilder = () => {
   const [saving, setSaving] = useState(false);
   const [showList, setShowList] = useState(false);
   const [workflows, setWorkflows] = useState([]);
-  const [workflowForm] = Form.useForm();
 
   const {
     nodes,
@@ -68,35 +67,30 @@ const WorkflowBuilder = () => {
     addNode,
     selectNode,
     clearSelection,
-    toWorkflowConfig,
-    loadFromWorkflow,
+    setNodes,
+    setEdges,
     reset,
   } = useWorkflowBuilderStore();
 
-  useEffect(() => {
-    if (workflowId) {
-      loadWorkflow(workflowId);
-    } else {
-      reset();
-    }
-    fetchWorkflows();
-  }, [workflowId]);
-
-  const fetchWorkflows = async () => {
+  const fetchWorkflows = useCallback(async () => {
     try {
       const response = await apiFetch(`/workflows?projectId=${projectId || ''}`);
       const data = await response.json();
       setWorkflows(data);
-    } catch (error) {
-      console.error('Error loading workflows:', error);
+    } catch {
+      console.error('Error loading workflows');
     }
-  };
+  }, [projectId]);
 
-  const loadWorkflow = async (id) => {
+  const loadWorkflow = useCallback(async (id) => {
     setLoading(true);
     try {
-      const response = await apiFetch(`/workflows/${id}`);
-      const data = await response.json();
+      const [workflowResponse, canvasResponse] = await Promise.all([
+        apiFetch(`/workflows/${id}`),
+        apiFetch(`/workflows/${id}/canvas`),
+      ]);
+      const data = await workflowResponse.json();
+      const canvas = await canvasResponse.json();
 
       setWorkflowMeta({
         id: data.id,
@@ -105,15 +99,23 @@ const WorkflowBuilder = () => {
         triggerEvent: data.trigger_event,
       });
 
-      if (data.steps && data.steps.length > 0) {
-        loadFromWorkflow(data, data.steps);
-      }
-    } catch (error) {
+      setNodes(canvas.nodes || []);
+      setEdges(canvas.edges || []);
+    } catch {
       message.error('Error loading workflow');
     } finally {
       setLoading(false);
     }
-  };
+  }, [setEdges, setNodes, setWorkflowMeta]);
+
+  useEffect(() => {
+    if (workflowId) {
+      loadWorkflow(workflowId);
+    } else {
+      reset();
+    }
+    fetchWorkflows();
+  }, [workflowId, fetchWorkflows, loadWorkflow, reset]);
 
   const handleSave = async () => {
     if (!workflowName) {
@@ -123,62 +125,46 @@ const WorkflowBuilder = () => {
 
     setSaving(true);
     try {
-      const config = toWorkflowConfig();
-      config.project_id = parseInt(projectId) || 1;
+      const workflowPayload = {
+        name: workflowName,
+        description: workflowDescription,
+        trigger_event: triggerEvent,
+        projectId: projectId ? parseInt(projectId, 10) : null,
+      };
 
-      let response;
-      if (currentWorkflowId) {
-        response = await apiFetch(`/workflows/${currentWorkflowId}`, {
+      let savedWorkflowId = currentWorkflowId;
+      if (savedWorkflowId) {
+        await apiFetch(`/workflows/${savedWorkflowId}`, {
           method: 'PUT',
-          body: JSON.stringify({
-            name: workflowName,
-            description: workflowDescription,
-            trigger_event: triggerEvent,
-          }),
+          body: JSON.stringify(workflowPayload),
         });
-
-        for (const step of config.steps) {
-          if (step.id && String(step.id).startsWith('step-')) {
-            await apiFetch(`/workflows/${currentWorkflowId}/steps`, {
-              method: 'POST',
-              body: JSON.stringify({
-                step_type: step.step_type,
-                name: step.name,
-                config: step.config,
-                order: step.order,
-              }),
-            });
-          }
-        }
       } else {
-        response = await apiFetch('/workflows', {
+        const response = await apiFetch('/workflows', {
           method: 'POST',
-          body: JSON.stringify({
-            name: workflowName,
-            description: workflowDescription,
-            trigger_event: triggerEvent,
-            project_id: config.project_id,
-          }),
+          body: JSON.stringify(workflowPayload),
         });
 
         const result = await response.json();
-
-        for (const step of config.steps) {
-          await apiFetch(`/workflows/${result.id}/steps`, {
-            method: 'POST',
-            body: JSON.stringify({
-              step_type: step.step_type,
-              name: step.name,
-              config: step.config,
-              order: step.order,
-            }),
-          });
-        }
+        savedWorkflowId = result.id;
+        setWorkflowMeta({
+          id: result.id,
+          name: result.name,
+          description: result.description,
+          triggerEvent: result.trigger_event,
+        });
       }
+
+      await apiFetch(`/workflows/${savedWorkflowId}/canvas`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          nodes,
+          edges,
+        }),
+      });
 
       message.success('Workflow salvato!');
       fetchWorkflows();
-    } catch (error) {
+    } catch {
       message.error('Errore nel salvataggio');
     } finally {
       setSaving(false);
@@ -202,7 +188,7 @@ const WorkflowBuilder = () => {
       } else {
         message.error(`Esecuzione fallita: ${data.error}`);
       }
-    } catch (error) {
+    } catch {
       message.error('Errore nel test');
     }
   };
@@ -240,6 +226,7 @@ const WorkflowBuilder = () => {
   };
 
   return (
+    <Spin spinning={loading}>
     <div style={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
       <Card size="small" style={{ borderRadius: 0 }}>
         <Space>
@@ -394,6 +381,7 @@ const WorkflowBuilder = () => {
         />
       </Drawer>
     </div>
+    </Spin>
   );
 };
 

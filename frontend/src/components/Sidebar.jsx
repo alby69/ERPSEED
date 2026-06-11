@@ -32,7 +32,6 @@ import {
     FileDoneOutlined,
     CarOutlined,
     RollbackOutlined,
-    ShopOutlined, // Import ShopOutlined for Marketplace
     ShopOutlined,
     HeartOutlined,
     FileProtectOutlined,
@@ -84,102 +83,102 @@ const Sidebar = ({ projectMenuItems = [] }) => {
             label: t('menu.areas.geografia'),
             icon: <GlobalOutlined />,
             children: [
-                { key: '/geografia/nazioni', label: 'Nazioni', icon: <GlobalOutlined /> },
-                { key: '/geografia/regioni', label: 'Regioni', icon: <GlobalOutlined /> },
-                { key: '/geografia/province', label: 'Province', icon: <GlobalOutlined /> },
-                { key: '/geografia/comuni', label: 'Comuni', icon: <GlobalOutlined /> },
+                { key: '/geografia/nazioni', label: t('menu.blocks.nazioni'), icon: <GlobalOutlined /> },
+                { key: '/geografia/regioni', label: t('menu.blocks.regioni'), icon: <GlobalOutlined /> },
+                { key: '/geografia/province', label: t('menu.blocks.province'), icon: <GlobalOutlined /> },
+                { key: '/geografia/comuni', label: t('menu.blocks.comuni'), icon: <GlobalOutlined /> },
                 { type: 'divider' },
-                { key: '/logistics/distances', label: 'Calcolo Distanze', icon: <CarOutlined /> },
+                { key: '/logistics/distances', label: t('menu.blocks.calcoloDistanze'), icon: <CarOutlined /> },
             ],
         },
         {
             key: 'area-acquisti',
-            label: 'Acquisti',
+            label: t('menu.areas.acquisti'),
             icon: <ShoppingCartOutlined />,
             children: [
-                { key: '/purchase-orders', label: 'Ordini Acquisto', icon: <ShoppingCartOutlined /> },
-                { key: '/purchase-requests', label: 'Richieste d\'Acquisto', icon: <FileTextOutlined /> },
-                { key: '/goods-receipts', label: 'DDT Entrata Merci', icon: <CarOutlined /> },
-                { key: '/purchase-returns', label: 'Resi Acquisti', icon: <RollbackOutlined /> },
+                { key: '/purchase-orders', label: t('menu.blocks.ordiniAcquisto'), icon: <ShoppingCartOutlined /> },
+                { key: '/purchase-requests', label: t('menu.blocks.richiesteAcquisto'), icon: <FileTextOutlined /> },
+                { key: '/goods-receipts', label: t('menu.blocks.ddtEntrata'), icon: <CarOutlined /> },
+                { key: '/purchase-returns', label: t('menu.blocks.resiAcquisto'), icon: <RollbackOutlined /> },
             ],
         },
         {
             key: 'area-vendite',
-            label: 'Vendite',
+            label: t('menu.areas.vendite'),
             icon: <ShoppingCartOutlined />,
             children: [
-                { key: '/sales', label: 'Ordini Vendita', icon: <ShoppingCartOutlined /> },
-                { key: '/quotations', label: 'Preventivi', icon: <FileTextOutlined /> },
-                { key: '/delivery-notes', label: 'DDT Vendita', icon: <CarOutlined /> },
-                { key: '/invoices', label: 'Fatture', icon: <FileDoneOutlined /> },
-                { key: '/sales-returns', label: 'Resi Vendita', icon: <RollbackOutlined /> },
-                { key: '/crm', label: 'CRM', icon: <HeartOutlined /> },
-                { key: '/contracts', label: 'Contratti', icon: <FileProtectOutlined /> },
+                { key: '/sales', label: t('menu.blocks.ordiniVendita'), icon: <ShoppingCartOutlined /> },
+                { key: '/quotations', label: t('menu.blocks.preventivi'), icon: <FileTextOutlined /> },
+                { key: '/delivery-notes', label: t('menu.blocks.ddtVendita'), icon: <CarOutlined /> },
+                { key: '/invoices', label: t('menu.blocks.fatture'), icon: <FileDoneOutlined /> },
+                { key: '/sales-returns', label: t('menu.blocks.resiVendita'), icon: <RollbackOutlined /> },
+                { key: '/crm', label: t('menu.blocks.crm'), icon: <HeartOutlined /> },
+                { key: '/contracts', label: t('menu.blocks.contratti'), icon: <FileProtectOutlined /> },
             ],
         },
         {
             key: 'area-magazzino',
-            label: 'Magazzino',
+            label: t('menu.areas.magazzino'),
             icon: <InboxOutlined />,
             children: [
-                { key: '/stock-levels', label: 'Giacenze', icon: <InboxOutlined /> },
-                { key: '/stock-movements', label: 'Movimenti', icon: <SwapOutlined /> },
-                { key: '/inventory-counts', label: 'Inventari', icon: <ProfileOutlined /> },
-                { key: '/lots', label: 'Lotti e Seriali', icon: <BarcodeOutlined /> },
+                { key: '/stock-levels', label: t('menu.blocks.giacenze'), icon: <InboxOutlined /> },
+                { key: '/stock-movements', label: t('menu.blocks.movimenti'), icon: <SwapOutlined /> },
+                { key: '/inventory-counts', label: t('menu.blocks.inventari'), icon: <ProfileOutlined /> },
+                { key: '/lots', label: t('menu.blocks.lotti'), icon: <BarcodeOutlined /> },
             ],
         },
         {
             key: 'area-contabilita',
-            label: 'Contabilità',
+            label: t('menu.areas.contabilita'),
             icon: <DollarOutlined />,
             children: [
-                { key: '/journal',     label: 'Prima Nota',    icon: <BookOutlined /> },
-                { key: '/maturities',  label: 'Scadenzario',  icon: <CalendarOutlined /> },
-                { key: '/trial-balance', label: 'Bilancio Verifica', icon: <DollarOutlined /> },
-                { key: '/vat-registers', label: 'Registri IVA', icon: <PercentageOutlined /> },
-                { key: '/intrastat',   label: 'Intrastat',    icon: <GlobalOutlined /> },
+                { key: '/journal', label: t('menu.blocks.primaNota'), icon: <BookOutlined /> },
+                { key: '/maturities', label: t('menu.blocks.scadenzario'), icon: <CalendarOutlined /> },
+                { key: '/trial-balance', label: t('menu.blocks.bilancioVerifica'), icon: <DollarOutlined /> },
+                { key: '/vat-registers', label: t('menu.blocks.registriIva'), icon: <PercentageOutlined /> },
+                { key: '/intrastat', label: t('menu.blocks.intrastat'), icon: <GlobalOutlined /> },
             ],
         },
         {
             key: 'area-produzione',
-            label: 'Produzione',
+            label: t('menu.areas.produzione'),
             icon: <ToolOutlined />,
             children: [
-                { key: '/bom', label: 'Distinte Base', icon: <ApartmentOutlined /> },
-                { key: '/work-cycles', label: 'Cicli di Lavoro', icon: <NodeIndexOutlined /> },
-                { key: '/production-orders', label: 'Ordini Produzione', icon: <BellOutlined /> },
+                { key: '/bom', label: t('menu.blocks.bom'), icon: <ApartmentOutlined /> },
+                { key: '/work-cycles', label: t('menu.blocks.cicliLavoro'), icon: <NodeIndexOutlined /> },
+                { key: '/production-orders', label: t('menu.blocks.ordiniProduzione'), icon: <BellOutlined /> },
             ],
         },
         {
             key: 'area-hr',
-            label: 'Risorse Umane',
+            label: t('menu.areas.hr'),
             icon: <TeamOutlined />,
             children: [
-                { key: '/employees', label: 'Dipendenti', icon: <TeamOutlined /> },
-                { key: '/departments', label: 'Reparti', icon: <ApartmentOutlined /> },
-                { key: '/attendance', label: 'Presenze', icon: <ClockCircleOutlined /> },
-                { key: '/leave-requests', label: 'Ferie e Permessi', icon: <CalendarOutlined /> },
+                { key: '/employees', label: t('menu.blocks.dipendenti'), icon: <TeamOutlined /> },
+                { key: '/departments', label: t('menu.blocks.reparti'), icon: <ApartmentOutlined /> },
+                { key: '/attendance', label: t('menu.blocks.presenze'), icon: <ClockCircleOutlined /> },
+                { key: '/leave-requests', label: t('menu.blocks.feriePermessi'), icon: <CalendarOutlined /> },
             ],
         },
         {
             key: 'area-progetti',
-            label: 'Progetti',
+            label: t('menu.areas.progetti'),
             icon: <ProjectOutlined />,
             children: [
-                { key: '/projects', label: 'Progetti', icon: <ProjectOutlined /> },
-                { key: '/timesheet', label: 'Timesheet', icon: <FieldTimeOutlined /> },
-                { key: '/project-budgets', label: 'Budget Commessa', icon: <FundOutlined /> },
+                { key: '/projects', label: t('menu.blocks.progetti'), icon: <ProjectOutlined /> },
+                { key: '/timesheet', label: t('menu.blocks.timesheet'), icon: <FieldTimeOutlined /> },
+                { key: '/project-budgets', label: t('menu.blocks.budgetCommessa'), icon: <FundOutlined /> },
             ],
         },
         {
             key: 'area-analytics',
-            label: 'Analytics',
+            label: t('menu.areas.analytics'),
             icon: <BarChartOutlined />,
             children: [
-                { key: '/dashboard', label: 'Dashboard', icon: <DashboardOutlined /> },
-                { key: '/dashboard/builder', label: 'Dashboard Builder', icon: <BuildOutlined /> },
-                { key: '/builder/blocks', label: 'Chart Builder', icon: <BarChartOutlined /> },
-                { key: '/reports', label: 'Report Designer', icon: <FileSearchOutlined /> },
+                { key: '/dashboard', label: t('menu.blocks.dashboard'), icon: <DashboardOutlined /> },
+                { key: '/dashboard/builder', label: t('menu.blocks.dashboardBuilder'), icon: <BuildOutlined /> },
+                { key: '/builder/blocks', label: t('menu.blocks.chartBuilder'), icon: <BarChartOutlined /> },
+                { key: '/reports', label: t('menu.blocks.reportDesigner'), icon: <FileSearchOutlined /> },
             ],
         },
     ];
@@ -188,32 +187,32 @@ const Sidebar = ({ projectMenuItems = [] }) => {
     const adminItems = [
         {
             key: 'builder-sub',
-            label: 'Builder',
+            label: t('menu.admin.builderSection'),
             icon: <BuildOutlined />,
             children: [
-                { key: '/admin/builder', label: 'Modelli (SysModel)' },
-                { key: '/admin/blocks', label: 'Blocchi (Block)' },
-                { key: '/builder/relationships', label: 'Relationship Manager', icon: <ApartmentOutlined /> },
+                { key: '/admin/builder', label: t('menu.admin.sysModels') },
+                { key: '/admin/blocks', label: t('menu.admin.blocks') },
+                { key: '/builder/relationships', label: t('menu.admin.relationshipManager'), icon: <ApartmentOutlined /> },
             ]
         },
         {
             key: 'modules-section',
-            label: 'Moduli',
+            label: t('menu.admin.modulesSection'),
             icon: <AppstoreOutlined />,
             children: [
-                { key: '/admin/custom-modules', label: 'Tutti i Moduli' },
-                { key: '/modules', label: 'System Modules' },
+                { key: '/admin/custom-modules', label: t('menu.admin.customModules') },
+                { key: '/modules', label: t('menu.admin.systemModules') },
             ]
         },
-        { key: `/projects/${projectId}/business-rules`, label: 'Business Rules', icon: <SettingOutlined /> },
-        { key: '/users', label: 'Users', icon: <TeamOutlined /> },
-        { key: '/test-runner', label: 'Test Runner', icon: <ExperimentOutlined /> },
-        { key: '/admin/projects', label: 'Projects Admin', icon: <ProjectOutlined /> },
-        { key: '/admin/audit-logs', label: 'Audit Logs', icon: <AuditOutlined /> },
-        { key: '/ai-assistant', label: 'AI Assistant', icon: <RobotOutlined /> },
-        { key: '/marketplace', label: 'Marketplace', icon: <ShopOutlined /> },
-        { key: '/admin/project-import-export', label: 'Import/Export', icon: <SwapOutlined /> }, // Import/Export menu item
-        { key: '/swagger-ui', label: 'API Docs', icon: <FileSearchOutlined /> },
+        { key: `/projects/${projectId}/business-rules`, label: t('menu.admin.businessRules'), icon: <SettingOutlined /> },
+        { key: '/users', label: t('menu.admin.users'), icon: <TeamOutlined /> },
+        { key: '/test-runner', label: t('menu.admin.testRunner'), icon: <ExperimentOutlined /> },
+        { key: '/admin/projects', label: t('menu.admin.projectsAdmin'), icon: <ProjectOutlined /> },
+        { key: '/admin/audit-logs', label: t('menu.admin.auditLogs'), icon: <AuditOutlined /> },
+        { key: '/ai-assistant', label: t('menu.admin.aiAssistant'), icon: <RobotOutlined /> },
+        { key: '/marketplace', label: t('menu.admin.marketplace'), icon: <ShopOutlined /> },
+        { key: '/admin/project-import-export', label: t('menu.admin.importExport'), icon: <SwapOutlined /> },
+        { key: '/swagger-ui', label: t('menu.admin.apiDocs'), icon: <FileSearchOutlined /> },
     ];
 
     // Build the full menu items array
@@ -250,7 +249,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
 
     items.push({
         key: 'app-section',
-        label: 'Applicazioni',
+        label: t('menu.applications'),
         icon: <AppstoreOutlined />,
         children: allAppItems,
     });
@@ -260,7 +259,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         items.push({ type: 'divider' });
         items.push({
             key: 'admin-section',
-            label: 'Administration',
+            label: t('menu.administration'),
             icon: <BarChartOutlined />,
             children: adminItems,
         });
@@ -268,7 +267,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
 
     // Add the logout button at the bottom
     items.push({ type: 'divider' });
-    items.push({ key: 'logout', label: 'Logout', icon: <LogoutOutlined />, danger: true });
+    items.push({ key: 'logout', label: t('menu.logout'), icon: <LogoutOutlined />, danger: true });
 
     const handleMenuClick = (e) => {
         if (e.key === 'logout') {
