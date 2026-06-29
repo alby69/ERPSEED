@@ -5,8 +5,15 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
 
 from backend.shared.commands import Command, CreateCommand, UpdateCommand, DeleteCommand, QueryCommand
+from backend.core import capability
 
 
+@capability(
+    name="create_purchase_order",
+    description="Create a new purchase order to a supplier.",
+    agent="PurchaseAgent",
+    category="purchases"
+)
 @dataclass
 class CreatePurchaseOrderCommand(CreateCommand):
     number: str = ""
@@ -59,6 +66,12 @@ class DeletePurchaseOrderCommand(DeleteCommand):
             entity_id=data.get("entity_id", data.get("id", 0)))
 
 
+@capability(
+    name="confirm_purchase_order",
+    description="Confirm a purchase order, typically after approval.",
+    agent="PurchaseAgent",
+    category="purchases"
+)
 @dataclass
 class ConfirmPurchaseOrderCommand(Command):
     @classmethod

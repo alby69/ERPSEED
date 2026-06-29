@@ -68,17 +68,20 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 ---
 
-## 📦 Fase 3: Nuove Features (MEDIO-LUNGO TERMINE)
+## 📦 Fase 3: Nuove Features & Agentificazione (MEDIO-LUNGO TERMINE)
 
-### Obiettivo: Espandere funzionalità in modo ordinato
+### Obiettivo: Espandere funzionalità e integrare AgentMesh
 
 | # | Feature | Priorità | Complessità | Stato |
 |---|---------|----------|------------|-------|
 | 3.1 | Batch Import/Export UI | 🟢 MEDIA | Media | ✅ PARZIALE |
 | 3.2 | Workflow Visual Editor | 🟢 MEDIA | Alta | ⏳ TODO |
 | 3.3 | Dashboard Builder | 🟢 MEDIA | Media | ✅ COMPLETATO |
-| 3.4 | Plugin Store | 🟢 MEDIA | Alta | ✅ COMPLETATO |
-| 3.5 | Multi-language Support | 🟢 MEDIA | Media | ⏳ TODO |
+| 3.4 | AgentMesh Integration | 🔴 CRITICA | Alta | ✅ COMPLETATO |
+| 3.5 | Capability Discovery | 🟡 ALTA | Media | ✅ COMPLETATO |
+| 3.6 | Agent Governance & Policy| 🟡 ALTA | Media | ✅ COMPLETATO |
+| 3.7 | Multi-Agent Collaboration| 🟢 MEDIA | Alta | ✅ COMPLETATO |
+| 3.8 | Multi-language Support | 🟢 MEDIA | Media | ⏳ TODO |
 
 ### Dettagli Fase 3
 #### 3.1 - Batch Import/Export
@@ -119,10 +122,14 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
     └── ✅ Standardize Services (BaseService)
 
 2026 Q2 (Aprile - Giugno)
-├── Fase 3: Nuove Features
+├── Fase 3: Nuove Features & Agentificazione
 │   ├── ✅ Batch Export logic
 │   ├── ✅ Product Detail page & CRUD routes
-│   └── ✅ Dashboard Builder
+│   ├── ✅ Dashboard Builder
+│   ├── ✅ AgentMesh Core (Capability Registry)
+│   ├── ✅ Capability Discovery Endpoint
+│   ├── ✅ Agent Governance (Policies)
+│   └── ✅ Multi-Agent Workflows
 ├── Fase 4: Security & Performance
 │   ├── ✅ API Versioning (v1)
 │   └── ✅ Tenant middleware JWT fallback fix

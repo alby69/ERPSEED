@@ -150,7 +150,8 @@ from .modules.builder.api import blp as builder_api_blp
 from .marketplace.api import blp as marketplace_api_blp
 
 # Import AI Assistant API
-from .modules.ai.api import blp as ai_bp
+from .modules.ai.rest_api import blp as ai_bp
+from .modules.ai.api.capabilities_api import blp as capabilities_bp
 
 # Import Relationship Manager API
 from .modules.relationship_manager.routes import relmgr_blp as relationship_manager_bp
@@ -294,8 +295,10 @@ def create_app(db_url=None):
 
     event_bus = EventBus()
     from .shared.events.handlers.read_model_handler import register_read_model_handlers
+    from .core.events.collaboration import register_collaboration_agents
 
     register_read_model_handlers(event_bus)
+    register_collaboration_agents(event_bus)
 
     container.register("event_bus", lambda: event_bus, singleton=True)
     container.register("db", lambda: db, singleton=True)
@@ -325,6 +328,7 @@ def create_app(db_url=None):
             TestExecution,
             ModuleStatusHistory,
         )
+        from backend.modules.ai.monitoring import AIMetrics
 
         db.create_all()
 
@@ -457,6 +461,7 @@ def create_app(db_url=None):
         builder_init_bp, url_prefix=f"{API_V1_PREFIX}", name="api_builder_init"
     )
     api.register_blueprint(ai_bp, url_prefix=f"{API_V1_PREFIX}/ai", name="api_ai")
+    api.register_blueprint(capabilities_bp, name="api_capabilities")
     api.register_blueprint(
         products_api_bp, url_prefix=f"{API_V1_PREFIX}/products", name="api_products"
     )

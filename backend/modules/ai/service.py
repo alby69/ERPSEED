@@ -19,7 +19,8 @@ from typing import Optional, Dict, Any, List
 
 from backend.modules.ai.context import get_project_context, get_conversation_context
 from backend.modules.ai.tool_registry import tool_registry
-from backend.modules.ai.adapters import get_adapter, LLMAdapter
+from backend.modules.ai.adapters import get_adapter
+from backend.modules.ai.adapters.base import LLMAdapter
 from backend.models import AIConversation, db
 
 logger = logging.getLogger(__name__)
@@ -150,8 +151,17 @@ class AIService:
         )
 
     def get_all_tools(self, projectId: int = None) -> List[Dict]:
-        """Ottiene tutti i tool disponibili (base + dinamici + business logic + test)."""
+        """Ottiene tutti i tool disponibili (base + dinamici + business logic + test + capabilities)."""
         tools = self.tools.copy()
+
+        # Add registered capabilities from the new registry
+        from backend.core.events.capabilities import capability_registry
+        for cap in capability_registry.get_all_capabilities():
+            tools.append({
+                "name": cap.name,
+                "description": cap.description,
+                "input_schema": cap.input_schema
+            })
 
         if projectId:
             try:
@@ -215,6 +225,25 @@ class AIService:
         result = self._handle_response(
             response, user_request, projectId, userId, apply_directly
         )
+
+        # Track usage
+        try:
+            from backend.modules.ai.monitoring import ai_monitor
+            raw_data = response.get("raw", {})
+            usage = raw_data.get("usage", {})
+
+            ai_monitor.track_usage(
+                tenant_id=None, # Should get from context if possible
+                projectId=projectId,
+                userId=userId or 0,
+                provider=self.provider_name,
+                model=self.model,
+                prompt_tokens=usage.get("prompt_tokens", 0),
+                completion_tokens=usage.get("completion_tokens", 0),
+                status="success" if result.get("success") else "error"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to track AI usage: {e}")
 
         # Convert simple config to a structured execution plan
         if result.get("success") and "config" in result:
@@ -380,14 +409,35 @@ What would you like me to create or modify? I'll analyze the project context and
             return {"error": str(e)}
 
     def _handle_tool_calls(self, llm_response, projectId: int) -> Dict[str, Any]:
-        """Gestisce le chiamate tool dalla risposta LLM."""
+        """Gestisce le chiamate tool dalla risposta LLM con controllo policy."""
         results = []
+        from backend.core.events.policies import policy_engine
 
         for tool_call in llm_response.tool_calls:
             tool_name = tool_call.name
             tool_args = tool_call.arguments
 
             logger.info(f"AI used tool: {tool_name}")
+
+            # Policy Check
+            access = policy_engine.check_access(tool_name, {"projectId": projectId})
+            if not access["allowed"]:
+                results.append({
+                    "tool": tool_name,
+                    "error": f"Access Denied: {access['reason']}",
+                    "tool_id": tool_call.tool_id
+                })
+                continue
+
+            if access["require_approval"]:
+                results.append({
+                    "tool": tool_name,
+                    "action_required": "approval",
+                    "reason": access["reason"],
+                    "tool_id": tool_call.tool_id,
+                    "arguments": tool_args
+                })
+                continue
 
             try:
                 result = tool_registry.execute_tool(

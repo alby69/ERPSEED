@@ -22,16 +22,17 @@ L'integrazione di ERPSEED con la rete `agentmesh` trasforma un sistema gestional
 - Centralizzazione della documentazione in `/docs`.
 - Stabilizzazione della logica CQRS come base per l'esposizione dei tool.
 
-#### Fase 2: Agentificazione dei Moduli
-- **Capability Discovery**: Implementare un endpoint `/capabilities` che esporta il manifesto dei comandi/query disponibili in formato JSON-Schema compatibile con AgentMesh.
-- **Agent Gateway**: Rifattorizzare `backend/modules/ai` affinché agisca come proxy verso il gateway di AgentMesh, delegando a quest'ultimo la scelta del modello LLM e la governance (PII masking, cost control).
+#### Fase 2: Agentificazione dei Moduli (IN CORSO)
+- **Capability Discovery**: Implementato `CapabilityRegistry` e l'endpoint `/api/v1/ai/capabilities` che esporta il manifesto in formato compatibile con AgentMesh.
+- **Agent Gateway**: Rifattorizzato `backend/modules/ai` con l'adapter `AgentMeshAdapter` per agire come gateway verso la rete distribuita.
+- **Agentification**: Iniziata l'agentificazione dei moduli `Sales` e `Products/Inventory` tramite decoratore `@capability`.
 
-#### Fase 3: Governance e Policy
-- Configurazione dei file di policy di AgentMesh per definire i perimetri d'azione degli agenti sui dati ERP.
-- Integrazione del monitoraggio dei costi AI direttamente nella dashboard amministrativa di ERPSEED.
+#### Fase 3: Governance e Policy (COMPLETATO)
+- **Policy Engine**: Implementato in `backend/core/events/policies.py` per definire perimetri d'azione e requisiti di approvazione per i comandi degli agenti.
+- **AI Monitoring**: Implementato `AIMonitorService` per tracciare costi (token), latenza e tassi di successo per agente e tenant.
 
-#### Fase 4: Collaborazione Multi-Agente
-- Implementare scenari in cui un "Sales Agent" coordina automaticamente con un "Inventory Agent" tramite il bus di AgentMesh per risolvere conflitti di stock o suggerire approvvigionamenti.
+#### Fase 4: Collaborazione Multi-Agente (COMPLETATO)
+- **Event-Driven Collaboration**: Implementato `AutoReplenishmentAgent` che coordina automaticamente tra `SalesAgent` e `PurchaseAgent` tramite l'EventBus per gestire riapprovvigionamenti intelligenti.
 
 ---
 
