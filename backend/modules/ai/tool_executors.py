@@ -239,7 +239,7 @@ class WorkflowToolExecutor:
             )
 
             # Crea workflow
-            from backend.workflow_service import WorkflowService
+            from backend.modules.automation.services.workflow_service import WorkflowService
 
             workflow = WorkflowService.create_workflow(
                 name=args["name"],
@@ -289,7 +289,7 @@ class WorkflowToolExecutor:
     def update_workflow(self, args: Dict, context: Dict) -> Dict:
         """Aggiorna un workflow esistente."""
         try:
-            from backend.workflow_service import WorkflowService
+            from backend.modules.automation.services.workflow_service import WorkflowService
 
             workflowId = args.get("workflowId")
             if not workflowId:
@@ -325,7 +325,7 @@ class WorkflowToolExecutor:
     def delete_workflow(self, args: Dict, context: Dict) -> Dict:
         """Elimina un workflow."""
         try:
-            from backend.workflow_service import WorkflowService
+            from backend.modules.automation.services.workflow_service import WorkflowService
 
             workflowId = args.get("workflowId")
             if not workflowId:

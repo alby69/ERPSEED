@@ -4,7 +4,7 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
 from marshmallow import Schema, fields
 
-from backend.extensions import db
+from backend.extensions import db, cache
 from backend.models import MovementReason, ProductStock
 
 blp = Blueprint("inventory_management", __name__, description="Inventory Management API")
@@ -29,8 +29,14 @@ class MovementReasonList(MethodView):
     @jwt_required()
     def get(self):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
+        cache_key = f"movement_reasons:{tenant_id}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
         reasons = MovementReason.query.filter_by(tenant_id=tenant_id, deleted_at=None).order_by(MovementReason.code).all()
-        return [movement_reason_to_dict(r) for r in reasons]
+        result = [movement_reason_to_dict(r) for r in reasons]
+        cache.set(cache_key, result, timeout=300)
+        return result
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()

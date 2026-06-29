@@ -417,6 +417,17 @@
     "reloadPage": "Reload Page",
     "errorLoading": "Error loading"
   },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "colors": {
+      "blue": "Blue",
+      "green": "Green",
+      "purple": "Purple",
+      "red": "Red",
+      "orange": "Orange"
+    }
+  },
   "sysModels": {
     "modelCloned": "Model cloned successfully! Remember to generate the table in the DB.",
     "errorCloning": "Error during cloning"

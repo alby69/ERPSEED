@@ -56,7 +56,7 @@ function Login() {
           <div className="text-center mb-4">
             <i className="bi bi-layers-half display-1 mb-3"></i>
             <h1 className="fw-bold display-4">ERPSeed</h1>
-            <p className="lead opacity-75">Manage your business with simplicity and power.</p>
+            <p className="lead opacity-75">{t('auth.manageBusiness')}</p>
           </div>
           <div className="mt-auto text-center opacity-50 small">
             &copy; {new Date().getFullYear()} ERPSeed Inc. All rights reserved.
@@ -73,30 +73,30 @@ function Login() {
               <h2 className="fw-bold text-primary">ERPSeed</h2>
             </div>
 
-            <h3 className="mb-4 fw-bold">Welcome!</h3>
-            <p className="text-muted mb-4">Enter your credentials to access the control panel.</p>
+            <h3 className="mb-4 fw-bold">{t('auth.welcome')}</h3>
+            <p className="text-muted mb-4">{t('auth.enterCredentials')}</p>
 
             {error && <div className="alert alert-danger d-flex align-items-center"><i className="bi bi-exclamation-triangle-fill me-2"></i>{error}</div>}
 
             <form onSubmit={handleSubmit}>
               <div className="form-floating mb-3">
                 <input type="email" className="form-control" id="floatingInput" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                <label htmlFor="floatingInput">Email Address</label>
+                <label htmlFor="floatingInput">{t('auth.email')}</label>
               </div>
               <div className="form-floating mb-4">
                 <input type="password" className="form-control" id="floatingPassword" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                <label htmlFor="floatingPassword">Password</label>
+                <label htmlFor="floatingPassword">{t('auth.password')}</label>
               </div>
 
               <div className="d-flex justify-content-between align-items-center mb-4">
                 <div className="form-check">
                   <input type="checkbox" className="form-check-input" id="rememberMe" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
-                  <label className="form-check-label small" htmlFor="rememberMe">Remember me</label>
+                  <label className="form-check-label small" htmlFor="rememberMe">{t('auth.rememberMe')}</label>
                 </div>
-                <Link to="/forgot-password" style={{ textDecoration: 'none', fontSize: '0.9rem' }}>Forgot password?</Link>
+                <Link to="/forgot-password" style={{ textDecoration: 'none', fontSize: '0.9rem' }}>{t('auth.forgotPassword')}</Link>
               </div>
 
-              <Button type="primary" htmlType="submit" size="large" className="w-100 py-2 fw-bold shadow-sm">Login</Button>
+              <Button type="primary" htmlType="submit" size="large" className="w-100 py-2 fw-bold shadow-sm">{t('auth.login')}</Button>
             </form>
           </div>
         </div>

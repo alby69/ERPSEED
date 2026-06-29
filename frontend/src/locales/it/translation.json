@@ -417,6 +417,17 @@
     "reloadPage": "Ricarica la Pagina",
     "errorLoading": "Errore nel caricamento"
   },
+  "theme": {
+    "light": "Chiaro",
+    "dark": "Scuro",
+    "colors": {
+      "blue": "Blu",
+      "green": "Verde",
+      "purple": "Viola",
+      "red": "Rosso",
+      "orange": "Arancione"
+    }
+  },
   "sysModels": {
     "modelCloned": "Modello clonato con successo! Ricordati di generare la tabella nel DB.",
     "errorCloning": "Errore durante la clonazione"

@@ -5,10 +5,11 @@ Provides REST API to access ProductService functionality.
 """
 
 from flask.views import MethodView
-from flask import request
+from flask import request, make_response, jsonify
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
+from backend.extensions import cache
 from backend.modules.products import get_product_service
 
 blp = Blueprint("products_api", __name__, url_prefix="/api/v1/products", description="Products API")
@@ -27,21 +28,30 @@ class ProductList(MethodView):
         """List all products."""
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
         userId = get_jwt_identity()
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+
+        cache_key = f"products_list:{tenant_id}:{page}:{per_page}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
 
         result = get_service().execute({
             "command": "ListProducts",
             "tenant_id": tenant_id,
             "userId": userId,
             "pagination": {
-                "page": request.args.get('page', 1, type=int),
-                "per_page": request.args.get('per_page', 20, type=int)
+                "page": page,
+                "per_page": per_page
             }
         })
 
         if not result.get("success"):
             abort(400, message=result.get("error", "Failed to list products"))
 
-        return result.get("data", {})
+        data = result.get("data", {})
+        cache.set(cache_key, data, timeout=300)
+        return data
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -73,6 +83,11 @@ class ProductDetail(MethodView):
         tenant_id = request.headers.get('X-Tenant-ID', 1, type=int)
         userId = get_jwt_identity()
 
+        cache_key = f"product_detail:{tenant_id}:{product_id}"
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return cached_result
+
         result = get_service().execute({
             "command": "GetProduct",
             "tenant_id": tenant_id,
@@ -83,7 +98,9 @@ class ProductDetail(MethodView):
         if not result.get("success"):
             abort(404, message=result.get("error", "Product not found"))
 
-        return result.get("data", {})
+        data = result.get("data", {})
+        cache.set(cache_key, data, timeout=300)
+        return data
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
