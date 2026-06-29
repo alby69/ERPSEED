@@ -32,44 +32,44 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
   const themeItems = [
     {
       key: 'light',
-      label: 'Chiaro',
+      label: t('theme.light', 'Light'),
       icon: <SunOutlined />,
       onClick: () => updateTheme({ mode: 'light' })
     },
     {
       key: 'dark',
-      label: 'Scuro',
+      label: t('theme.dark', 'Dark'),
       icon: <MoonOutlined />,
       onClick: () => updateTheme({ mode: 'dark' })
     },
     { type: 'divider' },
     {
       key: 'blue',
-      label: 'Blu',
+      label: t('theme.colors.blue', 'Blue'),
       icon: <span className="color-dot" style={{ background: '#1890ff', display: 'inline-block', width: 12, height: 12, borderRadius: '50%' }} />,
       onClick: () => updateTheme({ primaryColor: '#1890ff', mode: 'light' })
     },
     {
       key: 'green',
-      label: 'Verde',
+      label: t('theme.colors.green', 'Green'),
       icon: <span className="color-dot" style={{ background: '#52c41a', display: 'inline-block', width: 12, height: 12, borderRadius: '50%' }} />,
       onClick: () => updateTheme({ primaryColor: '#52c41a', mode: 'light' })
     },
     {
       key: 'purple',
-      label: 'Viola',
+      label: t('theme.colors.purple', 'Purple'),
       icon: <span className="color-dot" style={{ background: '#722ed1', display: 'inline-block', width: 12, height: 12, borderRadius: '50%' }} />,
       onClick: () => updateTheme({ primaryColor: '#722ed1', mode: 'light' })
     },
     {
       key: 'red',
-      label: 'Rosso',
+      label: t('theme.colors.red', 'Red'),
       icon: <span className="color-dot" style={{ background: '#ff4d4f', display: 'inline-block', width: 12, height: 12, borderRadius: '50%' }} />,
       onClick: () => updateTheme({ primaryColor: '#ff4d4f', mode: 'light' })
     },
     {
       key: 'orange',
-      label: 'Arancione',
+      label: t('theme.colors.orange', 'Orange'),
       icon: <span className="color-dot" style={{ background: '#fa8c16', display: 'inline-block', width: 12, height: 12, borderRadius: '50%' }} />,
       onClick: () => updateTheme({ primaryColor: '#fa8c16', mode: 'light' })
     }
@@ -78,20 +78,20 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
   const userMenuItems = [
     {
       key: 'profile',
-      label: 'Profilo',
+      label: t('profile.userProfile'),
       icon: <UserOutlined />,
       onClick: () => navigate('/profile')
     },
     {
       key: 'settings',
-      label: 'Impostazioni',
+      label: t('common.settings'),
       icon: <SettingOutlined />,
       onClick: () => navigate('/users')
     },
     { type: 'divider' },
     {
       key: 'logout',
-      label: 'Logout',
+      label: t('auth.logout'),
       icon: <LogoutOutlined />,
       danger: true,
       onClick: handleLogout
@@ -149,51 +149,51 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
       const isLast = index === paths.length - 1;
 
       let label = path;
-      if (path === 'projects') label = 'Progetti';
-      else if (path === 'data') label = 'Dati';
-      else if (path === 'anagrafiche') label = 'Soggetti';
-      else if (path === 'ruoli') label = 'Ruoli';
-      else if (path === 'indirizzi') label = 'Indirizzi';
-      else if (path === 'contatti') label = 'Contatti';
-      else if (path === 'products') label = 'Prodotti';
-      else if (path === 'product-categories') label = 'Categorie Prodotto';
-      else if (path === 'tax-rates') label = 'Aliquote IVA';
-      else if (path === 'units-of-measure') label = 'Unità di Misura';
-      else if (path === 'price-lists') label = 'Listini Prezzo';
-      else if (path === 'sales') label = 'Ordini Vendita';
-      else if (path === 'quotations') label = 'Preventivi';
-      else if (path === 'invoices') label = 'Fatture';
-      else if (path === 'journal') label = 'Prima Nota';
-      else if (path === 'stock-levels') label = 'Giacenze';
-      else if (path === 'stock-movements') label = 'Movimenti';
-      else if (path === 'admin') label = 'Admin';
-      else if (path === 'settings') label = 'Impostazioni';
-      else if (path === 'members') label = 'Membri';
-      else if (path === 'builder') label = 'Builder';
-      else if (path === 'custom-modules') label = 'Moduli Personalizzati';
-      else if (path === 'workflows') label = 'Workflows';
-      else if (path === 'audit-logs') label = 'Audit Logs';
-      else if (path === 'bi-builder') label = 'BI Builder';
-      else if (path === 'project-import-export') label = 'Import/Export';
-      else if (path === 'system') label = 'Sistema';
-      else if (path === 'sales-returns') label = 'Resi Vendita';
-      else if (path === 'purchase-returns') label = 'Resi Acquisti';
-      else if (path === 'inventory-counts') label = 'Inventari';
-      else if (path === 'bom') label = 'Distinte Base';
-      else if (path === 'work-cycles') label = 'Cicli di Lavoro';
-      else if (path === 'production-orders') label = 'Ordini Produzione';
-      else if (path === 'employees') label = 'Dipendenti';
-      else if (path === 'departments') label = 'Reparti';
-      else if (path === 'attendance') label = 'Presenze';
-      else if (path === 'leave-requests') label = 'Ferie e Permessi';
-      else if (path === 'timesheet') label = 'Timesheet';
-      else if (path === 'project-budgets') label = 'Budget Commessa';
-      else if (path === 'reports') label = 'Report Designer';
-      else if (path === 'gdo-reconciliation') label = 'Riconciliazione GDO';
-      else if (path === 'test-runner') label = 'Test Runner';
-      else if (path === 'relationship-manager') label = 'Relationship Manager';
-      else if (path === 'audit-logs') label = 'Audit Logs';
-      else if (path === 'distance-calculator') label = 'Calcolo Distanze';
+      if (path === 'projects') label = t('menu.areas.progetti');
+      else if (path === 'data') label = t('common.data', 'Data');
+      else if (path === 'anagrafiche') label = t('menu.blocks.soggetti');
+      else if (path === 'ruoli') label = t('menu.blocks.ruoli');
+      else if (path === 'indirizzi') label = t('menu.blocks.indirizzi');
+      else if (path === 'contatti') label = t('menu.blocks.contatti');
+      else if (path === 'products') label = t('menu.blocks.products', 'Products');
+      else if (path === 'product-categories') label = t('menu.blocks.categorie');
+      else if (path === 'tax-rates') label = t('menu.blocks.aliquoteIva');
+      else if (path === 'units-of-measure') label = t('menu.blocks.unitaMisura');
+      else if (path === 'price-lists') label = t('menu.blocks.listiniPrezzo');
+      else if (path === 'sales') label = t('menu.blocks.ordiniVendita');
+      else if (path === 'quotations') label = t('menu.blocks.preventivi');
+      else if (path === 'invoices') label = t('menu.blocks.fatture');
+      else if (path === 'journal') label = t('menu.blocks.primaNota');
+      else if (path === 'stock-levels') label = t('menu.blocks.giacenze');
+      else if (path === 'stock-movements') label = t('menu.blocks.movimenti');
+      else if (path === 'admin') label = t('menu.admin.adminArea', 'Admin');
+      else if (path === 'settings') label = t('common.settings');
+      else if (path === 'members') label = t('common.members', 'Members');
+      else if (path === 'builder') label = t('menu.admin.builderSection');
+      else if (path === 'custom-modules') label = t('menu.admin.customModules');
+      else if (path === 'workflows') label = t('menu.blocks.workflows', 'Workflows');
+      else if (path === 'audit-logs') label = t('menu.admin.auditLogs');
+      else if (path === 'bi-builder') label = t('menu.blocks.dashboardBuilder');
+      else if (path === 'project-import-export') label = t('menu.admin.importExport');
+      else if (path === 'system') label = t('menu.blocks.system', 'System');
+      else if (path === 'sales-returns') label = t('menu.blocks.resiVendita');
+      else if (path === 'purchase-returns') label = t('menu.blocks.resiAcquisto');
+      else if (path === 'inventory-counts') label = t('menu.blocks.inventari');
+      else if (path === 'bom') label = t('menu.blocks.bom');
+      else if (path === 'work-cycles') label = t('menu.blocks.cicliLavoro');
+      else if (path === 'production-orders') label = t('menu.blocks.ordiniProduzione');
+      else if (path === 'employees') label = t('menu.blocks.dipendenti');
+      else if (path === 'departments') label = t('menu.blocks.reparti');
+      else if (path === 'attendance') label = t('menu.blocks.presenze');
+      else if (path === 'leave-requests') label = t('menu.blocks.feriePermessi');
+      else if (path === 'timesheet') label = t('menu.blocks.timesheet');
+      else if (path === 'project-budgets') label = t('menu.blocks.budgetCommessa');
+      else if (path === 'reports') label = t('menu.blocks.reportDesigner');
+      else if (path === 'gdo-reconciliation') label = t('menu.blocks.gdoReconciliation', 'GDO Reconciliation');
+      else if (path === 'test-runner') label = t('menu.admin.testRunner');
+      else if (path === 'relationship-manager') label = t('menu.admin.relationshipManager');
+      else if (path === 'audit-logs') label = t('menu.admin.auditLogs');
+      else if (path === 'distance-calculator') label = t('menu.blocks.calcoloDistanze');
       else if (!isNaN(path)) label = `#${path}`;
 
       crumbs.push({

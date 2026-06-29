@@ -43,7 +43,7 @@ class WorkflowService(BaseService):
             data: Event payload data
             projectId: Optional project scope
         """
-        from backend.workflows import Workflow, WorkflowExecution, WorkflowLog
+        from backend.models.workflow import Workflow, WorkflowExecution, WorkflowLog
 
         query = Workflow.query.filter_by(is_active=True)
         if projectId:
@@ -53,7 +53,7 @@ class WorkflowService(BaseService):
 
         workflows = query.all()
 
-        from backend.workflow_executor import WorkflowEngine
+        from backend.modules.automation.services.workflow_executor import WorkflowEngine
 
         for workflow in workflows:
             if workflow.trigger_event == event or workflow.trigger_event == "*":
@@ -458,7 +458,7 @@ class WorkflowService(BaseService):
     @staticmethod
     def get_workflow_executions(workflowId: int) -> "Query":
         """Get workflow execution history query."""
-        from backend.workflows import WorkflowExecution
+        from backend.models.workflow import WorkflowExecution
         from sqlalchemy import desc
 
         return WorkflowExecution.query.filter_by(workflowId=workflowId).order_by(

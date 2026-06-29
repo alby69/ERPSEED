@@ -46,6 +46,7 @@ Vedi [backend/docs/QUICKSTART.md](backend/docs/QUICKSTART.md) per setup manuale 
 | **Cache Redis** | Flask-Caching su endpoint GET frequenti (maturities, VAT, inventory) |
 | **Marketplace** | Condividi e installa componenti/moduli |
 | **Import/Export** | Import/Export batch di progetti (SysModel, Block, Workflow, Module) |
+| **Multi-Language** | Supporto per internazionalizzazione (i18n) EN/IT |
 
 ---
 

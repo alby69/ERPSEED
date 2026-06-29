@@ -14,7 +14,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 |---|------|----------|------------|-------|
 | 0.1 | Riempire `requirements.txt` | 🔴 CRITICA | Bassa | ✅ COMPLETATO |
 | 0.2 | Fix BaseModel duplicati | 🔴 CRITICA | Media | ✅ COMPLETATO |
-| 0.3 | Aggiungere test base | 🔴 CRITICA | Media | ⏳ TODO |
+| 0.3 | Aggiungere test base | 🔴 CRITICA | Media | ✅ COMPLETATO |
 | 0.4 | Documentazione API completa | 🔴 CRITICA | Media | ✅ COMPLETATO |
 
 ### Dettagli Fase 0
@@ -75,11 +75,11 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 | # | Feature | Priorità | Complessità | Stato |
 |---|---------|----------|------------|-------|
 | 3.1 | Batch Import/Export UI | 🟢 MEDIA | Media | ✅ PARZIALE |
-| 3.2 | Workflow Visual Editor | 🟢 MEDIA | Alta | ⏳ TODO |
+| 3.2 | Workflow Visual Editor | 🟢 MEDIA | Alta | ✅ COMPLETATO |
 | 3.3 | Dashboard Builder | 🟢 MEDIA | Media | ✅ COMPLETATO |
 | 3.4 | AgentMesh Integration | 🔴 CRITICA | Alta | ✅ COMPLETATO (Base) |
 | 3.5 | Capability Discovery | 🟡 ALTA | Media | ✅ COMPLETATO |
-| 3.6 | Multi-language Support | 🟢 MEDIA | Media | ⏳ TODO |
+| 3.6 | Multi-language Support | 🟢 MEDIA | Media | ✅ COMPLETATO |
 
 ### Dettagli Fase 3
 #### 3.1 - Batch Import/Export
@@ -96,7 +96,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 | 4.1 | Rate Limiting | 🟡 ALTA | Bassa | ✅ COMPLETATO |
 | 4.2 | Input Sanitization | 🟡 ALTA | Media | ✅ COMPLETATO |
 | 4.3 | Query Optimization | 🟡 ALTA | Media | ⏳ TODO |
-| 4.4 | Redis Caching | 🟢 MEDIA | Media | ⏳ TODO |
+| 4.4 | Redis Caching | 🟢 MEDIA | Media | ✅ COMPLETATO |
 | 4.5 | API Versioning | 🟢 MEDIA | Bassa | ✅ COMPLETATO |
 
 ---
@@ -158,4 +158,4 @@ Quando si modifica un modulo esistente:
 
 ---
 
-*Ultimo aggiornamento: 2026-06-09*
+*Ultimo aggiornamento: 2026-06-10*

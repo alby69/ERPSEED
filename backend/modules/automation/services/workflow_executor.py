@@ -39,7 +39,7 @@ class NodeExecutor:
 
     def execute_condition(self, step, config, data, execution):
         """Valuta una condizione logica."""
-        from backend.workflow_service import WorkflowService
+        from backend.modules.automation.services.workflow_service import WorkflowService
         return WorkflowService._execute_condition(step, config, data)
 
     def execute_action(self, step, config, data, execution):
@@ -54,11 +54,11 @@ class NodeExecutor:
                 return {"output": {field: value}}
 
         elif action_type == "update_record":
-            from backend.workflow_service import WorkflowService
+            from backend.modules.automation.services.workflow_service import WorkflowService
             return WorkflowService._execute_update_record(step, config, data, self.projectId)
 
         elif action_type == "create_record":
-            from backend.workflow_service import WorkflowService
+            from backend.modules.automation.services.workflow_service import WorkflowService
             return WorkflowService._execute_create_record(step, config, data, self.projectId)
 
         return {"output": {"message": f"Action {action_type} executed"}}
@@ -68,7 +68,7 @@ class NodeExecutor:
         ntype = config.get("type", "webhook")
 
         if ntype == "webhook":
-            from backend.workflow_service import WorkflowService
+            from backend.modules.automation.services.workflow_service import WorkflowService
             return WorkflowService._execute_notification(step, config, data)
 
         # Placeholder per email
@@ -76,12 +76,12 @@ class NodeExecutor:
 
     def execute_delay(self, step, config, data, execution):
         """Gestisce ritardi (attualmente sincroni)."""
-        from backend.workflow_service import WorkflowService
+        from backend.modules.automation.services.workflow_service import WorkflowService
         return WorkflowService._execute_delay(step, config, data)
 
     def execute_webhook(self, step, config, data, execution):
         """Esegue una chiamata webhook esterna."""
-        from backend.workflow_service import WorkflowService
+        from backend.modules.automation.services.workflow_service import WorkflowService
         return WorkflowService._execute_webhook(step, config, data)
 
     def execute_unknown(self, step, config, data, execution):
@@ -172,7 +172,7 @@ def init_workflow_hooks():
 
     def workflow_trigger_hook(event, record_id, data, projectId=None):
         """Hook che scatena i workflow corrispondenti all'evento."""
-        from backend.workflow_service import WorkflowService
+        from backend.modules.automation.services.workflow_service import WorkflowService
         WorkflowService.trigger_event(event, data, projectId)
 
     # Nota: L'integrazione effettiva richiede che i servizi chiamino HookManager.trigger

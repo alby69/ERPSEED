@@ -147,7 +147,7 @@ class WorkflowExportConfig(MethodView):
     @blp.response(200)
     def get(self, workflowId):
         """Esporta configurazione Workflow."""
-        from backend.workflows import Workflow
+        from backend.models.workflow import Workflow
 
         workflow = db.session.get(Workflow, workflowId)
         if not workflow:
