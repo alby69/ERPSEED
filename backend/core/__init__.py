@@ -22,6 +22,7 @@ from backend.core.services import (
 )
 from backend.core.middleware import TenantMiddleware, setup_tenant_middleware
 from backend.core.api import auth_bp, tenant_bp
+from backend.core.events.capabilities import capability_registry, capability
 
 __version__ = '1.0.0'
 
@@ -49,4 +50,7 @@ __all__ = [
     # API
     'auth_bp',
     'tenant_bp',
+    # Capabilities
+    'capability_registry',
+    'capability',
 ]
