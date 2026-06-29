@@ -19,7 +19,8 @@ from typing import Optional, Dict, Any, List
 
 from backend.modules.ai.context import get_project_context, get_conversation_context
 from backend.modules.ai.tool_registry import tool_registry
-from backend.modules.ai.adapters import get_adapter, LLMAdapter
+from backend.modules.ai.adapters import get_adapter
+from backend.modules.ai.adapters.base import LLMAdapter
 from backend.models import AIConversation, db
 
 logger = logging.getLogger(__name__)
@@ -150,8 +151,17 @@ class AIService:
         )
 
     def get_all_tools(self, projectId: int = None) -> List[Dict]:
-        """Ottiene tutti i tool disponibili (base + dinamici + business logic + test)."""
+        """Ottiene tutti i tool disponibili (base + dinamici + business logic + test + capabilities)."""
         tools = self.tools.copy()
+
+        # Add registered capabilities from the new registry
+        from backend.core.events.capabilities import capability_registry
+        for cap in capability_registry.get_all_capabilities():
+            tools.append({
+                "name": cap.name,
+                "description": cap.description,
+                "input_schema": cap.input_schema
+            })
 
         if projectId:
             try:

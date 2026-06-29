@@ -8,8 +8,14 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 
 from backend.shared.commands import Command, CreateCommand, UpdateCommand, DeleteCommand, QueryCommand
+from backend.core import capability
 
 
+@capability(
+    name="create_product",
+    description="Create a new product in the catalog.",
+    agent="InventoryAgent"
+)
 @dataclass
 class CreateProductCommand(CreateCommand):
     """Command to create a new product."""
@@ -186,6 +192,11 @@ class ListProductsCommand(QueryCommand):
         )
 
 
+@capability(
+    name="update_product_stock",
+    description="Update the stock levels for a specific product.",
+    agent="InventoryAgent"
+)
 @dataclass
 class UpdateStockCommand(Command):
     """Command to update product stock."""

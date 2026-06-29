@@ -150,7 +150,8 @@ from .modules.builder.api import blp as builder_api_blp
 from .marketplace.api import blp as marketplace_api_blp
 
 # Import AI Assistant API
-from .modules.ai.api import blp as ai_bp
+from .modules.ai.rest_api import blp as ai_bp
+from .modules.ai.api.capabilities_api import blp as capabilities_bp
 
 # Import Relationship Manager API
 from .modules.relationship_manager.routes import relmgr_blp as relationship_manager_bp
@@ -457,6 +458,7 @@ def create_app(db_url=None):
         builder_init_bp, url_prefix=f"{API_V1_PREFIX}", name="api_builder_init"
     )
     api.register_blueprint(ai_bp, url_prefix=f"{API_V1_PREFIX}/ai", name="api_ai")
+    api.register_blueprint(capabilities_bp, name="api_capabilities")
     api.register_blueprint(
         products_api_bp, url_prefix=f"{API_V1_PREFIX}/products", name="api_products"
     )

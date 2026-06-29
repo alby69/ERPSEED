@@ -7,6 +7,7 @@ from .openrouter import OpenRouterAdapter, openrouter_adapter
 from .anthropic import AnthropicAdapter, anthropic_adapter
 from .openai import OpenAIAdapter, openai_adapter
 from .ollama import OllamaAdapter, ollama_adapter
+from .agentmesh import AgentMeshAdapter
 
 
 def get_adapter(provider: str = None) -> LLMAdapter:
@@ -32,6 +33,8 @@ def get_adapter(provider: str = None) -> LLMAdapter:
         return openai_adapter
     elif provider == "ollama":
         return ollama_adapter
+    elif provider == "agentmesh":
+        return AgentMeshAdapter()
     else:
         raise ValueError(f"Unknown provider: {provider}")
 
@@ -51,5 +54,6 @@ __all__ = [
     "anthropic_adapter",
     "openai_adapter",
     "ollama_adapter",
+    "AgentMeshAdapter",
     "get_adapter",
 ]

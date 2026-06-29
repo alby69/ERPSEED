@@ -5,8 +5,14 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
 
 from backend.shared.commands import Command, CreateCommand, UpdateCommand, DeleteCommand, QueryCommand
+from backend.core import capability
 
 
+@capability(
+    name="create_sales_order",
+    description="Create a new sales order with lines for a customer.",
+    agent="SalesAgent"
+)
 @dataclass
 class CreateSalesOrderCommand(CreateCommand):
     """Command to create a sales order."""
@@ -93,6 +99,11 @@ class DeleteSalesOrderCommand(DeleteCommand):
         )
 
 
+@capability(
+    name="confirm_sales_order",
+    description="Confirm a draft sales order, moving it to the next stage.",
+    agent="SalesAgent"
+)
 @dataclass
 class ConfirmSalesOrderCommand(Command):
     """Command to confirm a sales order."""
