@@ -126,6 +126,7 @@ L'applicazione sarà accessibile su `http://localhost:5173`.
 | `REDIS_URL` | `redis://redis:6379` | Server Redis per la cache |
 | `FLASK_ENV` | `development` | Ambiente Flask (`development` / `production`) |
 | `FLASK_DEBUG` | `1` | Modalità debug attivi/disattivi |
+| `VITE_API_URL` | `http://localhost:5000` | (Frontend) URL endpoint base per API backend |
 
 ### Configurazione AI Assistant
 
@@ -238,4 +239,4 @@ sudo chown -R $USER:$USER backend frontend
 
 ---
 
-*Ultimo aggiornamento: 2026-06-11*
+*Per la cronologia completa delle modifiche di questo documento, consulta la cronologia Git del repository.*

@@ -32,5 +32,5 @@ npx eslint src/    # Lint
 
 ## Documentazione
 
-Vedi [FRONTEND_GUIDE.md](docs/FRONTEND_GUIDE.md) per la guida sviluppatori.
-Vedi [backend/docs/](../backend/docs/) per la documentazione completa del progetto.
+Vedi [FRONTEND_GUIDE.md](../docs/FRONTEND_GUIDE.md) per la guida sviluppatori.
+Vedi [docs/](../docs/) per la documentazione completa del progetto.

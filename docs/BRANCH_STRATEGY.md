@@ -24,4 +24,4 @@ Per consultazione storica o refactoring mirati, rimangono presenti sui repositor
 
 ---
 
-*Ultimo aggiornamento: 2026-06-11*
+*Per la cronologia completa delle modifiche di questo documento, consulta la cronologia Git del repository.*

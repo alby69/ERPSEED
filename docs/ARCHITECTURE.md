@@ -305,24 +305,24 @@ class SysField(db.Model):
 
 ## Multi-Tenancy
 
-### Schema Isolation
+### Row-Level Isolation
 
+L'isolamento dei dati multi-tenant viene gestito a livello di riga (**Row-Level Isolation**) tramite la colonna `tenant_id` presente su tutti i modelli di dominio e un filtro automatico SQLAlchemy applicato a livello di query (`before_compile`).
+
+```mermaid
+flowchart TD
+    Req[Incoming HTTP Request] --> TM[TenantMiddleware]
+    TM -->|Extracts header / subdomain / JWT| TC[TenantContext]
+    TC -->|Sets g.current_tenant| TF[TenantFilter]
+    TF -->|SQLAlchemy before_compile| DB[(Database Query: WHERE tenant_id = tenant.id)]
 ```
-PostgreSQL
-├── schema: tenant_1
-│   ├── users
-│   ├── projects
-│   └── sys_models_*
-└── schema: tenant_2
-    ├── users
-    ├── projects
-    └── sys_models_*
-```
+
+> **Nota di architettura**: La logica di filtraggio automatico e contesto tenant è gestita centralmente da `backend/core/services/tenant/tenant_filter.py` (`TenantContext` e `TenantFilter`). Il file `backend/core/services/query_filter.py` è **deprecato** e sostituito da quest'ultimo.
 
 ### Middleware Flow
 
 ```
-Request → TenantMiddleware → Extract Tenant (header X-Tenant-ID / subdomain / JWT) → Set Context → Route Handler
+Request → TenantMiddleware → Extract Tenant (header X-Tenant-ID / subdomain / JWT) → Set TenantContext → Route Handler
 ```
 
 Il middleware tenta 3 metodi in ordine:
@@ -367,11 +367,13 @@ class BasePlugin:
 
 ## Workflow Engine
 
-```
-Trigger (event/time) → Workflow Definition → Steps Execution
-                                              ├── Step 1
-                                              ├── Step 2
-                                              └── Step 3
+```mermaid
+flowchart LR
+    Trigger["Trigger (event/time)"] --> WorkflowDef["Workflow Definition"]
+    WorkflowDef --> StepExec["Steps Execution"]
+    StepExec --> Step1["Step 1: Action"]
+    StepExec --> Step2["Step 2: Condition"]
+    StepExec --> Step3["Step 3: Webhook/Notify"]
 ```
 
 ## Dynamic Builder (No-Code)
@@ -416,4 +418,4 @@ LLM_PROVIDER=openrouter  # Per AI
 
 ---
 
-*Ultimo aggiornamento: 2026-03-18*
+*Per la cronologia completa delle modifiche di questo documento, consulta la cronologia Git del repository.*

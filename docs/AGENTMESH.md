@@ -38,7 +38,7 @@ L'integrazione di ERPSEED con la rete `agentmesh` trasforma un sistema gestional
 - Stabilizzazione della logica CQRS come base per l'esposizione dei tool.
 
 ### Fase 2: Agentificazione dei Moduli (Completato / In Corso)
-- **Capability Discovery**: Implementato `CapabilityRegistry` e l'endpoint `/api/v1/ai/capabilities` che esporta il manifesto in formato compatibile con AgentMesh.
+- **Capability Discovery**: Implementato `CapabilityRegistry` e l'endpoint `/api/v1/ai/capabilities` che esporta il manifesto in formato compatibile con AgentMesh (vedi riferimento completo in [API.md](API.md#capabilities-agentmesh-apiv1aicapabilities)).
 - **Agent Gateway**: Rifattorizzato `backend/modules/ai` con l'adapter `AgentMeshAdapter` per agire come gateway verso la rete distribuita.
 - **Agentification**: Mappatura dei moduli `Sales` e `Products/Inventory` tramite il decoratore `@capability`.
 
@@ -81,4 +81,4 @@ erpseed/
 
 ---
 
-*Ultimo aggiornamento: 2026-06-11*
+*Per la cronologia completa delle modifiche di questo documento, consulta la cronologia Git del repository.*

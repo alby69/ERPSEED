@@ -18,10 +18,10 @@ describe('apiFetch', () => {
       json: async () => ({ success: true }),
     });
 
-    await apiFetch('/test-endpoint');
+    await apiFetch('/api/v1/test-endpoint');
 
     expect(fetch).toHaveBeenCalledWith(
-      `${BASE_URL}/test-endpoint`,
+      `${BASE_URL}/api/v1/test-endpoint`,
       expect.objectContaining({
         headers: expect.objectContaining({
           'Authorization': 'Bearer test-token',

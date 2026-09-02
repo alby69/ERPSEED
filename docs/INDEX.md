@@ -1,7 +1,8 @@
 # Indice Documentazione ERPSEED
 
 > **Entry point unico** per tutta la documentazione del progetto ERPSEED.
-> Ultimo aggiornamento: 2026-06-11
+>
+> **Policy Linguistica**: La documentazione tecnica e di architettura è in italiano (IT). Il manuale utente ([USER_MANUAL.md](USER_MANUAL.md)) è in inglese (EN) per supportare gli utenti aziendali internazionali, in linea con il supporto i18n (EN/IT) della piattaforma.
 
 ---
 
@@ -27,8 +28,15 @@
 
 | Documento | Contenuto | Target |
 |-----------|-----------|--------|
-| [API.md](API.md) | Riferimento completo degli endpoint REST, autenticazione JWT, codici di errore | Sviluppatori / Integratori |
+| [API.md](API.md) | Riferimento completo degli endpoint REST, autenticazione JWT, paginazione, versionamento e [Capabilities AgentMesh](API.md#capabilities-agentmesh-apiv1aicapabilities) | Sviluppatori / Integratori |
 | [AGENTMESH.md](AGENTMESH.md) | Architettura ERP distribuito agentico, integrazione AgentMesh e manifesto `/capabilities` | Sviluppatori AI / System Architects |
+
+## 📝 Changelog e Tracciamento Modifiche
+
+| Documento | Contenuto | Target |
+|-----------|-----------|--------|
+| [CHANGELOG.md](../CHANGELOG.md) | Changelog di prodotto e delle release dell'applicazione | Tutti |
+| [DOC_LOG.md](../DOC_LOG.md) | Registro delle modifiche e refactoring della documentazione | Maintainers / Team |
 
 ## 🧪 Tutorial
 
