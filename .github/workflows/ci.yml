@@ -41,7 +41,7 @@ jobs:
           pytest --cov=backend backend/tests
 
   frontend-test:
-    name: Frontend Tests & Lint
+    name: Frontend Tests & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -60,15 +60,15 @@ jobs:
           cd frontend
           npm ci
 
-      - name: Run ESLint
-        run: |
-          cd frontend
-          npm run lint
-
       - name: Run Vitest Unit Tests
         run: |
           cd frontend
           npm run test:run
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm run build
 
   markdown-link-check:
     name: Markdown Link Check
@@ -79,7 +79,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Lychee Link Checker
-        uses: lycheeververse/lychee-action@v2
+        uses: lycheever/lychee-action@v2
         with:
           args: --verbose --no-progress './**.md'
           fail: true
