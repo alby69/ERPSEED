@@ -1,6 +1,8 @@
 # Piano di Implementazione ERP Blocks
 
 > **Nota:** Questo documento possiede lo stato di avanzamento e l'architettura dei 24 blocchi funzionali ERP. Per la roadmap di qualità del codice e debito tecnico (Fasi 0-4 KISS/DRY), consulta [ROADMAP.md](ROADMAP.md). Per le convenzioni di refactoring per sviluppatori, consulta [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md#convenzioni-di-refactoring).
+>
+> **Nota sullo Stato Attuale:** Tutti i 24 blocchi ERP pianificati nelle tabelle §1 e §2 sono stati completati e integrati nel sistema. Le tabelle sottostanti riflettono lo stato reale corrente; per il dettaglio sintetico delle fasi vedi [§8 Stato di Avanzamento Attuale](#8-stato-di-avanzamento-attuale-giugno-2026).
 
 ---
 
@@ -30,15 +32,15 @@ Sono le entità fondamentali, non scomponibili, che vengono riutilizzate per cos
 | P4 | **Contatto** | `Contatto` (email, tel, PEC, social) | `entities/` | ✅ |
 | P5 | **Indirizzo** | `Indirizzo` (via, civico, CAP, città, nazione, comune_id, via_id) + `Via` (cache locale strade per comune) | `entities/` | ✅ |
 | P6 | **Comune/Regione/Provincia** | `Comune`, `Regione`, `Provincia` | `entities/` | ✅ |
-| P7 | **Categoria** | `ProductCategory` (albero padre-figlio) | `products/` | 🔶 Nuovo |
-| P8 | **Aliquota IVA** | `TaxRate` (codice, %, data inizio/fine) | `modules/tax/` | ❌ Nuovo |
-| P9 | **Unità di Misura** | `UnitOfMeasure` (codice, descrizione, simbolo) | `modules/uom/` | ❌ Nuovo |
-| P10 | **Conto Contabile** | `Account` (piano dei conti, tipo, codice) | `modules/accounting/` | ⚠️ Da plugins/ |
-| P11 | **Magazzino/Deposito** | `InventoryLocation` (codice, nome, indirizzo) | `modules/inventory/` | ⚠️ Da plugins/ |
-| P12 | **Listino Prezzo** | `PriceList` + `PriceListItem` (prodotto, prezzo, sconto) | `modules/pricing/` | ❌ Nuovo |
-| P13 | **Scadenza** | `Maturity` (data, importo, saldo, riferimento) | `modules/accounting/` | ❌ Nuovo |
-| P14 | **Causale Magazzino** | `MovementReason` (codice, tipo: carico/scarico/trasf.) | `modules/inventory/` | ❌ Nuovo |
-| P15 | **Unità Organizzativa** | `Department` (codice, nome, gerarchia) | `modules/hr/` | ⚠️ Da plugins/ |
+| P7 | **Categoria** | `ProductCategory` (albero padre-figlio) | `modules/product_categories/` | ✅ |
+| P8 | **Aliquota IVA** | `TaxRate` (codice, %, data inizio/fine) | `modules/tax/` | ✅ |
+| P9 | **Unità di Misura** | `UnitOfMeasure` (codice, descrizione, simbolo) | `modules/uom/` | ✅ |
+| P10 | **Conto Contabile** | `Account` (piano dei conti, tipo, codice) | `modules/accounting/` | ✅ |
+| P11 | **Magazzino/Deposito** | `InventoryLocation` (codice, nome, indirizzo) | `modules/inventory/` | ✅ |
+| P12 | **Listino Prezzo** | `PriceList` + `PriceListItem` (prodotto, prezzo, sconto) | `modules/pricing/` | ✅ |
+| P13 | **Scadenza** | `Maturity` (data, importo, saldo, riferimento) | `modules/maturities/` | ✅ |
+| P14 | **Causale Magazzino** | `MovementReason` (codice, tipo: carico/scarico/trasf.) | `modules/inventory/` | ✅ |
+| P15 | **Unità Organizzativa** | `Department` (codice, nome, gerarchia) | `modules/hr/` | ✅ |
 
 ---
 
@@ -56,81 +58,81 @@ Ogni **Area** corrisponde a un submenu di "Applicazioni" nella sidebar.
 | **Indirizzi** | P5 + P6 + `Via` (cache strade) | `entities/` ✅ | — | — |
 | **Comuni** | P6 | `entities/` ✅ | — | — |
 | **Contatti** | P4 | `entities/` ✅ | — | — |
-| **Prodotti** | P3 + P7 + P8 + P9 + P12 | `products/` ✅ | — | — |
-| **Categorie Prodotto** | P7 | `products/` 🔶 | P1 | 1gg |
-| **Aliquote IVA** | P8 | `modules/tax/` ❌ | P0 | 2gg |
-| **Unità di Misura** | P9 | `modules/uom/` ❌ | P1 | 1gg |
-| **Listini Prezzo** | P12 + P3 | `modules/pricing/` ❌ | P0 | 3gg |
-| **Piano dei Conti** | P10 | `modules/accounting/` ⚠️ | P1 | 3gg |
+| **Prodotti** | P3 + P7 + P8 + P9 + P12 | `modules/products/` ✅ | — | — |
+| **Categorie Prodotto** | P7 | `modules/product_categories/` ✅ | — | — |
+| **Aliquote IVA** | P8 | `modules/tax/` ✅ | — | — |
+| **Unità di Misura** | P9 | `modules/uom/` ✅ | — | — |
+| **Listini Prezzo** | P12 + P3 | `modules/pricing/` ✅ | — | — |
+| **Piano dei Conti** | P10 | `modules/accounting/` ✅ | — | — |
 
 ### Area 2: Logistica e Acquisti
 *Submenu: "Acquisti" — Icona: `<ShoppingCartOutlined />`*
 
 | Blocco | Composizione | Modulo | Priorità | Sforzo |
 |--------|-------------|--------|----------|--------|
-| **Ordini Acquisto** | P1(Fornitore) + P3 + P12 + Documento | `purchases/` 🔶 | P1 | 3gg (UI) |
-| **Richieste d'Acquisto** | P1 + P3 + Workflow approvazione | `purchases/` ❌ | P1 | 5gg |
-| **Preventivi Fornitori (RFQ)** | P1 + P3 + confronto | `purchases/` ❌ | P2 | 5gg |
-| **Entrata Merci (DDT)** | PO + P3 + P11 + P14 | `purchases/` ❌ | P1 | 5gg |
-| **Resi Acquisti** | PO negativo + P11 + P14 | `purchases/` ❌ | P2 | 3gg |
+| **Ordini Acquisto** | P1(Fornitore) + P3 + P12 + Documento | `modules/purchases/` ✅ | — | — |
+| **Richieste d'Acquisto** | P1 + P3 + Workflow approvazione | `modules/purchase_requests/` ✅ | — | — |
+| **Preventivi Fornitori (RFQ)** | P1 + P3 + confronto | `modules/purchase_requests/` ✅ | — | — |
+| **Entrata Merci (DDT)** | PO + P3 + P11 + P14 | `modules/goods_receipt/` ✅ | — | — |
+| **Resi Acquisti** | PO negativo + P11 + P14 | `modules/purchase_returns/` ✅ | — | — |
 
 ### Area 3: Vendite e CRM
 *Submenu: "Vendite" — Icona: `<ProjectOutlined />`*
 
 | Blocco | Composizione | Modulo | Priorità | Sforzo |
 |--------|-------------|--------|----------|--------|
-| **Ordini Vendita** | P1(Cliente) + P3 + P12 + P8 | `sales/` ✅ | — | — |
-| **Preventivi** | Stessa struttura Ordine, stato quotazione | `sales/` ❌ | P1 | 3gg |
-| **DDT Vendita** | Ordine → P11 + P14 | `sales/` ❌ | P1 | 5gg |
-| **Fatturazione** | Ordine/DDT + P8 + P10 + P13 + num. automatica | `modules/invoicing/` ❌ | P1 | 10gg |
-| **Resi Vendita** | Negativo su Ordine + P11 + P14 | `sales/` ❌ | P2 | 3gg |
-| **CRM (Lead/Opportunità)** | P1(Lead) + pipeline kanban + attività | `modules/crm/` ❌ | P1 | 5gg |
-| **Contratti** | P1 + Documento + date + rinnovo | `modules/contracts/` ❌ | P2 | 5gg |
+| **Ordini Vendita** | P1(Cliente) + P3 + P12 + P8 | `modules/sales/` ✅ | — | — |
+| **Preventivi** | Stessa struttura Ordine, stato quotazione | `modules/sales/` ✅ | — | — |
+| **DDT Vendita** | Ordine → P11 + P14 | `modules/sales/` ✅ | — | — |
+| **Fatturazione** | Ordine/DDT + P8 + P10 + P13 + num. automatica | `modules/invoicing/` ✅ | — | — |
+| **Resi Vendita** | Negativo su Ordine + P11 + P14 | `modules/sales/` ✅ | — | — |
+| **CRM (Lead/Opportunità)** | P1(Lead) + pipeline kanban + attività | `modules/crm/` ✅ | — | — |
+| **Contratti** | P1 + Documento + date + rinnovo | `modules/contracts/` ✅ | — | — |
 
 ### Area 4: Magazzino e Inventory
 *Submenu: "Magazzino" — Icona: `<InboxOutlined />`*
 
 | Blocco | Composizione | Modulo | Priorità | Sforzo |
 |--------|-------------|--------|----------|--------|
-| **Giacenze** | P3 + P11 + quantità | `modules/inventory/` ⚠️ | P1 | 3gg |
-| **Movimenti di Magazzino** | P3 + P11 + P14 + qty + riferimento | `modules/inventory/` ❌ | P1 | 5gg |
-| **Inventario Fisico** | P3 + P11 + conteggio + scostamento | `modules/inventory/` ❌ | P2 | 5gg |
-| **Lotto/Serial Number** | P3 + lotto + scadenza + tracciabilità | `modules/inventory/` ❌ | P3 | 5gg |
-| **Picking/Packing** | Ordine + P3 + P11 + preparazione | `modules/inventory/` ❌ | P3 | 8gg |
+| **Giacenze** | P3 + P11 + quantità | `modules/inventory/` ✅ | — | — |
+| **Movimenti di Magazzino** | P3 + P11 + P14 + qty + riferimento | `modules/inventory/` ✅ | — | — |
+| **Inventario Fisico** | P3 + P11 + conteggio + scostamento | `modules/inventory/` ✅ | — | — |
+| **Lotto/Serial Number** | P3 + lotto + scadenza + tracciabilità | `modules/lot/` ✅ | — | — |
+| **Picking/Packing** | Ordine + P3 + P11 + preparazione | `modules/inventory/` ✅ | — | — |
 
 ### Area 5: Contabilità e Finanza
 *Submenu: "Contabilità" — Icona: `<DollarOutlined />`*
 
 | Blocco | Composizione | Modulo | Priorità | Sforzo |
 |--------|-------------|--------|----------|--------|
-| **Piano dei Conti** | P10 (da plugins/accounting) | `modules/accounting/` ⚠️ | P1 | 3gg |
-| **Prima Nota** | P10 + dare/avere + riferimento doc | `modules/accounting/` ❌ | P1 | 8gg |
-| **Scadenzario/Partite** | P13 + P1 + Fattura + solleciti | `modules/accounting/` ❌ | P1 | 5gg |
-| **Registri IVA** | P8 + Prima Nota + periodicità | `modules/accounting/` ❌ | P2 | 5gg |
-| **Intrastat** | Report movimenti intra | `modules/accounting/` ❌ | P3 | 5gg |
-| **Ri.Ba.** | P13 + banca + incasso | `modules/accounting/` ❌ | P3 | 5gg |
+| **Piano dei Conti** | P10 | `modules/accounting/` ✅ | — | — |
+| **Prima Nota** | P10 + dare/avere + riferimento doc | `modules/accounting/` ✅ | — | — |
+| **Scadenzario/Partite** | P13 + P1 + Fattura + solleciti | `modules/maturities/` ✅ | — | — |
+| **Registri IVA** | P8 + Prima Nota + periodicità | `modules/vat/` ✅ | — | — |
+| **Intrastat** | Report movimenti intra | `modules/vat/` ✅ | — | — |
+| **Ri.Ba.** | P13 + banca + incasso | `modules/riba/` ✅ | — | — |
 
 ### Area 6: Produzione
 *Submenu: "Produzione" — Icona: `<ToolOutlined />`*
 
 | Blocco | Composizione | Modulo | Priorità | Sforzo |
 |--------|-------------|--------|----------|--------|
-| **Distinta Base (BOM)** | P3(padre) + P3(figli) + quantità | `modules/manufacturing/` ❌ | P2 | 5gg |
-| **Ciclo di Lavoro** | Fasi + risorse + tempi | `modules/manufacturing/` ❌ | P2 | 5gg |
-| **Ordini di Produzione** | BOM + date + qty + stato | `modules/manufacturing/` ❌ | P2 | 8gg |
-| **MRP** | BOM + ordini + giacenze + forecast | `modules/manufacturing/` ❌ | P3 | 20gg |
-| **Controllo Qualità** | P3 + lotti + collaudi | `modules/manufacturing/` ❌ | P3 | 5gg |
+| **Distinta Base (BOM)** | P3(padre) + P3(figli) + quantità | `modules/manufacturing/` ✅ | — | — |
+| **Ciclo di Lavoro** | Fasi + risorse + tempi | `modules/manufacturing/` ✅ | — | — |
+| **Ordini di Produzione** | BOM + date + qty + stato | `modules/manufacturing/` ✅ | — | — |
+| **MRP** | BOM + ordini + giacenze + forecast | `modules/mrp/` ✅ | — | — |
+| **Controllo Qualità** | P3 + lotti + collaudi | `modules/manufacturing/` ✅ | — | — |
 
 ### Area 7: HR e Payroll
 *Submenu: "HR" — Icona: `<TeamOutlined />`*
 
 | Blocco | Composizione | Modulo | Priorità | Sforzo |
 |--------|-------------|--------|----------|--------|
-| **Dipendenti** | P1(PF) + ruolo dipendente + P15 | `modules/hr/` ⚠️ | P2 | 5gg |
-| **Reparti** | P15 + P1(Manager) | `modules/hr/` ⚠️ | P2 | 2gg |
-| **Presenze** | Dipendente + data + check-in/out | `modules/hr/` ❌ | P2 | 5gg |
-| **Ferie e Permessi** | Dipendente + tipo + date + approvazione | `modules/hr/` ❌ | P2 | 5gg |
-| **Formazione** | Dipendente + corso + certificazione | `modules/hr/` ❌ | P3 | 3gg |
+| **Dipendenti** | P1(PF) + ruolo dipendente + P15 | `modules/hr/` ✅ | — | — |
+| **Reparti** | P15 + P1(Manager) | `modules/hr/` ✅ | — | — |
+| **Presenze** | Dipendente + data + check-in/out | `modules/hr/` ✅ | — | — |
+| **Ferie e Permessi** | Dipendente + tipo + date + approvazione | `modules/hr/` ✅ | — | — |
+| **Formazione** | Dipendente + corso + certificazione | `modules/hr/` ✅ | — | — |
 
 ### Area 8: Project Management
 *Submenu: "Progetti" — Icona: `<ProjectOutlined />`*
@@ -138,11 +140,11 @@ Ogni **Area** corrisponde a un submenu di "Applicazioni" nella sidebar.
 | Blocco | Composizione | Modulo | Priorità | Sforzo |
 |--------|-------------|--------|----------|--------|
 | **Progetti** | Testata + date + stato + membri | `modules/projects/` ✅ | — | — |
-| **Attività/Task** | Progetto + risorsa + date + stato | Dynamic Model ⚠️ | P1 | 3gg |
-| **Timesheet** | P1 + Attività + ore + data | `modules/projects/` ❌ | P1 | 5gg |
-| **Budget Commessa** | Preventivo + consuntivo + scostamento | `modules/projects/` ❌ | P2 | 5gg |
+| **Attività/Task** | Progetto + risorsa + date + stato | `modules/project_management/` ✅ | — | — |
+| **Timesheet** | P1 + Attività + ore + data | `modules/project_management/` ✅ | — | — |
+| **Budget Commessa** | Preventivo + consuntivo + scostamento | `modules/project_management/` ✅ | — | — |
 | **Workflow** | Automazione processi | `modules/automation/` ✅ | — | — |
-| **Business Rules** | Regole di business | via automation ✅ | — | — |
+| **Business Rules** | Regole di business | `modules/automation/` ✅ | — | — |
 
 ### Area 9: BI e Analytics
 *Submenu: "Analytics" — Icona: `<BarChartOutlined />`*
@@ -150,66 +152,44 @@ Ogni **Area** corrisponde a un submenu di "Applicazioni" nella sidebar.
 | Blocco | Composizione | Modulo | Priorità | Sforzo |
 |--------|-------------|--------|----------|--------|
 | **Dashboard KPI** | Widgets + metriche | `modules/analytics/` ✅ | — | — |
-| **Dashboard Builder** | Builder visivo | `modules/analytics/` ⚠️ | P2 | 3gg |
+| **Dashboard Builder** | Builder visivo | `modules/analytics/` ✅ | — | — |
 | **Chart Builder** | Grafici (ECharts/Apex/Chart.js) | `modules/analytics/` ✅ | — | — |
-| **Report Designer** | Template + dati + formati | `modules/analytics/` ❌ | P2 | 8gg |
-| **Export Excel/PDF** | Dati + template | `modules/analytics/` ⚠️ | P2 | 3gg |
+| **Report Designer** | Template + dati + formati | `modules/report_designer/` ✅ | — | — |
+| **Export Excel/PDF** | Dati + template | `modules/analytics/` ✅ | — | — |
 
 ---
 
 ## 3. Mappa Dipendenze
 
-```
-                    ┌─────────────────┐
-                    │   Soggetto P1    │◄────────────── Ruolo P2
-                    │  (Anagrafica)    │
-                    └──────┬──────────┘
-                           │
-            ┌──────────────┼──────────────┬──────────────────┐
-            ▼              ▼              ▼                  ▼
-       ┌─────────┐  ┌──────────┐  ┌───────────┐    ┌──────────────┐
-       │Cliente  │  │Fornitore │  │Dipendente │    │    Lead      │
-       │(Ruolo)  │  │(Ruolo)   │  │(Ruolo)    │    │(Ruolo+CRM)   │
-       └────┬────┘  └────┬─────┘  └─────┬─────┘    └──────┬───────┘
-            │            │              │                  │
-            ▼            ▼              ▼                  ▼
-     ┌──────────┐ ┌──────────┐  ┌────────────┐   ┌─────────────┐
-     │Ordini    │ │Ordini    │  │ Presenze   │   │Opportunità  │
-     │Vendita   │ │Acquisto  │  │ Ferie      │   │Pipeline CRM │
-     └────┬─────┘ └────┬─────┘  └────────────┘   └─────────────┘
-          │            │
-          ▼            ▼
-     ┌──────────┐ ┌──────────┐
-     │DDT Ven.  │ │DDT Acq.  │
-     │Fatture   │ │Entrata   │
-     └────┬─────┘ └────┬─────┘
-          │            │
-          ▼            ▼
-     ┌─────────────────────────────────────┐
-     │        Movimenti Magazzino          │
-     │  (Carico/Scarico da documento)      │
-     └────────────────┬────────────────────┘
-                      ▼
-     ┌─────────────────────────────────────┐
-     │       Prima Nota Contabile          │
-     │  (Registrazione movimenti econ.)    │
-     └────────────────┬────────────────────┘
-                      ▼
-     ┌─────────────────────────────────────┐
-     │     Scadenzario / Partite           │
-     └─────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Soggetto["Soggetto P1 (Anagrafica)"] <-- Ruolo["Ruolo P2"]
+    Soggetto --> Cliente["Cliente (Ruolo)"]
+    Soggetto --> Fornitore["Fornitore (Ruolo)"]
+    Soggetto --> Dipendente["Dipendente (Ruolo)"]
+    Soggetto --> Lead["Lead (Ruolo+CRM)"]
 
-                        ┌──────────────┐
-                        │  Prodotto P3  │◄──────── Categoria P7
-                        │  (Catalogo)   │◄──────── UM P9
-                        └──────┬───────┘◄──────── Aliquota IVA P8
-                               │
-                    ┌──────────┼──────────┐
-                    ▼          ▼          ▼
-               ┌────────┐ ┌────────┐ ┌────────┐
-               │Listini │ │BOM     │ │Giacenze│
-               │P12     │ │(Produz)│ │P3+P11  │
-               └────────┘ └────────┘ └────────┘
+    Cliente --> SalesOrders["Ordini Vendita"]
+    Fornitore --> PurchaseOrders["Ordini Acquisto"]
+    Dipendente --> Attendance["Presenze / Ferie"]
+    Lead --> Opportunities["Opportunità Pipeline CRM"]
+
+    SalesOrders --> OutDocs["DDT Vendita / Fatture"]
+    PurchaseOrders --> InDocs["DDT Acquisto / Entrata"]
+
+    OutDocs --> Movements["Movimenti Magazzino"]
+    InDocs --> Movements
+
+    Movements --> Accounting["Prima Nota Contabile"]
+    Accounting --> Maturities["Scadenzario / Partite"]
+
+    Prodotto["Prodotto P3 (Catalogo)"] <-- Categoria["Categoria P7"]
+    Prodotto <-- UM["UM P9"]
+    Prodotto <-- Tax["Aliquota IVA P8"]
+
+    Prodotto --> Listini["Listini P12"]
+    Prodotto --> BOM["BOM (Produzione)"]
+    Prodotto --> Stock["Giacenze P3+P11"]
 ```
 
 ---
@@ -424,4 +404,4 @@ Tutti i 24 blocchi ERP pianificati sono **completati e funzionanti**. Di seguito
 
 ---
 
-*Ultimo aggiornamento: 2026-06-11*
+*Per la cronologia completa delle modifiche di questo documento, consulta la cronologia Git del repository.*

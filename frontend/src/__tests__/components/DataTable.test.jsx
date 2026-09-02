@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import DataTable from '../../components/DataTable';
 
@@ -32,10 +32,13 @@ describe('DataTable Component', () => {
 
   it('calls onEdit when edit button is clicked', () => {
     const onEdit = vi.fn();
-    render(<DataTable columns={columns} data={data} onEdit={onEdit} />);
+    const { container } = render(<DataTable columns={columns} data={data} onEdit={onEdit} />);
+
+    const dropdownButtons = container.querySelectorAll('.dropdown button');
+    fireEvent.click(dropdownButtons[0]);
 
     const editButtons = screen.getAllByText('Edit');
-    editButtons[0].click();
+    fireEvent.click(editButtons[0]);
 
     expect(onEdit).toHaveBeenCalledWith(data[0]);
   });

@@ -29,80 +29,93 @@ backend/
 
 ### Creare un Nuovo Modulo
 
-#### 1. Definisci il Modello
+Tutti i nuovi moduli backend devono seguire l'architettura **CQRS (Command Query Responsibility Segregation)**, in modo da disaccoppiare logica di business, accesso ai dati ed esposizione API (necessaria anche per l'esposizione automatica come capability in AgentMesh).
+
+#### 1. Struttura del Modulo CQRS
+
+```
+backend/modules/my_feature/
+├── __init__.py                # Entry point del modulo / service proxy
+├── api/
+│   └── rest_api.py            # Flask-Smorest Blueprint
+├── application/
+│   ├── commands/              # Dataclass dei comandi (Create, Update, Delete)
+│   ├── queries/               # Dataclass delle query (Get, List)
+│   └── handlers.py            # Command/Query Handlers
+├── domain/
+│   └── models.py              # Modello di dominio / SQLAlchemy
+└── infrastructure/
+    └── repository.py          # SQLAlchemy Repository per accesso dati
+```
+
+#### 2. Modello di Dominio (`domain/models.py`)
 
 ```python
-# myapp/models.py
 from backend.extensions import db
 from backend.core.models.base import BaseModel
 
-class MyModel(BaseModel):
-    __tablename__ = 'my_models'
+class FeatureItem(BaseModel):
+    __tablename__ = 'feature_items'
 
     name = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text)
-    active = db.Column(db.Boolean, default=True)
-
-    # Relazioni
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    user = db.relationship('User', backref='my_models')
+    code = db.Column(db.String(50), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
 ```
 
-#### 2. Crea lo Schema Marshmallow
+#### 3. Comandi e Handler (`application/`)
 
 ```python
-# myapp/schemas.py
-from marshmallow import Schema, fields
+# application/commands.py
+from dataclasses import dataclass
 
-class MyModelSchema(Schema):
-    id = fields.Int(dump_only=True)
-    name = fields.Str(required=True)
-    description = fields.Str()
-    active = fields.Bool()
-    created_at = fields.DateTime(dump_only=True)
+@dataclass
+class CreateFeatureItemCommand:
+    name: str
+    code: str
+    tenant_id: int
+
+# application/handlers.py
+class CreateFeatureItemHandler:
+    def __init__(self, repository):
+        self.repository = repository
+
+    def handle(self, command: CreateFeatureItemCommand):
+        item = FeatureItem(
+            name=command.name,
+            code=command.code,
+            tenant_id=command.tenant_id
+        )
+        return self.repository.save(item)
 ```
 
-#### 3. Crea l'API Blueprint
+#### 4. REST API Blueprint (`api/rest_api.py`)
 
 ```python
-# myapp/routes.py
-from flask import request
 from flask.views import MethodView
-from flask_smorest import Blueprint, abort
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_smorest import Blueprint
+from flask_jwt_extended import jwt_required
+from backend.core.services.tenant import TenantContext
 
-from .models import MyModel
-from .schemas import MyModelSchema
-from backend.extensions import db
-
-blp = Blueprint('myapp', __name__, url_prefix='/myapp')
+blp = Blueprint('feature_items', __name__, url_prefix='/api/v1/feature-items')
 
 @blp.route('/')
-class MyModelList(MethodView):
-    @blp.arguments(MyModelSchema)
-    @blp.response(201, MyModelSchema)
-    @jwt_required()
-    def post(self, data):
-        model = MyModel(**data)
-        db.session.add(model)
-        db.session.commit()
-        return model
-
-    @blp.response(200, MyModelSchema(many=True))
+class FeatureItemList(MethodView):
+    @blp.response(200)
     @jwt_required()
     def get(self):
-        return MyModel.query.all()
+        tenant_id = TenantContext.get_tenant_id()
+        return feature_service.list_items(tenant_id)
+
+    @blp.arguments(FeatureItemSchema)
+    @blp.response(201)
+    @jwt_required()
+    def post(self, data):
+        data['tenant_id'] = TenantContext.get_tenant_id()
+        command = CreateFeatureItemCommand(**data)
+        return feature_service.execute_command(command)
 ```
 
-#### 4. Registra il Blueprint
-
-```python
-# backend/__init__.py
-from .myapp.routes import blp as myapp_blp
-
-# Nella funzione create_app():
-api.register_blueprint(myapp_blp)
-```
+> **Pattern Legacy**: Per manutenzione di moduli semplici esistenti, è accettabile l'uso diretto di Flask-Smorest Blueprint + MethodView + `db.session` senza il layer CQRS completo, ma il pattern CQRS sopra descritto è lo standard obbligatorio per tutti i nuovi moduli.
 
 ---
 
@@ -411,4 +424,4 @@ CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "backend:create_app()"]
 
 ---
 
-*Ultimo aggiornamento: 2026-06-11*
+*Per la cronologia completa delle modifiche di questo documento, consulta la cronologia Git del repository.*

@@ -267,4 +267,4 @@ Complimenti! Hai creato un'applicazione relazionale completa con supporto GUI e 
 
 ---
 
-*Ultimo aggiornamento: 2026-06-11*
+*Per la cronologia completa delle modifiche di questo documento, consulta la cronologia Git del repository.*

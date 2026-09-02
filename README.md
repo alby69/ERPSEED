@@ -1,5 +1,6 @@
 # ERPSeed - Low-Code ERP Platform
 
+[![CI/CD Pipeline](https://github.com/alby69/ERPSEED/actions/workflows/ci.yml/badge.svg)](https://github.com/alby69/ERPSEED/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.x-orange)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -138,15 +139,17 @@ La documentazione completa è organizzata in [docs/INDEX.md](docs/INDEX.md):
 
 ## 🧪 Testing
 
+La suite di test viene eseguita automaticamente ad ogni push/PR via GitHub Actions (`.github/workflows/ci.yml`).
+
 ```bash
-# Backend
+# Backend (166+ test unitari e di integrazione)
 cd backend && pytest
 
 # Backend (con coverage)
 cd backend && pytest --cov=.
 
 # Frontend
-cd frontend && npm test
+cd frontend && npm run test:run
 ```
 
 ---

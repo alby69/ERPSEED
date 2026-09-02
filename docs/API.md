@@ -9,6 +9,23 @@ Production: https://api.your-domain.com
 
 Tutti gli endpoint API sono prefissati con `/api/v1/`. Nella documentazione che segue, il prefisso `/api/v1` è omesso per brevità (es. `GET /users` equivale a `GET /api/v1/users`).
 
+### Versionamento e Deprecazione API
+
+Le API di ERPSEED utilizzano il prefisso di versione `/api/v1/`.
+- **Breaking Changes**: Modifiche non retrocompatibili comportano l'introduzione di un nuovo prefisso di versione major (es. `/api/v2/`).
+- **Non-Breaking Changes**: L'aggiunta di nuovi campi opzionali o nuovi endpoint viene integrata nella versione corrente.
+- **Politica di Deprecazione**: Gli endpoint deprecati restituiscono l'header `Warning: 299 - Deprecated` e vengono mantenuti per almeno due minor release prima della dismissione.
+
+### Paginazione Standard
+
+Tutti gli endpoint di tipo **List** (es. `/users`, `/products`, `/sales-orders`, e tutti i moduli ERP sotto elencati) supportano la paginazione standard:
+- **Query Parameters**: `?page=1&per_page=20` (default: `page=1`, `per_page=20`, max `per_page=100`).
+- **Response Headers**:
+  - `X-Total-Count`: Numero totale dei record trovati
+  - `X-Pages`: Numero totale di pagine disponibili
+  - `X-Current-Page`: Pagina attualmente restituita
+  - `X-Per-Page`: Numero di elementi per pagina
+
 ## Autenticazione
 
 Tutti gli endpoint (eccetto `/auth/*`) richiedono JWT Bearer token:
@@ -769,6 +786,44 @@ Authorization: Bearer <token>
 }
 ```
 
+### Capabilities AgentMesh (`/api/v1/ai/capabilities`)
+
+Endpoint per il discovery delle capacità ed esecuzione dei tool agentici per l'integrazione con AgentMesh (vedi anche [AGENTMESH.md](AGENTMESH.md)).
+
+#### Manifest Completo Capacità
+
+```http
+GET /api/v1/ai/capabilities
+Authorization: Bearer <token>
+```
+
+**Risposta (200):**
+```json
+{
+  "success": true,
+  "count": 12,
+  "manifest": [
+    {
+      "agent": "sales",
+      "capabilities": [
+        {
+          "name": "sales.create_order",
+          "description": "Crea un nuovo ordine di vendita",
+          "parameters": { "customer_id": "integer", "lines": "array" }
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### Capacità per Agente Specifico
+
+```http
+GET /api/v1/ai/capabilities/{agent_name}
+Authorization: Bearer <token>
+```
+
 ---
 
 ## Moduli ERP
@@ -848,6 +903,17 @@ Authorization: Bearer <token>
 | PUT | `/api/v1/goods-receipt/<id>` | Modifica |
 | DELETE | `/api/v1/goods-receipt/<id>` | Elimina |
 | POST | `/api/v1/goods-receipt/<id>/complete` | Completa (carica stock) |
+
+### Resi Acquisti (`/api/v1/purchase-returns`)
+
+| Method | Endpoint | Descrizione |
+|--------|----------|-------------|
+| GET | `/api/v1/purchase-returns` | Lista resi a fornitore |
+| POST | `/api/v1/purchase-returns` | Crea reso a fornitore |
+| GET | `/api/v1/purchase-returns/<id>` | Dettaglio reso |
+| PUT | `/api/v1/purchase-returns/<id>` | Modifica reso (solo stato `draft`) |
+| DELETE | `/api/v1/purchase-returns/<id>` | Elimina reso |
+| POST | `/api/v1/purchase-returns/<id>/complete` | Completa reso (scarica giacenza) |
 
 ### Scadenzario (`/api/v1/maturities`)
 
