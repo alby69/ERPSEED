@@ -81,5 +81,5 @@ jobs:
       - name: Run Lychee Link Checker
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --verbose --no-progress './**.md'
+          args: --verbose --no-progress '**/*.md'
           fail: true
