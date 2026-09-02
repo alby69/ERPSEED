@@ -11,14 +11,14 @@ ERPSeed è una piattaforma ERP open-source e modulare che permette alle organizz
 ## 🚀 Quick Start (Docker)
 
 ```bash
-git clone https://github.com/your-repo/erpseed.git && cd erpseed
+git clone https://github.com/alby69/ERPSEED.git && cd ERPSEED
 docker-compose up -d --build
 ```
 
 Backend: `http://localhost:5000` | Swagger: `http://localhost:5000/swagger-ui` | Frontend: `http://localhost:5173`
 **Login**: `admin@erpseed.org` / `admin123` (cambiala subito!)
 
-Vedi [backend/docs/QUICKSTART.md](backend/docs/QUICKSTART.md) per setup manuale e comandi Docker.
+Vedi [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) per setup manuale e comandi Docker.
 
 ---
 
@@ -78,13 +78,14 @@ erpseed/
 │   │   ├── builder/                #   No-Code Builder
 │   │   ├── dynamic_api/            #   Dynamic CRUD engine
 │   │   ├── gdo/                    #   GDO Reconciliation
+│   │   ├── logistics/              #   Servizi Logistici e Routing
 │   │   ├── projects/               #   Progetti
 │   │   ├── users/                  #   Utenti
 │   │   └── system_tools/           #   Template, Versioning, Debug
 │   ├── plugins/                    # Plugin estensibili
-│   │   └── inventory/              #   Inventory plugin (ubicazioni, stock, conteggi)
-│   ├── seeds/                      # Database seed scripts
-│   └── docs/                       # Documentazione
+│   └── seeds/                      # Database seed scripts
+│
+├── docs/                            # Documentazione centralizzata (13 file attivi)
 │
 └── frontend/                        # React + Vite + Ant Design
     ├── src/
@@ -98,21 +99,22 @@ erpseed/
 
 ## 📚 Documentazione
 
-La documentazione completa è organizzata in [backend/docs/INDEX.md](backend/docs/INDEX.md):
+La documentazione completa è organizzata in [docs/INDEX.md](docs/INDEX.md):
 
 | Area | Documento | Contenuto |
 |------|-----------|-----------|
-| **Panoramica** | [ARCHITECTURE.md](backend/docs/ARCHITECTURE.md) | Architettura, pattern, struttura |
-| **Guida Rapida** | [QUICKSTART.md](backend/docs/QUICKSTART.md) | Docker, setup, comandi |
-| **Sviluppo** | [DEVELOPER_GUIDE.md](backend/docs/DEVELOPER_GUIDE.md) | Setup dev, creazione moduli, testing |
-| **API** | [API.md](backend/docs/API.md) | Riferimento endpoint completo |
-| **Manuale Utente** | [USER_MANUAL.md](backend/docs/USER_MANUAL.md) | Uso piattaforma |
-| **Roadmap** | [ROADMAP.md](backend/docs/ROADMAP.md) | Stato avanzamento e priorità |
-| **Piano ERP** | [IMPLEMENTATION_PLAN.md](backend/docs/IMPLEMENTATION_PLAN.md) | Piano blocchi ERP |
-| **Tutorial AI** | [TUTORIAL_AI_ASSISTANT.md](backend/docs/TUTORIAL_AI_ASSISTANT.md) | Uso AI Assistant |
-| **Tutorial Fleet** | [TUTORIAL_FLEET.md](backend/docs/TUTORIAL_FLEET.md) | Fleet Management via GUI |
-| **Frontend** | [FRONTEND_GUIDE.md](frontend/docs/FRONTEND_GUIDE.md) | Guida sviluppo frontend |
-| **Branch Git** | [BRANCH_STRATEGY.md](backend/docs/BRANCH_STRATEGY.md) | Strategia branch |
+| **Panoramica** | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architettura, pattern, struttura |
+| **Guida Rapida** | [GETTING_STARTED.md](docs/GETTING_STARTED.md) | Docker, setup locale, comandi |
+| **Sviluppo Backend** | [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | Setup dev, convenzioni refactoring, moduli, testing |
+| **Sviluppo Frontend** | [FRONTEND_GUIDE.md](docs/FRONTEND_GUIDE.md) | Guida sviluppo React/Vite/UI |
+| **API** | [API.md](docs/API.md) | Riferimento endpoint completo |
+| **AgentMesh AI** | [AGENTMESH.md](docs/AGENTMESH.md) | Architettura ERP distribuito agentico |
+| **Manuale Utente** | [USER_MANUAL.md](docs/USER_MANUAL.md) | Uso piattaforma e builder |
+| **Roadmap Qualità** | [ROADMAP.md](docs/ROADMAP.md) | Refactoring KISS/DRY e priorità |
+| **Piano ERP** | [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Stato avanzamento 24 blocchi ERP |
+| **Tutorial Fleet** | [TUTORIAL_FLEET.md](docs/TUTORIAL_FLEET.md) | Fleet Management via GUI & CLI |
+| **Tutorial AI** | [TUTORIAL_AI_ASSISTANT.md](docs/TUTORIAL_AI_ASSISTANT.md) | Uso AI Assistant |
+| **Branch Git** | [BRANCH_STRATEGY.md](docs/BRANCH_STRATEGY.md) | Strategia branch e workflow |
 
 ---
 
@@ -146,8 +148,6 @@ cd backend && pytest --cov=.
 # Frontend
 cd frontend && npm test
 ```
-
-**Stato attuale: 134 test, 0 failures, 0 errors.**
 
 ---
 

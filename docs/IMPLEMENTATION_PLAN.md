@@ -1,5 +1,9 @@
 # Piano di Implementazione ERP Blocks
 
+> **Nota:** Questo documento possiede lo stato di avanzamento e l'architettura dei 24 blocchi funzionali ERP. Per la roadmap di qualità del codice e debito tecnico (Fasi 0-4 KISS/DRY), consulta [ROADMAP.md](ROADMAP.md). Per le convenzioni di refactoring per sviluppatori, consulta [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md#convenzioni-di-refactoring).
+
+---
+
 ## Indice
 1. [Blocchi Primitivi (Atomi)](#1-blocchi-primitivi-atomi)
 2. [Aree Funzionali e Blocchi Compositi](#2-aree-funzionali-e-blocchi-compositi)
@@ -8,6 +12,8 @@
 5. [Frontend: Struttura Menu](#5-frontend-struttura-menu)
 6. [Piano di Implementazione per Fasi](#6-piano-di-implementazione-per-fasi)
 7. [Template Nuovo Modulo CQRS](#7-template-nuovo-modulo-cqrs)
+8. [Stato di Avanzamento Attuale](#8-stato-di-avanzamento-attuale-giugno-2026)
+9. [Piano Esecutivo Dettagliato](#9-piano-esecutivo-dettagliato--fase-05)
 
 ---
 
@@ -38,7 +44,7 @@ Sono le entità fondamentali, non scomponibili, che vengono riutilizzate per cos
 
 ## 2. Aree Funzionali e Blocchi Compositi
 
-Ogni **Area** corrisponde a un submenu di "Applicazioni" nella sidebar. I blocchi sono elencati per priorità come da `ERP_BLOCKS_ANALYSIS.md`.
+Ogni **Area** corrisponde a un submenu di "Applicazioni" nella sidebar.
 
 ### Area 1: Anagrafiche e Dati Base
 *Submenu: "Anagrafiche" — Icona: `<UserOutlined />`*
@@ -322,81 +328,12 @@ Applicazioni
     └── Report Designer            /reports                    [NEW]
 ```
 
-### Modifiche Necessarie
-
-1. **`frontend/src/components/Sidebar.jsx`** — Ristrutturare `appMenuItems` in sezioni annidate per Area. Aggiungere icone dedicate per ogni area. Mantenere compatibilità con `projectMenuItems` (dinamici) che vanno in fondo alla lista o nell'area Progetti.
-
-2. **`frontend/src/components/ui/Navigation/constants.js`** — Aggiornare `DEFAULT_NAVIGATIONS.main` con la struttura ad albero per aree. Aggiungere nuove icone in `DEFAULT_ICONS`.
-
-3. **`frontend/src/App.jsx`** — Aggiungere tutte le nuove route. Ogni nuova pagina usa `GenericCrudPage` o componente dedicato, con `ProtectedRoute`.
-
-4. **`frontend/src/locales/*/translation.json`** — Nuove chiavi per ogni area/blocco:
-   ```json
-   {
-     "menu": {
-       "areas": {
-         "anagrafiche": "Anagrafiche",
-         "acquisti": "Acquisti",
-         "vendite": "Vendite",
-         "magazzino": "Magazzino",
-         "contabilita": "Contabilità",
-         "produzione": "Produzione",
-         "hr": "Risorse Umane",
-         "progetti": "Progetti",
-         "analytics": "Analytics"
-       },
-       "blocks": {
-         "categorie": "Categorie Prodotto",
-         "aliquoteIva": "Aliquote IVA",
-         "unitaMisura": "Unità di Misura",
-         "listini": "Listini Prezzo",
-         "pianoConti": "Piano dei Conti",
-         "richiesteAcquisto": "Richieste d'Acquisto",
-         "preventiviFornitori": "Preventivi Fornitori",
-         "ddtEntrata": "DDT Entrata Merci",
-         "resiAcquisto": "Resi Acquisti",
-         "preventivi": "Preventivi",
-         "ddtVendita": "DDT Vendita",
-         "fatture": "Fatture",
-         "resiVendita": "Resi Vendita",
-         "crm": "CRM",
-         "contratti": "Contratti",
-         "giacenze": "Giacenze",
-         "movimenti": "Movimenti di Magazzino",
-         "inventari": "Inventari Fisici",
-         "lotti": "Lotti e Serial Number",
-         "primaNota": "Prima Nota",
-         "scadenzario": "Scadenzario",
-         "registriIva": "Registri IVA",
-         "intrastat": "Intrastat",
-         "bom": "Distinte Base",
-         "cicliLavoro": "Cicli di Lavoro",
-         "ordiniProduzione": "Ordini di Produzione",
-         "dipendenti": "Dipendenti",
-         "reparti": "Reparti",
-         "presenze": "Presenze",
-         "feriePermessi": "Ferie e Permessi",
-         "timesheet": "Timesheet",
-         "budgetCommessa": "Budget Commessa",
-         "reportDesigner": "Report Designer"
-       }
-     }
-   }
-   ```
-
 ---
 
 ## 6. Piano di Implementazione per Fasi
 
 ### Fase 0 — Refactoring Sidebar e Struttura (Frontend)
 *Obiettivo: Preparare la struttura a menu per accogliere tutti i blocchi*
-
-**File da modificare:**
-- `frontend/src/components/Sidebar.jsx`
-- `frontend/src/components/ui/Navigation/constants.js`
-- `frontend/src/components/ui/Navigation/AppSidebar.jsx`
-- `frontend/src/App.jsx` (aggiungere route placeholder)
-- `frontend/src/locales/*/translation.json`
 
 ### Fase 1 — Quick Win (P0/P1, ~7gg)
 *Colmare i gap che spezzano flussi già iniziati*
@@ -423,28 +360,8 @@ Applicazioni
 ### Fase 3 — Verticali (P1/P2, ~28gg)
 *Blocchi verticali di business*
 
-| # | Blocco | Modulo | Sforzo | Dipende da |
-|---|--------|--------|--------|-----------|
-| 11 | **Scadenzario/Partite** | `modules/accounting/` | 5gg | Fatture, Soggetti |
-| 12 | **CRM (Lead/Opportunità)** | `modules/crm/` CQRS | 5gg | Soggetti |
-| 13 | **DDT Vendita** | Estensione `sales/` | 5gg | Ordini Vendita, Magazzino |
-| 14 | **Preventivi** | Estensione `sales/` | 3gg | Ordini Vendita |
-| 15 | **Dipendenti + Reparti** | `modules/hr/` CQRS | 5gg | Soggetti, Ruoli |
-| 16 | **Contratti** | `modules/contracts/` CQRS | 5gg | Soggetti, Prodotti |
-
 ### Fase 4 — Specializzazioni (P2/P3, ~50gg)
 *Estensioni verticali e nicchie*
-
-| # | Blocco | Modulo | Sforzo |
-|---|--------|--------|--------|
-| 17 | **BOM + Cicli Lavoro + ODP** | `modules/manufacturing/` CQRS | 15gg | ✅ |
-| 18 | **Timesheet + Budget Commessa** | `modules/projects/` | 8gg | ✅ |
-| 19 | **Report Designer** | `modules/analytics/` | 8gg | ✅ |
-| 20 | **HR completo (Presenze, Ferie)** | `modules/hr/` | 8gg | ✅ |
-| 21 | **Registri IVA + Intrastat** | `modules/accounting/` | 8gg | ✅ |
-| 22 | **Ri.Ba. + Lotti/Seriali** | `modules/accounting/` + `modules/inventory/` | 8gg | ✅ |
-| 23 | **Richieste Acquisto + RFQ** | `modules/purchases/` | 8gg | ✅ |
-| 24 | **MRP** | `modules/manufacturing/` | 20gg | ✅ |
 
 ---
 
@@ -458,348 +375,6 @@ from .service_api import execute
 from .domain.models import *
 from .domain.events import *
 ```
-
-```python
-# modules/<nome>/service_api.py
-def execute(command_data: dict) -> dict:
-    from .container import get_container
-    container = get_container()
-    handler = container.get_command_handler(command_data)
-    return handler.handle(command_data)
-```
-
-```python
-# modules/<nome>/domain/models.py
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Optional
-
-@dataclass
-class EntityName:
-    id: Optional[str] = None
-    tenant_id: Optional[str] = None
-    code: str = ""
-    name: str = ""
-    is_active: bool = True
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-    def validate(self) -> list[str]:
-        errors = []
-        if not self.code:
-            errors.append("code is required")
-        if not self.name:
-            errors.append("name is required")
-        return errors
-
-    def to_dict(self) -> dict:
-        return {k: v for k, v in self.__dict__.items() if v is not None}
-
-    @classmethod
-    def from_dict(cls, data: dict) -> 'EntityName':
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
-```
-
-```python
-# modules/<nome>/domain/events.py
-from shared.domain_events import DomainEvent
-
-class EntityCreatedEvent(DomainEvent):
-    type = "entity.created"
-
-class EntityUpdatedEvent(DomainEvent):
-    type = "entity.updated"
-
-class EntityDeletedEvent(DomainEvent):
-    type = "entity.deleted"
-```
-
-```python
-# modules/<nome>/application/commands/__init__.py
-from dataclasses import dataclass
-from typing import Optional
-from shared.commands import Command, CreateCommand, UpdateCommand, DeleteCommand, QueryCommand
-
-@dataclass
-class CreateEntityCommand(CreateCommand):
-    code: str = ""
-    name: str = ""
-    is_active: bool = True
-
-@dataclass
-class UpdateEntityCommand(UpdateCommand):
-    entity_id: str = ""
-    code: Optional[str] = None
-    name: Optional[str] = None
-    is_active: Optional[bool] = None
-
-@dataclass
-class DeleteEntityCommand(DeleteCommand):
-    entity_id: str = ""
-
-@dataclass
-class GetEntityQuery(QueryCommand):
-    entity_id: str = ""
-
-@dataclass
-class ListEntitiesQuery(QueryCommand):
-    search: Optional[str] = None
-    is_active: Optional[bool] = None
-    page: int = 1
-    per_page: int = 20
-```
-
-```python
-# modules/<nome>/application/handlers.py
-from shared.handlers import CommandHandler, CommandResult, CreateHandler, UpdateHandler, DeleteHandler, QueryHandler
-from .commands import *
-from ..domain.models import EntityName
-from ..domain.events import EntityCreatedEvent, EntityUpdatedEvent, EntityDeletedEvent
-from ..infrastructure.repository import EntityRepository
-
-class CreateEntityHandler(CreateHandler):
-    def __init__(self, repository: EntityRepository, event_bus=None):
-        self.repository = repository
-        self.event_bus = event_bus
-
-    def handle(self, command: CreateEntityCommand) -> CommandResult:
-        entity = EntityName.from_dict(command.to_payload())
-        errors = entity.validate()
-        if errors:
-            return CommandResult(success=False, errors=errors)
-        created = self.repository.create(entity.to_dict())
-        if self.event_bus:
-            self.event_bus.publish(EntityCreatedEvent(data=created))
-        return CommandResult(success=True, data=created)
-
-class ListEntitiesHandler(QueryHandler):
-    def __init__(self, repository: EntityRepository):
-        self.repository = repository
-
-    def handle(self, query: ListEntitiesQuery) -> CommandResult:
-        result = self.repository.list(vars(query))
-        return CommandResult(success=True, data=result)
-```
-
-```python
-# modules/<nome>/infrastructure/repository.py
-from backend.shared.repository import BaseRepository
-from backend.models import db
-
-class EntityModel(db.Model):
-    __tablename__ = 'entities'
-    id = db.Column(db.String(36), primary_key=True)
-    tenant_id = db.Column(db.String(36), nullable=False)
-    code = db.Column(db.String(50), nullable=False)
-    name = db.Column(db.String(200), nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=db.func.now())
-    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
-
-class EntityRepository(BaseRepository):
-    model_cls = EntityModel
-
-    def create(self, data: dict) -> dict:
-        instance = self.model_cls(**data)
-        db.session.add(instance)
-        db.session.commit()
-        return instance.to_dict()
-
-    def list(self, filters: dict) -> list:
-        query = self.model_cls.query.filter_by(tenant_id=filters.get('tenant_id'))
-        if filters.get('search'):
-            query = query.filter(self.model_cls.name.ilike(f'%{filters["search"]}%'))
-        page = filters.get('page', 1)
-        per_page = filters.get('per_page', 20)
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-        return {
-            'items': [item.to_dict() for item in pagination.items],
-            'total': pagination.total,
-            'page': page,
-            'per_page': per_page
-        }
-```
-
-```python
-# modules/<nome>/api/rest_api.py
-from flask_smorest import Blueprint, abort
-from flask.views import MethodView
-from marshmallow import Schema, fields
-
-api = Blueprint('entities', __name__, description='Entity Management')
-
-class EntitySchema(Schema):
-    id = fields.String(dump_only=True)
-    code = fields.String(required=True)
-    name = fields.String(required=True)
-    is_active = fields.Boolean(dump_default=True)
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-
-class EntityQuerySchema(Schema):
-    search = fields.String()
-    is_active = fields.Boolean()
-    page = fields.Integer(dump_default=1)
-    per_page = fields.Integer(dump_default=20)
-
-@api.route('/')
-class EntityList(MethodView):
-    @api.arguments(EntityQuerySchema, location='query')
-    @api.response(200, EntitySchema(many=True))
-    def get(self, args):
-        from ..service_api import execute
-        result = execute({'command_type': 'list', **args})
-        if not result['success']:
-            abort(500, message=str(result.get('errors')))
-        return result['data']
-
-    @api.arguments(EntitySchema)
-    @api.response(201, EntitySchema)
-    def post(self, args):
-        from ..service_api import execute
-        result = execute({'command_type': 'create', **args})
-        if not result['success']:
-            abort(400, message=str(result.get('errors')))
-        return result['data']
-```
-
----
-
-## Appendice: Riepilogo Time-to-Value
-
-Completando **Fase 0 + Fase 1 + Fase 2** (~47gg/uomo), l'ERP copre i cicli fondamentali:
-
-```
-Anagrafiche → Prodotti (con IVA, UM, Categorie, Listini)
-    → Ordini Vendita → DDT → Fattura → Movimento Magazzino → Prima Nota → Scadenzario
-    → Ordini Acquisto → DDT Entrata → Movimento Magazzino → Prima Nota → Scadenzario
-```
-
-**Legenda:**
-- ✅ Esistente e funzionante
-- ⚠️ Esiste struttura base, da completare
-- 🔶 Backend presente, manca UI
-- ❌ Da implementare
-- ✅ Completato
-
----
-
-## Appendice A — Analisi Copertura ERP Standard (Giugno 2026)
-
-*A seguire l'analisi della copertura ERPSeed vs ERP standard, che ha guidato la prioritizzazione. Tutti i blocchi marcati come ❌ o 🔶 in questa analisi sono ora ✅ (completati) dopo le Fasi 3-4.*
-
-### Legenda Originale
-- ✅ **Presente** — implementato e funzionante
-- ⚠️ **Parziale** — esiste struttura base ma mancano funzionalità
-- 🔶 **Backend Only** — c'è il backend ma manca UI frontend
-- ❌ **Mancante** — non implementato
-
-### Area: Anagrafiche e Dati Base
-| Blocco | Allora | Ora | Note |
-|--------|--------|-----|------|
-| Soggetti (Clienti/Fornitori) | ✅ | ✅ | entities/ + SoggettiPage |
-| Ruoli/Settori | ✅ | ✅ | entities/ + RuoliPage |
-| Indirizzi | ✅ | ✅ | entities/ + IndirizziPage |
-| Contatti | ✅ | ✅ | entities/ + ContattiPage |
-| Comuni/Regioni/Province | ✅ | ✅ | entities/ + ComuniPage |
-| Prodotti/Servizi | ✅ | ✅ | products/ + Products |
-| Categorie Merceologiche | ❌ | ✅ | `modules/product_categories/` |
-| Listini Prezzo | ❌ | ✅ | `modules/pricing/` + PriceListsPage |
-| Aliquote IVA | ❌ | ✅ | `modules/tax/` + TaxRatesPage |
-| Unità di Misura | ⚠️ | ✅ | `modules/uom/` + UnitsOfMeasurePage |
-| Magazzini/Depositi | ❌ | ⚠️ | Plugin inventory/ abbozzato |
-| Conti Contabili (Piano dei Conti) | ❌ | ⚠️ | Plugin accounting/ presente ma non integrato |
-
-### Area: Logistica e Acquisti
-| Blocco | Allora | Ora | Note |
-|--------|--------|-----|------|
-| Ordini Acquisto | 🔶 | ✅ | UI PurchaseOrdersPage |
-| Richiesta d'Acquisto | ❌ | ✅ | `modules/purchase_requests/` |
-| Preventivi Fornitori (RFQ) | ❌ | ✅ | `modules/purchase_requests/` + RFQ tab |
-| Entrata Merci (DDT) | ❌ | ✅ | `modules/goods_receipt/` |
-| Resi Acquisti | ❌ | ❌ | Non ancora implementato |
-
-### Area: Vendite e CRM
-| Blocco | Allora | Ora | Note |
-|--------|--------|-----|------|
-| Ordini Vendita | ✅ | ✅ | sales/ (CQRS) + Sales page |
-| Preventivi | ❌ | ✅ | QuotationsPage (via SalesOrder type=quote) |
-| Contratti | ❌ | ✅ | `modules/contracts/` |
-| DDT Vendita | ❌ | ✅ | DeliveryNotesPage (via SalesOrder type=delivery_note) |
-| Fatturazione | ❌ | ✅ | `modules/invoicing/` (CQRS) |
-| Resi Vendita | ❌ | ✅ | `modules/sales/` |
-| CRM (Lead, Opportunità) | ❌ | ✅ | `modules/crm/` |
-
-### Area: Magazzino e Inventory
-| Blocco | Allora | Ora | Note |
-|--------|--------|-----|------|
-| Giacenze di Magazzino | ⚠️ | ✅ | StockLevelsPage |
-| Movimenti di Magazzino | ❌ | ✅ | `modules/inventory/` + StockMovementsPage |
-| Inventario Fisico | ❌ | ✅ | `modules/inventory/` |
-| Lotto/Serial Number | ❌ | ✅ | `modules/lot/` + LotsPage |
-| Picking/Packing | ❌ | ✅ | `modules/inventory/` |
-
-### Area: Contabilità e Finanza
-| Blocco | Allora | Ora | Note |
-|--------|--------|-----|------|
-| Piano dei Conti | ❌ | ⚠️ | Plugin accounting/ presente |
-| Prima Nota | ❌ | ✅ | JournalPage |
-| Partite Clienti/Fornitori (Scadenzario) | ❌ | ✅ | `modules/maturities/` + MaturitiesPage |
-| Fatture (Acquisto/Vendita) | ❌ | ✅ | InvoicesPage + modulo CQRS invoicing |
-| Registri IVA | ❌ | ✅ | `modules/vat/` + VatRegistersPage |
-| Liquidazione IVA | ❌ | ✅ | `modules/vat/` (automatica da registro) |
-| Intrastat | ❌ | ✅ | `modules/vat/` + IntrastatPage |
-| Ricevute Bancarie (Ri.Ba.) | ❌ | ✅ | `modules/riba/` + RiBaPage |
-
-### Area: Produzione
-| Blocco | Allora | Ora | Note |
-|--------|--------|-----|------|
-| Distinta Base (BOM) | ❌ | ✅ | `modules/manufacturing/` |
-| Ciclo di Lavoro | ❌ | ✅ | `modules/manufacturing/` |
-| Ordini di Produzione (ODP) | ❌ | ✅ | `modules/manufacturing/` |
-| MRP | ❌ | ✅ | `modules/mrp/` + MRPPage |
-| Controllo Qualità | ❌ | ✅ | `modules/manufacturing/` |
-
-### Area: HR e Payroll
-| Blocco | Allora | Ora | Note |
-|--------|--------|-----|------|
-| Dipendenti | ❌ | ✅ | HR tab Employees |
-| Presenze/Timbrature | ❌ | ✅ | HR tab Attendance |
-| Ferie e Permessi | ❌ | ✅ | HR tab Leave |
-| Buste Paga | ❌ | ❌ | Non ancora implementato |
-| Formazione | ❌ | ❌ | Non ancora implementato |
-
-### Area: Project Management
-| Blocco | Allora | Ora | Note |
-|--------|--------|-----|------|
-| Progetti | ✅ | ✅ | projects/ CQRS |
-| **ER Engine (Relazioni)**| ✅ | ✅ | Gestione visiva (XYFlow), chiavi esterne e Master-Detail |
-| Workflow Automation | ✅ | ✅ | automation/ |
-| Business Rules | ✅ | ✅ | BusinessRulesPage |
-| Timesheet | ❌ | ✅ | `modules/project_management/` |
-| Budget Commessa | ❌ | ✅ | `modules/project_management/` (KPI) |
-
-### Area: BI e Analytics
-| Blocco | Allora | Ora | Note |
-|--------|--------|-----|------|
-| Dashboard KPI | ✅ | ✅ | analytics/ + Dashboard |
-| Dashboard Builder | ⚠️ | ⚠️ | SysDashboardBuilder presente |
-| Chart Builder | ✅ | ✅ | ECharts/ApexCharts/Chart.js |
-| Report Designer | ❌ | ✅ | `modules/report_designer/` |
-| Export Excel/PDF | ⚠️ | ✅ | PDF via xhtml2pdf, Export CSV |
-
----
-
-## Appendice B — Guida al Refactoring per Sviluppatori
-
-Quando si modifica un modulo esistente:
-1. **Verificare il BaseModel**: Assicurarsi di importare da `backend.core.models.base`.
-2. **Usare BaseService**: Se il servizio fa CRUD semplice, non riscrivere i metodi, usa quelli ereditati.
-3. **Disaccoppiamento**: Non importare servizi direttamente se possibile; usare il pattern `ServiceProxy` o l'iniezione tramite container.
-
----
-
-*Ultimo aggiornamento: 2026-06-11*
 
 ---
 
@@ -822,104 +397,18 @@ Tutti i 24 blocchi ERP pianificati sono **completati e funzionanti**. Di seguito
 | **Analytics** | Dashboard KPI, Dashboard Builder, Chart Builder, Workflow Editor, Report Designer, Export | ✅ 6/6 |
 | **Sistema** | **Marketplace**, **Import/Export**, **API Docs**, **Redis Cache** | ✅ 4/4 |
 
-### Gap Rilevati
-
-| # | Gap | Criticità | Stato | Note |
-|---|-----|-----------|-------|------|
-| G1 | **Resi Acquisti** | Alta | ✅ Risolto | Modulo CQRS + test (Fase 1.1) |
-| G2 | **Piano dei Conti UI** | Alta | ✅ Risolto | `ChartOfAccounts.jsx` creato (Fase 1.2) |
-| G3 | **Buste Paga (Payroll)** | Media | ✅ Risolto | Modelli + API in `plugins/hr/` (Fase 2) |
-| G4 | **Formazione** | Media | ✅ Risolto | Modelli + API in `plugins/hr/` (Fase 2) |
-| G5 | **Dashboard Builder** | Media | ✅ Già completo | 495 righe, funzionante |
-| G6 | **Workflow Visual Editor** | Media | ✅ Già completo | 400 righe, funzionante |
-| G7 | **Test coverage** | Media | ✅ Migliorato | Da 18 a **134 test** |
-| G8 | **Redis Caching** | Media | ✅ Risolto | Flask-Caching integrato su endpoint GET (Fase 4) |
-| G9 | **Query Optimization** | Media | ✅ Risolto | SQLA 2.0 patterns fix, N+1 ridotti |
-| G10 | **i18n completo** | Media | 🔲 Da fare | ~30% chiavi tradotte, da completare |
-| G11 | **Plugin Store UI** | Bassa | ✅ Risolto | `MarketplaceBrowse.jsx` già presente + sidebar |
-| G12 | **Integrazione contabile** | Alta | ✅ Risolto | Trial Balance UI, from-invoices, VAT/Intrastat (Fase 3) |
-| G13 | **Fattura Elettronica** | Media | ✅ Risolto | `modules/fattura_elettronica/` genera XML (Fase 5) |
-| G14 | **Plugin system** | Alta | ✅ Risolto | `api.init_app(app)` prima di plugin, `create_plugin_manager(api)` |
-
 ---
 
 ## 9. Piano Esecutivo Dettagliato — Fase 0→5
 
 ### Fase 0 — Stabilizzazione Critica (~3gg)
-
-*Obiettivo: Rendere il progetto robusto prima di aggiungere feature*
-
-| # | Task | File Coinvolti | Sforzo |
-|---|------|---------------|--------|
-| 0.1 | **Test base per moduli core** | `backend/tests/test_tax.py`, `test_uom.py`, `test_pricing.py`, `test_invoicing.py`, `test_manufacturing.py`, `test_goods_receipt.py`, `test_project_management.py`, `test_report_designer.py` | 2gg |
-| 0.2 | **Fix placeholder maturities/from-invoices** | `backend/modules/maturities/api.py` | 0.5gg |
-| 0.3 | **Ricreare Sidebar.jsx e useCrudData.js stub** | `frontend/src/pages/Sidebar.jsx`, `frontend/src/hooks/useCrudData.js` | 0.5gg |
-| 0.4 | **Verifica import circolari in backend/__init__.py** | `backend/__init__.py` | 0.5gg |
-
 ### Fase 1 — Colmare Gap Funzionali (~12gg)
-
-*Obiettivo: Completare le funzionalità ERP mancanti*
-
-| # | Task | Backend | Frontend | Sforzo |
-|---|------|---------|----------|--------|
-| 1.1 | **Resi Acquisti** | `modules/purchase_returns/` CQRS | `PurchaseReturns.jsx` + route | 3gg |
-| 1.2 | **Piano dei Conti UI** | Bridge API da `plugins/accounting/` | `ChartOfAccounts.jsx` + route | 2gg |
-| 1.3 | **Dashboard Builder** | API SysDashboard CRUD completa | Completare `DashboardBuilder.jsx` | 3gg |
-| 1.4 | **Workflow Visual Editor** | API salvataggio workflow graph | UI XYFlow per workflow visuale | 4gg |
-
 ### Fase 2 — HR Completo (~8gg)
-
-*Obiettivo: Completare l'area HR con buste paga e formazione*
-
-| # | Task | Backend | Frontend | Sforzo |
-|---|------|---------|----------|--------|
-| 2.1 | **Buste Paga (Payroll)** | `modules/payroll/` CQRS + xhtml2pdf | `Payroll.jsx` + stampa cedolino PDF | 5gg |
-| 2.2 | **Formazione** | `modules/training/` CQRS | `Training.jsx` + calendario | 3gg |
-
 ### Fase 3 — Integrazione Contabilità (~8gg)
-
-*Obiettivo: Collegare fatture → prima nota → scadenzario in flusso automatico*
-
-| # | Task | Moduli Coinvolti | Sforzo | Stato |
-|---|------|-----------------|--------|-------|
-| 3.1 | **Fatture → Prima Nota** | `modules/invoicing/` → `plugins/accounting/` | 3gg | ✅ Backend presente (invoice API + journal API) |
-| 3.2 | **Prima Nota → Scadenzario** | `plugins/accounting/` → `modules/maturities/` | 2gg | ✅ `/api/v1/maturities/from-invoices` endpoint |
-| 3.3 | **Seed Piano dei Conti IT** | `backend/seeds/seed_chart_of_accounts.py` | 1gg | ✅ Esistente |
-| 3.4 | **Bilancio di Verifica UI** | `plugins/accounting/routes.py` + `TrialBalance.jsx` | 1gg | ✅ Creata pagina `/trial-balance` |
-
 ### Fase 4 — Quality & Performance (~15gg)
-
-*Obiettivo: Migliorare robustezza, velocità e copertura*
-
-| # | Task | Dettaglio | Sforzo |
-|---|------|-----------|--------|
-| 4.1 | **Test coverage** | Portare dal <5% al 40%+ | 5gg |
-| 4.2 | **Redis Caching** | `@cache.cached` su endpoint GET frequenti | 3gg |
-| 4.3 | **Query Optimization** | `joinedload()` su relazioni N+1 | 3gg |
-| 4.4 | **Rate Limiting** | Applicare a tutti gli endpoint API | 1gg |
-| 4.5 | **i18n completo** | Completare traduzioni IT/EN | 3gg |
-
 ### Fase 5 — Estensioni (~13gg)
 
-*Obiettivo: Feature avanzate per utenza professionale*
-
-| # | Task | Dettaglio | Sforzo | Stato |
-|---|------|-----------|--------|-------|
-| 5.1 | **Plugin Store UI** | Gestione plugin dal marketplace | 3gg | ✅ `MarketplaceBrowse.jsx` + sidebar menu |
-| 5.2 | **Import/Export Batch UI** | UI drag & drop CSV/XLSX | 3gg | ✅ `ProjectImportExportPage.jsx` + sidebar menu |
-| 5.3 | **Fattura Elettronica** | XML FatturaElettronicaPA + invio SDI/PEC | 5gg | ✅ `modules/fattura_elettronica/` endpoint + XML |
-| 5.4 | **API Public Docs** | Swagger UI / Redoc | 2gg | ✅ `/swagger-ui` già configurato + sidebar link |
-
-### Gantt di Massima
-
-```
-Settimana 1-2:  ✅ Fase 0 (test stabilizzazione)
-Settimana 3-4:  ✅ Fase 1 (Resi Acquisti, Piano Conti, Dashboard, Workflow)
-Settimana 5-6:  ✅ Fase 2 (Payroll, Formazione HR)
-Settimana 7-8:  ✅ Fase 3 (Integrazione Contabile)
-Settimana 9-11: ✅ Fase 4 (Test coverage, Redis caching, bug fix)
-Settimana 12-14: ✅ Fase 5 (Fattura Elettronica, Marketplace, Import/Export, API Docs)
-```
+---
 
 ## Stato Avanzamento (2026-06-11)
 
@@ -933,4 +422,6 @@ Settimana 12-14: ✅ Fase 5 (Fattura Elettronica, Marketplace, Import/Export, AP
 | **Fase 5** — Estensioni | ✅ **Completa** | Fattura Elettronica XML, Marketplace UI, Import/Export UI, API Docs sidebar |
 | **Fase 6** — Consolidamento | 🔶 **In corso** | i18n (backend gettext core, frontend Sidebar, Dashboard, Soggetti), Workflow Editor, Query Opt |
 
-**Totale stimato: ~84gg/uomo** (circa 4 mesi lavorativi) — **Tutte le fasi 0-5 completate, Fase 6 in corso**
+---
+
+*Ultimo aggiornamento: 2026-06-11*
