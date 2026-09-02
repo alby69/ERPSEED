@@ -1,92 +1,16 @@
 # Developer Guide - ERPSEED Backend
 
-## Setup Locale
-
-### Prerequisites
-
-- Python 3.11+
-- PostgreSQL 15+ (opzionale, SQLite per dev)
-- Git
-- Docker (opzionale)
-
-### 1. Clone e Installazione
-
-```bash
-# Clona il repository
-git clone https://github.com/alby69/ERPSEED.git
-cd ERPSEED/backend
-
-# Crea virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate  # Windows
-
-# Installa dipendenze
-pip install -r requirements.txt
-```
-
-### 2. Configurazione
-
-```bash
-# Crea file .env
-cat > .env << 'EOF'
-DATABASE_URL=sqlite:///data.db
-JWT_SECRET_KEY=your-super-secret-key-at-least-32-chars-long
-SECRET_KEY=flask-secret-key-change-in-production
-FLASK_ENV=development
-FLASK_DEBUG=1
-EOF
-```
-
-### 3. Avvio
-
-```bash
-# Modalità sviluppo
-python run.py
-
-# Oppure con Flask CLI
-flask run --host=0.0.0.0 --port=5000
-```
-
-L'API sarà disponibile su `http://localhost:5000`
-
-### 4. Database
-
-```bash
-# Crea tabelle
-flask db init
-flask db migrate
-flask db upgrade
-
-# Seed dati iniziali (se disponibile)
-flask seed
-```
+> Per l'installazione iniziale e il setup dell'ambiente (Docker o locale) vedi [GETTING_STARTED.md](GETTING_STARTED.md).
 
 ---
 
-## Setup con Docker
+## Convenzioni di Refactoring
 
-### Avvio rapido
-
-```bash
-# Dalla root del repository (main branch)
-docker compose up -d
-
-# Oppure build manuale
-cd backend
-docker build -t erpseed-backend .
-docker run -p 5002:5000 erpseed-backend
-```
-
-### Accedere ai container
-
-```bash
-# Backend shell
-docker exec -it erpseed_backend sh
-
-# Database shell
-docker exec -it erpseed_db psql -U postgres -d flarkerp
-```
+Quando si modifica un modulo esistente o se ne crea uno nuovo:
+1. **Verificare il BaseModel**: Assicurarsi di importare da `backend.core.models.base` (non `backend.models.base`).
+2. **Usare BaseService**: Se il servizio fa CRUD semplice, non riscrivere i metodi, usa quelli ereditati da `backend.core.services.base.BaseService`.
+3. **Disaccoppiamento**: Non importare servizi direttamente se possibile; usare il pattern `ServiceProxy` o l'iniezione tramite container.
+4. **Schema unico**: Usare `backend.core.schemas.dynamic_schemas` per centralizzare gli schemi Marshmallow delle API dinamiche.
 
 ---
 
@@ -99,8 +23,8 @@ backend/
 ├── __init__.py      # App factory (create_app)
 ├── run.py           # Entry point
 ├── extensions.py    # Flask extensions
-├── models.py        # Modelli principali
-└── ...
+├── models/          # Modelli SQLAlchemy
+└── core/            # Componenti condivisi e base
 ```
 
 ### Creare un Nuovo Modulo
@@ -223,6 +147,7 @@ class ProductSchema(Schema):
 
 ```python
 from flask_jwt_extended import jwt_required, get_jwt
+from functools import wraps
 
 def admin_required(f):
     @wraps(f)
@@ -338,17 +263,6 @@ def my_function():
     logger.info("Info message")
     logger.warning("Warning")
     logger.error("Error occurred")
-```
-
-### Flask Debug Toolbar
-
-```python
-# requirements.txt
-flask-debugtoolbar
-
-# app.py
-from flask_debugtoolbar import DebugToolbarExtension
-toolbar = DebugToolbarExtension(app)
 ```
 
 ### Breakpoints
@@ -483,16 +397,7 @@ CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "backend:create_app()"]
 | `ModuleNotFoundError` | Verifica `PYTHONPATH` o usa virtualenv |
 | `Database locked` | Riavvia server o usa PostgreSQL |
 | `CORS error` | Aggiungi origine in `CORS()` config |
-| `JWT expired` | Refresh token o login novamente |
-
-### Reset Database
-
-```bash
-# Reset completo (PERICOLOSO in produzione)
-rm data.db
-flask db upgrade
-flask seed
-```
+| `JWT expired` | Refresh token o login nuovamente |
 
 ---
 
@@ -506,4 +411,4 @@ flask seed
 
 ---
 
-*Ultimo aggiornamento: 2026-06-10*
+*Ultimo aggiornamento: 2026-06-11*

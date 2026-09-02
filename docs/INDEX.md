@@ -1,55 +1,47 @@
 # Indice Documentazione ERPSEED
 
-> **Entry point unico** per tutta la documentazione del progetto.
+> **Entry point unico** per tutta la documentazione del progetto ERPSEED.
 > Ultimo aggiornamento: 2026-06-11
 
 ---
 
-## 📋 Panoramica del Progetto
+## 📋 Panoramica e Architettura
 
 | Documento | Contenuto | Target |
 |-----------|-----------|--------|
-| [README.md](../../README.md) | Presentazione progetto, features, stack, quick start | Tutti |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Architettura sistema, pattern, struttura directory | Sviluppatori |
-| [ROADMAP.md](ROADMAP.md) | Roadmap qualità, stato avanzamento, PR guidelines | Team |
-| [BRANCH_STRATEGY.md](BRANCH_STRATEGY.md) | Strategia branch Git, flusso di lavoro | Sviluppatori |
+| [README.md](../README.md) | Presentazione progetto, features, stack, avvio | Tutti |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Architettura di sistema, pattern (CQRS, Multi-Tenant), struttura repository | Sviluppatori |
+| [ROADMAP.md](ROADMAP.md) | Roadmap di qualità del codice, refactoring KISS/DRY (Fasi 0-4) e priorità tecniche | Team |
+| [BRANCH_STRATEGY.md](BRANCH_STRATEGY.md) | Strategia dei branch Git e flusso di lavoro monorepo | Sviluppatori |
 
 ## 🚀 Guide Operative
 
 | Documento | Contenuto | Target |
 |-----------|-----------|--------|
-| [QUICKSTART.md](QUICKSTART.md) | Avvio rapido Docker, comandi, configurazione | Tutti |
-| [USER_MANUAL.md](USER_MANUAL.md) | Manuale utente: concetti, uso piattaforma | Utenti finali |
-| [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | Setup dev, creazione moduli, pattern, testing | Sviluppatori |
-| [FRONTEND_GUIDE.md](../../frontend/docs/FRONTEND_GUIDE.md) | Guida frontend: stack, struttura, best practices | Sviluppatori FE |
+| [GETTING_STARTED.md](GETTING_STARTED.md) | Guida all'avvio rapido: Docker, setup locale (backend/frontend) e risoluzione problemi | Tutti |
+| [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | Guida per sviluppatori backend: creazione moduli, convenzioni di refactoring, testing, debug | Sviluppatori BE |
+| [FRONTEND_GUIDE.md](FRONTEND_GUIDE.md) | Guida per sviluppatori frontend: React, Vite, Ant Design, componenti e state management | Sviluppatori FE |
+| [USER_MANUAL.md](USER_MANUAL.md) | Manuale utente: concetti chiave, uso delle applicazioni, builder visivo | Utenti finali |
 
-## 📡 Riferimento API
+## 📡 Riferimento API e Integrazione Agentica
 
-| Documento | Contenuto |
-|-----------|-----------|
-| [API.md](API.md) | Endpoint completi, autenticazione, codici errore (1029 righe) |
+| Documento | Contenuto | Target |
+|-----------|-----------|--------|
+| [API.md](API.md) | Riferimento completo degli endpoint REST, autenticazione JWT, codici di errore | Sviluppatori / Integratori |
+| [AGENTMESH.md](AGENTMESH.md) | Architettura ERP distribuito agentico, integrazione AgentMesh e manifesto `/capabilities` | Sviluppatori AI / System Architects |
 
 ## 🧪 Tutorial
 
-| Documento | Contenuto |
-|-----------|-----------|
-| [TUTORIAL_AI_ASSISTANT.md](TUTORIAL_AI_ASSISTANT.md) | Uso AI Assistant: configurazione LLM, comandi, troubleshooting |
-| [TUTORIAL_FLEET.md](TUTORIAL_FLEET.md) | Fleet Management via GUI Builder |
-| [TUTORIAL_FLEET_CLI.md](TUTORIAL_FLEET_CLI.md) | Fleet Management via CLI/curl |
+| Documento | Contenuto | Target |
+|-----------|-----------|--------|
+| [TUTORIAL_FLEET.md](TUTORIAL_FLEET.md) | Tutorial completo per creare un progetto di Gestione Flotta (via GUI e via CLI/curl) | Tutti |
+| [TUTORIAL_AI_ASSISTANT.md](TUTORIAL_AI_ASSISTANT.md) | Guida all'uso dell'AI Assistant: configurazione LLM, prompt e risoluzione problemi | Tutti |
 
-## 📐 Piani e Analisi
+## 📐 Piani di Implementazione
 
-| Documento | Contenuto |
-|-----------|-----------|
-| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Piano completo blocchi ERP: atomi, aree, fasi, template CQRS |
-| [archive/ERP_BLOCKS_ANALYSIS.md](archive/ERP_BLOCKS_ANALYSIS.md) | Analisi copertura ERP originale (storico) |
-
-## 🗂️ Archivio
-
-| Documento | Contenuto |
-|-----------|-----------|
-| [archive/QUESTIONS.md](archive/QUESTIONS.md) | Domande aperte risolte (storico) |
-| [archive/ROADMAP_ANALYSIS.md](archive/ROADMAP_ANALYSIS.md) | Analisi roadmap superata (storico) |
+| Documento | Contenuto | Target |
+|-----------|-----------|--------|
+| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Piano e stato di avanzamento dei 24 blocchi funzionali ERP (anagrafiche, acquisti, vendite, magazzino, contabilità, etc.) | Team / Stakeholder |
 
 ---
 
@@ -57,29 +49,29 @@
 
 ```
 README.md (root)
-└── backend/docs/INDEX.md ← PARTI DA QUI
-    ├── overview/
-    │   ├── ARCHITECTURE.md  (pattern + struttura)
-    │   ├── ROADMAP.md       (stato + priorità)
+└── docs/INDEX.md (Entry Point Unico)
+    ├── Panoramica & Architettura
+    │   ├── ARCHITECTURE.md
+    │   ├── ROADMAP.md
     │   └── BRANCH_STRATEGY.md
-    ├── guides/
-    │   ├── QUICKSTART.md    (se vuoi partire subito)
-    │   ├── USER_MANUAL.md   (se sei un utente)
-    │   ├── DEVELOPER_GUIDE.md (se sei uno sviluppatore)
-    │   └── FRONTEND_GUIDE.md
-    ├── api/
-    │   └── API.md           (riferimento endpoint)
-    ├── tutorials/
-    │   ├── AI_ASSISTANT.md
-    │   ├── FLEET_GUI.md
-    │   └── FLEET_CLI.md
-    └── implementation/
-        └── PLAN.md          (piano esecutivo ERP)
+    ├── Guide Operative
+    │   ├── GETTING_STARTED.md
+    │   ├── DEVELOPER_GUIDE.md
+    │   ├── FRONTEND_GUIDE.md
+    │   └── USER_MANUAL.md
+    ├── API & AgentMesh
+    │   ├── API.md
+    │   └── AGENTMESH.md
+    ├── Tutorial
+    │   ├── TUTORIAL_FLEET.md (GUI + CLI)
+    │   └── TUTORIAL_AI_ASSISTANT.md
+    └── Piani Esecutivi
+        └── IMPLEMENTATION_PLAN.md
 ```
 
-## Come Estendere
+## Come Estendere la Documentazione
 
 Per aggiungere un nuovo documento:
-1. Posizionarlo nella directory `backend/docs/`
-2. Aggiungere una riga nella tabella della sezione appropriata in questo `INDEX.md`
-3. Se applicabile, aggiornare anche `backend/docs/README.md` e il `README.md` radice
+1. Posizionarlo nella directory `docs/`.
+2. Aggiungere una riga nella tabella della sezione appropriata in questo `INDEX.md`.
+3. Se applicabile, aggiornare il sommario nel `README.md` principale del progetto.

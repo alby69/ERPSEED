@@ -1,5 +1,17 @@
 # Documentation Overhaul Log
 
+## [2026-06-11] Consolidamento e pulizia documentazione (docs/ overhaul)
+- **Spostamento codice sorgente**: Spostato `docs/service.py` in `backend/modules/logistics/service.py` e rimossi i file Python orfani `docs/service.py` e `docs/api.py`.
+- **Nuovo GETTING_STARTED.md**: Creato `docs/GETTING_STARTED.md` unificando setup Docker, setup locale e variabili d'ambiente. Eliminato `docs/QUICKSTART.md`.
+- **Riorganizzazione DEVELOPER_GUIDE.md**: Spostate le sezioni di setup duplicate in `GETTING_STARTED.md` e aggiunta la sezione `## Convenzioni di Refactoring`.
+- **Consolidamento Roadmap e Implementation Plan**: Spostate le appendici duplicate da `IMPLEMENTATION_PLAN.md` e `ROADMAP.md` a `DEVELOPER_GUIDE.md`. Chiarita la titolarità: `IMPLEMENTATION_PLAN.md` per i blocchi funzionali ERP, `ROADMAP.md` per la qualità del codice (KISS/DRY).
+- **Consolidamento AgentMesh**: Uniti `AGENTMESH_DESIGN.md` e `AGENTMESH_INTEGRATION.md` nel nuovo `docs/AGENTMESH.md`. Eliminati i due file precedenti.
+- **Unificazione Tutorial Fleet**: Fusi `TUTORIAL_FLEET_CLI.md` e `TUTORIAL_FLEET.md` in un unico `TUTORIAL_FLEET.md` con sezioni GUI e CLI e indice di navigazione iniziale. Eliminato `TUTORIAL_FLEET_CLI.md`.
+- **Aggiornamento Strategia Branch**: Aggiornato `BRANCH_STRATEGY.md` indicando la unificazione su `main` e la gestione tramite feature branch.
+- **Rimozione Archivio e README ridondanti**: Eliminata interamente la cartella `docs/archive/` (contenuto già confluito in roadmap e plan) ed eliminato `docs/README.md`.
+- **Aggiornamento Indice e Links**: Riscritto `docs/INDEX.md` per mappare esattamente i 13 file attivi. Aggiornati i link in root `README.md` (puntatori da `backend/docs/` corretti in `docs/`).
+- **Verifica finale**: Verificato con script automatizzato che 100% dei link Markdown interni siano validi (0 link rotti). Ridotto il numero di file `.md` in `docs/` da 19 a 13 attivi.
+
 ## [2026-06-09] Refactoring documentazione
 - Creata `backend/docs/INDEX.md`: indice master che categorizza tutti i 21 documenti per area (overview, guides, api, tutorials, implementation, archive)
 - Unificati duplicati: ERP_BLOCKS_ANALYSIS → fuso in IMPLEMENTATION_PLAN come Appendice A; ROADMAP_ANALYSIS → fuso in ROADMAP come Appendice

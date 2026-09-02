@@ -1,38 +1,27 @@
 # Strategia dei Branch ERPSeed
 
-Questo documento spiega la struttura dei branch del progetto e come utilizzarli correttamente per lo sviluppo.
+> ⚠️ **Nota di Sincronizzazione:** Come descritto in [AGENTMESH.md](AGENTMESH.md#fase-1-consolidamento-e-bridge-completato), i branch storici `erpseed/backend` ed `erpseed/frontend` sono stati unificati nel ramo principale `main`. Lo sviluppo attivo e l'integrazione avvengono direttamente su `main` tramite feature branch.
 
-## Branch Principali
+---
 
-### 1. `main`
-Il branch `main` è il punto di integrazione stabile. Contiene sia il `backend/` che il `frontend/` in uno stato coerente.
-- **Utilizzo**: Per test di integrazione e deploy di produzione.
-- **Note**: Tutti i nuovi moduli testati e le feature completate vengono uniti qui.
+## Flusso di Lavoro Attuale
 
-### 2. `erpseed/backend`
-Questo branch è focalizzato sul rifacimento modulare del backend seguendo il pattern **CQRS** (Command Query Responsibility Segregation).
-- **Utilizzo**: Sviluppo di core logic, nuovi moduli backend, refactoring dell'architettura.
-- **Caratteristiche**: Struttura a cartelle sotto `backend/modules/` più profonda (application, domain, infrastructure).
+### Ramo Principale: `main`
+Il branch `main` costituisce l'unica sorgente di verità del repository mono-repo e contiene sia il backend (`backend/`) che il frontend (`frontend/`) in uno stato coerente e testato.
 
-### 3. `erpseed/frontend`
-Focalizzato sullo sviluppo dell'interfaccia utente React e del Visual Builder.
-- **Utilizzo**: Modifiche ai componenti UI, miglioramenti del builder visuale, integrazione API lato client.
-- **Caratteristiche**: Spesso contiene aggiornamenti alle API proxy e agli schema di validazione lato frontend.
+### Sviluppo di Nuove Feature
+1. **Creazione Feature Branch**: Crea un branch dedicato a partire da `main` (es. `feature/nome-feature` o `fix/nome-bug`).
+2. **Commit Atomici**: Se la feature richiede modifiche sia al backend che al frontend, includi i cambi nello stesso branch/pull request.
+3. **Pull Request**: Apri una Pull Request verso `main`. Assicurati che i test passino prima del merge.
 
-## Flusso di Lavoro Consigliato
+---
 
-1. **Nuova Feature Backend**: Lavora su un branch derivato da `erpseed/backend`.
-2. **Nuova Feature Frontend**: Lavora su un branch derivato da `erpseed/frontend`.
-3. **Bugfix/Integrazione**: Lavora su `main` o un branch dedicato se richiede modifiche coordinate ad entrambi i lati.
+## Branch Storici (Remote)
 
-## Sincronizzazione
+Per consultazione storica o refactoring mirati, rimangono presenti sui repository remoti:
+- `remotes/origin/erpseed/backend`: storia dello sviluppo iniziale della logica CQRS.
+- `remotes/origin/erpseed/frontend`: storia dello sviluppo iniziale del Visual Builder React.
 
-A causa della natura divergente ma parallela dello sviluppo, i branch vengono periodicamente sincronizzati verso `main`.
-Quando si effettua il merge tra questi branch, potrebbe essere necessario usare il flag `--allow-unrelated-histories` se i branch hanno divergenze strutturali significative nella storia dei commit.
+---
 
-## Testing su più Branch
-
-Ogni branch mantiene la propria suite di test specifica:
-- I test nel branch `backend` si concentrano sulla logica di business e i comandi CQRS.
-- I test nel branch `frontend` si concentrano sulla resa dei componenti e la validazione degli stati.
-- Il branch `main` esegue la suite completa di integrazione.
+*Ultimo aggiornamento: 2026-06-11*
