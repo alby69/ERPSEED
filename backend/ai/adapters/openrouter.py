@@ -1,21 +1,24 @@
 """
-OpenRouter adapter - Supports many LLM models.
+OpenRouter adapter - Supporta moltissimi modelli LLM.
 https://openrouter.ai/docs/api
 """
 
+import json
 import os
 import requests
 import logging
-from typing import Dict, List
+from typing import Dict, List, Any
 
-from .base_adapter import BaseLLMAdapter
-from ..domain.ports.llm_port import ChatCompletion
+from .base import LLMAdapter, LLMResponse, ToolCall
 
 logger = logging.getLogger(__name__)
 
 
-class OpenRouterAdapter(BaseLLMAdapter):
-    """Adapter for OpenRouter API."""
+class OpenRouterAdapter(LLMAdapter):
+    """
+    Adapter per OpenRouter API.
+    Supporta: DeepSeek, Anthropic, OpenAI, Google, e molti altri.
+    """
 
     def __init__(
         self,
@@ -23,12 +26,12 @@ class OpenRouterAdapter(BaseLLMAdapter):
         base_url: str = "https://openrouter.ai/api/v1",
         default_model: str = "deepseek/deepseek-chat-v3-0324",
     ):
-        super().__init__(api_key, default_model)
         self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY", "")
         self.base_url = base_url
+        self.default_model = default_model
 
     @property
-    def name(self) -> str:
+    def provider_name(self) -> str:
         return "openrouter"
 
     def chat(
@@ -39,7 +42,8 @@ class OpenRouterAdapter(BaseLLMAdapter):
         temperature: float = 0.3,
         max_tokens: int = 2000,
         **kwargs,
-    ) -> ChatCompletion:
+    ) -> LLMResponse:
+        """Invia richiesta a OpenRouter."""
         url = f"{self.base_url}/chat/completions"
 
         headers = {
@@ -71,18 +75,22 @@ class OpenRouterAdapter(BaseLLMAdapter):
                 logger.error(
                     f"OpenRouter error: {response.status_code} - {response.text}"
                 )
-                return self._error_response(f"API Error: {response.status_code}")
+                return LLMResponse(
+                    content=f"API Error: {response.status_code}",
+                    raw={"error": response.text},
+                )
 
             data = response.json()
             return self._parse_response(data)
 
         except requests.Timeout:
-            return self._error_response("Request timeout")
+            return LLMResponse(content="Request timeout", raw={"error": "timeout"})
         except Exception as e:
             logger.error(f"OpenRouter exception: {e}")
-            return self._error_response(str(e))
+            return LLMResponse(content=str(e), raw={"error": str(e)})
 
-    def _parse_response(self, data: Dict) -> ChatCompletion:
+    def _parse_response(self, data: Dict) -> LLMResponse:
+        """Parsa la risposta OpenRouter."""
         try:
             choice = data.get("choices", [{}])[0]
             message = choice.get("message", {})
@@ -90,30 +98,54 @@ class OpenRouterAdapter(BaseLLMAdapter):
             content = message.get("content")
             tool_calls = self.extract_tool_calls(message)
 
-            return ChatCompletion(
+            return LLMResponse(
                 content=content,
                 tool_calls=tool_calls,
-                finish_reason=choice.get("finish_reason"),
-                model=data.get("model"),
+                stop_reason=choice.get("finish_reason"),
                 raw=data,
             )
         except (KeyError, IndexError) as e:
-            logger.error(f"Error parsing response: {e}")
-            return self._error_response("Error parsing response")
+            logger.error(f"Error parsing OpenRouter response: {e}")
+            return LLMResponse(content="Error parsing response", raw=data)
 
-    def extract_tool_calls(self, response_data: Dict) -> List:
+    def extract_tool_calls(self, response_data: Dict) -> List[ToolCall]:
+        """Estrae tool calls dalla risposta OpenRouter."""
+        tool_calls = []
+
         if not isinstance(response_data, dict):
-            return []
+            return tool_calls
 
         message = response_data.get("message", {})
         raw_tool_calls = message.get("tool_calls", [])
 
-        return self._parse_tool_calls(raw_tool_calls)
+        for tc in raw_tool_calls:
+            try:
+                func = tc.get("function", {})
+                name = func.get("name")
+                arguments_str = func.get("arguments", "{}")
+
+                if isinstance(arguments_str, str):
+                    arguments = json.loads(arguments_str)
+                else:
+                    arguments = arguments_str
+
+                tool_calls.append(
+                    ToolCall(name=name, arguments=arguments, tool_id=tc.get("id"))
+                )
+            except (json.JSONDecodeError, AttributeError) as e:
+                logger.warning(f"Error parsing tool call: {e}")
+                continue
+
+        return tool_calls
 
     def format_tools(self, tools: List[Dict]) -> List[Dict]:
-        return tools
+        """OpenRouter usa il formato OpenAI."""
+        from backend.ai.tool_registry import tool_registry
+
+        return tool_registry.to_openai_format(tools)
 
     def list_models(self) -> List[Dict]:
+        """Lista modelli disponibili."""
         url = f"{self.base_url}/models"
         headers = {"Authorization": f"Bearer {self.api_key}"}
 
