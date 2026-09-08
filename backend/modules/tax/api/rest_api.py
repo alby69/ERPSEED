@@ -3,7 +3,7 @@ from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from backend.modules.tax import get_tax_service
+from backend.modules.tax.service_api import get_tax_service
 
 blp = Blueprint("tax_api", __name__, url_prefix="/api/v1/tax-rates", description="Tax Rates API")
 

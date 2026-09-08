@@ -50,12 +50,56 @@ class AnalyticsService:
     def execute(self, cmd_dict):
         # Compatibility method
         command = cmd_dict.get("command")
+
         if command == "ListChartLibraries":
             items = ChartLibraryConfig.query.all()
             return {"success": True, "data": {"items": items}}
         if command == "ListCharts":
             items = SysChart.query.all()
             return {"success": True, "data": {"items": items}}
+        if command == "GetChart":
+            chart = self.get_chart(cmd_dict.get("entity_id"))
+            if not chart:
+                return {"success": False, "error": "Chart not found"}
+            return {"success": True, "data": chart}
+        if command == "CreateChart":
+            data = {k: v for k, v in cmd_dict.items() if k != "command"}
+            return {"success": True, "data": self.create_chart(data)}
+        if command == "UpdateChart":
+            chart_id = cmd_dict.get("entity_id")
+            if not self.get_chart(chart_id):
+                return {"success": False, "error": "Chart not found"}
+            data = {k: v for k, v in cmd_dict.items() if k not in ("command", "entity_id")}
+            return {"success": True, "data": self.update_chart(chart_id, data)}
+        if command == "DeleteChart":
+            chart_id = cmd_dict.get("entity_id")
+            if not self.get_chart(chart_id):
+                return {"success": False, "error": "Chart not found"}
+            return {"success": True, "data": self.delete_chart(chart_id)}
+
+        if command == "ListDashboards":
+            items = SysDashboard.query.all()
+            return {"success": True, "data": {"items": items}}
+        if command == "GetDashboard":
+            dashboard = self.get_dashboard(cmd_dict.get("entity_id"))
+            if not dashboard:
+                return {"success": False, "error": "Dashboard not found"}
+            return {"success": True, "data": dashboard}
+        if command == "CreateDashboard":
+            data = {k: v for k, v in cmd_dict.items() if k != "command"}
+            return {"success": True, "data": self.create_dashboard(data)}
+        if command == "UpdateDashboard":
+            dashboard_id = cmd_dict.get("entity_id")
+            if not self.get_dashboard(dashboard_id):
+                return {"success": False, "error": "Dashboard not found"}
+            data = {k: v for k, v in cmd_dict.items() if k not in ("command", "entity_id")}
+            return {"success": True, "data": self.update_dashboard(dashboard_id, data)}
+        if command == "DeleteDashboard":
+            dashboard_id = cmd_dict.get("entity_id")
+            if not self.get_dashboard(dashboard_id):
+                return {"success": False, "error": "Dashboard not found"}
+            return {"success": True, "data": self.delete_dashboard(dashboard_id)}
+
         return {"success": True, "data": {"items": []}}
 
 _analytics_service = None

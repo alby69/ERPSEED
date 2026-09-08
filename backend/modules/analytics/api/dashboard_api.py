@@ -90,7 +90,6 @@ class SalesSummary(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.response(200, fields.Dict(keys=fields.Str(), values=fields.Nested(SummarySchema)))
     def get(self, tenant_id):
         """Get sales summary by status"""
         from backend.models import SalesOrder
@@ -118,7 +117,6 @@ class PurchasesSummary(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.response(200, fields.Dict(keys=fields.Str(), values=fields.Nested(SummarySchema)))
     def get(self, tenant_id):
         """Get purchases summary by status"""
         from backend.models import PurchaseOrder

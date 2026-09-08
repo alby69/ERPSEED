@@ -302,7 +302,7 @@ function AIAssistant({ projectId, visible, onClose, onConfigApplied }) {
       style={{ top: 20 }}
     >
       <Card
-        bodyStyle={{ padding: 0, height: 500, display: 'flex', flexDirection: 'column' }}
+        styles={{ body: { padding: 0, height: 500, display: 'flex', flexDirection: 'column' } }}
         style={{ height: 500 }}
       >
         {/* Messages Area */}

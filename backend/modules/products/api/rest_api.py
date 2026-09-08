@@ -9,7 +9,7 @@ from flask import request, make_response, jsonify
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from backend.extensions import cache
+from backend.core.utils.cache_utils import cache_get, cache_set
 from backend.modules.products import get_product_service
 
 blp = Blueprint("products_api", __name__, url_prefix="/api/v1/products", description="Products API")
@@ -32,7 +32,7 @@ class ProductList(MethodView):
         per_page = request.args.get('per_page', 20, type=int)
 
         cache_key = f"products_list:{tenant_id}:{page}:{per_page}"
-        cached_result = cache.get(cache_key)
+        cached_result = cache_get(cache_key)
         if cached_result:
             return cached_result
 
@@ -50,7 +50,7 @@ class ProductList(MethodView):
             abort(400, message=result.get("error", "Failed to list products"))
 
         data = result.get("data", {})
-        cache.set(cache_key, data, timeout=300)
+        cache_set(cache_key, data, timeout=300)
         return data
 
     @blp.doc(security=[{"jwt": []}])
@@ -84,7 +84,7 @@ class ProductDetail(MethodView):
         userId = get_jwt_identity()
 
         cache_key = f"product_detail:{tenant_id}:{product_id}"
-        cached_result = cache.get(cache_key)
+        cached_result = cache_get(cache_key)
         if cached_result:
             return cached_result
 
@@ -99,7 +99,7 @@ class ProductDetail(MethodView):
             abort(404, message=result.get("error", "Product not found"))
 
         data = result.get("data", {})
-        cache.set(cache_key, data, timeout=300)
+        cache_set(cache_key, data, timeout=300)
         return data
 
     @blp.doc(security=[{"jwt": []}])

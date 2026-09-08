@@ -323,12 +323,14 @@ const KanbanColumn = React.memo(function KanbanColumn({ id, title, tasks, onDele
         display: 'flex',
         flexDirection: 'column'
       }}
-      bodyStyle={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        padding: 12,
-        overflow: 'hidden'
+      styles={{
+        body: {
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          padding: 12,
+          overflow: 'hidden'
+        }
       }}
     >
       <Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
@@ -502,7 +504,7 @@ function TaskDetailModal({ task, onClose }) {
                       background: isSelf ? '#1677ff' : '#ffffff',
                       color: isSelf ? '#ffffff' : 'inherit'
                     }}
-                    bodyStyle={{ padding: '8px 12px' }}
+                    styles={{ body: { padding: '8px 12px' } }}
                   >
                     <Text
                       style={{

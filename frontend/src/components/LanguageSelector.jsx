@@ -31,7 +31,7 @@ function LanguageSelector() {
         variant="borderless"
         popupMatchSelectWidth={false}
         style={{ width: 'auto' }}
-        dropdownStyle={{ minWidth: 120 }}
+        styles={{ dropdown: { minWidth: 120 } }}
       />
     </Space>
   );

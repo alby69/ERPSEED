@@ -9,12 +9,11 @@ from backend.modules.purchases import get_purchase_service
 blp = Blueprint("purchases", __name__, description="Operations on purchase orders")
 
 
-@blp.route("/purchases")
+@blp.route("")
 class PurchaseList(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.response(200, PurchaseOrderSchema(many=True))
     def get(self, tenant_id):
         """List all purchase orders"""
         service = get_purchase_service()
@@ -26,7 +25,7 @@ class PurchaseList(MethodView):
         if not result.get("success"):
             abort(400, message=result.get("error", "Failed to list purchases"))
 
-        return result["data"]["items"]
+        return result.get("data", {"items": [], "total": 0, "page": 1, "per_page": 20})
 
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
@@ -56,7 +55,7 @@ class PurchaseList(MethodView):
         return result["data"], 201
 
 
-@blp.route("/purchases/<int:purchase_id>")
+@blp.route("/<int:purchase_id>")
 class PurchaseResource(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()

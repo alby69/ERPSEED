@@ -283,7 +283,7 @@ def create_app(db_url=None):
     api.init_app(app)
 
     # --- Redis Cache ---
-    app.config["CACHE_TYPE"] = os.getenv("CACHE_TYPE", "RedisCache")
+    app.config["CACHE_TYPE"] = os.getenv("CACHE_TYPE", "SimpleCache")
     app.config["CACHE_REDIS_URL"] = os.getenv("CACHE_REDIS_URL", "redis://localhost:6379/0")
     app.config["CACHE_DEFAULT_TIMEOUT"] = int(os.getenv("CACHE_DEFAULT_TIMEOUT", "300"))
     app.config["CACHE_KEY_PREFIX"] = "erpseed:"

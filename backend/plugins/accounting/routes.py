@@ -417,7 +417,6 @@ class TrialBalance(MethodView):
     @blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @blp.response(200, fields.Dict())
     def get(self, tenant_id):
         """Generate trial balance report."""
         accounts = Account.query.filter_by(tenant_id=tenant_id, is_active=True).all()

@@ -166,18 +166,6 @@ class ListPurchaseOrdersHandler(QueryHandler):
         self.repository = repository
         self.event_bus = event_bus
     @property
-    def command_type(self) -> str: return "GetPurchaseOrder"
-    def handle(self, command: Command) -> CommandResult:
-        if not isinstance(command, GetPurchaseOrderCommand): return CommandResult.error(f"Invalid command type")
-        if not command.entity_id: return CommandResult.error("Order ID is required")
-        result = self.repository.find_by_id(command.entity_id, command.tenant_id)
-        if not result: return CommandResult.error(f"Order not found: {command.entity_id}")
-        return CommandResult.ok(result)
-
-
-class ListPurchaseOrdersHandler(QueryHandler):
-    def __init__(self, repository: PurchaseOrderRepository): self.repository = repository
-    @property
     def command_type(self) -> str: return "ListPurchaseOrders"
     def handle(self, command: Command) -> CommandResult:
         if not isinstance(command, ListPurchaseOrdersCommand): return CommandResult.error(f"Invalid command type")

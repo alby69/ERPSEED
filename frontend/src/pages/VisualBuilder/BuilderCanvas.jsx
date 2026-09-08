@@ -64,7 +64,7 @@ const DraggableComponent = ({
           display: 'flex',
           flexDirection: 'column'
         }}
-        bodyStyle={{ flex: 1, overflow: 'auto', padding: 8 }}
+        styles={{ body: { flex: 1, overflow: 'auto', padding: 8 } }}
         title={
           !previewMode ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

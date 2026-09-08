@@ -256,7 +256,7 @@ function DistanceCalculator() {
             )}
           </Col>
           <Col xs={24} lg={16}>
-            <Card bodyStyle={{ padding: 0 }} style={{ height: 600 }}>
+            <Card styles={{ body: { padding: 0 } }} style={{ height: 600 }}>
               {coordsArray.length > 0 ? (
                 <MapContainer center={[41.9, 12.5]} zoom={6} style={{ height: '100%', width: '100%' }}>
                   <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

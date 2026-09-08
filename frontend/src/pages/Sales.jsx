@@ -23,11 +23,11 @@ function Sales() {
         setError(null);
         try {
             const data = await apiClient.get(`/api/v1/sales/orders?page=${page}&per_page=${pageSize}`);
-            setOrders(data.items);
+            setOrders(data.items || []);
             setPagination({
-                current: data.pagination.page,
-                pageSize: data.pagination.per_page,
-                total: data.pagination.total,
+                current: data.page || page,
+                pageSize: data.per_page || pageSize,
+                total: data.total || 0,
             });
         } catch (err) {
             setError(err.message || 'Failed to fetch sales orders. The backend service might be down.');

@@ -5,7 +5,8 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_babel import gettext as _
 
-from backend.extensions import db, cache
+from backend.extensions import db
+from backend.core.utils.cache_utils import cache_get, cache_set
 from backend.models import Maturity
 from backend.plugins.accounting.models import Invoice
 
@@ -42,7 +43,7 @@ class MaturityList(MethodView):
         overdue = request.args.get("overdue", type=bool)
 
         cache_key = f"maturities_list:{tenant_id}:{status}:{party_id}:{overdue}"
-        cached = cache.get(cache_key)
+        cached = cache_get(cache_key)
         if cached is not None:
             return cached
 
@@ -55,7 +56,7 @@ class MaturityList(MethodView):
             query = query.filter(Maturity.due_date < date.today(), Maturity.status.in_(["open", "partial"]))
         query = query.order_by(Maturity.due_date.asc(), Maturity.id.desc())
         result = [maturity_to_dict(m) for m in query.all()]
-        cache.set(cache_key, result, timeout=300)
+        cache_set(cache_key, result, timeout=300)
         return result
 
     @blp.doc(security=[{"jwt": []}])
@@ -189,7 +190,7 @@ class MaturitySummary(MethodView):
     def get(self):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
         cache_key = f"maturities_summary:{tenant_id}"
-        cached = cache.get(cache_key)
+        cached = cache_get(cache_key)
         if cached is not None:
             return cached
         today = date.today()
@@ -211,5 +212,5 @@ class MaturitySummary(MethodView):
             "total_paid": round(total_paid, 2),
             "due_next_30_days": round(due_30, 2),
         }
-        cache.set(cache_key, result, timeout=300)
+        cache_set(cache_key, result, timeout=300)
         return result

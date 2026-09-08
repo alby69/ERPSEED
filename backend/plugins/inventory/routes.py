@@ -22,7 +22,7 @@ from backend.core.services.generic_service import generic_service
 from backend.core.utils.utils import paginate, apply_filters, apply_sorting
 from backend.core.decorators.decorators import tenant_required
 
-blp = Blueprint("inventory", __name__, url_prefix="/inventory", description="Inventory Operations")
+blp = Blueprint("inventory", __name__, url_prefix="/api/v1/inventory", description="Inventory Operations")
 
 class InventoryLocationSchema(BaseSchema):
     class Meta(BaseSchema.Meta):

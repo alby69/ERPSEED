@@ -252,7 +252,7 @@ function SysChartBuilder() {
                     </Popconfirm>
                   </Space>
                 }
-                bodyStyle={{ minHeight: 300, padding: 16 }}
+                styles={{ body: { minHeight: 300, padding: 16 } }}
               >
                 <ChartWidget chartId={chart.id} />
                 <div style={{ marginTop: 12, paddingTop: 8, borderTop: '1px solid #f0f0f0' }}>

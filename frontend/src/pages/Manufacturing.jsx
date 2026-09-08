@@ -26,7 +26,7 @@ const BOMTab = () => {
                 apiFetch('/api/v1/products'),
             ]);
             if (bRes.ok) setData(await bRes.json());
-            if (pRes.ok) setProducts(await pRes.json());
+            if (pRes.ok) { const j = await pRes.json(); setProducts(j.items || j || []); }
         } catch { message.error('Error'); }
         finally { setLoading(false); }
     }, []);
@@ -173,7 +173,7 @@ const ProductionOrdersTab = () => {
                 apiFetch('/api/v1/products'),
             ]);
             if (oRes.ok) setData(await oRes.json());
-            if (pRes.ok) setProducts(await pRes.json());
+            if (pRes.ok) { const j = await pRes.json(); setProducts(j.items || j || []); }
         } catch { message.error('Error'); }
         finally { setLoading(false); }
     }, []);

@@ -27,7 +27,7 @@ const LotsTab = () => {
                 apiFetch('/api/v1/products'),
             ]);
             if (lRes.ok) setData(await lRes.json());
-            if (pRes.ok) setProducts(await pRes.json());
+            if (pRes.ok) { const j = await pRes.json(); setProducts(j.items || j || []); }
         } catch { message.error('Error'); }
         finally { setLoading(false); }
     }, []);
@@ -110,7 +110,7 @@ const SerialTab = () => {
                 apiFetch('/api/v1/lots'),
             ]);
             if (sRes.ok) setData(await sRes.json());
-            if (pRes.ok) setProducts(await pRes.json());
+            if (pRes.ok) { const j = await pRes.json(); setProducts(j.items || j || []); }
             if (lRes.ok) setLots(await lRes.json());
         } catch { message.error('Error'); }
         finally { setLoading(false); }

@@ -9,14 +9,17 @@ from flask import request
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from backend.modules.sales import get_sales_service
+from backend.modules.sales.service_api import get_sales_service
 
 blp = Blueprint("sales_api", __name__, url_prefix="/api/v1/sales", description="Sales API")
 
 
 def get_service():
     """Get the sales service instance."""
-    return get_sales_service()
+    svc = get_sales_service()
+    if svc is None:
+        abort(500, message="Sales service not initialized")
+    return svc
 
 
 @blp.route("/orders")

@@ -5,7 +5,8 @@ from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required
 from flask_babel import gettext as _
 
-from backend.extensions import db, cache
+from backend.extensions import db
+from backend.core.utils.cache_utils import cache_get, cache_set
 from backend.models import VatRegisterEntry, VatLiquidation, IntrastatDeclaration, TaxRate, Invoice
 
 blp = Blueprint("vat", __name__, description="VAT & Intrastat API")
@@ -65,7 +66,7 @@ class VatRegisterList(MethodView):
         period = request.args.get("period")
         fiscal_year = request.args.get("fiscal_year", type=int)
         cache_key = f"vat_register:{tenant_id}:{register_type}:{period}:{fiscal_year}"
-        cached = cache.get(cache_key)
+        cached = cache_get(cache_key)
         if cached is not None:
             return cached
         q = VatRegisterEntry.query.filter_by(
@@ -73,7 +74,7 @@ class VatRegisterList(MethodView):
         if period: q = q.filter_by(period=period)
         if fiscal_year: q = q.filter_by(fiscal_year=fiscal_year)
         result = [entry_to_dict(e) for e in q.order_by(VatRegisterEntry.entry_number.asc()).all()]
-        cache.set(cache_key, result, timeout=300)
+        cache_set(cache_key, result, timeout=300)
         return result
 
     @blp.doc(security=[{"jwt": []}])
@@ -229,12 +230,12 @@ class VatLiquidationList(MethodView):
     def get(self):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
         cache_key = f"vat_liquidations:{tenant_id}"
-        cached = cache.get(cache_key)
+        cached = cache_get(cache_key)
         if cached is not None:
             return cached
         q = VatLiquidation.query.filter_by(tenant_id=tenant_id)
         result = [liquidation_to_dict(l) for l in q.order_by(VatLiquidation.fiscal_year.desc(), VatLiquidation.period.desc()).all()]
-        cache.set(cache_key, result, timeout=300)
+        cache_set(cache_key, result, timeout=300)
         return result
 
     @blp.doc(security=[{"jwt": []}])

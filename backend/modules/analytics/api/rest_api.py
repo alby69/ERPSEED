@@ -20,8 +20,18 @@ blp = Blueprint("analytics", __name__, description="BI & Analytics Operations")
 
 
 def get_analytics_svc():
-    from backend.modules.analytics.service.api import AnalyticsService
-    return AnalyticsService()
+    return get_analytics_service()
+
+
+def _chart_payload(value):
+    """Convert schema-loaded chart data (dict or ORM instance) into a plain dict of valid command fields."""
+    keys = ("title", "library", "chart_type", "modelId", "x_axis", "y_axis",
+            "aggregation", "filters", "filters_config", "library_options")
+    if isinstance(value, dict):
+        return {k: v for k, v in value.items() if k in keys}
+    if hasattr(value, "__table__"):
+        return {c.name: getattr(value, c.name) for c in value.__table__.columns if c.name in keys}
+    return value
 
 
 # --- CRUD per Chart Libraries ---
@@ -121,7 +131,7 @@ class SysChartList(MethodView):
     @blp.arguments(SysChartSchema)
     @blp.response(201, SysChartSchema)
     def post(self, chart_data):
-        payload = dict(chart_data) if hasattr(chart_data, 'items') else chart_data
+        payload = _chart_payload(chart_data)
         result = get_analytics_svc().execute({
             "command": "CreateChart",
             **payload
@@ -149,7 +159,7 @@ class SysChartResource(MethodView):
     @blp.arguments(SysChartSchema)
     @blp.response(200, SysChartSchema)
     def put(self, chart_data, chart_id):
-        payload = dict(chart_data) if hasattr(chart_data, 'items') else chart_data
+        payload = _chart_payload(chart_data)
         result = get_analytics_svc().execute({
             "command": "UpdateChart",
             "entity_id": chart_id,
