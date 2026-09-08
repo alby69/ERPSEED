@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useEffect, useMemo, memo } from 'react';
 import { ReactFlow, Background, Controls, MiniMap, Handle, Position, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Card, Tabs, Table, Button, Tag, Space, Modal, Form, Select, Tooltip, Spin, message, Drawer, Input, Empty, Badge } from 'antd';
+import { Card, Tabs, Table, Button, Tag, Space, Modal, Form, Select, Tooltip, Spin, message, Drawer, Input, Empty, Badge, Alert } from 'antd';
 import { ScanOutlined, PlusOutlined, DeleteOutlined, ReloadOutlined, ApartmentOutlined, DatabaseOutlined, LinkOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import { apiFetch } from '@/utils';
 import { useTheme } from '@/context';
+import useResponsive from '@/hooks/useResponsive';
 import Layout from '../components/Layout';
 import { useColumnManagerWithDrawer } from '@/hooks/useColumnManager';
 import ColumnSettingsButton from '@/components/ColumnSettingsButton';
@@ -101,6 +102,7 @@ function applySimpleLayout(nodes, edges) {
 
 const RelationshipManagerPage = () => {
   const { themeConfig } = useTheme();
+  const { isMobile } = useResponsive();
   const primaryColor = themeConfig?.primaryColor || '#1677ff';
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -378,6 +380,16 @@ const RelationshipManagerPage = () => {
   return (
     <Layout>
       <div style={{ padding: 24, minHeight: '100%' }}>
+        {isMobile && (
+          <Alert
+            message="ER Diagram - Desktop Optimized"
+            description="Il diagramma ER ed il Relationship Manager sono ottimizzati per schermi desktop. Per la migliore esperienza d'uso, passa a uno schermo più grande."
+            type="info"
+            showIcon
+            closable
+            style={{ marginBottom: 16 }}
+          />
+        )}
         <Card
           title={
             <Space>

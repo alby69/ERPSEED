@@ -75,7 +75,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 | # | Task | Priorità | Complessità | Stato |
 |---|------|----------|------------|-------|
 | A.1 | Design Token Layer (`frontend/src/theme/tokens.js`) | 🟡 ALTA | Bassa | ✅ COMPLETATO |
-| A.2 | Deprecazione Bootstrap nelle pagine target e builder | 🟡 ALTA | Media | ✅ COMPLETATO |
+| A.2 | Deprecazione Bootstrap nelle pagine target | 🟡 ALTA | Media | ✅ COMPLETATO |
 | A.3 | Consolidamento navigazione / eliminazione dead code | 🟡 ALTA | Bassa | ✅ COMPLETATO |
 | A.4 | Standardizzazione libreria di charting (`@ant-design/charts`) | 🟢 MEDIA | Bassa | ✅ COMPLETATO |
 
@@ -86,13 +86,34 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 - Aggiornato `ThemeContext.jsx` per esporre `tokens` unificati.
 
 #### A.2 - Deprecazione Bootstrap
-- Sostituite le utility Bootstrap (`d-flex`, `mb-3`, `gap-2`, `p-5`, `list-group`, `card-body`, `modal`, `btn`) con componenti layout Ant Design (`Flex`, `Space`, `Card`, `List`, `Modal`, `Form`, `Input`, `Select`, `Breadcrumb`, `Avatar`, `Badge`, `Tag`, `Row`, `Col`) nelle pagine primarie (`Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, `SoggettiPage.jsx`), nelle pagine di gestione progetti/anagrafiche (`ProjectDetail.jsx`, `RuoliPage.jsx`), nei builder visivi (`SysChartBuilder.jsx`, `SysModelDetail.jsx`) e nelle pagine di autenticazione/utilità (`ResetPassword.jsx`).
+- Sostituite le utility Bootstrap (`d-flex`, `mb-3`, `gap-2`, `p-5`, `list-group`) con componenti layout Ant Design (`Flex`, `Space`, `Card`, `List`) in `Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, e `SoggettiPage.jsx`.
 
 #### A.3 - Consolidamento Navigazione
 - Rimosso il file vuoto `frontend/src/pages/Sidebar.jsx` e confermato `components/Sidebar.jsx` come navigazione principale.
 
 #### A.4 - Charting Standard
 - Documentato `@ant-design/charts` come libreria di charting primaria in `docs/FRONTEND_GUIDE.md`.
+
+---
+
+## 📱 Fase B — UX/UI: Responsive Design (Mobile/Tablet)
+
+### Obiettivo: Garantire usabilità e navigazione fluida su dispositivi mobile e tablet
+
+| # | Task | Priorità | Complessità | Stato |
+|---|------|----------|------------|-------|
+| B.1 | Breakpoint layout principale (`breakpoint="lg"`, `collapsedWidth="0"`) | 🔴 CRITICA | Bassa | ✅ COMPLETATO |
+| B.2 | Hook `useResponsive()` per rilevamento viewport | 🟡 ALTA | Bassa | ✅ COMPLETATO |
+| B.3 | Banner avviso "desktop-optimized" per builder visuali | 🟢 MEDIA | Bassa | ✅ COMPLETATO |
+
+### Dettagli Fase B — UX/UI
+
+#### B.1 & B.2 - Responsive Layout & Hook
+- Implementato l'hook custom `useResponsive.js` con suite di test Vitest (`useResponsive.test.js`).
+- Aggiornato `ProjectLayout.jsx` con breakpoint `lg` e `collapsedWidth="0"` per collassare automaticamente la sidebar su viewport ridotti.
+
+#### B.3 - Banner per Visual Builders
+- Aggiunto banner d'avviso `Alert` in `WorkflowBuilder.jsx`, `DashboardBuilder.jsx` e `RelationshipManagerPage.jsx` quando visualizzati su schermi mobile.
 
 ---
 
@@ -159,9 +180,13 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 │   └── ✅ Tenant middleware JWT fallback fix
 ├── Fase A: UX/UI Design System
 │   ├── ✅ tokens.js & ThemeContext integration
-│   ├── ✅ Complete Bootstrap deprecation (Dashboard, Products, Sales, Soggetti, ProjectDetail, ChartBuilder, ModelDetail, ResetPassword, Ruoli)
+│   ├── ✅ Bootstrap deprecation (top 5 pages)
 │   ├── ✅ Navigation consolidation
 │   └── ✅ Charting library standard (@ant-design/charts)
+├── Fase B: UX/UI Responsive Design
+│   ├── ✅ Responsive hook (useResponsive.js)
+│   ├── ✅ Responsive ProjectLayout Sider (breakpoint="lg")
+│   └── ✅ Visual builders mobile optimization banners
 └── Bug fixes
     ├── ✅ Entity blueprint URL alignment (/api/v1 instead of /api/v1/entities/{name})
     ├── ✅ Products API (GetProductCommand entity_id field)

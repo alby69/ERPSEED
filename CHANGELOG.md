@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Responsive viewport hook (`frontend/src/hooks/useResponsive.js`) and unit test suite (`frontend/src/__tests__/useResponsive.test.js`).
+- Mobile desktop-optimization alert banners for visual builders (`WorkflowBuilder.jsx`, `DashboardBuilder.jsx`, `RelationshipManagerPage.jsx`).
 - Centralized UX/UI Design Token layer (`frontend/src/theme/tokens.js`) providing theme tokens for colors, spacing, radii, and typography.
 - Unit tests for theme tokens and context (`frontend/src/__tests__/tokens.test.js`).
 - Standardized `@ant-design/charts` primary charting library guidance in `docs/FRONTEND_GUIDE.md`.
@@ -18,9 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Column customization code examples (`useColumnManagerWithDrawer` and `ColumnSettingsButton`) in `docs/FRONTEND_GUIDE.md`.
 
 ### Changed
-- Refactored `Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, `SoggettiPage.jsx`, `ProjectDetail.jsx`, `SysChartBuilder.jsx`, `SysModelDetail.jsx`, `ResetPassword.jsx`, and `RuoliPage.jsx` to replace legacy Bootstrap utility classes with native Ant Design layout components (`Flex`, `Space`, `Card`, `List`, `Modal`, `Form`, `Input`, `Select`, `Breadcrumb`, `Avatar`, `Badge`, `Tag`, `Row`, `Col`).
+- Configured responsive breakpoint (`lg`) and auto-collapse (`collapsedWidth="0"`) on `ProjectLayout.jsx` Sider for mobile/tablet navigation (<992px).
+- Fixed template listing sorting in `TemplateService` to ensure deterministic ordering across all file systems.
+- Refactored `Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, and `SoggettiPage.jsx` to replace Bootstrap utility classes with native Ant Design layout components (`Flex`, `Space`, `Card`, `List`).
 - Removed unused empty file `frontend/src/pages/Sidebar.jsx`.
-- Reconciled status of all 24 ERP blocks across `docs/IMPLEMENTATION_PLAN.md` and `docs/ROADMAP.md` to reflect completed implementations and Phase A Design System alignment.
+- Reconciled status of all 24 ERP blocks across `docs/IMPLEMENTATION_PLAN.md` to reflect completed implementations.
 - Updated multi-tenancy documentation in `docs/ARCHITECTURE.md` to accurately represent Row-Level Isolation (`tenant_id` + `TenantFilter`) and documented `tenant_filter.py` as primary while `query_filter.py` is deprecated.
 - Updated `docs/DEVELOPER_GUIDE.md` tutorial for creating new modules to enforce the CQRS pattern.
 - Converted core architecture and dependency diagrams in `docs/ARCHITECTURE.md` and `docs/IMPLEMENTATION_PLAN.md` to GitHub-native Mermaid syntax.
