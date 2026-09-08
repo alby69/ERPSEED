@@ -5,10 +5,20 @@ import { SortableContext, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { io } from 'socket.io-client';
+import {
+  Breadcrumb, Typography, Button, Modal, Form, Input, Select, DatePicker,
+  Card, Avatar, Badge, Space, Flex, Popconfirm, message, Spin, Divider
+} from 'antd';
+import { PlusOutlined, DeleteOutlined, UserOutlined, SendOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+
 import { Layout } from '../components';
 import { useAuth } from '../context';
 import { formatDateForDisplay } from '@/utils/dateUtils';
 import { apiFetch, BASE_URL } from '../utils';
+
+const { Title, Text } = Typography;
+const { Option } = Select;
 
 const TASK_STATUSES = ['todo', 'in_progress', 'review', 'done'];
 const STATUS_LABELS = {
@@ -26,13 +36,7 @@ function ProjectDetail() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [users, setUsers] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [newTask, setNewTask] = useState({
-    name: '',
-    description: '',
-    status: 'todo',
-    due_date: '',
-    assigned_to_id: ''
-  });
+  const [form] = Form.useForm();
 
   useEffect(() => {
     const loadData = async () => {
@@ -42,12 +46,10 @@ function ProjectDetail() {
         const projectData = await projectRes.json();
         setProject(projectData);
 
-        // Fetch all tasks for the project, assuming pagination is not needed for the board
         const tasksRes = await apiFetch(`/project-tasks?projectId=${id}&per_page=1000`);
         const tasksData = await tasksRes.json();
-        setTasks(tasksData);
+        setTasks(Array.isArray(tasksData) ? tasksData : (tasksData.items || []));
 
-        // Fetch users for assignment (best effort, might fail if not admin)
         try {
           const usersRes = await apiFetch('/users?per_page=100');
           if (usersRes.ok) {
@@ -57,7 +59,6 @@ function ProjectDetail() {
         } catch (e) {
           console.warn("Could not load users list");
         }
-
       } catch (error) {
         console.error("Failed to load project data", error);
       } finally {
@@ -67,7 +68,6 @@ function ProjectDetail() {
     loadData();
   }, [id]);
 
-  // WebSocket Connection
   useEffect(() => {
     const socket = io(BASE_URL);
 
@@ -84,16 +84,7 @@ function ProjectDetail() {
     });
 
     socket.on('task_deleted', (deletedTask) => {
-      // Note: deletedTask might only contain ID depending on how SQLAlchemy serializes deleted objects,
-      // but usually we just need the ID.
       setTasks((prev) => prev.filter((t) => t.id !== deletedTask.id));
-    });
-
-    // Listen for new comments to update the modal if open
-    socket.on('comment_created', (newComment) => {
-      // The event is handled inside the TaskDetailModal if active,
-      // but we might want to update a counter on the card in the future.
-      // For now, let the modal handle its own list.
     });
 
     return () => {
@@ -115,7 +106,6 @@ function ProjectDetail() {
     const activeTask = tasks.find((t) => t.id === active.id);
     const overTask = tasks.find((t) => t.id === over.id);
 
-    // Scenario 1: Reordering within the same column
     if (activeTask && overTask && activeTask.status === overTask.status) {
       setTasks((currentTasks) => {
         const oldIndex = currentTasks.findIndex((t) => t.id === active.id);
@@ -126,7 +116,6 @@ function ProjectDetail() {
       return;
     }
 
-    // Scenario 2: Moving to a different column
     const overIsColumn = String(over.id).startsWith('column-');
     const newStatus = overIsColumn
       ? String(over.id).replace('column-', '')
@@ -134,47 +123,51 @@ function ProjectDetail() {
 
     if (activeTask && newStatus && activeTask.status !== newStatus) {
       const originalStatus = activeTask.status;
-      // Optimistic UI update
       setTasks((currentTasks) =>
         currentTasks.map((t) =>
           t.id === active.id ? { ...t, status: newStatus } : t
         )
       );
 
-      // Persist change to backend
       apiFetch(`/project-tasks/${active.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       }).catch(() => {
-        // Revert on error
         setTasks((currentTasks) => currentTasks.map((t) => (t.id === active.id ? { ...t, status: originalStatus } : t)));
       });
     }
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (!window.confirm("Are you sure you want to delete this task?")) return;
     try {
       const res = await apiFetch(`/project-tasks/${taskId}`, {
         method: 'DELETE'
       });
       if (res.ok) {
+        message.success("Task deleted");
         setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
       } else {
-        alert("Error during deletion");
+        message.error("Error during deletion");
       }
     } catch (error) {
       console.error("Failed to delete task", error);
+      message.error("Failed to delete task");
     }
   };
 
-  const handleCreateTask = async (e) => {
-    e.preventDefault();
+  const handleCreateTask = async (values) => {
     try {
-      const payload = { ...newTask, project_id: parseInt(id) };
-      if (!payload.assigned_to_id) delete payload.assigned_to_id;
-      else payload.assigned_to_id = parseInt(payload.assigned_to_id);
+      const payload = {
+        name: values.name,
+        description: values.description || '',
+        status: values.status || 'todo',
+        due_date: values.due_date ? values.due_date.format('YYYY-MM-DD') : null,
+        project_id: parseInt(id)
+      };
+      if (values.assigned_to_id) {
+        payload.assigned_to_id = parseInt(values.assigned_to_id);
+      }
 
       const res = await apiFetch('/project-tasks', {
         method: 'POST',
@@ -186,34 +179,55 @@ function ProjectDetail() {
         const createdTask = await res.json();
         setTasks([...tasks, createdTask]);
         setShowTaskModal(false);
-        setNewTask({ name: '', description: '', status: 'todo', due_date: '', assigned_to_id: '' });
+        form.resetFields();
+        message.success("Task created successfully");
       } else {
-        alert("Error creating the task");
+        message.error("Error creating task");
       }
     } catch (error) {
       console.error("Failed to create task", error);
+      message.error("Failed to create task");
     }
   };
 
   if (isLoading) {
-    return <Layout><div className="p-4">Loading...</div></Layout>;
+    return (
+      <Layout>
+        <Flex justify="center" align="center" style={{ minHeight: '60vh' }}>
+          <Spin size="large" tip="Loading project..." />
+        </Flex>
+      </Layout>
+    );
   }
 
   return (
     <Layout>
-      <div className="p-4">
-        <nav aria-label="breadcrumb">
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item"><Link to="/projects">Projects</Link></li>
-            <li className="breadcrumb-item active" aria-current="page">{project?.name}</li>
-          </ol>
-        </nav>
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="mb-0">Kanban Board: {project?.name}</h2>
-          <button className="btn btn-primary" onClick={() => setShowTaskModal(true)}>+ New Task</button>
-        </div>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Breadcrumb
+          items={[
+            { title: <Link to="/projects">Projects</Link> },
+            { title: project?.name || 'Project' }
+          ]}
+        />
+
+        <Flex justify="space-between" align="center">
+          <Title level={3} style={{ margin: 0 }}>
+            Kanban Board: {project?.name}
+          </Title>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              form.resetFields();
+              setShowTaskModal(true);
+            }}
+          >
+            New Task
+          </Button>
+        </Flex>
+
         <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
-          <div className="d-flex gap-3" style={{ overflowX: 'auto' }}>
+          <Flex gap="md" style={{ overflowX: 'auto', paddingBottom: 16 }}>
             {TASK_STATUSES.map(status => (
               <KanbanColumn
                 key={status}
@@ -224,82 +238,57 @@ function ProjectDetail() {
                 onTaskClick={setSelectedTask}
               />
             ))}
-          </div>
+          </Flex>
         </DndContext>
 
-        {showTaskModal && (
-          <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">New Task</h5>
-                  <button type="button" className="btn-close" onClick={() => setShowTaskModal(false)}></button>
-                </div>
-                <form onSubmit={handleCreateTask}>
-                  <div className="modal-body">
-                    <div className="mb-3">
-                      <label className="form-label">Title</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        required
-                        value={newTask.name}
-                        onChange={(e) => setNewTask({...newTask, name: e.target.value})}
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">Description</label>
-                      <textarea
-                        className="form-control"
-                        rows="3"
-                        value={newTask.description}
-                        onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                      ></textarea>
-                    </div>
-                    <div className="row">
-                      <div className="col-md-6 mb-3">
-                          <label className="form-label">Status</label>
-                          <select
-                              className="form-select"
-                              value={newTask.status}
-                              onChange={(e) => setNewTask({...newTask, status: e.target.value})}
-                          >
-                              {TASK_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
-                          </select>
-                      </div>
-                      <div className="col-md-6 mb-3">
-                          <label className="form-label">Due Date</label>
-                          <input
-                              type="date"
-                              className="form-control"
-                              value={newTask.due_date}
-                              onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
-                          />
-                      </div>
-                    </div>
-                    <div className="mb-3">
-                      <label className="form-label">Assign to</label>
-                      <select
-                          className="form-select"
-                          value={newTask.assigned_to_id}
-                          onChange={(e) => setNewTask({...newTask, assigned_to_id: e.target.value})}
-                      >
-                          <option value="">None</option>
-                          {users.map(u => (
-                              <option key={u.id} value={u.id}>{u.first_name} {u.last_name} ({u.email})</option>
-                          ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" onClick={() => setShowTaskModal(false)}>Cancel</button>
-                    <button type="submit" className="btn btn-primary">Create</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
+        <Modal
+          title="New Task"
+          open={showTaskModal}
+          onCancel={() => setShowTaskModal(false)}
+          footer={null}
+          destroyOnClose
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleCreateTask}
+            initialValues={{ status: 'todo' }}
+          >
+            <Form.Item name="name" label="Title" rules={[{ required: true, message: 'Please enter a task title' }]}>
+              <Input placeholder="Task title" />
+            </Form.Item>
+            <Form.Item name="description" label="Description">
+              <Input.TextArea rows={3} placeholder="Task description..." />
+            </Form.Item>
+            <Flex gap="middle">
+              <Form.Item name="status" label="Status" style={{ flex: 1 }}>
+                <Select>
+                  {TASK_STATUSES.map(s => (
+                    <Option key={s} value={s}>{STATUS_LABELS[s]}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item name="due_date" label="Due Date" style={{ flex: 1 }}>
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Flex>
+            <Form.Item name="assigned_to_id" label="Assign to">
+              <Select allowClear placeholder="Select team member">
+                {users.map(u => (
+                  <Option key={u.id} value={u.id}>
+                    {u.first_name} {u.last_name} ({u.email})
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+              <Space>
+                <Button onClick={() => setShowTaskModal(false)}>Cancel</Button>
+                <Button type="primary" htmlType="submit">Create</Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
 
         {selectedTask && (
           <TaskDetailModal
@@ -307,7 +296,7 @@ function ProjectDetail() {
             onClose={() => setSelectedTask(null)}
           />
         )}
-      </div>
+      </Space>
     </Layout>
   );
 }
@@ -318,13 +307,34 @@ const KanbanColumn = React.memo(function KanbanColumn({ id, title, tasks, onDele
   const rowVirtualizer = useVirtualizer({
     count: tasks.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => 125, []), // Estimate card height + gap
+    estimateSize: useCallback(() => 125, []),
     overscan: 5,
   });
 
   return (
-    <div id={id} className="bg-light rounded p-2 d-flex flex-column" style={{ width: '320px', flexShrink: 0, height: 'calc(100vh - 150px)' }}>
-      <h5 className="p-2">{title} <span className="badge bg-secondary rounded-pill">{tasks.length}</span></h5>
+    <Card
+      id={id}
+      size="small"
+      style={{
+        width: 320,
+        minWidth: 320,
+        height: 'calc(100vh - 200px)',
+        background: '#fafafa',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+      bodyStyle={{
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        padding: 12,
+        overflow: 'hidden'
+      }}
+    >
+      <Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
+        <Text bold style={{ fontSize: 16 }}>{title}</Text>
+        <Badge count={tasks.length} overflowCount={999} style={{ backgroundColor: '#8c8c8c' }} />
+      </Flex>
       <div ref={parentRef} style={{ flex: 1, overflowY: 'auto' }}>
         {tasks.length > 0 ? (
           <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
@@ -341,7 +351,7 @@ const KanbanColumn = React.memo(function KanbanColumn({ id, title, tasks, onDele
                       width: '100%',
                       height: `${virtualItem.size}px`,
                       transform: `translateY(${virtualItem.start}px)`,
-                      padding: '4px 2px' // to simulate gap
+                      padding: '4px 2px'
                     }}
                   >
                     <TaskCard task={task} onDelete={() => onDeleteTask(task.id)} onClick={() => onTaskClick(task)} />
@@ -351,11 +361,10 @@ const KanbanColumn = React.memo(function KanbanColumn({ id, title, tasks, onDele
             </SortableContext>
           </div>
         ) : (
-          // Placeholder for empty columns to remain droppable
-          <div style={{ minHeight: '100px' }}></div>
+          <div style={{ minHeight: 100 }} />
         )}
       </div>
-    </div>
+    </Card>
   );
 });
 
@@ -372,37 +381,48 @@ const TaskCard = React.memo(function TaskCard({ task, onDelete, onClick }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={onClick}>
-      <div className="card shadow-sm">
-        <div className="card-body">
-          <div className="d-flex justify-content-between align-items-start">
-            <p className="fw-bold mb-1">{task.name}</p>
-            <button
-              className="btn btn-sm btn-outline-danger py-0 px-2"
-              onClick={onDelete}
-              onPointerDown={(e) => e.stopPropagation()} // Prevents drag start
-              title="Delete"
-            >
-              &times;
-            </button>
-          </div>
-          <p className="small text-muted">{task.description}</p>
-          <div className="d-flex justify-content-between align-items-center mt-2">
-            <small className="text-muted">
-              {task.due_date ? `Due: ${formatDateForDisplay(task.due_date)}` : ''}
-            </small> {/* Use formatDateForDisplay */}
-            {assignedUser && (
-              <img
-                src={assignedUser.avatar_url || `https://ui-avatars.com/api/?name=${assignedUser.full_name}&background=random`}
-                alt={assignedUser.full_name}
-                className="rounded-circle"
-                width="24"
-                height="24"
-                title={assignedUser.full_name}
-              />
-            )}
-          </div>
-        </div>
-      </div>
+      <Card size="small" hoverable style={{ borderRadius: 6 }}>
+        <Flex justify="space-between" align="start">
+          <Text strong style={{ fontSize: 14 }}>{task.name}</Text>
+          <Popconfirm
+            title="Delete task?"
+            onConfirm={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            onCancel={(e) => e.stopPropagation()}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button
+              type="text"
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            />
+          </Popconfirm>
+        </Flex>
+        {task.description && (
+          <Text type="secondary" ellipsis={{ rows: 2 }} style={{ display: 'block', marginTop: 4, fontSize: 12 }}>
+            {task.description}
+          </Text>
+        )}
+        <Flex justify="space-between" align="center" style={{ marginTop: 8 }}>
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            {task.due_date ? `Due: ${formatDateForDisplay(task.due_date)}` : ''}
+          </Text>
+          {assignedUser && (
+            <Avatar
+              size="small"
+              src={assignedUser.avatar_url}
+              icon={<UserOutlined />}
+              title={assignedUser.full_name}
+            />
+          )}
+        </Flex>
+      </Card>
     </div>
   );
 });
@@ -414,20 +434,17 @@ function TaskDetailModal({ task, onClose }) {
   const commentsEndRef = useRef(null);
 
   useEffect(() => {
-    // Load initial comments
     apiFetch(`/task-comments?task_id=${task.id}`)
       .then(res => res.json())
-      .then(setComments)
+      .then(data => setComments(Array.isArray(data) ? data : (data.items || [])))
       .catch(console.error);
 
-    // Setup local socket listener for this modal
     const socket = io(BASE_URL);
     socket.emit('join', { room: `project_${task.project_id}` });
 
     socket.on('comment_created', (comment) => {
       if (comment.task_id === task.id) {
         setComments(prev => [...prev, comment]);
-        // Scroll to bottom
         setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
       }
     });
@@ -452,44 +469,76 @@ function TaskDetailModal({ task, onClose }) {
   };
 
   return (
-    <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <div className="modal-dialog modal-lg">
-        <div className="modal-content" style={{ height: '80vh' }}>
-          <div className="modal-header">
-            <h5 className="modal-title">{task.name}</h5>
-            <button type="button" className="btn-close" onClick={onClose}></button>
-          </div>
-          <div className="modal-body d-flex flex-column">
-            <div className="mb-4">
-              <h6>Description</h6>
-              <p className="text-muted">{task.description || "No description."}</p>
-            </div>
-            <hr />
-            <h6 className="mb-3">Comments</h6>
-            <div className="flex-grow-1 overflow-auto bg-light p-3 rounded mb-3">
-              {comments.length === 0 && <p className="text-center text-muted small">No comments yet.</p>}
-              {comments.map(c => (
-                <div key={c.id} className={`d-flex mb-3 ${c.user?.id === user?.id ? 'justify-content-end' : ''}`}>
-                  <div className={`card ${c.user?.id === user?.id ? 'bg-primary text-white' : 'bg-white'}`} style={{ maxWidth: '75%' }}>
-                    <div className="card-body p-2">
-                      <small className={`d-block fw-bold mb-1 ${c.user?.id === user?.id ? 'text-white-50' : 'text-muted'}`}>
-                        {c.user?.full_name || 'User'} - {new Date(c.created_at).toLocaleString()}
-                      </small>
-                      {c.content}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div ref={commentsEndRef} />
-            </div>
-            <form onSubmit={handleSendComment} className="d-flex gap-2">
-              <input type="text" className="form-control" placeholder="Write a comment..." value={newComment} onChange={e => setNewComment(e.target.value)} />
-              <button type="submit" className="btn btn-primary">Send</button>
-            </form>
+    <Modal
+      title={task.name}
+      open={true}
+      onCancel={onClose}
+      footer={null}
+      width={700}
+    >
+      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+        <div>
+          <Text type="secondary" style={{ fontSize: 12 }}>Description</Text>
+          <div>
+            <Text>{task.description || "No description provided."}</Text>
           </div>
         </div>
-      </div>
-    </div>
+
+        <Divider style={{ margin: '8px 0' }} />
+
+        <Text strong>Comments</Text>
+
+        <div style={{ maxHeight: 300, overflowY: 'auto', background: '#f5f5f5', padding: 12, borderRadius: 6 }}>
+          {comments.length === 0 && <Text type="secondary" style={{ display: 'block', textAlign: 'center' }}>No comments yet.</Text>}
+          <Space direction="vertical" style={{ width: '100%' }} size="small">
+            {comments.map(c => {
+              const isSelf = c.user?.id === user?.id;
+              return (
+                <Flex key={c.id} justify={isSelf ? 'end' : 'start'}>
+                  <Card
+                    size="small"
+                    style={{
+                      maxWidth: '80%',
+                      background: isSelf ? '#1677ff' : '#ffffff',
+                      color: isSelf ? '#ffffff' : 'inherit'
+                    }}
+                    bodyStyle={{ padding: '8px 12px' }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        display: 'block',
+                        marginBottom: 4,
+                        color: isSelf ? 'rgba(255,255,255,0.85)' : '#8c8c8c'
+                      }}
+                    >
+                      {c.user?.full_name || 'User'} - {new Date(c.created_at).toLocaleString()}
+                    </Text>
+                    <Text style={{ color: isSelf ? '#ffffff' : 'inherit' }}>
+                      {c.content}
+                    </Text>
+                  </Card>
+                </Flex>
+              );
+            })}
+            <div ref={commentsEndRef} />
+          </Space>
+        </div>
+
+        <form onSubmit={handleSendComment}>
+          <Flex gap="small">
+            <Input
+              placeholder="Write a comment..."
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+            />
+            <Button type="primary" htmlType="submit" icon={<SendOutlined />}>
+              Send
+            </Button>
+          </Flex>
+        </form>
+      </Space>
+    </Modal>
   );
 }
 

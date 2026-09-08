@@ -1,5 +1,10 @@
 # Documentation Overhaul Log
 
+## [2026-06-11] Deprecazione Bootstrap e aggiornamento Roadmap UX/UI
+- **Deprecazione completata nelle pagine target e builder**: Refattorizzate le pagine `ProjectDetail.jsx`, `SysChartBuilder.jsx`, `SysModelDetail.jsx`, `ResetPassword.jsx`, e `RuoliPage.jsx` sostituendo le classi utility Bootstrap residue con componenti nativi Ant Design (`Flex`, `Space`, `Card`, `List`, `Modal`, `Form`, `Input`, `Select`, `Breadcrumb`, `Avatar`, `Badge`, `Tag`, `Row`, `Col`).
+- **Aggiornamento ROADMAP.md e IMPLEMENTATION_PLAN.md**: Allineata la roadmap per riflettere il completamento della Fase A (Design System UX/UI) e l'integrazione di Import/Export UI (Fase 3).
+- **Tracciamento Modifiche**: Aggiornato `CHANGELOG.md` e la documentazione del progetto.
+
 ## [2026-06-11] Consolidamento e pulizia documentazione (docs/ overhaul)
 - **Spostamento codice sorgente**: Spostato `docs/service.py` in `backend/modules/logistics/service.py` e rimossi i file Python orfani `docs/service.py` e `docs/api.py`.
 - **Nuovo GETTING_STARTED.md**: Creato `docs/GETTING_STARTED.md` unificando setup Docker, setup locale e variabili d'ambiente. Eliminato `docs/QUICKSTART.md`.

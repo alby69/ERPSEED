@@ -123,7 +123,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 | # | Feature | Priorità | Complessità | Stato |
 |---|---------|----------|------------|-------|
-| 3.1 | Batch Import/Export UI | 🟢 MEDIA | Media | ✅ PARZIALE |
+| 3.1 | Batch Import/Export UI | 🟢 MEDIA | Media | ✅ COMPLETATO |
 | 3.2 | Workflow Visual Editor | 🟢 MEDIA | Alta | ✅ COMPLETATO |
 | 3.3 | Dashboard Builder | 🟢 MEDIA | Media | ✅ COMPLETATO |
 | 3.4 | AgentMesh Integration | 🔴 CRITICA | Alta | ✅ COMPLETATO (Base) |
@@ -132,7 +132,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 ### Dettagli Fase 3
 #### 3.1 - Batch Import/Export
-- Implementata logica di Export in `DynamicApiService`. Endpoint `/export` aggiunto a `dynamic_io.py`.
+- Implementata logica di Export in `DynamicApiService`. Endpoint `/export` aggiunto a `dynamic_io.py` e interfaccia di import/export integrata in `ProjectImportExportPage.jsx`.
 
 ---
 
@@ -170,7 +170,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 2026 Q2 (Aprile - Giugno)
 ├── Fase 3: Nuove Features & Agentificazione
-│   ├── ✅ Batch Export logic
+│   ├── ✅ Batch Export/Import logic & UI
 │   ├── ✅ Product Detail page & CRUD routes
 │   ├── ✅ Dashboard Builder
 │   ├── ✅ AgentMesh Core (Capability Registry)
