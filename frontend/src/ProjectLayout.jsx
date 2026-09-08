@@ -14,6 +14,7 @@ const ProjectLayout = () => {
     const [projectMenuItems, setProjectMenuItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [projectTitle, setProjectTitle] = useState('');
+    const [collapsed, setCollapsed] = useState(false);
 
     useEffect(() => {
         if (projectId) {
@@ -53,7 +54,6 @@ const ProjectLayout = () => {
                     });
 
                     // Group models under the project name
-                    // Add workflows entry for this project
                     menuItems.push({
                         key: `project-${projectId}-workflows`,
                         label: 'Workflows',
@@ -90,13 +90,17 @@ const ProjectLayout = () => {
     return (
         <AntLayout style={{ minHeight: '100vh' }}>
             <Sider
+                breakpoint="lg"
+                collapsedWidth="0"
+                onCollapse={(collapsedVal) => setCollapsed(collapsedVal)}
                 width={250}
                 theme={themeConfig.mode === 'dark' ? 'dark' : 'light'}
                 style={{
                     position: 'sticky',
                     top: 0,
                     height: '100vh',
-                    boxShadow: '2px 0 8px 0 rgba(29,35,41,.05)'
+                    boxShadow: '2px 0 8px 0 rgba(29,35,41,.05)',
+                    zIndex: 100
                 }}
             >
                 <Sidebar projectMenuItems={projectMenuItems} />

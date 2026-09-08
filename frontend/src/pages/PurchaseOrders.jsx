@@ -120,7 +120,7 @@ export default function PurchaseOrders() {
                 <Modal title={editingRecord ? 'Modifica Ordine' : 'Nuovo Ordine Acquisto'} open={modalVisible} onOk={handleSubmit} onCancel={() => { setModalVisible(false); form.resetFields(); setEditingRecord(null); }} okText="Salva" cancelText="Annulla" width={800}>
                     <Form form={form} layout="vertical">
                         <Space style={{ width: '100%' }} size={16}>
-                            <Form.Item name="number" label="Numero Ordine"><Input placeholder="Auto-generato" /></Form.Item> {/* No change needed here */}
+                            <Form.Item name="number" label="Numero Ordine"><Input placeholder="Auto-generato" /></Form.Item>
                             <Form.Item name="date" label="Data"><DatePicker format={formatDateForDisplay} /></Form.Item>
                             <Form.Item name="expected_date" label="Data Prevista"><DatePicker format={formatDateForDisplay} /></Form.Item>
                         </Space>

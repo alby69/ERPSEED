@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
-  Card, Button, Input, Select, Space, message,
+  Card, Button, Input, Select, Space, message, Alert,
   Drawer, List, Tag, Modal, Spin, Divider
 } from 'antd';
 import {
@@ -18,6 +18,7 @@ import WorkflowPropertiesPanel from '../components/workflow/WorkflowPropertiesPa
 import ImportExportToolbar from '../components/ui/ImportExportToolbar';
 import ImportExportContextMenu from '../components/ui/ImportExportContextMenu';
 import { useTheme } from '../context';
+import useResponsive from '../hooks/useResponsive';
 
 const { Option } = Select;
 
@@ -45,6 +46,7 @@ const toolboxItems = [
 
 const WorkflowBuilder = () => {
   const { themeConfig } = useTheme();
+  const { isMobile } = useResponsive();
   const { projectId, workflowId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -209,7 +211,7 @@ const WorkflowBuilder = () => {
 
   const handleDragOver = useCallback((event) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.effectAllowed = 'move';
   }, []);
 
   const onNodeClick = useCallback((event, node) => {
@@ -228,8 +230,18 @@ const WorkflowBuilder = () => {
   return (
     <Spin spinning={loading}>
     <div style={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
+      {isMobile && (
+        <Alert
+          message="Visual Builder - Desktop Optimized"
+          description="Questo editor visuale è ottimizzato per schermi desktop. Per la migliore esperienza d'uso, passa a uno schermo più grande."
+          type="info"
+          showIcon
+          closable
+          style={{ margin: '8px 12px 0 12px' }}
+        />
+      )}
       <Card size="small" style={{ borderRadius: 0 }}>
-        <Space>
+        <Space wrap>
           <Button
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate(`/projects/${projectId}/workflows`)}

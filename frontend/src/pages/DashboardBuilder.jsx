@@ -2,13 +2,14 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css'; // No date fields in this page
-import { Button, Card, Modal, Form, Input, Select, Space, Table, message, Tooltip, Dropdown, Tag, DatePicker } from 'antd';
+import 'react-resizable/css/styles.css';
+import { Button, Card, Modal, Form, Input, Select, Space, Table, message, Tooltip, Dropdown, Tag, DatePicker, Alert } from 'antd';
 import { PlusOutlined, DeleteOutlined, SaveOutlined, ExportOutlined, SettingOutlined, FullscreenOutlined, DownloadOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import { ChartRenderer, getAllAdapters, CHART_LIBRARIES, CHART_LIBRARY_LABELS, CHART_TYPES_BY_LIBRARY } from '../components/charts';
 import { exportToImage } from '../utils/exportUtils';
 import { useTheme } from '../context';
+import useResponsive from '../hooks/useResponsive';
 import Layout from '../components/Layout';
 
 const WIDGET_TYPES = {
@@ -20,6 +21,7 @@ const WIDGET_TYPES = {
 
 function DashboardBuilder() {
   const { themeConfig } = useTheme();
+  const { isMobile } = useResponsive();
   const { projectId, dashboardId } = useParams();
   const navigate = useNavigate();
   const dashboardRef = useRef(null);
@@ -200,15 +202,11 @@ function DashboardBuilder() {
       case WIDGET_TYPES.KPI:
         return <KPIWidget widget={widget} />;
       case WIDGET_TYPES.TEXT:
-        return <div className="p-3"><h5>{widget.title}</h5><p>{widget.content}</p></div>;
+        return <div style={{ padding: 12 }}><h5>{widget.title}</h5><p>{widget.content}</p></div>;
       default:
         return <div>Widget sconosciuto</div>;
     }
   };
-
-  const chartTypesOptions = Object.entries(CHART_TYPES_BY_LIBRARY).flatMap(([lib, types]) =>
-    types.map(t => ({ value: t, label: `${t} (${CHART_LIBRARY_LABELS[lib]})` }))
-  );
 
   const exportMenuItems = [
     { key: 'png', label: 'Esporta PNG', icon: <DownloadOutlined />, onClick: () => handleExport('png') },
@@ -217,7 +215,17 @@ function DashboardBuilder() {
 
   return (
     <Layout>
-    <div className="p-3" style={{ background: themeConfig.mode === 'dark' ? '#141414' : '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: 16, background: themeConfig.mode === 'dark' ? '#141414' : '#f5f5f5', minHeight: '100vh' }}>
+      {isMobile && (
+        <Alert
+          message="Dashboard Builder - Desktop Optimized"
+          description="Questo builder visuale è ottimizzato per schermi desktop. Per la migliore esperienza d'uso, passa a uno schermo più grande."
+          type="info"
+          showIcon
+          closable
+          style={{ marginBottom: 16 }}
+        />
+      )}
       <Card
         title={
           <Space>
@@ -226,7 +234,7 @@ function DashboardBuilder() {
           </Space>
         }
         extra={
-          <Space>
+          <Space wrap>
             {!isEditing && (
               <Button icon={<PlusOutlined />} onClick={createNewDashboard}>
                 Nuovo Dashboard
@@ -320,10 +328,10 @@ function DashboardBuilder() {
                 draggableHandle=".drag-handle"
               >
               {layout.lg.map(item => (
-                <div key={item.i} className="bg-white rounded shadow-sm">
+                <div key={item.i} style={{ background: '#fff', borderRadius: 6, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                   {isEditing && (
-                    <div className="drag-handle p-2 bg-light border-bottom d-flex justify-content-between align-items-center" style={{ cursor: 'move' }}>
-                      <span className="fw-bold">{widgets[item.i]?.title || 'Widget'}</span>
+                    <div className="drag-handle" style={{ padding: 8, background: '#fafafa', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'move' }}>
+                      <span style={{ fontWeight: 600 }}>{widgets[item.i]?.title || 'Widget'}</span>
                       <Button size="small" type="text" danger icon={<DeleteOutlined />} onClick={() => removeWidget(item.i)} />
                     </div>
                   )}
@@ -442,8 +450,8 @@ function ChartWidget({ widget }) {
     loadChart();
   }, [widget.chartId]);
 
-  if (loading) return <div className="text-center p-4">Caricamento...</div>;
-  if (!chartConfig) return <div className="p-3 text-muted">Grafico non trovato</div>;
+  if (loading) return <div style={{ textAlign: 'center', padding: 16 }}>Caricamento...</div>;
+  if (!chartConfig) return <div style={{ padding: 12, color: '#888' }}>Grafico non trovato</div>;
 
   return (
     <div style={{ width: '100%', height: '100%', padding: 8 }}>
@@ -483,9 +491,9 @@ function KPIWidget({ widget }) {
   }, [widget.modelId]);
 
   return (
-    <div className="d-flex flex-column justify-content-center align-items-center h-100 p-3">
-      <div className="text-muted small">{widget.title}</div>
-      <div className="display-4 fw-bold">
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: 12 }}>
+      <div style={{ color: '#888', fontSize: 12 }}>{widget.title}</div>
+      <div style={{ fontSize: 28, fontWeight: 'bold' }}>
         {loading ? '...' : value}
       </div>
     </div>

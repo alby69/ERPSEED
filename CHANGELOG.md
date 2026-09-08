@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Responsive viewport hook (`frontend/src/hooks/useResponsive.js`) and unit test suite (`frontend/src/__tests__/useResponsive.test.js`).
+- Mobile desktop-optimization alert banners for visual builders (`WorkflowBuilder.jsx`, `DashboardBuilder.jsx`, `RelationshipManagerPage.jsx`).
+- Centralized UX/UI Design Token layer (`frontend/src/theme/tokens.js`) providing theme tokens for colors, spacing, radii, and typography.
+- Unit tests for theme tokens and context (`frontend/src/__tests__/tokens.test.js`).
+- Standardized `@ant-design/charts` primary charting library guidance in `docs/FRONTEND_GUIDE.md`.
 - GitHub Actions CI/CD pipeline workflow (`.github/workflows/ci.yml`) covering backend Pytest, frontend Vitest, and Lychee markdown link checking.
 - `@playwright/test` dependency and `"test:e2e"` script in `frontend/package.json`.
 - Capabilities API discovery endpoint documentation (`/api/v1/ai/capabilities`) and Purchase Returns endpoints (`/api/v1/purchase-returns`) in `docs/API.md`.
@@ -15,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Column customization code examples (`useColumnManagerWithDrawer` and `ColumnSettingsButton`) in `docs/FRONTEND_GUIDE.md`.
 
 ### Changed
+- Configured responsive breakpoint (`lg`) and auto-collapse (`collapsedWidth="0"`) on `ProjectLayout.jsx` Sider for mobile/tablet navigation (<992px).
+- Fixed template listing sorting in `TemplateService` to ensure deterministic ordering across all file systems.
+- Refactored `Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, and `SoggettiPage.jsx` to replace Bootstrap utility classes with native Ant Design layout components (`Flex`, `Space`, `Card`, `List`).
+- Removed unused empty file `frontend/src/pages/Sidebar.jsx`.
 - Reconciled status of all 24 ERP blocks across `docs/IMPLEMENTATION_PLAN.md` to reflect completed implementations.
 - Updated multi-tenancy documentation in `docs/ARCHITECTURE.md` to accurately represent Row-Level Isolation (`tenant_id` + `TenantFilter`) and documented `tenant_filter.py` as primary while `query_filter.py` is deprecated.
 - Updated `docs/DEVELOPER_GUIDE.md` tutorial for creating new modules to enforce the CQRS pattern.

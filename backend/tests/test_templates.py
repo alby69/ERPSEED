@@ -34,7 +34,8 @@ class TemplateTestCase(unittest.TestCase):
         service = TemplateService()
         templates = service.list_templates()
         self.assertGreater(len(templates), 0)
-        self.assertEqual(templates[0]['id'], 'crm_base')
+        template_ids = [t['id'] for t in templates]
+        self.assertIn('crm_base', template_ids)
 
     def test_install_template(self):
         service = TemplateService()

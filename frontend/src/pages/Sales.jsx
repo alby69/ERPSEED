@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Spin, Alert, Button, Tag, Typography, Space } from 'antd';
+import { Table, Spin, Alert, Button, Tag, Typography, Space, Flex } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from './api';
@@ -39,7 +39,7 @@ function Sales() {
 
     useEffect(() => {
         fetchOrders(pagination.current, pagination.pageSize);
-    }, []); // Removed token dependency
+    }, []);
 
     const handleTableChange = (pagination) => {
         fetchOrders(pagination.current, pagination.pageSize);
@@ -65,7 +65,11 @@ function Sales() {
     const colManager = useColumnManagerWithDrawer('sales', rawColumns);
 
     if (loading && !error) {
-        return <div className="p-5 text-center"><Spin size="large" /></div>;
+        return (
+            <Flex justify="center" align="center" style={{ padding: 48 }}>
+                <Spin size="large" />
+            </Flex>
+        );
     }
 
   return (
@@ -84,7 +88,7 @@ function Sales() {
           </Space>
         </div>
         <div style={{ padding: 24 }}>
-          {error && <Alert message="Error" description={error} type="error" showIcon className="mb-4" />}
+          {error && <Alert message="Error" description={error} type="error" showIcon style={{ marginBottom: 16 }} />}
           <Table dataSource={orders} columns={colManager.processedColumns} rowKey="id" pagination={pagination} loading={loading} onChange={handleTableChange} />
         </div>
       </>

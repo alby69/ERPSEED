@@ -39,6 +39,7 @@ class TemplateService:
             except Exception as e:
                 print(f"Error loading template {file}: {e}")
 
+        templates.sort(key=lambda x: x.get("id") or "")
         return templates
 
     def install_template(self, template_id: str, projectId: int) -> Dict[str, Any]:
