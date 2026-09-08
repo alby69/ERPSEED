@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   Card, Table, Button, Modal, Form, Input, Select, Tag, Space, message, Popconfirm, Typography, Row, Col
 } from 'antd';
@@ -10,7 +10,6 @@ import TableSearch from '../components/TableSearch';
 import ColumnSettingsButton from '../components/ColumnSettingsButton';
 import Layout from '../components/Layout';
 
-const { Title } = Typography;
 const { Option } = Select;
 
 export default function RuoliPage() {
@@ -155,23 +154,18 @@ export default function RuoliPage() {
 
   return (
     <Layout>
-      <div style={{ padding: '0' }}>
-        <Card
-          title={
-            <Space>Anagrafiche (
-              <span>Gestione Ruoli</span>
-            </Space>
-          }
-          extra={
-            <Space>
-              <ColumnSettingsButton manager={colManager} />
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                Nuovo Ruolo
-              </Button>
+      <Card
+        title="Anagrafiche (Gestione Ruoli)"
+        extra={
+          <Space>
+            <ColumnSettingsButton manager={colManager} />
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              Nuovo Ruolo
+            </Button>
           </Space>
         }
       >
-        <div className="mb-3">
+        <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <TableSearch
             columns={colManager.processedColumns}
             searchField={searchField}
@@ -184,20 +178,20 @@ export default function RuoliPage() {
             onClearSearch={handleClearSearch}
             onGlobalSearch={handleSearch}
           />
-        </div>
-        <Table
-          columns={colManager.processedColumns}
-          dataSource={ruoli}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            current: pagination.page,
-            pageSize: pagination.perPage,
-            total: pagination.totalItems,
-            onChange: handlePageChange,
-            showSizeChanger: false
-          }}
-        />
+          <Table
+            columns={colManager.processedColumns}
+            dataSource={ruoli}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              current: pagination.page,
+              pageSize: pagination.perPage,
+              total: pagination.totalItems,
+              onChange: handlePageChange,
+              showSizeChanger: false
+            }}
+          />
+        </Space>
       </Card>
 
       <Modal
@@ -248,7 +242,7 @@ export default function RuoliPage() {
           <Form.Item name="parametri" label="Parametri (JSON)">
             <Input.TextArea rows={4} placeholder='{"sconto_max": 10}' />
           </Form.Item>
-          <Form.Item>
+          <Form.Item style={{ marginBottom: 0 }}>
             <Space>
               <Button type="primary" htmlType="submit">
                 {editingRuolo ? 'Aggiorna' : 'Crea'}
@@ -258,7 +252,6 @@ export default function RuoliPage() {
           </Form.Item>
         </Form>
       </Modal>
-      </div>
     </Layout>
   );
-};
+}

@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Card, Row, Col, Button, Modal, Form, Input, Select, InputNumber,
+  Tag, Space, Typography, List, Popconfirm, message, Empty, Flex
+} from 'antd';
+import { PlusOutlined, SettingOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { apiFetch } from '../utils';
 import ChartWidget from '../components/ChartWidget';
 import Layout from '../components/Layout';
+
+const { Title, Text } = Typography;
+const { Option } = Select;
 
 const CHART_TYPES = [
   { value: 'bar', label: 'Bar Chart' },
@@ -38,24 +46,13 @@ function SysChartBuilder() {
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [editingChart, setEditingChart] = useState(null);
 
-  const [newChart, setNewChart] = useState({
-    title: '',
-    type: 'bar',
-    model_id: '',
-    x_axis: '',
-    y_axis: '',
-    aggregation: 'sum',
-    filters: '',
-    filters_config: []
-  });
+  const [form] = Form.useForm();
+  const [filterForm] = Form.useForm();
 
+  const [selectedModelId, setSelectedModelId] = useState('');
+  const [selectedChartType, setSelectedChartType] = useState('bar');
   const [modelFields, setModelFields] = useState([]);
-  const [tempFilter, setTempFilter] = useState({
-    field: '',
-    type: 'select',
-    label: '',
-    options: ''
-  });
+  const [filtersConfig, setFiltersConfig] = useState([]);
 
   const fetchData = async () => {
     try {
@@ -65,10 +62,17 @@ function SysChartBuilder() {
         apiFetch('/sys-models')
       ]);
 
-      if (chartsRes.ok) setCharts(await chartsRes.json());
-      if (modelsRes.ok) setModels(await modelsRes.json());
+      if (chartsRes.ok) {
+        const chartsData = await chartsRes.json();
+        setCharts(Array.isArray(chartsData) ? chartsData : (chartsData.items || []));
+      }
+      if (modelsRes.ok) {
+        const modelsData = await modelsRes.json();
+        setModels(Array.isArray(modelsData) ? modelsData : (modelsData.items || []));
+      }
     } catch (error) {
       console.error("Error fetching builder data", error);
+      message.error("Failed to load chart builder data");
     } finally {
       setLoading(false);
     }
@@ -79,137 +83,111 @@ function SysChartBuilder() {
   }, []);
 
   useEffect(() => {
-    if (newChart.model_id) {
-      apiFetch(`/sys-models/${newChart.model_id}`)
+    if (selectedModelId) {
+      apiFetch(`/sys-models/${selectedModelId}`)
         .then(res => res.json())
-        .then(data => setModelFields(data.fields || []))
+        .then(data => setModelFields(data.fields || data.model_fields || []))
         .catch(console.error);
     } else {
       setModelFields([]);
     }
-  }, [newChart.model_id]);
+  }, [selectedModelId]);
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    try {
-      const payload = {
-        ...newChart,
-        chart_type: newChart.type,
-        filters_config: newChart.filters_config
-      };
-
-      const res = await apiFetch('/analytics/sys-charts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        setShowModal(false);
-        setNewChart({ title: '', type: 'bar', model_id: '', x_axis: '', y_axis: '', aggregation: 'sum', filters: '', filters_config: [] });
-        fetchData();
-      } else {
-        alert("Error creating chart");
-      }
-    } catch (error) {
-      console.error(error);
-    }
+  const handleOpenCreateModal = () => {
+    setEditingChart(null);
+    setSelectedModelId('');
+    setSelectedChartType('bar');
+    form.resetFields();
+    setShowModal(true);
   };
 
-  const handleEdit = (chart) => {
+  const handleOpenEditModal = (chart) => {
     setEditingChart(chart);
-    setNewChart({
+    setSelectedModelId(chart.model_id);
+    setSelectedChartType(chart.type || chart.chart_type || 'bar');
+    form.setFieldsValue({
       title: chart.title,
       type: chart.type || chart.chart_type || 'bar',
       model_id: chart.model_id,
       x_axis: chart.x_axis || '',
       y_axis: chart.y_axis || '',
       aggregation: chart.aggregation || 'sum',
-      filters: chart.filters || '',
-      filters_config: chart.filters_config || []
+      filters: chart.filters || ''
     });
     setShowModal(true);
   };
 
-  const handleUpdate = async (e) => {
-    e.preventDefault();
+  const handleSaveChart = async (values) => {
     try {
       const payload = {
-        ...newChart,
-        chart_type: newChart.type,
-        filters_config: newChart.filters_config
+        title: values.title,
+        chart_type: values.type,
+        model_id: values.model_id,
+        x_axis: values.x_axis || '',
+        y_axis: values.y_axis || '',
+        aggregation: values.aggregation || 'sum',
+        filters: values.filters || '',
+        filters_config: editingChart ? (editingChart.filters_config || []) : []
       };
 
-      const res = await apiFetch(`/analytics/sys-charts/${editingChart.id}`, {
-        method: 'PUT',
+      const url = editingChart ? `/analytics/sys-charts/${editingChart.id}` : '/analytics/sys-charts';
+      const method = editingChart ? 'PUT' : 'POST';
+
+      const res = await apiFetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       if (res.ok) {
+        message.success(editingChart ? "Chart updated" : "Chart created");
         setShowModal(false);
-        setEditingChart(null);
-        setNewChart({ title: '', type: 'bar', model_id: '', x_axis: '', y_axis: '', aggregation: 'sum', filters: '', filters_config: [] });
         fetchData();
       } else {
-        alert("Error updating chart");
+        message.error("Error saving chart");
       }
     } catch (error) {
       console.error(error);
+      message.error("Error saving chart");
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete this chart?")) return;
-    await apiFetch(`/analytics/sys-charts/${id}`, { method: 'DELETE' });
-    fetchData();
-  };
-
-  const handleLimitChange = (val) => {
     try {
-      const currentFilters = newChart.filters ? JSON.parse(newChart.filters) : {};
-      currentFilters.limit = parseInt(val);
-      setNewChart({ ...newChart, filters: JSON.stringify(currentFilters) });
-    } catch (e) {
-      setNewChart({ ...newChart, filters: JSON.stringify({ limit: parseInt(val) }) });
+      const res = await apiFetch(`/analytics/sys-charts/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        message.success("Chart deleted");
+        fetchData();
+      } else {
+        message.error("Error deleting chart");
+      }
+    } catch (error) {
+      console.error(error);
+      message.error("Error deleting chart");
     }
   };
 
   const openFiltersConfig = (chart) => {
     setEditingChart(chart);
-    setNewChart({
-      title: chart.title,
-      type: chart.type || chart.chart_type || 'bar',
-      model_id: chart.model_id,
-      x_axis: chart.x_axis || '',
-      y_axis: chart.y_axis || '',
-      aggregation: chart.aggregation || 'sum',
-      filters: chart.filters || '',
-      filters_config: chart.filters_config || []
-    });
+    setSelectedModelId(chart.model_id);
+    setFiltersConfig(chart.filters_config || []);
+    filterForm.resetFields();
     setShowFiltersModal(true);
   };
 
-  const addFilter = () => {
-    if (!tempFilter.field || !tempFilter.label) return;
-
+  const handleAddFilter = (values) => {
     const newFilter = {
-      field: tempFilter.field,
-      type: tempFilter.type,
-      label: tempFilter.label,
-      options: tempFilter.options ? tempFilter.options.split(',').map(o => o.trim()) : []
+      field: values.field,
+      type: values.type,
+      label: values.label,
+      options: values.options ? values.options.split(',').map(o => o.trim()) : []
     };
-
-    setNewChart({
-      ...newChart,
-      filters_config: [...newChart.filters_config, newFilter]
-    });
-    setTempFilter({ field: '', type: 'select', label: '', options: '' });
+    setFiltersConfig(prev => [...prev, newFilter]);
+    filterForm.resetFields();
   };
 
-  const removeFilter = (index) => {
-    const updated = newChart.filters_config.filter((_, i) => i !== index);
-    setNewChart({ ...newChart, filters_config: updated });
+  const handleRemoveFilter = (index) => {
+    setFiltersConfig(prev => prev.filter((_, i) => i !== index));
   };
 
   const saveFiltersConfig = async () => {
@@ -217,204 +195,263 @@ function SysChartBuilder() {
       const res = await apiFetch(`/analytics/sys-charts/${editingChart.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filters_config: newChart.filters_config })
+        body: JSON.stringify({ filters_config: filtersConfig })
       });
 
       if (res.ok) {
+        message.success("Filters updated");
         setShowFiltersModal(false);
         fetchData();
       } else {
-        alert("Error saving filters");
+        message.error("Error saving filters");
       }
     } catch (error) {
       console.error(error);
+      message.error("Error saving filters");
     }
   };
 
-  const currentLimit = (() => { try { return JSON.parse(newChart.filters).limit || 5 } catch { return 5 } })();
-
-  if (loading) return <div className="p-4">Loading...</div>;
-
   return (
     <Layout>
-      <div className="container mt-4">
-        <div className="d-flex justify-content-between align-items-center mb-4"> Analytics (
-          <h2>Chart Builder)</h2>
-          <button className="btn btn-primary" onClick={() => { setEditingChart(null); setNewChart({ title: '', type: 'bar', model_id: '', x_axis: '', y_axis: '', aggregation: 'sum', filters: '', filters_config: [] }); setShowModal(true); }}>+ New Chart</button>
-        </div>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Flex justify="space-between" align="center">
+          <Title level={3} style={{ margin: 0 }}>
+            Analytics (Chart Builder)
+          </Title>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreateModal}>
+            New Chart
+          </Button>
+        </Flex>
 
-        <div className="row">
+        <Row gutter={[16, 16]}>
           {charts.map(chart => (
-            <div key={chart.id} className="col-md-6 mb-4">
-              <div className="card h-100 shadow-sm">
-                <div className="card-header d-flex justify-content-between align-items-center">
-                  <h5 className="mb-0">{chart.title}</h5>
-                  <div>
-                    <button className="btn btn-sm btn-outline-secondary me-1" onClick={() => openFiltersConfig(chart)}>
-                      <span>⚙️</span>
-                    </button>
-                    <button className="btn btn-sm btn-outline-primary me-1" onClick={() => handleEdit(chart)}>Edit</button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(chart.id)}>&times;</button>
-                  </div>
-                </div>
-              <div className="card-body" style={{ minHeight: '300px' }}>
+            <Col key={chart.id} xs={24} md={12}>
+              <Card
+                title={chart.title}
+                extra={
+                  <Space>
+                    <Button
+                      type="text"
+                      icon={<SettingOutlined />}
+                      onClick={() => openFiltersConfig(chart)}
+                      title="Configure Filters"
+                    />
+                    <Button
+                      type="text"
+                      icon={<EditOutlined />}
+                      onClick={() => handleOpenEditModal(chart)}
+                      title="Edit Chart"
+                    />
+                    <Popconfirm
+                      title="Delete this chart?"
+                      onConfirm={() => handleDelete(chart.id)}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <Button type="text" danger icon={<DeleteOutlined />} title="Delete Chart" />
+                    </Popconfirm>
+                  </Space>
+                }
+                bodyStyle={{ minHeight: 300, padding: 16 }}
+              >
                 <ChartWidget chartId={chart.id} />
-              </div>
-              <div className="card-footer text-muted small">
-                {chart.type === 'text' ? (
-                  <span>Type: Text Widget</span>
-                ) : (
-                  <span>Type: {chart.type} | Aggregation: {chart.aggregation} of {chart.y_axis} by {chart.x_axis}</span>
-                )}
-                {chart.filters_config && chart.filters_config.length > 0 && (
-                  <span className="ms-2 badge bg-info">{chart.filters_config.length} filter(s)</span>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-        {charts.length === 0 && <div className="col-12 text-center text-muted">No charts created yet.</div>}
-      </div>
-
-      {showModal && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">{editingChart ? 'Edit' : 'Create'} Chart</h5>
-                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
-              </div>
-              <form onSubmit={editingChart ? handleUpdate : handleCreate}>
-                <div className="modal-body">
-                  <div className="mb-3">
-                    <label className="form-label">Chart Title</label>
-                    <input type="text" className="form-control" required value={newChart.title} onChange={e => setNewChart({...newChart, title: e.target.value})} />
-                  </div>
-                  <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Chart Type</label>
-                      <select className="form-select" value={newChart.type} onChange={e => setNewChart({...newChart, type: e.target.value})}>
-                        {CHART_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                      </select>
-                    </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Data Source (Model)</label>
-                      <select className="form-select" required value={newChart.model_id} onChange={e => setNewChart({...newChart, model_id: e.target.value})}>
-                        <option value="">Select Model...</option>
-                        {models.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  {newChart.type !== 'text' && newChart.type !== 'table' && (
-                    <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <label className="form-label">X Axis (Category)</label>
-                        <select className="form-select" required value={newChart.x_axis} onChange={e => setNewChart({...newChart, x_axis: e.target.value})}>
-                          <option value="">Select Field...</option>
-                          {modelFields.map(f => <option key={f.name} value={f.name}>{f.title || f.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="col-md-6 mb-3">
-                        <label className="form-label">Y Axis (Value)</label>
-                        <select className="form-select" required value={newChart.y_axis} onChange={e => setNewChart({...newChart, y_axis: e.target.value})}>
-                          <option value="">Select Field...</option>
-                          <option value="*">Count All (*)</option>
-                          {modelFields.filter(f => ['integer', 'float', 'currency'].includes(f.type)).map(f => <option key={f.name} value={f.name}>{f.title || f.name}</option>)}
-                        </select>
-                      </div>
-                    </div>
+                <div style={{ marginTop: 12, paddingTop: 8, borderTop: '1px solid #f0f0f0' }}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {chart.type === 'text' ? (
+                      'Type: Text Widget'
+                    ) : (
+                      `Type: ${chart.type} | Aggregation: ${chart.aggregation} of ${chart.y_axis} by ${chart.x_axis}`
+                    )}
+                  </Text>
+                  {chart.filters_config && chart.filters_config.length > 0 && (
+                    <Tag color="processing" style={{ marginLeft: 8 }}>
+                      {chart.filters_config.length} filter(s)
+                    </Tag>
                   )}
-
-                  {newChart.type !== 'text' && (
-                    <div className="mb-3">
-                      <label className="form-label">Aggregation Function</label>
-                      <select className="form-select" value={newChart.aggregation} onChange={e => setNewChart({...newChart, aggregation: e.target.value})}>
-                        {AGGREGATIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-                      </select>
-                    </div>
-                  )}
-
-                  {newChart.type === 'table' && (
-                    <div className="mb-3">
-                      <label className="form-label">Rows Limit</label>
-                      <input type="number" className="form-control" min="1" max="100" value={currentLimit} onChange={e => handleLimitChange(e.target.value)} />
-                    </div>
-                  )}
-
-                  <div className="mb-3">
-                    <label className="form-label">Fixed Filters (JSON)</label>
-                    <textarea className="form-control" rows="2" placeholder='e.g. {"status": "confirmed"}' value={newChart.filters} onChange={e => setNewChart({...newChart, filters: e.target.value})}></textarea>
-                  </div>
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                  <button type="submit" className="btn btn-primary">{editingChart ? 'Update' : 'Create'}</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+              </Card>
+            </Col>
+          ))}
+          {charts.length === 0 && !loading && (
+            <Col span={24}>
+              <Card>
+                <Empty description="No charts created yet." />
+              </Card>
+            </Col>
+          )}
+        </Row>
 
-      {showFiltersModal && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Configure Dynamic Filters</h5>
-                <button type="button" className="btn-close" onClick={() => setShowFiltersModal(false)}></button>
-              </div>
-              <div className="modal-body">
-                <p className="text-muted small">Add interactive filters that users can apply when viewing the dashboard.</p>
+        {/* Modal Chart Create/Edit */}
+        <Modal
+          title={editingChart ? 'Edit Chart' : 'Create Chart'}
+          open={showModal}
+          onCancel={() => setShowModal(false)}
+          footer={null}
+          destroyOnClose
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSaveChart}
+            initialValues={{ type: 'bar', aggregation: 'sum' }}
+          >
+            <Form.Item name="title" label="Chart Title" rules={[{ required: true, message: 'Title is required' }]}>
+              <Input placeholder="E.g., Sales by Region" />
+            </Form.Item>
 
-                <div className="border rounded p-3 mb-3">
-                  <div className="row g-2">
-                    <div className="col-md-4">
-                      <input type="text" className="form-control form-control-sm" placeholder="Label" value={tempFilter.label} onChange={e => setTempFilter({...tempFilter, label: e.target.value})} />
-                    </div>
-                    <div className="col-md-3">
-                      <select className="form-select form-select-sm" value={tempFilter.type} onChange={e => setTempFilter({...tempFilter, type: e.target.value})}>
-                        {FILTER_TYPES.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-                      </select>
-                    </div>
-                    <div className="col-md-3">
-                      <select className="form-select form-select-sm" value={tempFilter.field} onChange={e => setTempFilter({...tempFilter, field: e.target.value})}>
-                        <option value="">Field...</option>
-                        {modelFields.map(f => <option key={f.name} value={f.name}>{f.title || f.name}</option>)}
-                      </select>
-                    </div>
-                    <div className="col-md-2">
-                      <button type="button" className="btn btn-sm btn-primary w-100" onClick={addFilter}>Add</button>
-                    </div>
-                  </div>
-                  {tempFilter.type === 'select' || tempFilter.type === 'multiselect' ? (
-                    <input type="text" className="form-control form-control-sm mt-2" placeholder="Options (comma separated)" value={tempFilter.options} onChange={e => setTempFilter({...tempFilter, options: e.target.value})} />
-                  ) : null}
-                </div>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="type" label="Chart Type" rules={[{ required: true }]}>
+                  <Select onChange={val => setSelectedChartType(val)}>
+                    {CHART_TYPES.map(t => (
+                      <Option key={t.value} value={t.value}>{t.label}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="model_id" label="Data Source (Model)" rules={[{ required: true }]}>
+                  <Select placeholder="Select Model..." onChange={val => setSelectedModelId(val)}>
+                    {models.map(m => (
+                      <Option key={m.id} value={m.id}>{m.title}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
 
-                <div className="list-group">
-                  {newChart.filters_config.map((f, i) => (
-                    <div key={i} className="list-group-item d-flex justify-content-between align-items-center">
-                      <div>
-                        <strong>{f.label}</strong>
-                        <small className="text-muted ms-2">({f.type}) - {f.field}</small>
-                      </div>
-                      <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => removeFilter(i)}>&times;</button>
-                    </div>
+            {selectedChartType !== 'text' && selectedChartType !== 'table' && (
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item name="x_axis" label="X Axis (Category)" rules={[{ required: true }]}>
+                    <Select placeholder="Select Field...">
+                      {modelFields.map(f => (
+                        <Option key={f.name} value={f.name}>{f.title || f.name}</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name="y_axis" label="Y Axis (Value)" rules={[{ required: true }]}>
+                    <Select placeholder="Select Field...">
+                      <Option value="*">Count All (*)</Option>
+                      {modelFields.filter(f => ['integer', 'float', 'currency'].includes(f.type)).map(f => (
+                        <Option key={f.name} value={f.name}>{f.title || f.name}</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+            )}
+
+            {selectedChartType !== 'text' && (
+              <Form.Item name="aggregation" label="Aggregation Function">
+                <Select>
+                  {AGGREGATIONS.map(a => (
+                    <Option key={a.value} value={a.value}>{a.label}</Option>
                   ))}
-                  {newChart.filters_config.length === 0 && <div className="text-center text-muted p-3">No filters configured</div>}
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowFiltersModal(false)}>Cancel</button>
-                <button type="button" className="btn btn-primary" onClick={saveFiltersConfig}>Save Filters</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      </div>
+                </Select>
+              </Form.Item>
+            )}
+
+            <Form.Item name="filters" label="Fixed Filters (JSON)">
+              <Input.TextArea rows={2} placeholder='e.g. {"status": "confirmed"}' />
+            </Form.Item>
+
+            <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+              <Space>
+                <Button onClick={() => setShowModal(false)}>Cancel</Button>
+                <Button type="primary" htmlType="submit">
+                  {editingChart ? 'Update' : 'Create'}
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        {/* Modal Dynamic Filters */}
+        <Modal
+          title="Configure Dynamic Filters"
+          open={showFiltersModal}
+          onCancel={() => setShowFiltersModal(false)}
+          footer={
+            <Space>
+              <Button onClick={() => setShowFiltersModal(false)}>Cancel</Button>
+              <Button type="primary" onClick={saveFiltersConfig}>Save Filters</Button>
+            </Space>
+          }
+        >
+          <Space direction="vertical" style={{ width: '100%' }} size="middle">
+            <Text type="secondary" style={{ fontSize: 13 }}>
+              Add interactive filters that users can apply when viewing the dashboard.
+            </Text>
+
+            <Card size="small" style={{ background: '#fafafa' }}>
+              <Form form={filterForm} layout="vertical" onFinish={handleAddFilter}>
+                <Row gutter={8}>
+                  <Col span={8}>
+                    <Form.Item name="label" label="Label" rules={[{ required: true }]}>
+                      <Input placeholder="Filter Name" size="small" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item name="type" label="Type" initialValue="select">
+                      <Select size="small">
+                        {FILTER_TYPES.map(f => (
+                          <Option key={f.value} value={f.value}>{f.label}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item name="field" label="Field" rules={[{ required: true }]}>
+                      <Select size="small" placeholder="Select Field">
+                        {modelFields.map(f => (
+                          <Option key={f.name} value={f.name}>{f.title || f.name}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Form.Item name="options" label="Options (Comma separated, for dropdowns)">
+                  <Input placeholder="Val1, Val2, Val3" size="small" />
+                </Form.Item>
+                <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+                  <Button type="primary" size="small" htmlType="submit" icon={<PlusOutlined />}>
+                    Add Filter
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Card>
+
+            <List
+              size="small"
+              bordered
+              dataSource={filtersConfig}
+              renderItem={(f, i) => (
+                <List.Item
+                  actions={[
+                    <Button
+                      type="text"
+                      danger
+                      size="small"
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleRemoveFilter(i)}
+                    />
+                  ]}
+                >
+                  <Space>
+                    <Text strong>{f.label}</Text>
+                    <Tag color="blue">{f.type}</Tag>
+                    <Text type="secondary">({f.field})</Text>
+                  </Space>
+                </List.Item>
+              )}
+              locale={{ emptyText: 'No dynamic filters configured yet.' }}
+            />
+          </Space>
+        </Modal>
+      </Space>
     </Layout>
   );
 }

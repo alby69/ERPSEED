@@ -18,9 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Column customization code examples (`useColumnManagerWithDrawer` and `ColumnSettingsButton`) in `docs/FRONTEND_GUIDE.md`.
 
 ### Changed
-- Refactored `Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, and `SoggettiPage.jsx` to replace Bootstrap utility classes with native Ant Design layout components (`Flex`, `Space`, `Card`, `List`).
+- Refactored `Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, `SoggettiPage.jsx`, `ProjectDetail.jsx`, `SysChartBuilder.jsx`, `SysModelDetail.jsx`, `ResetPassword.jsx`, and `RuoliPage.jsx` to replace legacy Bootstrap utility classes with native Ant Design layout components (`Flex`, `Space`, `Card`, `List`, `Modal`, `Form`, `Input`, `Select`, `Breadcrumb`, `Avatar`, `Badge`, `Tag`, `Row`, `Col`).
 - Removed unused empty file `frontend/src/pages/Sidebar.jsx`.
-- Reconciled status of all 24 ERP blocks across `docs/IMPLEMENTATION_PLAN.md` to reflect completed implementations.
+- Reconciled status of all 24 ERP blocks across `docs/IMPLEMENTATION_PLAN.md` and `docs/ROADMAP.md` to reflect completed implementations and Phase A Design System alignment.
 - Updated multi-tenancy documentation in `docs/ARCHITECTURE.md` to accurately represent Row-Level Isolation (`tenant_id` + `TenantFilter`) and documented `tenant_filter.py` as primary while `query_filter.py` is deprecated.
 - Updated `docs/DEVELOPER_GUIDE.md` tutorial for creating new modules to enforce the CQRS pattern.
 - Converted core architecture and dependency diagrams in `docs/ARCHITECTURE.md` and `docs/IMPLEMENTATION_PLAN.md` to GitHub-native Mermaid syntax.
