@@ -75,7 +75,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 | # | Task | Priorità | Complessità | Stato |
 |---|------|----------|------------|-------|
 | A.1 | Design Token Layer (`frontend/src/theme/tokens.js`) | 🟡 ALTA | Bassa | ✅ COMPLETATO |
-| A.2 | Deprecazione Bootstrap nelle pagine target | 🟡 ALTA | Media | ✅ COMPLETATO |
+| A.2 | Deprecazione Bootstrap nelle pagine target e builder | 🟡 ALTA | Media | ✅ COMPLETATO |
 | A.3 | Consolidamento navigazione / eliminazione dead code | 🟡 ALTA | Bassa | ✅ COMPLETATO |
 | A.4 | Standardizzazione libreria di charting (`@ant-design/charts`) | 🟢 MEDIA | Bassa | ✅ COMPLETATO |
 
@@ -86,7 +86,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 - Aggiornato `ThemeContext.jsx` per esporre `tokens` unificati.
 
 #### A.2 - Deprecazione Bootstrap
-- Sostituite le utility Bootstrap (`d-flex`, `mb-3`, `gap-2`, `p-5`, `list-group`) con componenti layout Ant Design (`Flex`, `Space`, `Card`, `List`) in `Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, e `SoggettiPage.jsx`.
+- Sostituite le utility Bootstrap (`d-flex`, `mb-3`, `gap-2`, `p-5`, `list-group`, `card-body`, `modal`, `btn`) con componenti layout Ant Design (`Flex`, `Space`, `Card`, `List`, `Modal`, `Form`, `Input`, `Select`, `Breadcrumb`, `Avatar`, `Badge`, `Tag`, `Row`, `Col`) nelle pagine primarie (`Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, `SoggettiPage.jsx`), nelle pagine di gestione progetti/anagrafiche (`ProjectDetail.jsx`, `RuoliPage.jsx`), nei builder visivi (`SysChartBuilder.jsx`, `SysModelDetail.jsx`) e nelle pagine di autenticazione/utilità (`ResetPassword.jsx`).
 
 #### A.3 - Consolidamento Navigazione
 - Rimosso il file vuoto `frontend/src/pages/Sidebar.jsx` e confermato `components/Sidebar.jsx` come navigazione principale.
@@ -102,7 +102,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 | # | Feature | Priorità | Complessità | Stato |
 |---|---------|----------|------------|-------|
-| 3.1 | Batch Import/Export UI | 🟢 MEDIA | Media | ✅ PARZIALE |
+| 3.1 | Batch Import/Export UI | 🟢 MEDIA | Media | ✅ COMPLETATO |
 | 3.2 | Workflow Visual Editor | 🟢 MEDIA | Alta | ✅ COMPLETATO |
 | 3.3 | Dashboard Builder | 🟢 MEDIA | Media | ✅ COMPLETATO |
 | 3.4 | AgentMesh Integration | 🔴 CRITICA | Alta | ✅ COMPLETATO (Base) |
@@ -111,7 +111,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 ### Dettagli Fase 3
 #### 3.1 - Batch Import/Export
-- Implementata logica di Export in `DynamicApiService`. Endpoint `/export` aggiunto a `dynamic_io.py`.
+- Implementata logica di Export in `DynamicApiService`. Endpoint `/export` aggiunto a `dynamic_io.py` e interfaccia di import/export integrata in `ProjectImportExportPage.jsx`.
 
 ---
 
@@ -149,7 +149,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 2026 Q2 (Aprile - Giugno)
 ├── Fase 3: Nuove Features & Agentificazione
-│   ├── ✅ Batch Export logic
+│   ├── ✅ Batch Export/Import logic & UI
 │   ├── ✅ Product Detail page & CRUD routes
 │   ├── ✅ Dashboard Builder
 │   ├── ✅ AgentMesh Core (Capability Registry)
@@ -159,7 +159,7 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 │   └── ✅ Tenant middleware JWT fallback fix
 ├── Fase A: UX/UI Design System
 │   ├── ✅ tokens.js & ThemeContext integration
-│   ├── ✅ Bootstrap deprecation (top 5 pages)
+│   ├── ✅ Complete Bootstrap deprecation (Dashboard, Products, Sales, Soggetti, ProjectDetail, ChartBuilder, ModelDetail, ResetPassword, Ruoli)
 │   ├── ✅ Navigation consolidation
 │   └── ✅ Charting library standard (@ant-design/charts)
 └── Bug fixes
