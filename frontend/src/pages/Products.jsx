@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Spin, Alert, Button, Typography, Space } from 'antd';
+import { Table, Spin, Alert, Button, Typography, Space, Flex } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from './api';
@@ -42,7 +42,7 @@ function Products() {
 
     useEffect(() => {
         fetchProducts(pagination.current, pagination.pageSize);
-    }, []); // Removed token dependency
+    }, []);
 
     const handleTableChange = (pagination) => {
         fetchProducts(pagination.current, pagination.pageSize);
@@ -57,10 +57,10 @@ function Products() {
             title: 'Actions',
             key: 'actions',
             render: (text, record) => (
-                <span>
+                <Space>
                     <Button type="link" onClick={() => navigate(`/products/${record.id}`)}>Edit</Button>
                     <Button type="link" danger>Delete</Button>
-                </span>
+                </Space>
             ),
         },
     ];
@@ -68,7 +68,11 @@ function Products() {
     const colManager = useColumnManagerWithDrawer('products', rawColumns);
 
     if (loading && !error) {
-        return <div className="p-5 text-center"><Spin size="large" /></div>;
+        return (
+            <Flex justify="center" align="center" style={{ padding: 48 }}>
+                <Spin size="large" />
+            </Flex>
+        );
     }
 
   return (
@@ -86,7 +90,7 @@ function Products() {
         </Space>
       </div>
       <div style={{ padding: 24 }}>
-        {error && <Alert message="Error" description={error} type="error" showIcon className="mb-4" />}
+        {error && <Alert message="Error" description={error} type="error" showIcon style={{ marginBottom: 16 }} />}
         <Table dataSource={products} columns={colManager.processedColumns} rowKey="id" pagination={pagination} loading={loading} onChange={handleTableChange} />
       </div>
     </Layout>

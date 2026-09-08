@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Button, Card, Flex, List, Select, Space, Tag, Typography } from 'antd';
 import { Layout } from '../components';
 import DashboardWidgets from '../components/DashboardWidgets';
 import ChartWidget from '../components/ChartWidget';
@@ -11,6 +12,8 @@ import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
+const { Title, Text } = Typography;
+
 const GRID_COLS = 12;
 const ROW_HEIGHT = 80;
 
@@ -18,6 +21,7 @@ function Dashboard() {
   const { projectId } = useParams();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [usersList, setUsersList] = useState([]);
   const [dashboards, setDashboards] = useState([]);
   const [selectedDashboard, setSelectedDashboard] = useState(null);
@@ -96,43 +100,43 @@ function Dashboard() {
 
   if (!user) return null;
 
-  // Se siamo dentro un progetto, non usare il Layout principale (già incluso in ProjectLayout)
   const isInProject = !!projectId;
 
   const dashboardContent = (
-    <>
-      <div className="d-flex justify-content-between align-items-center">
-        <h2>{t('dashboard.title')}</h2>
-        <div className="d-flex gap-2 align-items-center">
+    <div style={{ padding: isInProject ? 0 : 24 }}>
+      <Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
+        <Title level={2} style={{ margin: 0 }}>{t('dashboard.title')}</Title>
+        <Flex gap={8} align="center">
           <DateRangePicker
             value={[dateFilters.from, dateFilters.to]}
             onChange={(dates) => setDateFilters({ from: dates[0], to: dates[1] })}
           />
-        </div>
-      </div>
+        </Flex>
+      </Flex>
 
-      <p className="text-muted">{t('dashboard.roleLabel')}: <span className="badge bg-secondary">{user.role}</span></p>
-      <hr />
+      <Text type="secondary">
+        {t('dashboard.roleLabel')}: <Tag color="blue">{user.role}</Tag>
+      </Text>
 
-      {/* Widget Dinamici dal Builder (Modello: dashboard_kpi) */}
+      <div style={{ margin: '16px 0', borderBottom: '1px solid #f0f0f0' }} />
+
+      {/* Dynamic KPI Widgets */}
       <DashboardWidgets modelName="dashboard_kpi" projectId={kpiProjectId} />
 
-      {/* Selettore Dashboard */}
+      {/* Dashboard Selector */}
       {dashboards.length > 0 && (
-        <div className="mb-4">
-          <label htmlFor="dashboard-selector" className="form-label fw-bold">{t('dashboard.selectorLabel')}</label>
-          <select
-            id="dashboard-selector"
-            className="form-select"
+        <div style={{ marginBottom: 16 }}>
+          <Text strong style={{ display: 'block', marginBottom: 6 }}>{t('dashboard.selectorLabel')}</Text>
+          <Select
+            style={{ width: '100%', maxWidth: 300 }}
             value={selectedDashboard?.id || ''}
-            onChange={(e) => handleDashboardChange(e.target.value)}
-          >
-            {dashboards.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}
-          </select>
+            onChange={(val) => handleDashboardChange(val)}
+            options={dashboards.map(d => ({ value: d.id, label: d.title }))}
+          />
         </div>
       )}
 
-      {/* Grafici Dinamici dal BI Builder */}
+      {/* Dynamic BI Builder Charts */}
       {dashboardCharts.length > 0 && (
         <GridLayout
           className="layout"
@@ -152,25 +156,34 @@ function Dashboard() {
         </GridLayout>
       )}
       {selectedDashboard && dashboardCharts.length === 0 && (
-        <div className="text-center text-muted p-4 border rounded bg-light">{t('dashboard.emptyCharts')}</div>
+        <Card style={{ textAlign: 'center', marginTop: 16 }}>
+          <Text type="secondary">{t('dashboard.emptyCharts')}</Text>
+        </Card>
       )}
 
       {user.role && ['admin', 'owner'].includes(user.role) && (
-        <div className="mt-4">
-          <div className="d-flex justify-content-between align-items-center">
-            <h4>{t('dashboard.adminUsersTitle')}</h4>
-            <Link to="/users" className="btn btn-sm btn-outline-primary">{t('dashboard.manageUsers')}</Link>
-          </div>
-          <ul className="list-group mt-3">
-            {usersList.map(u => (
-              <li key={u.id} className="list-group-item d-flex justify-content-between align-items-center">
-                {u.email} <span className="badge bg-primary rounded-pill">{u.role}</span>
-              </li>
-            ))}
-          </ul>
+        <div style={{ marginTop: 24 }}>
+          <Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
+            <Title level={4} style={{ margin: 0 }}>{t('dashboard.adminUsersTitle')}</Title>
+            <Button size="small" type="default" onClick={() => navigate('/users')}>
+              {t('dashboard.manageUsers')}
+            </Button>
+          </Flex>
+          <List
+            bordered
+            dataSource={usersList}
+            renderItem={(u) => (
+              <List.Item key={u.id}>
+                <Flex justify="space-between" align="center" style={{ width: '100%' }}>
+                  <Text>{u.email}</Text>
+                  <Tag color="blue">{u.role}</Tag>
+                </Flex>
+              </List.Item>
+            )}
+          />
         </div>
       )}
-    </>
+    </div>
   );
 
   if (isInProject) {
