@@ -429,7 +429,7 @@ export default function SoggettiPage() {
             <Card
               title={
                 <Space>
-                  <UserOutlined /> {t('soggetti.title')}
+                  <UserOutlined />
                   <span>{t('soggetti.title')}</span>
                 </Space>
               }
@@ -442,7 +442,7 @@ export default function SoggettiPage() {
                 </Space>
               }
             >
-              <div className="mb-3">
+              <div style={{ marginBottom: 16 }}>
                 <TableSearch
                   columns={columns}
                   searchField={searchField}
@@ -487,7 +487,7 @@ export default function SoggettiPage() {
         >
           <Tabs items={tabItems} />
           <Form.Item>
-            <Space>
+            <Space style={{ marginTop: 16 }}>
               <Button type="primary" htmlType="submit">
                 {editingSoggetto ? t('common.edit') : t('common.add')}
               </Button>

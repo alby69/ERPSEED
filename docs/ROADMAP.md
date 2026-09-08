@@ -1,6 +1,6 @@
 # ERPSEED Roadmap di Sviluppo
 
-> **Nota:** Questo documento definisce la roadmap di qualità del codice, refactoring e debito tecnico (Fasi 0-4 KISS/DRY). Per lo stato di avanzamento dei blocchi funzionali ERP (acquisti, vendite, contabilità, etc.), consulta [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
+> **Nota:** Questo documento definisce la roadmap di qualità del codice, refactoring e debito tecnico (Fasi 0-4 KISS/DRY e Piano UX/UI). Per lo stato di avanzamento dei blocchi funzionali ERP (acquisti, vendite, contabilità, etc.), consulta [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
 ---
 
@@ -68,6 +68,34 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 
 ---
 
+## 🎨 Fase A — UX/UI: Fondamenta del Design System
+
+### Obiettivo: Stabilire token unificati, deprecare il layout ibrido e consolidare la navigazione
+
+| # | Task | Priorità | Complessità | Stato |
+|---|------|----------|------------|-------|
+| A.1 | Design Token Layer (`frontend/src/theme/tokens.js`) | 🟡 ALTA | Bassa | ✅ COMPLETATO |
+| A.2 | Deprecazione Bootstrap nelle pagine target | 🟡 ALTA | Media | ✅ COMPLETATO |
+| A.3 | Consolidamento navigazione / eliminazione dead code | 🟡 ALTA | Bassa | ✅ COMPLETATO |
+| A.4 | Standardizzazione libreria di charting (`@ant-design/charts`) | 🟢 MEDIA | Bassa | ✅ COMPLETATO |
+
+### Dettagli Fase A — UX/UI
+
+#### A.1 - Design Token Layer
+- Creato `frontend/src/theme/tokens.js` con definizioni centralizzate per colori, spaziature, tipografia e bordi.
+- Aggiornato `ThemeContext.jsx` per esporre `tokens` unificati.
+
+#### A.2 - Deprecazione Bootstrap
+- Sostituite le utility Bootstrap (`d-flex`, `mb-3`, `gap-2`, `p-5`, `list-group`) con componenti layout Ant Design (`Flex`, `Space`, `Card`, `List`) in `Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, e `SoggettiPage.jsx`.
+
+#### A.3 - Consolidamento Navigazione
+- Rimosso il file vuoto `frontend/src/pages/Sidebar.jsx` e confermato `components/Sidebar.jsx` come navigazione principale.
+
+#### A.4 - Charting Standard
+- Documentato `@ant-design/charts` come libreria di charting primaria in `docs/FRONTEND_GUIDE.md`.
+
+---
+
 ## 📦 Fase 3: Nuove Features & Agentificazione (MEDIO-LUNGO TERMINE)
 
 ### Obiettivo: Espandere funzionalità e integrare AgentMesh
@@ -129,6 +157,11 @@ Questa roadmap definisce le priorità di sviluppo per ERPSEED, organizzate per f
 ├── Fase 4: Security & Performance
 │   ├── ✅ API Versioning (v1)
 │   └── ✅ Tenant middleware JWT fallback fix
+├── Fase A: UX/UI Design System
+│   ├── ✅ tokens.js & ThemeContext integration
+│   ├── ✅ Bootstrap deprecation (top 5 pages)
+│   ├── ✅ Navigation consolidation
+│   └── ✅ Charting library standard (@ant-design/charts)
 └── Bug fixes
     ├── ✅ Entity blueprint URL alignment (/api/v1 instead of /api/v1/entities/{name})
     ├── ✅ Products API (GetProductCommand entity_id field)

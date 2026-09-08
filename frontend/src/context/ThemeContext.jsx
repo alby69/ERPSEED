@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { ConfigProvider, theme as antTheme } from 'antd';
-import { useParams } from 'react-router-dom';
 import { apiFetch } from '@/utils';
+import { getDesignTokens } from '@/theme/tokens';
 
 const ThemeContext = createContext(null);
 
@@ -12,6 +12,8 @@ export const ThemeProvider = ({ children }) => {
         mode: 'light',
     });
     const [loading, setLoading] = useState(false);
+
+    const tokens = useMemo(() => getDesignTokens(themeConfig), [themeConfig]);
 
     const fetchTheme = useCallback(async (id) => {
         if (!id) return;
@@ -48,13 +50,13 @@ export const ThemeProvider = ({ children }) => {
     const antdThemeConfig = useMemo(() => ({
         algorithm: themeConfig.mode === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
         token: {
-            colorPrimary: themeConfig.primaryColor,
-            borderRadius: themeConfig.borderRadius,
+            colorPrimary: tokens.colorPrimary,
+            borderRadius: tokens.borderRadius,
         },
-    }), [themeConfig]);
+    }), [themeConfig, tokens]);
 
     return (
-        <ThemeContext.Provider value={{ themeConfig, updateTheme, fetchTheme, resetTheme }}>
+        <ThemeContext.Provider value={{ themeConfig, tokens, updateTheme, fetchTheme, resetTheme, loading }}>
             <ConfigProvider theme={antdThemeConfig}>
                 {children}
             </ConfigProvider>

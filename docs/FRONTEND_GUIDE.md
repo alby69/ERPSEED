@@ -3,8 +3,9 @@
 ## Tech Stack
 - **Framework**: React 18/19
 - **Build Tool**: Vite
-- **UI Components**: Ant Design (antd)
-- **Styling**: Bootstrap 5 (standard classes) + Ant Design Themes
+- **UI Components**: Ant Design (`antd`)
+- **Design Tokens & Themes**: `frontend/src/theme/tokens.js` + Ant Design `ConfigProvider`
+- **Charting Standard**: `@ant-design/charts` (Primary standard for data visualizations)
 - **State Management**: React Hooks + Context API + Zustand
 - **API Communication**: Custom `apiFetch` utility with automatic JWT token management
 
@@ -19,9 +20,43 @@
 ## Project Structure
 - `src/components`: Reusable UI components (`GenericCrudPage.jsx`, `ColumnSettingsButton.jsx`, `ComponentRenderer.jsx`).
 - `src/pages`: Individual application pages (Anagrafiche, Products, Sales, Accounting, HR, etc.).
+- `src/theme`: Centralized design token definitions (`tokens.js`).
 - `src/hooks`: Custom React hooks (`useColumnManagerWithDrawer.js`, `useCrudData.js`).
 - `src/utils.js`: Centralized utility functions (`apiFetch`, date/currency formatters).
 - `src/ProjectLayout.jsx`: Layout wrapper with AppHeader, Sidebar, and Breadcrumbs.
+
+---
+
+## Charting Library Standard
+
+ERPSEED standardizes on **`@ant-design/charts`** as the primary charting library across all dashboards, reports, and analytics pages to ensure visual consistency and seamless integration with the Ant Design theme.
+
+### Best Practices for Charts:
+- **Primary Library**: Use `@ant-design/charts` for all new charts and dashboards (e.g., `Line`, `Bar`, `Pie`, `Column`, `Area`).
+- **Legacy Adapters**: Legacy chart libraries (`ApexCharts`, `Chart.js`, `ECharts`) are kept solely for backward compatibility with existing user-generated chart templates and should not be used for new core features.
+
+```jsx
+import React from 'react';
+import { Card } from 'antd';
+import { Line } from '@ant-design/charts';
+
+const SalesTrendChart = ({ data }) => {
+  const config = {
+    data,
+    xField: 'date',
+    yField: 'amount',
+    point: { size: 5, shape: 'diamond' },
+  };
+
+  return (
+    <Card title="Sales Trend">
+      <Line {...config} />
+    </Card>
+  );
+};
+
+export default SalesTrendChart;
+```
 
 ---
 
@@ -87,7 +122,6 @@ const CustomAddressesPage = ({ data, loading }) => {
     { title: 'CAP', dataIndex: 'zip_code', key: 'zip_code' },
   ];
 
-  // Initializes hook with page key and original column definitions
   const colManager = useColumnManagerWithDrawer('custom_addresses_page', rawColumns);
 
   return (
@@ -110,7 +144,7 @@ export default CustomAddressesPage;
 
 ### 3. API Requests with `apiFetch`
 
-Always use `apiFetch` from `@/utils.js` instead of raw `fetch` or `axios`. It automatically injects `VITE_API_URL`, appends the `Authorization: Bearer <token>` header, handles 401 refresh tokens, and formats error messages:
+Always use `apiFetch` from `@/utils.js` instead of raw `fetch` or `axios`:
 
 ```javascript
 import { apiFetch } from '@/utils';
@@ -131,7 +165,7 @@ async function fetchProducts() {
 ## Best Practices
 1. **Reuse Components**: Prefer `GenericCrudPage` for standard tabular data.
 2. **Column Settings**: Integrate `useColumnManagerWithDrawer` for custom tables to offer user preference persistence.
-3. **Styling**: Combine Ant Design components with Bootstrap spacing utilities (`mb-3`, `d-flex`, `gap-2`).
+3. **Styling & Layout**: Use Ant Design layout components (`Space`, `Flex`, `Row`, `Col`) and central design tokens from `@/theme/tokens`.
 4. **i18n Translations**: Use `useTranslation()` from `react-i18next` for user-visible strings.
 
 ---
