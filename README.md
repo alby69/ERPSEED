@@ -115,7 +115,6 @@ La documentazione completa è organizzata in [docs/INDEX.md](docs/INDEX.md):
 | **Piano ERP** | [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Stato avanzamento 24 blocchi ERP |
 | **Tutorial Fleet** | [TUTORIAL_FLEET.md](docs/TUTORIAL_FLEET.md) | Fleet Management via GUI & CLI |
 | **Tutorial AI** | [TUTORIAL_AI_ASSISTANT.md](docs/TUTORIAL_AI_ASSISTANT.md) | Uso AI Assistant |
-| **Branch Git** | [BRANCH_STRATEGY.md](docs/BRANCH_STRATEGY.md) | Strategia branch e workflow |
 
 ---
 
