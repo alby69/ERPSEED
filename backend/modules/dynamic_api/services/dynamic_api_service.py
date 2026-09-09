@@ -27,9 +27,10 @@ from sqlalchemy import (
     asc,
     String,
     Text,
+    text,
 )
 from werkzeug.utils import secure_filename
-from flask import request, current_app
+from flask import request, current_app, has_request_context
 from flask_jwt_extended import get_jwt_identity
 
 from backend.core.services.base import BaseService
@@ -99,6 +100,11 @@ class DynamicApiService(BaseService):
             abort(404, message=f"Model '{model_name}' not found{status_msg}.")
 
         return sys_model
+
+    def _get_schema_name(self, projectId):
+        if self.db.engine.dialect.name == "sqlite":
+            return None
+        return f"project_{projectId}"
 
     def validate_value(self, field, value):
         """Delegate to FieldValidator."""
@@ -202,7 +208,7 @@ class DynamicApiService(BaseService):
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "read", projectId)
 
-        schema_name = f"project_{projectId}"
+        schema_name = self._get_schema_name(projectId)
         table = get_table_object(model_name, schema=schema_name)
 
         query, relation_fields = self.build_relational_query(sys_model, table, schema=schema_name)
@@ -291,10 +297,10 @@ class DynamicApiService(BaseService):
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "write", projectId)
 
-        schema_name = f"project_{projectId}"
+        schema_name = self._get_schema_name(projectId)
         table = get_table_object(model_name, schema=schema_name)
 
-        if request.content_type and "multipart/form-data" in request.content_type:
+        if has_request_context() and request.content_type and "multipart/form-data" in request.content_type:
             data = request.form.to_dict()
             data = self.handle_file_uploads(data, sys_model)
 
@@ -326,15 +332,25 @@ class DynamicApiService(BaseService):
                         from flask_smorest import abort
                         abort(409, message=f"Value '{value}' for field '{field.name}' already exists.")
 
-        stmt = insert(table).values(validated_data).returning(table)
-        result = self.db.session.execute(stmt).mappings().one()
+        if self.db.engine.dialect.name == "sqlite":
+            res = self.db.session.execute(insert(table).values(validated_data))
+            self.db.session.flush()
+            max_id = self.db.session.execute(text(f'SELECT max(id) FROM "{table.name}"')).scalar()
+            new_id = int(max_id) if max_id is not None else int(res.inserted_primary_key[0])
+            self.handle_nested_writes(new_id, data, sys_model, schema=schema_name)
+            log_audit(None, model_name, new_id, "CREATE", validated_data)
+            self.db.session.commit()
 
-        self.handle_nested_writes(result.id, data, sys_model, schema=schema_name)
-        log_audit(get_jwt_identity(), model_name, result.id, "CREATE", validated_data)
+            result_dict = self.get_record(projectId, model_name, new_id)
+        else:
+            stmt = insert(table).values(validated_data).returning(table)
+            result = self.db.session.execute(stmt).mappings().one()
 
-        self.db.session.commit()
+            self.handle_nested_writes(result.id, data, sys_model, schema=schema_name)
+            log_audit(None, model_name, result.id, "CREATE", validated_data)
 
-        result_dict = {k: serialize_value(v) for k, v in dict(result).items()}
+            self.db.session.commit()
+            result_dict = self.get_record(projectId, model_name, result.id)
 
         try:
             from ..webhook_triggers import on_record_created
@@ -349,7 +365,7 @@ class DynamicApiService(BaseService):
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "write", projectId)
 
-        schema_name = f"project_{projectId}"
+        schema_name = self._get_schema_name(projectId)
         table = get_table_object(model_name, schema=schema_name)
 
         if request.content_type and "multipart/form-data" in request.content_type:
@@ -379,7 +395,7 @@ class DynamicApiService(BaseService):
         result = self.db.session.execute(stmt).mappings().one()
 
         self.handle_nested_writes(itemId, data, sys_model, schema=schema_name)
-        log_audit(get_jwt_identity(), model_name, itemId, "UPDATE", validated_data)
+        log_audit(None, model_name, itemId, "UPDATE", validated_data)
 
         self.db.session.commit()
         result_dict = {k: serialize_value(v) for k, v in dict(result).items()}
@@ -397,12 +413,12 @@ class DynamicApiService(BaseService):
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "write", projectId)
 
-        schema_name = f"project_{projectId}"
+        schema_name = self._get_schema_name(projectId)
         table = get_table_object(model_name, schema=schema_name)
 
         stmt = delete(table).where(table.c.id == itemId)
         self.db.session.execute(stmt)
-        log_audit(get_jwt_identity(), model_name, itemId, "DELETE")
+        log_audit(None, model_name, itemId, "DELETE")
         self.db.session.commit()
 
         try:
@@ -416,12 +432,11 @@ class DynamicApiService(BaseService):
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "write", projectId)
 
-        schema_name = f"project_{projectId}"
+        schema_name = self._get_schema_name(projectId)
         table = get_table_object(model_name, schema=schema_name)
 
-        userId = get_jwt_identity()
         for itemId in ids_to_delete:
-            log_audit(userId, model_name, itemId, "DELETE")
+            log_audit(None, model_name, itemId, "DELETE")
 
         stmt = delete(table).where(table.c.id.in_(ids_to_delete))
         self.db.session.execute(stmt)
@@ -432,7 +447,7 @@ class DynamicApiService(BaseService):
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "read", projectId)
 
-        schema_name = f"project_{projectId}"
+        schema_name = self._get_schema_name(projectId)
         table = get_table_object(model_name, schema=schema_name)
 
         query, relation_fields = self.build_relational_query(sys_model, table, schema=schema_name)
@@ -470,7 +485,7 @@ class DynamicApiService(BaseService):
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "write", projectId)
 
-        schema_name = f"project_{projectId}"
+        schema_name = self._get_schema_name(projectId)
         table = get_table_object(model_name, schema=schema_name)
 
         query = select(table).where(table.c.id == itemId)
@@ -485,7 +500,7 @@ class DynamicApiService(BaseService):
         stmt = insert(table).values(new_data).returning(table)
         result = self.db.session.execute(stmt).mappings().one()
 
-        log_audit(get_jwt_identity(), model_name, result.id, "CLONE", {"source_id": itemId})
+        log_audit(None, model_name, result.id, "CLONE", {"source_id": itemId})
         self.db.session.commit()
 
         result_dict = {k: serialize_value(v) for k, v in dict(result).items()}
@@ -496,7 +511,7 @@ class DynamicApiService(BaseService):
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "write", projectId)
 
-        schema_name = f"project_{projectId}"
+        schema_name = self._get_schema_name(projectId)
         table = get_table_object(model_name, schema=schema_name)
 
         try:
@@ -544,7 +559,7 @@ class DynamicApiService(BaseService):
                 errors.append(f"Row {i + 2}: {str(e)}")
 
         if inserted_count > 0:
-            log_audit(get_jwt_identity(), model_name, 0, "IMPORT", {"count": inserted_count})
+            log_audit(None, model_name, 0, "IMPORT", {"count": inserted_count})
             self.db.session.commit()
 
         return {"message": f"Imported {inserted_count} records.", "errors": errors}, 200
@@ -554,7 +569,7 @@ class DynamicApiService(BaseService):
         sys_model = self.get_model(projectId, model_name, require_published=True)
         self.check_permissions(sys_model, "read", projectId)
 
-        schema_name = f"project_{projectId}"
+        schema_name = self._get_schema_name(projectId)
         table = get_table_object(model_name, schema=schema_name)
 
         query, relation_fields = self.build_relational_query(sys_model, table, schema=schema_name)

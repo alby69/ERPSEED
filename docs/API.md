@@ -414,7 +414,11 @@ Authorization: Bearer <token>
 | `datetime` | Data e ora | - |
 | `select` | Menu a tendina | `options: []` |
 | `multiselect` | Menu multiplo | `options: []` |
-| `relation` | Relazione | `target_model`, `relation_type` |
+| `relation` | Foreign key (many-to-one) verso altra tabella | `target_table`, `label_field` |
+| `lookup` | Campo remoto in sola lettura letto via JOIN senza duplicazione | `target_table`, `local_key`, `remote_key`, `remote_field` |
+| `summary` | Campo aggregato (SUM/AVG/COUNT/MIN/MAX) sui record figli | `target_table`, `foreign_key`, `summary_expression` |
+| `lines` | Master-Detail (gestione inline record figli collegati) | `target_table`, `foreign_key` |
+| `calculated` | Campo calcolato dinamico (formula) | `formula` |
 | `file` | Upload file | `allowed_extensions: []` |
 | `image` | Upload immagine | `max_size_mb` |
 | `richtext` | Editor WYSIWYG | - |
@@ -422,6 +426,45 @@ Authorization: Bearer <token>
 | `url` | URL web | - |
 | `email` | Email | - |
 | `phone` | Telefono | - |
+
+### Relational Field Options
+
+Ciascun tipo di campo relazionale utilizza una specifica struttura JSON nella colonna `options`:
+
+**`relation`** (Many-to-One FK):
+```json
+{
+  "target_table": "vehicle",
+  "label_field": "plate"
+}
+```
+
+**`lookup`** (Campo remoto in sola lettura via JOIN):
+```json
+{
+  "target_table": "vehicle",
+  "local_key": "vehicle",
+  "remote_key": "id",
+  "remote_field": "plate"
+}
+```
+
+**`summary`** (Aggregazione sui figli):
+```json
+{
+  "target_table": "maintenance",
+  "foreign_key": "vehicle"
+}
+```
+*Richiede anche `summary_expression` sul `SysField`, ad es. `"SUM(cost)"`.*
+
+**`lines`** (Master-Detail inline):
+```json
+{
+  "target_table": "maintenance",
+  "foreign_key": "vehicle"
+}
+```
 
 ### Relation Types
 

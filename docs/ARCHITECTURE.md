@@ -327,21 +327,29 @@ Consente la gestione visiva del modello Entity-Relationship (ER) tramite un'inte
 - Visualizzare e mappare le relazioni tra modelli dinamici.
 - Gestire graficamente chiavi esterne e vincoli di integrità.
 
+> **Nota di architettura**: Il grafo ER visuale in Visual Relationship Manager (`/builder/relationships`) rappresenta esclusivamente le relazioni `relation` dirette (chiavi esterne fisiche) e non ancora i collegamenti derivati `lookup` (campi letti via JOIN) o `summary` (aggregati calcolati).
+
 ### Field Types
 
-| Type | Database | Validation |
-|------|----------|------------|
-| `string` | VARCHAR | max_length |
+| Type | Database | Validation / Mechanics |
+|------|----------|------------------------|
+| `string` | VARCHAR | max_length, min_length |
+| `text` | TEXT | max_length |
 | `integer` | INTEGER | min, max |
 | `float` | FLOAT | min, max |
 | `boolean` | BOOLEAN | - |
 | `date` | DATE | - |
 | `datetime` | DATETIME | - |
 | `select` | ENUM / VARCHAR | options[] |
-| `relation` | FOREIGN KEY | target_model |
+| `relation` | FOREIGN KEY | target_table, label_field |
+| `lookup` | VIRTUAL (JOIN) | local_key, remote_key, remote_field |
+| `summary` | VIRTUAL (SUBQUERY) | summary_expression, foreign_key |
+| `lines` | VIRTUAL (DETAIL) | target_table, foreign_key |
+| `calculated` | VIRTUAL (EVAL) | formula |
 | `file` | VARCHAR (path) | allowed_extensions |
+| `image` | VARCHAR (path) | max_size_mb |
 | `richtext` | TEXT | - |
-| `currency` | DECIMAL | - |
+| `currency` | DECIMAL | format, suffix |
 
 ## Configurazione
 

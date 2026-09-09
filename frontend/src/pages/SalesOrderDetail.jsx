@@ -54,7 +54,7 @@ function SalesOrderDetail() {
         }
         try {
             setLoading(true);
-            const data = await apiFetch(`/sales-orders/${orderId}`).then(res => res.json());
+            const data = await apiFetch(`/sales/orders/${orderId}`).then(res => res.json());
             const { updatedLines, grandTotal } = computeTotals(data.lines || []);
             setOrder({ ...data, lines: updatedLines, total_amount: grandTotal.toFixed(2) });
         } catch (err) {
@@ -66,7 +66,13 @@ function SalesOrderDetail() {
 
     useEffect(() => {
         fetchOrder();
-        apiFetch('/parties?per_page=1000').then(r => r.json()).then(d => setDynamicOptions(p => ({...p, parties: d.items || d})));
+        apiFetch('/soggetti?per_page=1000')
+            .then(r => r.json())
+            .then(d => {
+                const items = Array.isArray(d) ? d : (d.items || []);
+                setDynamicOptions(p => ({ ...p, parties: items }));
+            })
+            .catch(err => console.error("Failed loading parties", err));
     }, [fetchOrder]);
 
     const handleHeaderChange = (e) => {
@@ -90,7 +96,7 @@ function SalesOrderDetail() {
             delete payload.lines;
             delete payload.party;
 
-            const url = isNew ? '/sales-orders' : `/sales-orders/${orderId}`;
+            const url = isNew ? '/sales/orders' : `/sales/orders/${orderId}`;
             const method = isNew ? 'POST' : 'PUT';
 
             await apiFetch(url, {
@@ -159,7 +165,7 @@ function SalesOrderDetail() {
                             <label className="form-label">Customer</label>
                             <select name="party_id" value={order.party_id} onChange={handleHeaderChange} className="form-select">
                                 <option value="">Select Customer</option>
-                                {(dynamicOptions.parties || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                {(dynamicOptions.parties || []).map(p => <option key={p.id} value={p.id}>{p.name || p.nome || p.denominazione || p.ragione_sociale || `Soggetto #${p.id}`}</option>)}
                             </select>
                         </div>
                         <div className="col-md-6 mb-3">
