@@ -26,105 +26,69 @@ ERPSEED è un sistema ERP modulare costruito con Flask. Utilizza un'architettura
 ```
 backend/
 ├── __init__.py              # App factory (create_app)
-├── extensions.py            # Flask extensions initialization
-├── schemas.py               # Marshmallow schemas
-├── container.py            # Dependency Injection container
-├── run.py                   # Entry point
+├── extensions.py            # Inizializzazione estensioni Flask
+├── schemas.py               # Schemi Marshmallow centrali
+├── container.py             # Iniezione dipendenze (Container)
+├── models.py                # Proxy e relazioni modelli
+├── utils.py                 # Utility condivise
+├── webhooks.py / webhook_triggers.py  # Webhook triggers & handlers
 │
-├── models/                  # DATABASE MODELS (spacchettato)
+├── models/                  # MODELLI DATABASE (SQLAlchemy)
 │   ├── __init__.py
-│   ├── base.py             # BaseModel con soft delete
-│   ├── user.py             # User model
-│   ├── project.py          # Project model
-│   ├── product.py          # Product model
-│   ├── sales.py            # SalesOrder, SalesOrderLine
-│   ├── purchase.py         # PurchaseOrder, PurchaseOrderLine
-│   ├── ai.py              # AIConversation
-│   ├── chart.py            # ChartLibraryConfig
-│   ├── user_role.py       # UserRole
-│   ├── tax.py             # TaxRate
-│   ├── uom.py             # UnitOfMeasure
-│   ├── pricing.py         # PriceList, PriceListItem
-│   ├── movement_reason.py # MovementReason
-│   ├── goods_receipt.py   # GoodsReceipt, GoodsReceiptLine
-│   ├── maturity.py        # Maturity
-│   ├── crm.py             # Lead, Opportunity
-│   ├── contract.py        # Contract
-│   ├── manufacturing.py   # BillOfMaterial, BOMLine, WorkCycle, WorkPhase, ProductionOrder, ProductionOrderMaterial
-│   ├── project_management.py # BusinessProject, Timesheet, TimesheetLine
-│   ├── report.py          # Report, ReportExecution
-│   ├── vat.py             # VatRegisterEntry, VatLiquidation, IntrastatDeclaration
-│   ├── riba.py            # RiBa, RiBaItem
-│   ├── lot.py             # Lot, SerialNumber
-│   ├── purchase_request.py # PurchaseRequest, RFQ, SupplierQuotation (con linee)
-│   ├── mrp.py             # MRPRun, MRPSuggestion
-│   ├── workflow.py        # Workflow, WorkflowStep, WorkflowExecution
-│   ├── webhook.py         # WebhookEndpoint, WebhookDelivery, WebhookEvent
-│   └── system/            # System models
-│       ├── sys_model.py   # SysModel
-│       ├── sys_field.py   # SysField
-│       ├── sys_view.py    # SysView
-│       ├── sys_component.py
-│       ├── sys_action.py
-│       ├── sys_chart.py
-│       ├── sys_dashboard.py
-│       └── sys_model_version.py
+│   ├── base.py              # BaseModel con soft delete e to_dict
+│   ├── user.py              # User, Role, UserRole
+│   ├── project.py           # Project
+│   ├── product.py           # Product
+│   ├── sales.py             # SalesOrder, SalesOrderLine
+│   ├── purchase.py          # PurchaseOrder, PurchaseOrderLine
+│   ├── ai.py               # AIConversation
+│   ├── chart.py             # ChartLibraryConfig
+│   ├── tax.py              # TaxRate
+│   ├── uom.py              # UnitOfMeasure
+│   ├── pricing.py          # PriceList, PriceListItem
+│   ├── movement_reason.py  # MovementReason
+│   ├── goods_receipt.py    # GoodsReceipt, GoodsReceiptLine
+│   ├── maturity.py         # Maturity
+│   ├── crm.py              # Lead, Opportunity
+│   ├── contract.py         # Contract
+│   ├── manufacturing.py    # BillOfMaterial, WorkCycle, ProductionOrder
+│   ├── project_management.py # BusinessProject, Timesheet
+│   ├── report.py           # Report, ReportExecution
+│   ├── vat.py              # VatRegisterEntry, VatLiquidation, IntrastatDeclaration
+│   ├── riba.py             # RiBa, RiBaItem
+│   ├── lot.py              # Lot, SerialNumber
+│   ├── purchase_request.py  # PurchaseRequest, RFQ, SupplierQuotation
+│   ├── mrp.py              # MRPRun, MRPSuggestion
+│   ├── workflow.py         # Workflow, WorkflowStep, WorkflowExecution
+│   ├── webhook.py          # WebhookEndpoint, WebhookDelivery, WebhookEvent
+│   └── system.py           # SysModel, SysField, SysView, SysComponent, SysAction, SysChart, SysDashboard, SysModelVersion
 │
-├── routes/                  # API ROUTES
-│   ├── __init__.py
-│   ├── projects.py
-│   ├── dashboard.py
-│   ├── analytics.py
-│   ├── dynamic.py          # Dynamic CRUD API
-│   ├── workflows.py
-│   ├── webhooks.py
-│   ├── templates.py
-│   ├── visual_builder.py
-│   ├── versioning.py
-│   ├── debugging.py
-│   └── cashrec.py         # CashRec Integration
-│
-├── services/                # BUSINESS LOGIC
-│   ├── __init__.py
-│   ├── base.py            # BaseService
-│   ├── workflow_service.py
-│   ├── webhook_service.py
-│   ├── workflow_executor.py
+├── services/                # SERVICE PROXIES (Lazy imports / backward compatibility)
+│   ├── __init__.py          # ServiceProxy wrapper
+│   ├── base.py
+│   ├── builder_service.py
 │   ├── dynamic_api_service.py
-│   ├── project_service.py
-│   ├── user_service.py
-│   ├── template_service.py
-│   ├── versioning_service.py
 │   ├── file_processing_service.py
-│   └── generic_service.py
-│
-├── cli/                     # CLI SCRIPTS
-│   ├── create_admin.py
-│   ├── create_default_project.py
-│   ├── setup_database.py
-│   ├── register_cashrec_module.py
-│   ├── test_container.py
-│   └── create_tenant.py
-│
-├── seeds/                   # DATABASE SEEDS
-│   ├── initial.py          # Admin user + tenant
-│   ├── comuni.py          # Italian geographic data
-│   ├── metadata.py         # SysComponent, SysAction
-│   ├── kpi.py             # Dashboard KPI
-│   └── gdo_models.py       # GDO template
+│   ├── generic_service.py
+│   ├── geocoded_client.py
+│   ├── logistics_service.py
+│   ├── project_service.py
+│   ├── template_service.py
+│   ├── user_service.py
+│   └── versioning_service.py
 │
 ├── core/                    # CORE SYSTEM
-│   ├── api/               # Core API endpoints
-│   │   ├── auth.py        # Login, Register, JWT
-│   │   ├── tenant.py       # Tenant management
-│   │   ├── modules.py     # Module system
-│   │   ├── system.py      # System config
-│   │   ├── pdf.py         # PDF generation
-│   │   ├── test_runner.py  # Test execution
+│   ├── api/                # Endpoint API core (/api/v1/)
+│   │   ├── auth.py         # Login, Register, JWT, Password reset
+│   │   ├── tenant.py        # Gestione Tenant
+│   │   ├── modules.py      # Gestione Moduli
+│   │   ├── system.py       # Configurazione Sistema
+│   │   ├── pdf.py          # Generazione PDF
+│   │   ├── test_runner.py  # Esecuzione Test
 │   │   ├── custom_modules.py
 │   │   ├── module_api.py
 │   │   └── import_export.py
-│   ├── models/            # Core models
+│   ├── models/             # Modelli Core
 │   │   ├── base.py
 │   │   ├── tenant.py
 │   │   ├── tenant_member.py
@@ -134,107 +98,90 @@ backend/
 │   │   ├── modulo.py
 │   │   ├── tenant_module.py
 │   │   └── test_models.py
-│   ├── services/          # Core services
+│   ├── services/           # Servizi Core
 │   │   ├── auth_service.py
-│   │   ├── auth/
 │   │   ├── tenant_service.py
-│   │   ├── tenant/
 │   │   ├── module_service.py
 │   │   ├── permission_service.py
-│   │   ├── query_filter.py
+│   │   ├── webhook_service.py
 │   │   ├── import_export_service.py
 │   │   ├── pdf_service.py
-│   │   └── test_engine.py
-│   └── middleware/         # Middleware
+│   │   ├── file_processing_service.py
+│   │   ├── test_engine.py
+│   │   └── tenant/ (tenant_filter.py, tenant_context.py)
+│   └── middleware/          # Middleware
 │       ├── tenant_middleware.py
 │       └── module_middleware.py
 │
-├── modules/                 # MODULI APPLICATIVI
-│   ├── entities/           # Anagrafiche (Vision Archetypes)
-│   │   ├── soggetto.py    #   Soggetto (Cliente/Fornitore)
-│   │   ├── ruolo.py
-│   │   ├── indirizzo.py
-│   │   ├── indirizzo_geografico.py
-│   │   ├── contatto.py
-│   │   ├── comune.py
-│   │   ├── routes.py      #   CRUD: soggetti, ruoli, indirizzi, contatti
-│   │   ├── comuni_routes.py  # CRUD: comuni, regioni, province
-│   │   └── schemas.py
-│   ├── products/           # Prodotti (CQRS)
-│   │   ├── service_api.py #   Entry point (execute command)
-│   │   ├── api/rest_api.py #   REST CRUD
-│   │   ├── domain/        #   Product, ProductCreatedEvent
-│   │   ├── application/   #   Handlers, Commands, Queries
-│   │   └── infrastructure/ #   ProductRepository
-│   ├── sales/              # Vendite (CQRS)
-│   │   └── (same CQRS structure)
-│   ├── purchases/          # Acquisti (CQRS)
-│   │   └── (same CQRS structure)
-│   ├── analytics/          # Dashboard e KPI
-│   │   └── api/rest_api.py, dashboard_api.py
-│   ├── automation/         # Workflow e Webhook
-│   │   └── api/workflows_api.py, webhooks_api.py
-│   ├── ai/                 # AI Assistant
-│   │   ├── service.py, api.py, context.py
-│   │   ├── tool_registry.py, tool_executors.py
-│   │   └── adapters/ (openai, anthropic, ollama, openrouter)
-│   ├── builder/            # No-Code Builder (CQRS)
-│   │   └── application/, domain/, api.py
-│   ├── dynamic_api/        # Dynamic CRUD engine
-│   │   └── api/routes/, services/field_validator, query_builder, result_processor
-│   ├── cashrec/            # CashRec Engine (client-side)
-│   │   └── services/
-│   ├── projects/           # Progetti (CQRS)
-│   │   └── api/rest_api.py, application/, service.py
-│   ├── users/              # Utenti (CQRS)
-│   │   └── api/rest_api.py, application/, service.py
-│   ├── system_tools/       # Template, Versioning, Debug
-│   │   └── api/templates_api.py, versioning_api.py
-│   ├── tax/                # Aliquote IVA (CQRS)
-│   ├── product_categories/ # Categorie Prodotto
-│   ├── uom/                # Unità di Misura
-│   ├── pricing/            # Listini Prezzo
-│   ├── invoicing/          # Fatturazione Vendita (CQRS)
-│   ├── inventory/          # Magazzino (movimenti + causali)
-│   ├── goods_receipt/      # DDT Entrata Merci
-│   ├── maturities/         # Scadenzario
-│   ├── crm/                # CRM (Lead + Opportunità)
+├── modules/                 # MODULI APPLICATIVI (CQRS & Domain Logic)
+│   ├── ai/                 # Agent Gateway & AI Assistant (adapters, tool_registry, tool_executors)
+│   ├── analytics/          # Dashboard, KPI & Analytics API
+│   ├── automation/         # Workflow Engine & Webhook management
+│   ├── builder/            # No-Code Builder (application, domain, api)
 │   ├── contracts/          # Contratti
-│   ├── manufacturing/      # Produzione (BOM, Cicli, ODP)
-│   ├── project_management/ # Timesheet + Budget Commessa
-│   ├── report_designer/    # Report Designer
-│   ├── vat/                # Registri IVA + Intrastat
-│   ├── riba/               # Ri.Ba. (Ricevute Bancarie)
+│   ├── crm/                # Lead & Opportunità
+│   ├── dynamic_api/        # Dynamic CRUD engine (QueryBuilder, FieldValidator, ResultProcessor)
+│   ├── entities/           # Anagrafiche: Soggetto, Ruolo, Indirizzo, Contatto, Comune, Via
+│   ├── fattura_elettronica/# Generazione XML FatturaElettronicaPA 1.2
+│   ├── geografia/          # Regioni, Province, Comuni, Nazioni
+│   ├── goods_receipt/      # DDT Entrata Merci
+│   ├── inventory/          # Giacenze, Movimenti & Causali
+│   ├── invoicing/          # Fatturazione Vendita (CQRS)
+│   ├── logistics/          # Servizi Logistici & Calcolo Percorsi
 │   ├── lot/                # Lotti e Serial Number
-│   ├── purchase_requests/  # Richieste Acquisto + RFQ
-│   └── mrp/                # MRP (Material Requirements Planning)
+│   ├── manufacturing/      # Produzione (BOM, Cicli, ODP)
+│   ├── maturities/         # Scadenzario & Partite
+│   ├── mrp/                # Material Requirements Planning
+│   ├── pricing/            # Listini Prezzo
+│   ├── product_categories/ # Categorie Prodotto
+│   ├── products/           # Prodotti (CQRS)
+│   ├── project_management/ # Timesheet & Budget Commessa
+│   ├── projects/           # Progetti (CQRS)
+│   ├── purchase_requests/  # Richieste d'Acquisto & RFQ
+│   ├── purchase_returns/   # Resi Acquisti
+│   ├── purchases/          # Ordini Acquisto (CQRS)
+│   ├── relationship_manager/# Visual ER Relationship Manager
+│   ├── report_designer/    # Report Designer & Esecuzione
+│   ├── riba/               # Ricevute Bancarie (Ri.Ba.)
+│   ├── sales/              # Ordini Vendita & Preventivi (CQRS)
+│   ├── system_tools/       # Template, Versioning & System Debugging
+│   ├── tax/                # Aliquote IVA (CQRS)
+│   ├── uom/                # Unità di Misura
+│   ├── users/              # Utenti & Ruoli (CQRS)
+│   └── vat/                # Registri IVA & Intrastat
 │
-├── plugins/                # PLUGIN SYSTEM
-│   ├── base.py
-│   ├── registry.py
-│   ├── accounting/
-│   ├── hr/
-│   └── inventory/
+├── plugins/                # SYSTEM PLUGINS
+│   ├── base.py             # BasePlugin class
+│   ├── registry.py         # Plugin Registry
+│   ├── accounting/         # Contabilità (Piano dei Conti, Prima Nota)
+│   ├── hr/                 # Risorse Umane (Dipendenti, Presenze, Ferie, Payroll, Formazione)
+│   └── inventory/          # Plugin Magazzino esteso
 │
-├── shared/                 # SHARED UTILITIES
-│   ├── events/
-│   │   ├── event_bus.py
-│   │   ├── event.py
-│   │   └── system_events.py
-│   ├── utils/
-│   │   ├── audit.py
-│   │   ├── filters.py
-│   │   └── pagination.py
-│   ├── interfaces/
-│   └── exceptions/
+├── cli/                    # CLI SCRIPTS
+│   ├── create_admin.py
+│   ├── create_default_project.py
+│   ├── create_tenant.py
+│   ├── reset_db.py
+│   ├── setup_database.py
+│   └── test_container.py
 │
-├── composition/            # COMPOSITION SYSTEM
-├── orm/                    # ORM ENHANCEMENTS
-├── view_renderer/          # VIEW RENDERING
+├── seeds/                  # DATABASE SEEDS
+│   ├── seed_initial.py     # Admin user + default tenant
+│   ├── seed_comuni.py     # Anagrafica comuni italiani
+│   ├── seed_metadata.py    # SysComponent, SysAction metadata
+│   ├── seed_kpi.py         # KPI e dashboard iniziali
+│   ├── enrich_comuni.py
+│   └── comuni_istat.json
 │
-├── docs/                   # DOCUMENTATION
-├── tests/                  # TEST SUITE
-└── translations/           # i18n
+├── shared/                 # SHARED UTILITIES & EVENT BUS
+│   ├── events/             # EventBus, Event, SystemEvents
+│   ├── handlers/           # Event Handlers (Read Model Sync)
+│   ├── utils/              # Audit, Filters, Pagination
+│   ├── interfaces/         # ICrudService
+│   └── exceptions/         # Excezioni Custom
+│
+├── tests/                  # SUITE TEST BACKEND (Pytest)
+└── translations/           # File i18n (Flask-Babel)
 ```
 
 ## Pattern Architetturali

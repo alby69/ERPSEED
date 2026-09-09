@@ -18,12 +18,31 @@
 - `VITE_API_URL`: Base URL for backend API requests (default: `http://localhost:5000`). Configurable in `.env` or `.env.local`.
 
 ## Project Structure
-- `src/components`: Reusable UI components (`GenericCrudPage.jsx`, `ColumnSettingsButton.jsx`, `ComponentRenderer.jsx`).
-- `src/pages`: Individual application pages (Anagrafiche, Products, Sales, Accounting, HR, etc.).
-- `src/theme`: Centralized design token definitions (`tokens.js`).
-- `src/hooks`: Custom React hooks (`useColumnManagerWithDrawer.js`, `useCrudData.js`).
-- `src/utils.js`: Centralized utility functions (`apiFetch`, date/currency formatters).
-- `src/ProjectLayout.jsx`: Layout wrapper with AppHeader, Sidebar, and Breadcrumbs.
+
+```
+frontend/src/
+├── assets/                  # Immagini ed asset statici
+├── components/              # COMPONENTI UI RIUTILIZZABILI
+│   ├── archetypes/          #   Archetipi UI (FormArchetype, TableArchetype, GridArchetype, etc.)
+│   ├── charts/              #   Componenti di charting (@ant-design/charts e adapter)
+│   ├── core/                #   ComponentRenderer e ArchetypeRegistry
+│   ├── ui/                  #   AIAssistant, ImportExportToolbar, TemplateGallery
+│   ├── workflow/            #   Nodi e proprietà per il Visual Workflow Builder
+│   └── (root components)    #   GenericCrudPage, DataTable, ColumnSettingsButton, Sidebar, AppHeader, HelpDrawer, etc.
+│
+├── context/                 # Context Providers (AuthContext, ThemeContext, NotificationContext)
+├── hooks/                   # Custom Hooks (useColumnManager, useResponsive, useCrudData, useModules)
+├── lib/                     # Librerie e moduli frontend
+│   └── cashrec/             #   Motore CashRec 100% client-side (engine, worker, parser, reporter)
+├── locales/                 # Traduzioni i18n (it/translation.json, en/translation.json)
+├── pages/                   # PAGINE APPLICATIVE (50+ pagine ERP, Dashboard, VisualBuilder, CashRecTool, etc.)
+├── stores/                  # State management Zustand (workflowBuilderStore)
+├── theme/                   # Token di design centralizzati (tokens.js)
+├── utils/                   # Utility modulari (binding, dateUtils, exportUtils, sortable)
+├── __tests__/               # Test unitari frontend (Vitest + React Testing Library)
+├── App.jsx / ProjectLayout.jsx # Inizio applicazione e layout responsive principale
+└── utils.js                 # Utility centralizzate (`apiFetch`, formattatori)
+```
 
 ---
 

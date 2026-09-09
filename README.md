@@ -58,41 +58,50 @@ erpseed/
 ├── backend/                          # Flask API Backend
 │   ├── __init__.py                  # App factory (create_app)
 │   ├── models/                      # Modelli SQLAlchemy
-│   ├── core/                        # Sistema core
-│   │   ├── api/                     #   Auth, Tenant, Modules, System
-│   │   ├── models/                  #   Tenant, Audit, Module
-│   │   ├── services/                #   Auth, Tenant, Permission, Query Filter
-│   │   ├── middleware/              #   TenantMiddleware, ModuleMiddleware
-│   │   └── decorators/              #   @tenant_required, @admin_required
-│   ├── modules/                     # Moduli applicativi (CQRS)
+│   ├── core/                        # Sistema core (API, Models, Services, Middleware)
+│   │   ├── api/                     #   Auth, Tenant, Modules, System, Import/Export
+│   │   ├── models/                  #   Tenant, Audit, Module, Modulo
+│   │   ├── services/                #   Auth, Tenant, Permission, File Processing, PDF
+│   │   └── middleware/              #   TenantMiddleware, ModuleMiddleware
+│   ├── modules/                     # Moduli applicativi (CQRS & Domain Logic)
 │   │   ├── entities/               #   Anagrafiche: Soggetto, Ruolo, Indirizzo, Contatto, Comune, Via
 │   │   ├── products/               #   Prodotti (CQRS)
-│   │   ├── sales/                  #   Vendite (CQRS)
-│   │   ├── purchases/              #   Acquisti + Resi (CQRS)
-│   │   ├── accounting/             #   Contabilità: Piano Conti, Prima Nota, Scadenzario, Bilancio Verifica, IVA, Intrastat, Ri.Ba.
-│   │   ├── hr/                     #   HR: Dipendenti, Presenze, Ferie, Payroll, Formazione
-│   │   ├── fattura_elettronica/    #   Fattura Elettronica XML generation
-│   │   ├── crm/                    #   Lead, Opportunità, Contratti
-│   │   ├── analytics/              #   Dashboard e KPI
-│   │   ├── automation/             #   Workflow e Webhook
-│   │   ├── ai/                     #   AI Assistant
+│   │   ├── sales/                  #   Vendite & Preventivi (CQRS)
+│   │   ├── purchases/              #   Acquisti (CQRS)
+│   │   ├── purchase_returns/       #   Resi Acquisti
+│   │   ├── invoicing/              #   Fatturazione (CQRS)
+│   │   ├── fattura_elettronica/    #   Generazione XML FatturaElettronicaPA 1.2
+│   │   ├── crm/                    #   Lead & Opportunità
+│   │   ├── contracts/              #   Contratti
+│   │   ├── inventory/              #   Magazzino: Giacenze, Movimenti, Causali
+│   │   ├── manufacturing/          #   Produzione: BOM, Cicli, ODP
+│   │   ├── mrp/                    #   Material Requirements Planning
+│   │   ├── maturities/             #   Scadenzario & Partite
+│   │   ├── vat/                    #   Registri IVA & Intrastat
+│   │   ├── riba/                   #   Ricevute Bancarie
+│   │   ├── analytics/              #   Dashboard, KPI & Reporting
+│   │   ├── automation/             #   Workflow Engine & Webhooks
+│   │   ├── ai/                     #   AI Assistant & Agent Gateway (AgentMesh)
 │   │   ├── builder/                #   No-Code Builder
 │   │   ├── dynamic_api/            #   Dynamic CRUD engine
-│   │   ├── cashrec/                #   CashRec Engine (Frontend lib)
 │   │   ├── logistics/              #   Servizi Logistici e Routing
-│   │   ├── projects/               #   Progetti
-│   │   ├── users/                  #   Utenti
+│   │   ├── projects/               #   Progetti (CQRS)
+│   │   ├── users/                  #   Utenti & Ruoli (CQRS)
 │   │   └── system_tools/           #   Template, Versioning, Debug
-│   ├── plugins/                    # Plugin estensibili
+│   ├── plugins/                    # Plugin estensibili (Accounting, HR, Inventory)
 │   └── seeds/                      # Database seed scripts
 │
 ├── docs/                            # Documentazione centralizzata (13 file attivi)
 │
-└── frontend/                        # React + Vite + Ant Design
+└── frontend/                        # React 19 + Vite + Ant Design
     ├── src/
-    │   ├── pages/                  # 50+ pagine (Dashboard, Anagrafiche, Prodotti, Sales, Accounting, HR, etc.)
-    │   ├── components/             # 45+ componenti riutilizzabili
-    │   └── context/                # AuthContext, ThemeProvider
+    │   ├── pages/                  # 50+ pagine applicative (Dashboard, Anagrafiche, Sales, HR, CashRec, etc.)
+    │   ├── components/             # Componenti UI (archetypes, charts, core, ui, workflow)
+    │   ├── context/                # AuthContext, ThemeContext, NotificationContext
+    │   ├── hooks/                  # Custom hooks (useColumnManager, useResponsive, useCrudData)
+    │   ├── lib/cashrec/            # Motore CashRec 100% client-side
+    │   ├── theme/                  # Token di design centralizzati (tokens.js)
+    │   └── locales/                # Internazionalizzazione i18n (EN/IT)
     └── docker-compose.yml          # Sviluppo con hot-reload
 ```
 
