@@ -73,9 +73,10 @@ L'integrazione di ERPSEED con la rete `agentmesh` trasforma un sistema gestional
 erpseed/
 ├── docs/                      # Documentazione centralizzata
 ├── backend/                   # Core Flask (CQRS + Multi-tenant)
-│   ├── modules/               # Moduli ERP (Sales, HR, Magazzino, etc.)
+│   ├── modules/               # Moduli ERP (Sales, Magazzino, Invoicing, etc.)
 │   │   └── ai/                # Agent Gateway (Bridge verso AgentMesh)
-│   └── core/                  # Sistema base e middleware
+│   ├── plugins/               # Plugin ERP (Accounting, HR, etc.)
+│   └── core/                  # Sistema base, capabilities e middleware
 └── frontend/                  # React UI (Visual Builder + Dashboards)
 ```
 

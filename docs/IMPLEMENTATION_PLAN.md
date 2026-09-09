@@ -35,12 +35,12 @@ Sono le entità fondamentali, non scomponibili, che vengono riutilizzate per cos
 | P7 | **Categoria** | `ProductCategory` (albero padre-figlio) | `modules/product_categories/` | ✅ |
 | P8 | **Aliquota IVA** | `TaxRate` (codice, %, data inizio/fine) | `modules/tax/` | ✅ |
 | P9 | **Unità di Misura** | `UnitOfMeasure` (codice, descrizione, simbolo) | `modules/uom/` | ✅ |
-| P10 | **Conto Contabile** | `Account` (piano dei conti, tipo, codice) | `modules/accounting/` | ✅ |
+| P10 | **Conto Contabile** | `Account` (piano dei conti, tipo, codice) | `plugins/accounting/` | ✅ |
 | P11 | **Magazzino/Deposito** | `InventoryLocation` (codice, nome, indirizzo) | `modules/inventory/` | ✅ |
 | P12 | **Listino Prezzo** | `PriceList` + `PriceListItem` (prodotto, prezzo, sconto) | `modules/pricing/` | ✅ |
 | P13 | **Scadenza** | `Maturity` (data, importo, saldo, riferimento) | `modules/maturities/` | ✅ |
 | P14 | **Causale Magazzino** | `MovementReason` (codice, tipo: carico/scarico/trasf.) | `modules/inventory/` | ✅ |
-| P15 | **Unità Organizzativa** | `Department` (codice, nome, gerarchia) | `modules/hr/` | ✅ |
+| P15 | **Unità Organizzativa** | `Department` (codice, nome, gerarchia) | `plugins/hr/` | ✅ |
 
 ---
 
@@ -63,7 +63,7 @@ Ogni **Area** corrisponde a un submenu di "Applicazioni" nella sidebar.
 | **Aliquote IVA** | P8 | `modules/tax/` ✅ | — | — |
 | **Unità di Misura** | P9 | `modules/uom/` ✅ | — | — |
 | **Listini Prezzo** | P12 + P3 | `modules/pricing/` ✅ | — | — |
-| **Piano dei Conti** | P10 | `modules/accounting/` ✅ | — | — |
+| **Piano dei Conti** | P10 | `plugins/accounting/` ✅ | — | — |
 
 ### Area 2: Logistica e Acquisti
 *Submenu: "Acquisti" — Icona: `<ShoppingCartOutlined />`*
@@ -105,8 +105,8 @@ Ogni **Area** corrisponde a un submenu di "Applicazioni" nella sidebar.
 
 | Blocco | Composizione | Modulo | Priorità | Sforzo |
 |--------|-------------|--------|----------|--------|
-| **Piano dei Conti** | P10 | `modules/accounting/` ✅ | — | — |
-| **Prima Nota** | P10 + dare/avere + riferimento doc | `modules/accounting/` ✅ | — | — |
+| **Piano dei Conti** | P10 | `plugins/accounting/` ✅ | — | — |
+| **Prima Nota** | P10 + dare/avere + riferimento doc | `plugins/accounting/` ✅ | — | — |
 | **Scadenzario/Partite** | P13 + P1 + Fattura + solleciti | `modules/maturities/` ✅ | — | — |
 | **Registri IVA** | P8 + Prima Nota + periodicità | `modules/vat/` ✅ | — | — |
 | **Intrastat** | Report movimenti intra | `modules/vat/` ✅ | — | — |
@@ -128,11 +128,11 @@ Ogni **Area** corrisponde a un submenu di "Applicazioni" nella sidebar.
 
 | Blocco | Composizione | Modulo | Priorità | Sforzo |
 |--------|-------------|--------|----------|--------|
-| **Dipendenti** | P1(PF) + ruolo dipendente + P15 | `modules/hr/` ✅ | — | — |
-| **Reparti** | P15 + P1(Manager) | `modules/hr/` ✅ | — | — |
-| **Presenze** | Dipendente + data + check-in/out | `modules/hr/` ✅ | — | — |
-| **Ferie e Permessi** | Dipendente + tipo + date + approvazione | `modules/hr/` ✅ | — | — |
-| **Formazione** | Dipendente + corso + certificazione | `modules/hr/` ✅ | — | — |
+| **Dipendenti** | P1(PF) + ruolo dipendente + P15 | `plugins/hr/` ✅ | — | — |
+| **Reparti** | P15 + P1(Manager) | `plugins/hr/` ✅ | — | — |
+| **Presenze** | Dipendente + data + check-in/out | `plugins/hr/` ✅ | — | — |
+| **Ferie e Permessi** | Dipendente + tipo + date + approvazione | `plugins/hr/` ✅ | — | — |
+| **Formazione** | Dipendente + corso + certificazione | `plugins/hr/` ✅ | — | — |
 
 ### Area 8: Project Management
 *Submenu: "Progetti" — Icona: `<ProjectOutlined />`*

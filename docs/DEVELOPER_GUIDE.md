@@ -33,10 +33,12 @@ Quando si modifica un modulo esistente o se ne crea uno nuovo:
 ```
 backend/
 ├── __init__.py      # App factory (create_app)
-├── run.py           # Entry point
-├── extensions.py    # Flask extensions
+├── extensions.py    # Estensioni Flask
+├── container.py     # DI Container
 ├── models/          # Modelli SQLAlchemy
-└── core/            # Componenti condivisi e base
+├── core/            # Componenti condivisi, API core, servizi e middleware
+├── modules/         # Moduli applicativi CQRS (sales, products, ai, etc.)
+└── plugins/         # Plugin estensibili (accounting, hr, inventory)
 ```
 
 ### Creare un Nuovo Modulo

@@ -14,11 +14,17 @@ Interfaccia utente React per la piattaforma ERPSeed.
 
 ```
 src/
-├── pages/          # 44 pagine (Dashboard, Anagrafiche, Prodotti, etc.)
-├── components/     # 43 componenti riutilizzabili
-├── context/        # AuthContext, ThemeProvider
-├── locales/        # Traduzioni IT/EN
-└── utils/          # apiFetch, helpers
+├── assets/         # Immagini ed asset statici
+├── components/     # Componenti UI (archetypes, charts, core, ui, workflow, etc.)
+├── context/        # Context Providers (AuthContext, ThemeContext, NotificationContext)
+├── hooks/          # Custom React hooks (useColumnManager, useResponsive, useCrudData)
+├── lib/cashrec/    # Motore CashRec 100% client-side (engine, worker, parser, reporter)
+├── locales/        # Traduzioni IT/EN (i18n)
+├── pages/          # 50+ pagine applicative (Dashboard, Anagrafiche, Prodotti, CashRec, etc.)
+├── stores/         # State management Zustand (workflowBuilderStore)
+├── theme/          # Token di design centralizzati (tokens.js)
+├── utils/          # Utility (apiFetch, binding, dateUtils, exportUtils)
+└── __tests__/      # Test unitari (Vitest + React Testing Library)
 ```
 
 ## Comandi
