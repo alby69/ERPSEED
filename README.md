@@ -41,7 +41,7 @@ Vedi [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) per setup manuale e coma
 | **Magazzino** | Giacenze, Movimenti, Inventario, Lotti/Seriali, Ubicazioni |
 | **Produzione** | BOM, Cicli, ODP, MRP |
 | **CRM** | Lead, Opportunità, Contratti |
-| **GDO Reconciliation** | Strumento di riconciliazione GDO con report Excel |
+| **CashRec** | Riconciliazione Casse (CashRec) 100% client-side con report Excel |
 | **Webhook System** | 7 event types, secret regeneration, test delivery |
 | **Audit Logging** | Tracciamento completo delle operazioni |
 | **Cache Redis** | Flask-Caching su endpoint GET frequenti (maturities, VAT, inventory) |
@@ -78,7 +78,7 @@ erpseed/
 │   │   ├── ai/                     #   AI Assistant
 │   │   ├── builder/                #   No-Code Builder
 │   │   ├── dynamic_api/            #   Dynamic CRUD engine
-│   │   ├── gdo/                    #   GDO Reconciliation
+│   │   ├── cashrec/                #   CashRec Engine (Frontend lib)
 │   │   ├── logistics/              #   Servizi Logistici e Routing
 │   │   ├── projects/               #   Progetti
 │   │   ├── users/                  #   Utenti
