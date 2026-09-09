@@ -82,7 +82,7 @@ backend/
 │   ├── visual_builder.py
 │   ├── versioning.py
 │   ├── debugging.py
-│   └── gdo.py             # GDO Reconciliation
+│   └── cashrec.py         # CashRec Integration
 │
 ├── services/                # BUSINESS LOGIC
 │   ├── __init__.py
@@ -96,16 +96,13 @@ backend/
 │   ├── template_service.py
 │   ├── versioning_service.py
 │   ├── file_processing_service.py
-│   ├── gdo_reconciliation_service.py
-│   ├── gdo_excel_reporter.py
 │   └── generic_service.py
 │
 ├── cli/                     # CLI SCRIPTS
 │   ├── create_admin.py
 │   ├── create_default_project.py
 │   ├── setup_database.py
-│   ├── reset_db.py
-│   ├── register_gdo_module.py
+│   ├── register_cashrec_module.py
 │   ├── test_container.py
 │   └── create_tenant.py
 │
@@ -185,14 +182,14 @@ backend/
 │   │   └── application/, domain/, api.py
 │   ├── dynamic_api/        # Dynamic CRUD engine
 │   │   └── api/routes/, services/field_validator, query_builder, result_processor
-│   ├── gdo/                # GDO Reconciliation
+│   ├── cashrec/            # CashRec Engine (client-side)
 │   │   └── services/
 │   ├── projects/           # Progetti (CQRS)
 │   │   └── api/rest_api.py, application/, service.py
 │   ├── users/              # Utenti (CQRS)
 │   │   └── api/rest_api.py, application/, service.py
 │   ├── system_tools/       # Template, Versioning, Debug
-│   │   └── api/templates_api.py, versioning_api.py, gdo_api.py
+│   │   └── api/templates_api.py, versioning_api.py
 │   ├── tax/                # Aliquote IVA (CQRS)
 │   ├── product_categories/ # Categorie Prodotto
 │   ├── uom/                # Unità di Misura

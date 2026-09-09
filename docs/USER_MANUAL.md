@@ -100,7 +100,7 @@ Dynamic models and standard entities support batch CSV import and export. Use th
 ### Column Customization
 Click the **Colonne** button on any table header to customize column visibility, reorder columns, or reset table preferences (saved to local browser storage).
 
-### GDO Reconciliation
+### CashRec — Riconciliazione Casse
 Specialized matching engine for reconciling external data sources (e.g., bank statements vs. invoices) using subset-sum algorithms, exporting formatted Excel reports.
 
 ### Webhooks & API Integration

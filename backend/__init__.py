@@ -164,7 +164,6 @@ from .modules.system_tools.api.visual_builder_api import blp as visual_builder_b
 
 # Import Template API
 from .modules.system_tools.api.templates_api import blp as template_bp
-from .modules.system_tools.api.gdo_api import blp as gdo_reconciliation_bp
 
 
 class CustomJSONProvider(DefaultJSONProvider):
@@ -502,7 +501,6 @@ def create_app(db_url=None):
         visual_builder_bp, url_prefix=f"{API_V1_PREFIX}/visual-builder"
     )
     api.register_blueprint(template_bp, url_prefix=f"{API_V1_PREFIX}/templates")
-    api.register_blueprint(gdo_reconciliation_bp, url_prefix=f"{API_V1_PREFIX}/gdo")
 
     # Marketplace
     api.register_blueprint(

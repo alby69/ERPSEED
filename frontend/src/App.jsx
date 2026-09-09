@@ -20,7 +20,7 @@ import CustomModulesPage from './pages/CustomModulesPage';
 import AIAssistantPage from './pages/AIAssistantPage';
 import ModuleAppPage from './pages/ModuleAppPage';
 import ProjectImportExportPage from './pages/ProjectImportExportPage';
-import GDOReconciliationTool from './pages/GDOReconciliationTool';
+import CashRecTool from './pages/CashRecTool';
 import PagePlaceholder from './pages/PagePlaceholder';
 import RelationshipManagerPage from './pages/RelationshipManagerPage';
 import DistanceCalculator from './pages/DistanceCalculator';
@@ -132,7 +132,7 @@ return (
             <Route path="settings" element={<ProjectSettingsPage />} />
             {/* The route for dynamic models, now nested */}
             <Route path="data/:modelName" element={<DynamicModelPage />} />
-            <Route path="gdo-reconciliation" element={<GDOReconciliationTool />} />
+            <Route path="cashrec" element={<CashRecTool />} />
             {/* Module App Dashboard - App-like experience */}
             <Route path="app/:moduleName" element={<ModuleAppPage />} />
             <Route path="workflows" element={<WorkflowsPage />} />
