@@ -13,14 +13,13 @@
 | [README.md](../README.md) | Presentazione progetto, features, stack, avvio | Tutti |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Architettura di sistema, pattern (CQRS, Multi-Tenant), struttura repository | Sviluppatori |
 | [ROADMAP.md](ROADMAP.md) | Roadmap di qualità del codice, refactoring KISS/DRY (Fasi 0-4) e priorità tecniche | Team |
-| [BRANCH_STRATEGY.md](BRANCH_STRATEGY.md) | Strategia dei branch Git e flusso di lavoro monorepo | Sviluppatori |
 
 ## 🚀 Guide Operative
 
 | Documento | Contenuto | Target |
 |-----------|-----------|--------|
 | [GETTING_STARTED.md](GETTING_STARTED.md) | Guida all'avvio rapido: Docker, setup locale (backend/frontend) e risoluzione problemi | Tutti |
-| [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | Guida per sviluppatori backend: creazione moduli, convenzioni di refactoring, testing, debug | Sviluppatori BE |
+| [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | Guida per sviluppatori backend: workflow branch Git, creazione moduli, refactoring, testing, debug | Sviluppatori BE |
 | [FRONTEND_GUIDE.md](FRONTEND_GUIDE.md) | Guida per sviluppatori frontend: React, Vite, Ant Design, componenti e state management | Sviluppatori FE |
 | [USER_MANUAL.md](USER_MANUAL.md) | Manuale utente: concetti chiave, uso delle applicazioni, builder visivo | Utenti finali |
 
@@ -60,8 +59,7 @@ README.md (root)
 └── docs/INDEX.md (Entry Point Unico)
     ├── Panoramica & Architettura
     │   ├── ARCHITECTURE.md
-    │   ├── ROADMAP.md
-    │   └── BRANCH_STRATEGY.md
+    │   └── ROADMAP.md
     ├── Guide Operative
     │   ├── GETTING_STARTED.md
     │   ├── DEVELOPER_GUIDE.md

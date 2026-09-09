@@ -4,6 +4,18 @@
 
 ---
 
+## Strategia dei Branch Git
+
+### Ramo Principale: `main`
+Il branch `main` costituisce l'unica sorgente di verità del repository mono-repo e contiene sia il backend (`backend/`) che il frontend (`frontend/`) in uno stato coerente e testato.
+
+### Sviluppo di Nuove Feature
+1. **Creazione Feature Branch**: Crea un branch dedicato a partire da `main` (es. `feature/nome-feature` o `fix/nome-bug`).
+2. **Commit Atomici**: Se la feature richiede modifiche sia al backend che al frontend, includi i cambi nello stesso branch/pull request.
+3. **Pull Request**: Apri una Pull Request verso `main`. Assicurati che tutti i test passino prima del merge.
+
+---
+
 ## Convenzioni di Refactoring
 
 Quando si modifica un modulo esistente o se ne crea uno nuovo:

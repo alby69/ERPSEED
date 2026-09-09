@@ -120,7 +120,6 @@ from .modules.geografia.routes import (
     province_blp,
     comuni_geo_blp,
 )
-from .tutorials.routes import tutorial_blp
 from .modules.entities.indirizzo_geografico import geografico_blp
 from .modules.entities.comuni_routes import comuni_blp
 
@@ -522,7 +521,6 @@ def create_app(db_url=None):
     api.register_blueprint(geografico_blp, url_prefix=f"{API_V1_PREFIX}")
     api.register_blueprint(comuni_blp, url_prefix=f"{API_V1_PREFIX}")
     api.register_blueprint(vie_blp)
-    api.register_blueprint(tutorial_blp)
 
     # Geografia module
     api.register_blueprint(nazioni_blp, url_prefix=f"{API_V1_PREFIX}")
