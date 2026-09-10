@@ -20,6 +20,10 @@ class PurchaseOrder(BaseModel):
     buyer_id = db.Column(db.Integer, nullable=True)
     supplier_reference = db.Column(db.String(100), default="")
     landing_costs = db.Column(db.Float, default=0.0)
+    incoterm_id = db.Column(db.Integer, db.ForeignKey("incoterms.id"), nullable=True)
+    carrier_id = db.Column(db.Integer, db.ForeignKey("carriers.id"), nullable=True)
+    tracking_number = db.Column(db.String(100), nullable=True)
+    analytic_account_id = db.Column(db.Integer, nullable=True)
 
     status = db.Column(db.String(20), default="draft")
     total_amount = db.Column(db.Float, default=0)
