@@ -16,7 +16,7 @@ jobs:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.AGENTMESH_PAT }} # Richiede un PAT con permessi di scrittura su agentmesh
+          token: ${{ secrets.AGENTMESH_PAT || secrets.GITHUB_TOKEN }} # Fallback su GITHUB_TOKEN se AGENTMESH_PAT non e' impostato
           repository: alby69/agentmesh
           event-type: erpseed-updated
           client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
