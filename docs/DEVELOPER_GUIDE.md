@@ -23,6 +23,21 @@ Quando si modifica un modulo esistente o se ne crea uno nuovo:
 2. **Usare BaseService**: Se il servizio fa CRUD semplice, non riscrivere i metodi, usa quelli ereditati da `backend.core.services.base.BaseService`.
 3. **Disaccoppiamento**: Non importare servizi direttamente se possibile; usare il pattern `ServiceProxy` o l'iniezione tramite container.
 4. **Schema unico**: Usare `backend.core.schemas.dynamic_schemas` per centralizzare gli schemi Marshmallow delle API dinamiche.
+5. **i18n & Localizzazione**: Usare `Flask-Babel` per i messaggi uscenti dal backend (`gettext` / `_()`) per garantire risposte i18n coerenti con le chiavi frontend.
+
+---
+
+## Modelli dati avanzati per Vendite e Acquisti (`Sales` & `Purchases`)
+
+I moduli `sales` e `purchases` utilizzano un'architettura CQRS avanzata con dataclass di dominio e schemi ORM estesi secondo le best practice ERP enterprise:
+
+### Dataclass di Dominio CQRS
+- **`SalesOrder` / `SalesOrderLine`** (`backend/modules/sales/domain/models.py`)
+- **`PurchaseOrder` / `PurchaseOrderLine`** (`backend/modules/purchases/domain/models.py`)
+
+### Campi Enterprise Supportati
+- **Document Level**: `pricelist_id`, `currency_id`, `payment_term_id`, `billing_address_id`, `shipping_address_id`, `salesperson_id` / `buyer_id`, `customer_reference` / `supplier_reference`, `warehouse_id`, `landing_costs`.
+- **Line Item Level**: `tax_id` (IVA di riga), `discount_percent` (sconto percentuale), `uom_id` (unità di misura), `expected_delivery_date` (data prevista consegna).
 
 ---
 
@@ -35,9 +50,9 @@ backend/
 ├── __init__.py      # App factory (create_app)
 ├── extensions.py    # Estensioni Flask
 ├── container.py     # DI Container
-├── models/          # Modelli SQLAlchemy
+├── models/          # Modelli SQLAlchemy (Sales, Purchase, Entities, Users, etc.)
 ├── core/            # Componenti condivisi, API core, servizi e middleware
-├── modules/         # Moduli applicativi CQRS (sales, products, ai, etc.)
+├── modules/         # Moduli applicativi CQRS (sales, purchases, products, ai, etc.)
 └── plugins/         # Plugin estensibili (accounting, hr, inventory)
 ```
 
@@ -210,16 +225,13 @@ class MyMiddleware:
 
 ```bash
 # Tutti i test
-pytest
+python3 -m pytest backend/tests
 
 # Con coverage
-pytest --cov=. --cov-report=html
+python3 -m pytest backend/tests --cov=. --cov-report=html
 
 # Test specifico
-pytest tests/test_auth.py -v
-
-# Watch mode
-pytest-watch
+python3 -m pytest backend/tests/test_sales_purchases_enhancements.py -v
 ```
 
 ### Struttura Test
@@ -254,17 +266,6 @@ def test_register(client):
     assert response.status_code == 201
 ```
 
-### Mock External Services
-
-```python
-from unittest.mock import patch
-
-@patch('requests.post')
-def test_webhook(mock_post):
-    mock_post.return_value.status_code = 200
-    # ... test code
-```
-
 ---
 
 ## Debug
@@ -292,18 +293,6 @@ def my_function():
     logger.error("Error occurred")
 ```
 
-### Breakpoints
-
-```python
-# Usa pdb per debug
-import pdb
-
-def my_function():
-    result = some_calculations()
-    pdb.set_trace()  # Debug breakpoint
-    return result
-```
-
 ---
 
 ## Database Migrations
@@ -322,31 +311,6 @@ flask db upgrade
 
 # Downgrade
 flask db downgrade
-```
-
-### Seed Data
-
-```python
-# commands/seed_users.py
-import click
-from flask.cli import with_appcontext
-
-@click.command('seed:users')
-@with_appcontext
-def seed_users():
-    from backend.extensions import db
-    from backend.models import User
-
-    users = [
-        {'email': 'admin@test.com', 'first_name': 'Admin'},
-    ]
-
-    for data in users:
-        user = User(**data)
-        db.session.add(user)
-
-    db.session.commit()
-    click.echo('Users seeded!')
 ```
 
 ---
@@ -380,41 +344,6 @@ def expensive_query():
 
 ---
 
-## Deployment
-
-### Produzione con Gunicorn
-
-```bash
-gunicorn -w 4 -b 0.0.0.0:5000 "backend:create_app()"
-```
-
-### Environment Variables
-
-```bash
-# Produzione
-export DATABASE_URL=postgresql://user:pass@host:5432/prod
-export JWT_SECRET_KEY=<strong-secret>
-export FLASK_ENV=production
-export FLASK_DEBUG=0
-```
-
-### Docker Production
-
-```dockerfile
-FROM python:3.12-slim
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
-
-COPY . .
-EXPOSE 5000
-
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "backend:create_app()"]
-```
-
----
-
 ## Troubleshooting
 
 ### Errori Comuni
@@ -435,10 +364,6 @@ CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "backend:create_app()"]
 - [SQLAlchemy](https://docs.sqlalchemy.org/)
 - [Marshmallow](https://marshmallow.readthedocs.io/)
 - [Flask-JWT-Extended](https://flask-jwt-extended.readthedocs.io/)
-
----
-
-*Per la cronologia completa delle modifiche di questo documento, consulta la cronologia Git del repository.*
 
 ---
 
