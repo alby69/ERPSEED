@@ -1,0 +1,22 @@
+name: Notify AgentMesh of ERPSEED Updates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/modules/**'
+      - 'backend/core/api/**'
+      - 'docs/API.md'
+      - 'backend/openapi.json'
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.AGENTMESH_PAT }} # Richiede un PAT con permessi di scrittura su agentmesh
+          repository: alby69/agentmesh
+          event-type: erpseed-updated
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
