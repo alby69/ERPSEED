@@ -718,12 +718,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
           <div className="mb-3">
             <TableSearch
               columns={columns}
-              searchField={searchField}
-              searchValue={searchValue}
-              searchTerm={filters.q || ''}
               globalSearchValue={filters.q || ''}
-              onSearchFieldChange={handleSearchField}
-              onSearchValueChange={(val) => handleSearchField(searchField, val)}
               onSearchSubmit={() => {}}
               onClearSearch={handleSearchClear}
               onGlobalSearch={handleGlobalSearch}

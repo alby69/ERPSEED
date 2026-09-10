@@ -20,10 +20,15 @@ from backend.modules.entities.schemas import (
     ContattoSchema,
 )
 from backend.extensions import db, ma
+import logging
+from sqlalchemy.exc import IntegrityError
+from werkzeug.exceptions import HTTPException
+
+logger = logging.getLogger(__name__)
 from backend.core.utils.utils import paginate, apply_filters, apply_sorting
 from backend.core.decorators.decorators import tenant_required
 from backend.core.services.generic_service import generic_service
-from backend.core.utils.cache_utils import cached
+from backend.core.utils.cache_utils import cached, cache_delete
 
 
 soggetto_blp = Blueprint("soggetti", __name__, description="Operazioni su Soggetti")
@@ -45,7 +50,16 @@ class SoggettoList(MethodView):
     def get(self, tenant_id):
         """Lista soggetti con ordinamento, ricerca e paginazione"""
         query = Soggetto.query.filter_by(tenant_id=tenant_id)
-        query = apply_filters(query, Soggetto, ["nome", "codice", "email_principale"])
+        relation_filters = {
+            "ruoli": lambda q, values: q.filter(
+                Soggetto.id.in_(
+                    SoggettoRuolo.query.filter(
+                        SoggettoRuolo.ruolo_id.in_([int(v) for v in values])
+                    ).with_entities(SoggettoRuolo.soggetto_id)
+                )
+            ),
+        }
+        query = apply_filters(query, Soggetto, ["nome", "codice", "email_principale"], relation_filters=relation_filters)
         query = apply_sorting(query, Soggetto, default_sort_column="nome")
         items, headers = paginate(query)
         return items, 200, headers
@@ -133,6 +147,8 @@ class SoggettoList(MethodView):
             db.session.add(sc)
 
         db.session.commit()
+        tenant_id_str = request.headers.get("X-Tenant-ID", "0")
+        cache_delete(f"soggetti_list:{tenant_id_str}")
         return soggetto
 
 
@@ -220,12 +236,13 @@ class SoggettoResource(MethodView):
                 db.session.add(sc)
 
         db.session.commit()
+        tenant_id_str = request.headers.get("X-Tenant-ID", "0")
+        cache_delete(f"soggetti_list:{tenant_id_str}")
         return soggetto
 
     @soggetto_blp.doc(security=[{"jwt": []}])
     @jwt_required()
     @tenant_required
-    @soggetto_blp.response(204)
     def delete(self, soggetto_id, tenant_id):
         """Elimina soggetto"""
 
@@ -241,13 +258,32 @@ class SoggettoResource(MethodView):
                     message=_("Cannot delete subject with existing sales or purchase orders. Consider deactivating it."),
                 )
 
-        generic_service.delete_tenant_resource(
-            Soggetto,
-            soggetto_id,
-            tenant_id,
-            pre_delete_check=check_dependencies,
-            not_found_message=_("Soggetto not found"),
-        )
+        try:
+            generic_service.delete_tenant_resource(
+                Soggetto,
+                soggetto_id,
+                tenant_id,
+                pre_delete_check=check_dependencies,
+                not_found_message=_("Soggetto not found"),
+            )
+        except IntegrityError as e:
+            db.session.rollback()
+            logger.warning("Cannot delete soggetto %s: %s", soggetto_id, e)
+            abort(
+                409,
+                message=_("Cannot delete subject: it is referenced by other records. Deactivate it instead."),
+            )
+        except Exception as e:
+            db.session.rollback()
+            if isinstance(e, HTTPException):
+                raise
+            logger.exception("Unexpected error deleting soggetto %s", soggetto_id)
+            abort(
+                500,
+                message=_("Unexpected error deleting subject: %s") % str(e),
+            )
+        tenant_id_str = request.headers.get("X-Tenant-ID", "0")
+        cache_delete(f"soggetti_list:{tenant_id_str}")
         return "", 204
 
 

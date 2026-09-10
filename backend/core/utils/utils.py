@@ -59,8 +59,16 @@ def _get_model_column(model, name):
     return model.__table__.columns.get(name) if hasattr(model, "__table__") else None
 
 
-def apply_filters(query, model, search_fields):
-    """Apply text search filters (q, search_field, search_value) to the query."""
+def apply_filters(query, model, search_fields, relation_filters=None):
+    """Apply text search filters (q, search_field, search_value) and dropdown filters (filter_<field>) to the query.
+    
+    Args:
+        query: SQLAlchemy query
+        model: SQLAlchemy model class
+        search_fields: list of field names for global/field-specific text search
+        relation_filters: dict mapping field names to callable(query, list_of_values) -> query
+                          for filtering on related models (e.g. N:N relationships)
+    """
     # Global search
     q = request.args.get("q")
     if q and search_fields:
@@ -72,13 +80,36 @@ def apply_filters(query, model, search_fields):
         if filters:
             query = query.filter(or_(*filters))
 
-    # Specific field search
+    # Specific field search (text)
     search_field = request.args.get("search_field")
     search_value = request.args.get("search_value")
     if search_field and search_value:
         col = _get_model_column(model, search_field)
         if col is not None:
             query = query.filter(col.ilike(f"%{search_value}%"))
+
+    # Dropdown filters: filter_<field>=value1,value2,...
+    for key in request.args:
+        if key.startswith("filter_"):
+            field_name = key[7:]  # strip "filter_"
+            raw_value = request.args.get(key)
+            if not raw_value:
+                continue
+            values = [v.strip() for v in raw_value.split(",") if v.strip()]
+            if not values:
+                continue
+            # Try relation_filters first, then direct column
+            if relation_filters and field_name in relation_filters:
+                query = relation_filters[field_name](query, values)
+            else:
+                col = _get_model_column(model, field_name)
+                if col is not None:
+                    # Try int cast for ID-like fields, fallback to string
+                    try:
+                        int_values = [int(v) for v in values]
+                        query = query.filter(col.in_(int_values))
+                    except (ValueError, TypeError):
+                        query = query.filter(col.in_(values))
 
     return query
 

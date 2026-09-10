@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '../utils';
 
 export function useTableSort(apiPath, { initialSortField = '', initialSortOrder = 'asc' } = {}) {
@@ -11,6 +11,7 @@ export function useTableSort(apiPath, { initialSortField = '', initialSortOrder 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchField, setSearchField] = useState('');
   const [searchValue, setSearchValue] = useState('');
+  const [filters, setFilters] = useState({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -30,6 +31,11 @@ export function useTableSort(apiPath, { initialSortField = '', initialSortOrder 
         params.append('search_field', searchField);
         params.append('search_value', searchValue);
       }
+      Object.entries(filters).forEach(([field, values]) => {
+        if (values && values.length > 0) {
+          params.append(`filter_${field}`, values.join(','));
+        }
+      });
 
       const response = await apiFetch(`${apiPath}?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch data');
@@ -53,11 +59,11 @@ export function useTableSort(apiPath, { initialSortField = '', initialSortOrder 
     } finally {
       setLoading(false);
     }
-  }, [apiPath, pagination.page, pagination.perPage, sortField, sortOrder, searchTerm, searchField, searchValue]);
+  }, [apiPath, pagination.page, pagination.perPage, sortField, sortOrder, searchTerm, searchField, searchValue, filters]);
 
   useEffect(() => {
     fetchData();
-  }, [sortField, sortOrder, pagination.page, pagination.perPage, searchTerm, searchField, searchValue]);
+  }, [sortField, sortOrder, pagination.page, pagination.perPage, searchTerm, searchField, searchValue, filters]);
 
   const handleSort = useCallback((field) => {
     if (sortField === field) {
@@ -91,6 +97,20 @@ export function useTableSort(apiPath, { initialSortField = '', initialSortOrder 
     setSearchTerm('');
     setSearchField('');
     setSearchValue('');
+    setFilters({});
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, []);
+
+  const handleFilterChange = useCallback((field, values) => {
+    setFilters(prev => {
+      const next = { ...prev };
+      if (values && values.length > 0) {
+        next[field] = values;
+      } else {
+        delete next[field];
+      }
+      return next;
+    });
     setPagination(prev => ({ ...prev, page: 1 }));
   }, []);
 
@@ -108,6 +128,7 @@ export function useTableSort(apiPath, { initialSortField = '', initialSortOrder 
     searchTerm,
     searchField,
     searchValue,
+    filters,
     setSortField,
     setSortOrder,
     setSearchTerm,
@@ -119,6 +140,7 @@ export function useTableSort(apiPath, { initialSortField = '', initialSortOrder 
     handleSearchField,
     handleSearchSubmit,
     handleClearSearch,
+    handleFilterChange,
     handlePageChange
   };
 }

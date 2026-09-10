@@ -293,12 +293,7 @@ export default function IndirizziPage() {
         <div className="mb-3">
           <TableSearch
             columns={colManager.processedColumns}
-            searchField={searchField}
-            searchValue={searchValue}
-            searchTerm={searchTerm}
             globalSearchValue={searchTerm}
-            onSearchFieldChange={handleSearchField}
-            onSearchValueChange={(val) => handleSearchField(searchField, val)}
             onSearchSubmit={handleSearchSubmit}
             onClearSearch={handleClearSearch}
             onGlobalSearch={handleSearch}

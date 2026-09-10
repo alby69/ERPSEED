@@ -1,68 +1,53 @@
-import { Select, Input, Button, Space } from 'antd';
+import { Select, Input, Button, Space, Tooltip } from 'antd';
 import { SearchOutlined, ClearOutlined } from '@ant-design/icons';
 
 function TableSearch({
   columns = [],
-  searchField,
-  searchValue,
-  searchTerm,
-  onSearchFieldChange,
-  onSearchValueChange,
+  globalSearchValue,
   onSearchSubmit,
   onClearSearch,
   onGlobalSearch,
-  globalSearchValue
+  filters = {},
+  onFilterChange
 }) {
-  const searchableColumns = columns.filter(col =>
-    col.dataIndex && col.searchable !== false
-  );
-
-  const showFieldSearch = searchField || searchValue;
+  const filterColumns = columns.filter(col => col.filterType === 'select' && col.filterOptions);
+  const hasActiveFilters = Object.values(filters).some(v => v?.length > 0) || globalSearchValue;
 
   return (
     <Space size="small" wrap>
-      <Select
-        placeholder="Cerca per campo..."
-        style={{ width: 150 }}
-        value={searchField || null}
-        allowClear
-        onChange={(val) => onSearchFieldChange(val, searchValue)}
-        options={searchableColumns.map(col => ({
-          value: typeof col.dataIndex === 'string' ? col.dataIndex : col.dataIndex[0],
-          label: col.title
-        }))}
-      />
-      {searchField && (
-        <Input.Search
-          placeholder={`Cerca in ${searchField}...`}
-          style={{ width: 200 }}
-          value={searchValue}
-          onChange={(e) => onSearchFieldChange(searchField, e.target.value)}
-          onSearch={onSearchSubmit}
-          enterButton
-          allowClear
-          onClear={() => onSearchFieldChange('', '')}
-        />
-      )}
-      {(searchField || searchValue) && (
-        <Button
-          icon={<ClearOutlined />}
-          onClick={onClearSearch}
-          title="Pulisci ricerca"
-        >
-          Pulisci
-        </Button>
-      )}
-      <span style={{ borderLeft: '1px solid #d9d9d9', margin: '0 8px', height: 24, display: 'inline-block' }} />
       <Input.Search
-        placeholder="Ricerca globale..."
-        style={{ width: 200 }}
-        value={globalSearchValue}
+        placeholder="Ricerca..."
+        style={{ width: 250 }}
+        value={globalSearchValue || ''}
         onChange={(e) => onGlobalSearch(e.target.value)}
         onSearch={onSearchSubmit}
-        enterButton
+        enterButton={<SearchOutlined />}
         allowClear
       />
+      {filterColumns.map(col => {
+        const fieldKey = col.key || (typeof col.dataIndex === 'string' ? col.dataIndex : col.dataIndex?.[0]);
+        return (
+          <Select
+            key={fieldKey}
+            mode="multiple"
+            placeholder={col.title}
+            style={{ minWidth: 180 }}
+            maxTagCount={1}
+            value={filters[fieldKey] || []}
+            onChange={(values) => onFilterChange(fieldKey, values)}
+            allowClear
+            options={col.filterOptions}
+          />
+        );
+      })}
+      {hasActiveFilters && (
+        <Tooltip title="Pulisci filtri">
+          <Button
+            icon={<ClearOutlined />}
+            onClick={onClearSearch}
+          />
+        </Tooltip>
+      )}
     </Space>
   );
 }

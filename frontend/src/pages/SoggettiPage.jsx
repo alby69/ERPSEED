@@ -33,16 +33,15 @@ export default function SoggettiPage() {
     pagination,
     sortField,
     sortOrder,
-    searchField,
-    searchValue,
     searchTerm,
+    filters,
     fetchData,
     handleSort,
     handlePageChange,
-    handleSearchField,
     handleSearchSubmit,
     handleClearSearch,
-    handleSearch
+    handleSearch,
+    handleFilterChange
   } = useTableSort('/api/v1/soggetti', { initialSortField: 'nome', initialSortOrder: 'asc' });
 
   const fetchRuoli = useCallback(async () => {
@@ -91,7 +90,7 @@ export default function SoggettiPage() {
     }
     form.setFieldsValue({
       ...record,
-      ruoli: record.ruoli?.map(r => r.id) || [],
+      ruoli: record.ruoli?.map(r => r.ruolo_id) || [],
       contatti,
     });
     setModalVisible(true);
@@ -189,26 +188,48 @@ export default function SoggettiPage() {
       title: sortableHeader('Tipo', 'tipo_soggetto'),
       dataIndex: 'tipo_soggetto',
       key: 'tipo_soggetto',
+      filterType: 'select',
+      filterOptions: [
+        { value: 'persona_fisica', label: 'Persona Fisica' },
+        { value: 'persona_giuridica', label: 'Azienda' },
+        { value: 'ente', label: 'Ente' },
+      ],
       render: (tipo) => getTipoTag(tipo),
     },
     {
-      title: sortableHeader('Email', 'email_principale'),
-      dataIndex: 'email_principale',
-      key: 'email_principale',
+      title: sortableHeader('Email', 'contact_email'),
+      key: 'contact_email',
+      render: (_, record) => {
+        const c = record.contatti?.find(sc => sc.contatto?.canale === 'email');
+        return c?.contatto?.valore || '';
+      },
     },
     {
-      title: sortableHeader('Telefono', 'telefono_principale'),
-      dataIndex: 'telefono_principale',
-      key: 'telefono_principale',
+      title: sortableHeader('Telefono', 'contact_telefono'),
+      key: 'contact_telefono',
+      render: (_, record) => {
+        const c = record.contatti?.find(sc => sc.contatto?.canale === 'telefono');
+        return c?.contatto?.valore || '';
+      },
+    },
+    {
+      title: sortableHeader('Cellulare', 'contact_cellulare'),
+      key: 'contact_cellulare',
+      render: (_, record) => {
+        const c = record.contatti?.find(sc => sc.contatto?.canale === 'cellulare');
+        return c?.contatto?.valore || '';
+      },
     },
     {
       title: 'Ruoli',
       dataIndex: 'ruoli',
       key: 'ruoli',
+      filterType: 'select',
+      filterOptions: ruoli.map(r => ({ value: String(r.id), label: r.nome })),
       render: (ruoli) => (
         <Space size={4}>
           {ruoli?.slice(0, 2).map((r, i) => (
-            <Tag key={i} color="blue">{r.nome}</Tag>
+            <Tag key={i} color="blue">{r.ruolo_nome}</Tag>
           ))}
           {ruoli?.length > 2 && <Tag>+{ruoli.length - 2}</Tag>}
         </Space>
@@ -368,19 +389,20 @@ export default function SoggettiPage() {
           <Descriptions.Item label="Ragione Sociale">{selectedSoggetto.ragione_sociale}</Descriptions.Item>
           <Descriptions.Item label="P.IVA">{selectedSoggetto.partita_iva}</Descriptions.Item>
           <Descriptions.Item label="C.F.">{selectedSoggetto.codice_fiscale}</Descriptions.Item>
-          <Descriptions.Item label="Email">{selectedSoggetto.email_principale}</Descriptions.Item>
-          <Descriptions.Item label="Telefono">{selectedSoggetto.telefono_principale}</Descriptions.Item>
-          <Descriptions.Item label="Sito">{selectedSoggetto.website}</Descriptions.Item>
+          <Descriptions.Item label="Email">{selectedSoggetto.contatti?.find(sc => sc.contatto?.canale === 'email')?.contatto?.valore || ''}</Descriptions.Item>
+          <Descriptions.Item label="Telefono">{selectedSoggetto.contatti?.find(sc => sc.contatto?.canale === 'telefono')?.contatto?.valore || ''}</Descriptions.Item>
+          <Descriptions.Item label="Cellulare">{selectedSoggetto.contatti?.find(sc => sc.contatto?.canale === 'cellulare')?.contatto?.valore || ''}</Descriptions.Item>
+          <Descriptions.Item label="Sito">{selectedSoggetto.contatti?.find(sc => sc.contatto?.canale === 'sito_web')?.contatto?.valore || ''}</Descriptions.Item>
         </Descriptions>
       ),
     },
     {
       key: '2',
       label: 'Ruoli',
-      children: selectedSoggetto?.ruoli && (
+      children: selectedSoggetto?.ruoli?.length > 0 && (
         <Space wrap>
           {selectedSoggetto.ruoli.map((r, i) => (
-            <Tag key={i} color="blue" style={{ padding: '8px 16px' }}>{r.nome}</Tag>
+            <Tag key={i} color="blue" style={{ padding: '8px 16px' }}>{r.ruolo_nome}</Tag>
           ))}
         </Space>
       ),
@@ -445,15 +467,12 @@ export default function SoggettiPage() {
               <div style={{ marginBottom: 16 }}>
                 <TableSearch
                   columns={columns}
-                  searchField={searchField}
-                  searchValue={searchValue}
-                  searchTerm={searchTerm}
                   globalSearchValue={searchTerm}
-                  onSearchFieldChange={handleSearchField}
-                  onSearchValueChange={(val) => handleSearchField(searchField, val)}
                   onSearchSubmit={handleSearchSubmit}
                   onClearSearch={handleClearSearch}
                   onGlobalSearch={handleSearch}
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
                 />
               </div>
               <Table

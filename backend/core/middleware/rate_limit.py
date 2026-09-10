@@ -27,8 +27,10 @@ _limiter = RateLimiter(requests_per_minute=100)
 def rate_limit_middleware(app):
     @app.before_request
     def limit_remote_addr():
-        # Skip for testing or local
+        # Skip for testing, local, and CORS preflight (OPTIONS)
         if app.config.get('TESTING'):
+            return
+        if request.method == 'OPTIONS':
             return
 
         key = request.remote_addr
