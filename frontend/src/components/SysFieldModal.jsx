@@ -244,7 +244,7 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
 
               {showOptions && (
                 <div className="mb-3">
-                  <label className="form-label">{['relation', 'lines'].includes(field.type) ? 'Target Table' : field.type === 'select' ? 'Options (List)' : 'Options (JSON)'}</label>
+                  <label className="form-label">{['relation', 'lines', 'lookup'].includes(field.type) ? 'Target Table / Related Configuration' : field.type === 'select' ? 'Options (List)' : 'Options (JSON)'}</label>
                   {['relation', 'lines'].includes(field.type) ? (
                     <div>
                       <select
@@ -285,6 +285,75 @@ function SysFieldModal({ show, onClose, onSave, modelId, fieldToEdit }) {
                           <div className="form-text text-muted small">This field will be shown in select dropdowns and references to this record.</div>
                         </div>
                       )}
+                    </div>
+                  ) : field.type === 'lookup' ? (
+                    <div className="border p-3 rounded bg-light">
+                      <div className="mb-3">
+                        <label className="form-label small fw-bold">Target Table</label>
+                        <select
+                          className="form-select"
+                          value={(() => {
+                            try { return JSON.parse(field.options || '{}').target_table || ''; }
+                            catch { return ''; }
+                          })()}
+                          onChange={(e) => setField(prev => {
+                            let opts = {};
+                            try { opts = JSON.parse(prev.options || '{}'); } catch {}
+                            return { ...prev, options: JSON.stringify({ ...opts, target_table: e.target.value }) };
+                          })}
+                        >
+                          <option value="">Select Target Table...</option>
+                          {sysModels.map(m => (
+                            <option key={m.id} value={m.name}>{m.title} ({m.name})</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="row">
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label small fw-bold">Local Relation Field (local_key)</label>
+                          <select
+                            className="form-select"
+                            value={(() => {
+                              try { return JSON.parse(field.options || '{}').local_key || ''; }
+                              catch { return ''; }
+                            })()}
+                            onChange={(e) => setField(prev => {
+                              let opts = {};
+                              try { opts = JSON.parse(prev.options || '{}'); } catch {}
+                              return { ...prev, options: JSON.stringify({ ...opts, local_key: e.target.value }) };
+                            })}
+                          >
+                            <option value="">Select Local Relation Field...</option>
+                            {currentModelFields.filter(f => f.type === 'relation').map(f => (
+                              <option key={f.name} value={f.name}>{f.title} ({f.name})</option>
+                            ))}
+                          </select>
+                          <div className="form-text text-muted small">The relation field on this model linking to the target table.</div>
+                        </div>
+
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label small fw-bold">Field to Display (remote_field)</label>
+                          <select
+                            className="form-select"
+                            value={(() => {
+                              try { return JSON.parse(field.options || '{}').remote_field || ''; }
+                              catch { return ''; }
+                            })()}
+                            onChange={(e) => setField(prev => {
+                              let opts = {};
+                              try { opts = JSON.parse(prev.options || '{}'); } catch {}
+                              return { ...prev, options: JSON.stringify({ ...opts, remote_field: e.target.value, remote_key: opts.remote_key || 'id' }) };
+                            })}
+                          >
+                            <option value="">Select Remote Field...</option>
+                            {allTargetFields.map(f => (
+                              <option key={f.name} value={f.name}>{f.title} ({f.name})</option>
+                            ))}
+                          </select>
+                          <div className="form-text text-muted small">Field from the target table to fetch and display.</div>
+                        </div>
+                      </div>
                     </div>
                   ) : field.type === 'select' ? (
                     <div className="border p-3 rounded bg-light">

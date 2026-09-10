@@ -188,16 +188,34 @@ def generate_create_table_sql(sys_model, schema=None):
     """
     Generate a 'CREATE TABLE' SQL string from a SysModel object, handling relations.
     """
+    is_sqlite = False
+    try:
+        is_sqlite = (db.engine.dialect.name == "sqlite")
+    except Exception:
+        pass
+
+    if is_sqlite:
+        schema = None
     type_mapping = _get_type_mapping()
 
     table_name = sys_model.name
     if not table_name or not table_name.isidentifier():
         raise ValueError(f"Invalid table name: {table_name}")
 
+    id_column = (
+        "id INTEGER PRIMARY KEY AUTOINCREMENT"
+        if is_sqlite
+        else "id SERIAL PRIMARY KEY"
+    )
+    timestamp_type = (
+        "DATETIME DEFAULT CURRENT_TIMESTAMP"
+        if is_sqlite
+        else "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+    )
     columns = [
-        "id SERIAL PRIMARY KEY",
-        "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP",
-        "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP",
+        id_column,
+        f"created_at {timestamp_type}",
+        f"updated_at {timestamp_type}",
     ]
     foreign_keys = []
 
@@ -228,6 +246,8 @@ def generate_schema_diff_sql(sys_model, db_engine, schema=None):
     """
     Compares a SysModel to the live database schema and generates ALTER TABLE statements.
     """
+    if db_engine.dialect.name == "sqlite":
+        schema = None
     inspector = inspect(db_engine)
     table_name = sys_model.name
 
@@ -311,6 +331,8 @@ def generate_schema_diff_sql(sys_model, db_engine, schema=None):
 
 def get_table_object(model_name, schema=None):
     """Reflect the database and return a SQLAlchemy Table object."""
+    if db.engine.dialect.name == "sqlite":
+        schema = None
     try:
         return Table(
             model_name,

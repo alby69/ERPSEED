@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
 test.describe('Login Flow', () => {
   test('should show login page and allow entering credentials', async ({ page }) => {
@@ -17,5 +17,9 @@ test.describe('Login Flow', () => {
 
     await emailInput.fill('admin@erpseed.org');
     await passwordInput.fill('admin123');
+    await loginButton.click();
+
+    // Verify navigation after successful login
+    await expect(page).toHaveURL(/.*projects/);
   });
 });

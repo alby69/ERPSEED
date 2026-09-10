@@ -4,6 +4,7 @@ Product Repository - SQLAlchemy implementation for Products.
 This is the infrastructure layer that handles persistence.
 """
 import logging
+from datetime import datetime
 from typing import Optional, List, Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,11 @@ class ProductRepository:
         product = Product()
         for key, value in data.items():
             if hasattr(product, key):
+                if key in ("created_at", "updated_at", "deleted_at") and isinstance(value, str):
+                    try:
+                        value = datetime.fromisoformat(value)
+                    except ValueError:
+                        value = None
                 setattr(product, key, value)
 
         self.db.session.add(product)
@@ -122,6 +128,11 @@ class ProductRepository:
 
         for key, value in changes.items():
             if hasattr(product, key):
+                if key in ("created_at", "updated_at", "deleted_at") and isinstance(value, str):
+                    try:
+                        value = datetime.fromisoformat(value)
+                    except ValueError:
+                        value = None
                 setattr(product, key, value)
 
         self.db.session.commit()

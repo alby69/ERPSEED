@@ -195,6 +195,82 @@ curl -s -X POST http://localhost:5000/api/v1/sys-models/1/generate-table \
 
 ---
 
+## Step 3c: Aggiungere un campo Lookup su Maintenance (evitare la duplicazione dei dati)
+
+Obiettivo: mostrare che invece di ri-digitare la targa del veicolo su ogni riga di manutenzione, si "pesca" automaticamente da `vehicle.plate` tramite il campo `relation` già creato allo Step 3.
+
+### Via GUI
+1. Vai su **Models → Maintenance**.
+2. Click **Add New Field**.
+3. Compila:
+   - **Field Name**: `vehicle_plate`
+   - **Type**: `Lookup`
+   - **Target Table**: `vehicle`
+   - **Local Relation Field** (`local_key`): `vehicle`
+   - **Field to Display** (`remote_field`): `plate`
+4. Salva e rigenera la tabella.
+5. Il campo `vehicle_plate` apparirà **in sola lettura** nelle liste e nel form di Maintenance, sempre allineato al veicolo collegato, senza occupare una colonna fisica duplicata nel database.
+
+### Via CLI
+```bash
+curl -s -X POST http://localhost:5000/api/v1/sys-fields \
+  -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "modelId": 2,
+    "name": "vehicle_plate",
+    "type": "lookup",
+    "title": "Targa Veicolo",
+    "ui_readonly": true,
+    "options": "{\"target_table\": \"vehicle\", \"local_key\": \"vehicle\", \"remote_key\": \"id\", \"remote_field\": \"plate\"}"
+  }'
+```
+
+**Verifica:**
+```bash
+curl -s "http://localhost:5000/api/v1/projects/1/data/maintenance" -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+# Ogni riga di manutenzione conterrà "vehicle_plate": "AB123CD" senza che il campo sia stato scritto manualmente.
+```
+
+---
+
+## Step 3d: Aggiungere un campo Summary su Vehicle (totale spese di manutenzione)
+
+Obiettivo: mostrare l'aggregazione dei record figli, complementare al Master-Detail dello Step 3b.
+
+### Via GUI
+1. Vai su **Models → Vehicle**.
+2. Click **Add New Field**.
+3. Compila:
+   - **Field Name**: `total_maintenance_cost`
+   - **Type**: `Summary`
+   - **Target Table**: `maintenance`
+   - **Foreign Key Field**: `vehicle`
+   - **Aggregation Function**: `SUM`
+   - **Column**: `cost`
+4. Salva, verifica che il campo generato (`summary_expression`) sia `SUM(cost)`, poi rigenera la tabella.
+
+### Via CLI
+```bash
+curl -s -X POST http://localhost:5000/api/v1/sys-fields \
+  -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "modelId": 1,
+    "name": "total_maintenance_cost",
+    "type": "summary",
+    "title": "Totale Spese Manutenzione",
+    "summary_expression": "SUM(cost)",
+    "options": "{\"target_table\": \"maintenance\", \"foreign_key\": \"vehicle\"}"
+  }'
+```
+
+**Verifica:**
+```bash
+curl -s "http://localhost:5000/api/v1/projects/1/data/vehicle/1" -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+# Conterrà "total_maintenance_cost": 120.5 dopo l'inserimento della manutenzione dello Step 4.
+```
+
+---
+
 ## Step 4: Test your Application (Data CRUD)
 
 ### Via GUI
@@ -260,6 +336,15 @@ curl -s -X DELETE "http://localhost:5000/api/v1/projects/1/data/vehicle/1" \
 ## Summary
 
 Complimenti! Hai creato un'applicazione relazionale completa con supporto GUI e CLI per la gestione della flotta aziendale.
+
+### Confronto dei Tipi Relazionali
+
+| Tipo campo | Dove si mette | Cosa fa | Scrive dati fisici? |
+|---|---|---|---|
+| `relation` | Sul modello "figlio"/dettaglio | Crea la FK verso il record padre | Sì (colonna INTEGER con FK) |
+| `lookup` | Sul modello che ha già un `relation` | Mostra un campo del record collegato (sola lettura) | No |
+| `summary` | Sul modello "padre" | Aggrega (SUM/COUNT/AVG/MIN/MAX) i record figli | No |
+| `lines` | Sul modello "padre" | Mostra/gestisce inline la lista dei record figli (Master-Detail) | No (usa la FK del figlio) |
 
 ### Risorse utili:
 - [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) per personalizzazioni lato codice.

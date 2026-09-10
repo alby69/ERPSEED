@@ -9,7 +9,7 @@ class QueryBuilder:
     @staticmethod
     def build_relational_query(sys_model, table, schema=None):
         """Build query with joins for relations, lookups, and summaries."""
-        columns_to_select = [table]
+        columns_to_select = [*table.c]
         relation_fields = {}
         joins_to_make = {}
 
@@ -35,7 +35,7 @@ class QueryBuilder:
                                 target_table,
                                 table.c[field.name] == target_table.c.id,
                             )
-                except (json.JSONDecodeError, KeyError):
+                except Exception:
                     pass
 
             # Handle Lookups
@@ -56,7 +56,7 @@ class QueryBuilder:
                                 target_table,
                                 table.c[local_key] == target_table.c[remote_key],
                             )
-                except (json.JSONDecodeError, KeyError):
+                except Exception:
                     pass
 
             # Handle Summaries
@@ -83,7 +83,7 @@ class QueryBuilder:
                                     subquery = select(sql_func(target_table.c[col_name])).scalar_subquery()
 
                                 columns_to_select.append(subquery.label(field.name))
-                except (json.JSONDecodeError, KeyError, AttributeError):
+                except Exception:
                     pass
 
         query = select(*columns_to_select).select_from(table)

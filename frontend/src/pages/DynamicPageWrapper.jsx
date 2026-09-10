@@ -37,22 +37,20 @@ function DynamicPageWrapper() {
         const formFields = [];
 
         // Ordina i campi per 'order'
-        const sortedFields = (model.fields || []).sort((a, b) => a.order - b.order);
+        const sortedFields = (model.fields || []).sort((a, b) => (a.order || 0) - (b.order || 0));
 
-        sortedFields.forEach(field => {
+        for (const field of sortedFields) {
           // Configurazione Colonne Tabella
-          // Escludiamo campi "pesanti" o non visualizzabili facilmente dalla tabella di default
-          if (!['file', 'image', 'formula', 'summary', 'calculated'].includes(field.type)) {
+          // Escludiamo campi "pesanti" o la lista figli (lines) dalla tabella di default
+          if (!['file', 'image', 'formula', 'lines'].includes(field.type)) {
              const colConfig = {
                header: field.title || field.name
              };
 
              if (field.type === 'relation') {
-               // Se è una relazione, l'API dinamica restituisce l'oggetto annidato (es. 'customer')
-               // invece di 'customer_id'. Proviamo ad accedere a .name o .title
                const relationName = field.name.endsWith('_id') ? field.name.slice(0, -3) : field.name;
-               colConfig.accessor = `${relationName}.name`; // Default a .name per ora
-               colConfig.sortField = `${relationName}.name`; // Usa la notazione dot per ordinare per nome (es. customer.name)
+               colConfig.accessor = `${relationName}.name`;
+               colConfig.sortField = `${relationName}.name`;
              } else {
                colConfig.accessor = field.name;
                colConfig.sortField = field.name;
@@ -78,7 +76,6 @@ function DynamicPageWrapper() {
 
                        const color = badgeColors[val] || 'secondary';
 
-                       // Cerca la label corretta se le opzioni sono oggetti
                        let label = val;
                        const values = Array.isArray(opts) ? opts : (opts.values || []);
                        const option = values.find(o => (typeof o === 'object' ? o.value : o) === val);
@@ -92,12 +89,11 @@ function DynamicPageWrapper() {
                  } catch (e) {}
                }
 
-               // Gestione Formattazione Numerica
-               if (['integer', 'float', 'currency'].includes(field.type)) {
+               // Gestione Formattazione Numerica (inclusi campi summary)
+               if (['integer', 'float', 'currency', 'summary'].includes(field.type)) {
                  try {
                    const opts = JSON.parse(field.options || '{}');
 
-                   // Default currency formatting if type is currency and no specific format is chosen
                    if (field.type === 'currency' && !opts.format) {
                        opts.format = 'currency_eur';
                    }
@@ -186,7 +182,7 @@ function DynamicPageWrapper() {
             const formField = {
               name: field.name,
               label: field.title || field.name,
-              type: field.type === 'string' ? 'text' : field.type, // Mappa 'string' a 'text' per HTML input
+              type: field.type === 'string' ? 'text' : field.type,
               required: field.required,
               defaultValue: field.default_value
             };
@@ -214,19 +210,69 @@ function DynamicPageWrapper() {
                   formField.type = 'select';
                   formField.apiUrl = `/data/${opts.target_table}`;
                   formField.valueKey = 'id';
-                  // Cerchiamo di usare 'name' o 'title' come label se esistono, altrimenti id
-                  // Nota: GenericCrudPage/FormLines dovrà essere abbastanza smart da gestire questo
-                  // oppure l'API dinamica dovrebbe restituire un campo standard 'display_name'.
-                  formField.labelKey = 'name';
+                  formField.labelKey = opts.label_field || 'name';
                 }
               } catch (e) {
                 console.error("Error parsing relation options for field", field.name, e);
               }
             }
 
+            // Gestione Master-Detail (lines)
+            if (field.type === 'lines' && field.options) {
+              try {
+                const opts = JSON.parse(field.options);
+                if (opts.target_table) {
+                  formField.type = 'lines';
+                  formField.fetchUrl = `/data/${opts.target_table}`;
+                  formField.filterField = opts.foreign_key;
+
+                  try {
+                    const targetRes = await apiFetch(`/data/${opts.target_table}/meta`);
+                    if (targetRes.ok) {
+                      const targetMeta = await targetRes.json();
+                      const targetFields = targetMeta.fields || targetMeta.model_fields || [];
+                      const filteredFields = targetFields.filter(tf => tf.name !== opts.foreign_key && tf.name !== 'id');
+
+                      formField.columns = filteredFields.map(tf => ({
+                        header: tf.title || tf.name,
+                        accessor: tf.name,
+                        key: tf.name
+                      }));
+
+                      formField.fields = filteredFields.map(tf => {
+                        const lf = {
+                          name: tf.name,
+                          label: tf.title || tf.name,
+                          type: tf.type === 'string' ? 'text' : tf.type,
+                          required: tf.required,
+                          defaultValue: tf.default_value || ''
+                        };
+                        if (tf.type === 'relation' && tf.options) {
+                          try {
+                            const relOpts = JSON.parse(tf.options);
+                            if (relOpts.target_table) {
+                              lf.type = 'select';
+                              lf.apiUrl = `/data/${relOpts.target_table}`;
+                              lf.valueKey = 'id';
+                              lf.labelKey = relOpts.label_field || 'name';
+                            }
+                          } catch (e) {}
+                        }
+                        return lf;
+                      });
+                    }
+                  } catch (e) {
+                    console.error("Error fetching target meta for lines field", field.name, e);
+                  }
+                }
+              } catch (e) {
+                console.error("Error parsing lines options for field", field.name, e);
+              }
+            }
+
             formFields.push(formField);
           }
-        });
+        }
 
         setConfig({
           pageTitle: model.title,
