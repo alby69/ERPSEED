@@ -354,6 +354,32 @@ def create_app(db_url=None):
             add_column_if_not_exists("sys_fields", "created_at", "TIMESTAMP")
             add_column_if_not_exists("sys_fields", "updated_at", "TIMESTAMP")
 
+            # Sales Orders enhancements
+            add_column_if_not_exists("sales_orders", "pricelist_id", "INTEGER")
+            add_column_if_not_exists("sales_orders", "currency_id", "VARCHAR(10)")
+            add_column_if_not_exists("sales_orders", "payment_term_id", "INTEGER")
+            add_column_if_not_exists("sales_orders", "billing_address_id", "INTEGER")
+            add_column_if_not_exists("sales_orders", "shipping_address_id", "INTEGER")
+            add_column_if_not_exists("sales_orders", "salesperson_id", "INTEGER")
+            add_column_if_not_exists("sales_orders", "customer_reference", "VARCHAR(100)")
+            add_column_if_not_exists("sales_orders", "warehouse_id", "INTEGER")
+
+            add_column_if_not_exists("sales_order_lines", "discount_percent", "FLOAT")
+            add_column_if_not_exists("sales_order_lines", "tax_id", "INTEGER")
+            add_column_if_not_exists("sales_order_lines", "uom_id", "INTEGER")
+
+            # Purchase Orders enhancements
+            add_column_if_not_exists("purchase_orders", "currency_id", "VARCHAR(10)")
+            add_column_if_not_exists("purchase_orders", "payment_term_id", "INTEGER")
+            add_column_if_not_exists("purchase_orders", "buyer_id", "INTEGER")
+            add_column_if_not_exists("purchase_orders", "supplier_reference", "VARCHAR(100)")
+            add_column_if_not_exists("purchase_orders", "landing_costs", "FLOAT")
+
+            add_column_if_not_exists("purchase_order_lines", "discount_percent", "FLOAT")
+            add_column_if_not_exists("purchase_order_lines", "tax_id", "INTEGER")
+            add_column_if_not_exists("purchase_order_lines", "uom_id", "INTEGER")
+            add_column_if_not_exists("purchase_order_lines", "expected_delivery_date", "DATE")
+
     # --- Initialize Middleware ---
     rate_limit_middleware(app)
 

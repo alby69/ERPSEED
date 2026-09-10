@@ -33,20 +33,47 @@ class SalesOrderRepository:
         order = SalesOrder()
         order.tenant_id = data.get("tenant_id", 0)
         order.number = data.get("number", "")
-        order.date = datetime.strptime(data["date"], "%Y-%m-%d").date() if data.get("date") else date.today()
-        order.customer_id = data.get("customer_id", 0)
-        order.notes = data.get("notes", "")
-        order.status = "draft"
+        if data.get("date"):
+            if isinstance(data["date"], date):
+                order.date = data["date"]
+            elif isinstance(data["date"], str):
+                order.date = datetime.strptime(data["date"][:10], "%Y-%m-%d").date()
+        else:
+            order.date = date.today()
 
-        total = 0
+        order.customer_id = data.get("customer_id", 0)
+        order.pricelist_id = data.get("pricelist_id")
+        order.currency_id = data.get("currency_id", "EUR") or "EUR"
+        order.payment_term_id = data.get("payment_term_id")
+        order.billing_address_id = data.get("billing_address_id")
+        order.shipping_address_id = data.get("shipping_address_id")
+        order.salesperson_id = data.get("salesperson_id")
+        order.customer_reference = data.get("customer_reference", "")
+        order.warehouse_id = data.get("warehouse_id")
+        order.notes = data.get("notes", "")
+        order.status = data.get("status", "draft")
+        order.type = data.get("type", "order")
+
+        if data.get("expiry_date"):
+            if isinstance(data["expiry_date"], date):
+                order.expiry_date = data["expiry_date"]
+            elif isinstance(data["expiry_date"], str):
+                order.expiry_date = datetime.strptime(data["expiry_date"][:10], "%Y-%m-%d").date()
+
+        total = 0.0
         for line_data in data.get("lines", []):
             line = SalesOrderLine()
             line.tenant_id = order.tenant_id
             line.product_id = line_data.get("product_id", 0)
             line.description = line_data.get("description", "")
-            line.quantity = line_data.get("quantity", 0)
-            line.unit_price = line_data.get("unit_price", 0)
-            line.total_price = line.quantity * line.unit_price
+            line.quantity = float(line_data.get("quantity", 0))
+            line.unit_price = float(line_data.get("unit_price", 0))
+            line.discount_percent = float(line_data.get("discount_percent", 0))
+            line.tax_id = line_data.get("tax_id")
+            line.uom_id = line_data.get("uom_id")
+
+            discount_factor = max(0.0, 1.0 - (line.discount_percent / 100.0))
+            line.total_price = line.quantity * line.unit_price * discount_factor
             total += line.total_price
             order.lines.append(line)
 
@@ -120,8 +147,10 @@ class SalesOrderRepository:
 
         for key, value in changes.items():
             if key == "date" and value:
-                value = datetime.strptime(value, "%Y-%m-%d").date()
-            if hasattr(order, key):
+                value = datetime.strptime(value[:10], "%Y-%m-%d").date() if isinstance(value, str) else value
+            if key == "expiry_date" and value:
+                value = datetime.strptime(value[:10], "%Y-%m-%d").date() if isinstance(value, str) else value
+            if hasattr(order, key) and key != "lines":
                 setattr(order, key, value)
 
         self.db.session.commit()
@@ -169,9 +198,17 @@ class SalesOrderRepository:
             "number": order.number,
             "date": order.date.isoformat() if order.date else None,
             "customer_id": order.customer_id,
+            "pricelist_id": getattr(order, 'pricelist_id', None),
+            "currency_id": getattr(order, 'currency_id', 'EUR') or 'EUR',
+            "payment_term_id": getattr(order, 'payment_term_id', None),
+            "billing_address_id": getattr(order, 'billing_address_id', None),
+            "shipping_address_id": getattr(order, 'shipping_address_id', None),
+            "salesperson_id": getattr(order, 'salesperson_id', None),
+            "customer_reference": getattr(order, 'customer_reference', ''),
+            "warehouse_id": getattr(order, 'warehouse_id', None),
             "status": order.status,
-            "type": order.type if hasattr(order, 'type') else "order",
-            "expiry_date": order.expiry_date.isoformat() if hasattr(order, 'expiry_date') and order.expiry_date else None,
+            "type": getattr(order, 'type', "order"),
+            "expiry_date": order.expiry_date.isoformat() if getattr(order, 'expiry_date', None) else None,
             "total_amount": order.total_amount,
             "notes": order.notes,
             "lines": [
@@ -181,6 +218,9 @@ class SalesOrderRepository:
                     "description": line.description,
                     "quantity": line.quantity,
                     "unit_price": line.unit_price,
+                    "discount_percent": getattr(line, 'discount_percent', 0.0),
+                    "tax_id": getattr(line, 'tax_id', None),
+                    "uom_id": getattr(line, 'uom_id', None),
                     "total_price": line.total_price,
                 }
                 for line in order.lines

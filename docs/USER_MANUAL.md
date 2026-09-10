@@ -119,3 +119,7 @@ All requests are scoped to the active tenant via header `X-Tenant-ID`, subdomain
 - **Developer Guide**: [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)
 - **API Reference**: [API.md](./API.md)
 - **Fleet Tutorial**: [TUTORIAL_FLEET.md](./TUTORIAL_FLEET.md)
+
+---
+
+> Ultimo aggiornamento: 10 Settembre 2026 | [Torna all'Indice](INDEX.md)

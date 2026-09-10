@@ -8,3 +8,5 @@ export { default as SysFieldModal } from './SysFieldModal';
 export { default as ChartWidget } from './ChartWidget';
 export { default as DashboardWidgets } from './DashboardWidgets';
 export { default as Sidebar } from './Sidebar';
+export { default as ProductLookupInput } from './ui/ProductLookupInput';
+export { default as InlineEditableTable } from './ui/InlineEditableTable';

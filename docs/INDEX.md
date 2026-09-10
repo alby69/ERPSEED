@@ -12,7 +12,7 @@
 |-----------|-----------|--------|
 | [README.md](../README.md) | Presentazione progetto, features, stack, avvio | Tutti |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Architettura di sistema, pattern (CQRS, Multi-Tenant), struttura repository | Sviluppatori |
-| [ROADMAP.md](ROADMAP.md) | Roadmap di qualità del codice, refactoring KISS/DRY (Fasi 0-4) e priorità tecniche | Team |
+| [ROADMAP.md](ROADMAP.md) | Roadmap Q3-Q4 2026, UX/UI, Command Palette, Data Model Enhancements | Team |
 
 ## 🚀 Guide Operative
 
@@ -27,7 +27,7 @@
 
 | Documento | Contenuto | Target |
 |-----------|-----------|--------|
-| [API.md](API.md) | Riferimento completo degli endpoint REST, autenticazione JWT, paginazione, versionamento e [Capabilities AgentMesh](API.md#capabilities-agentmesh-apiv1aicapabilities) | Sviluppatori / Integratori |
+| [API.md](API.md) | Riferimento completo degli endpoint REST, autenticazione JWT, paginazione, versionamento e Capabilities AgentMesh | Sviluppatori / Integratori |
 | [AGENTMESH.md](AGENTMESH.md) | Architettura ERP distribuito agentico, integrazione AgentMesh e manifesto `/capabilities` | Sviluppatori AI / System Architects |
 
 ## 📝 Changelog e Tracciamento Modifiche
@@ -44,11 +44,12 @@
 | [TUTORIAL_FLEET.md](TUTORIAL_FLEET.md) | Tutorial completo per creare un progetto di Gestione Flotta (via GUI e via CLI/curl) | Tutti |
 | [TUTORIAL_AI_ASSISTANT.md](TUTORIAL_AI_ASSISTANT.md) | Guida all'uso dell'AI Assistant: configurazione LLM, prompt e risoluzione problemi | Tutti |
 
-## 📐 Piani di Implementazione
+## 📐 Piani di Implementazione & Archivio
 
 | Documento | Contenuto | Target |
 |-----------|-----------|--------|
-| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Piano e stato di avanzamento dei 24 blocchi funzionali ERP (anagrafiche, acquisti, vendite, magazzino, contabilità, etc.) | Team / Stakeholder |
+| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Piano e stato di avanzamento dei 24 blocchi funzionali ERP | Team / Stakeholder |
+| [ARCHIVE/COMPLETED_PHASES.md](ARCHIVE/COMPLETED_PHASES.md) | Archivio storico delle fasi di sviluppo completate (Fasi 0-5) | Maintainers |
 
 ---
 
@@ -71,13 +72,11 @@ README.md (root)
     ├── Tutorial
     │   ├── TUTORIAL_FLEET.md (GUI + CLI)
     │   └── TUTORIAL_AI_ASSISTANT.md
-    └── Piani Esecutivi
-        └── IMPLEMENTATION_PLAN.md
+    └── Piani Esecutivi & Archivio
+        ├── IMPLEMENTATION_PLAN.md
+        └── ARCHIVE/COMPLETED_PHASES.md
 ```
 
-## Come Estendere la Documentazione
+---
 
-Per aggiungere un nuovo documento:
-1. Posizionarlo nella directory `docs/`.
-2. Aggiungere una riga nella tabella della sezione appropriata in questo `INDEX.md`.
-3. Se applicabile, aggiornare il sommario nel `README.md` principale del progetto.
+> Ultimo aggiornamento: 10 Settembre 2026 | [Torna all'Indice](INDEX.md)
