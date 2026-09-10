@@ -23,6 +23,10 @@ class SalesOrder(BaseModel):
     salesperson_id = db.Column(db.Integer, nullable=True)
     customer_reference = db.Column(db.String(100), default="")
     warehouse_id = db.Column(db.Integer, nullable=True)
+    incoterm_id = db.Column(db.Integer, db.ForeignKey("incoterms.id"), nullable=True)
+    carrier_id = db.Column(db.Integer, db.ForeignKey("carriers.id"), nullable=True)
+    tracking_number = db.Column(db.String(100), nullable=True)
+    analytic_account_id = db.Column(db.Integer, nullable=True)
 
     status = db.Column(db.String(20), default="draft")
     type = db.Column(db.String(20), default="order")  # order, quote, delivery_note

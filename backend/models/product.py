@@ -24,6 +24,9 @@ class Product(BaseModel):
     track_inventory = db.Column(db.Boolean, default=False)
     current_stock = db.Column(db.Float, default=0)
     reorder_level = db.Column(db.Float, default=0)
+    reorder_point = db.Column(db.Float, default=0.0)
+    abc_classification = db.Column(db.String(1), default="C")
+    costing_method = db.Column(db.String(10), default="AVCO")
     unit_of_measure = db.Column(db.String(20), default="pcs")
     weight = db.Column(db.Float)
     dimensions = db.Column(db.String(50))
@@ -74,3 +77,29 @@ class ProductStockModel(BaseModel):
     __table_args__ = (
         db.UniqueConstraint("product_id", "warehouse_id", name="uq_product_warehouse"),
     )
+
+
+class StockValuationLayer(BaseModel):
+    """Stock valuation layer for inventory valuation tracking."""
+
+    __tablename__ = "stock_valuation_layer"
+
+    tenant_id = db.Column(
+        db.Integer, db.ForeignKey("tenants.id"), nullable=False, index=True
+    )
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
+    quantity = db.Column(db.Float, nullable=False)
+    unit_cost = db.Column(db.Float, nullable=False)
+    total_value = db.Column(db.Float, nullable=False)
+    move_id = db.Column(db.Integer, nullable=True)
+    accounting_date = db.Column(db.Date, nullable=False)
+
+    tenant = db.relationship("Tenant")
+    product = db.relationship("Product", backref="valuation_layers")
+
+    __table_args__ = (
+        db.Index("ix_stock_val_tenant_product", "tenant_id", "product_id"),
+    )
+
+    def __repr__(self):
+        return f"<StockValuationLayer Product={self.product_id} Qty={self.quantity} Total={self.total_value}>"

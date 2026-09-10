@@ -13,6 +13,8 @@ class Lead(BaseModel):
     phone = db.Column(db.String(50))
     source = db.Column(db.String(50))  # website, referral, cold_call, email_campaign, etc.
     status = db.Column(db.String(20), default="new")  # new, contacted, qualified, lost
+    lead_score = db.Column(db.Integer, default=0)
+    campaign_id = db.Column(db.Integer, nullable=True)
     notes = db.Column(db.Text)
     assigned_to = db.Column(db.Integer, db.ForeignKey("users.id"))
 

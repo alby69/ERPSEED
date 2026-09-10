@@ -44,6 +44,8 @@ export const getDesignTokens = (themeConfig = {}) => {
         borderRadius: borderRadius,
         colorTextBase: isDark ? '#ffffff' : '#000000',
         colorBgBase: isDark ? '#141414' : '#ffffff',
+        colorBgContainerDark: '#1f1f1f',
+        colorTextDark: '#e6f7ff',
         mode: themeConfig.mode || 'light',
     };
 };

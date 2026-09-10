@@ -18391,6 +18391,23 @@
             "type": "number",
             "nullable": true
           },
+          "incoterm_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "carrier_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "tracking_number": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "analytic_account_id": {
+            "type": "integer",
+            "nullable": true
+          },
           "status": {
             "type": "string",
             "maxLength": 20,
