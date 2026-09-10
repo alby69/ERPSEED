@@ -25,13 +25,13 @@ frontend/src/
 ├── components/              # COMPONENTI UI RIUTILIZZABILI
 │   ├── archetypes/          #   Archetipi UI (FormArchetype, TableArchetype, GridArchetype, etc.)
 │   ├── charts/              #   Componenti di charting (@ant-design/charts e adapter)
-│   ├── core/                #   ComponentRenderer e ArchetypeRegistry
-│   ├── ui/                  #   AIAssistant, ImportExportToolbar, TemplateGallery
+│   ├── core/                #   CommandPalette.jsx, ComponentRenderer, ArchetypeRegistry
+│   ├── ui/                  #   InlineEditableTable.jsx, ProductLookupInput.jsx, AIAssistant, ImportExportToolbar
 │   ├── workflow/            #   Nodi e proprietà per il Visual Workflow Builder
 │   └── (root components)    #   GenericCrudPage, DataTable, ColumnSettingsButton, Sidebar, AppHeader, HelpDrawer, etc.
 │
 ├── context/                 # Context Providers (AuthContext, ThemeContext, NotificationContext)
-├── hooks/                   # Custom Hooks (useColumnManager, useResponsive, useCrudData, useModules)
+├── hooks/                   # Custom Hooks (useCommandPalette, useColumnManager, useResponsive, useCrudData)
 ├── lib/                     # Librerie e moduli frontend
 │   └── cashrec/             #   Motore CashRec 100% client-side (engine, worker, parser, reporter)
 ├── locales/                 # Traduzioni i18n (it/translation.json, en/translation.json)
@@ -79,6 +79,48 @@ export default SalesTrendChart;
 
 ---
 
+## Command Palette & Productive UX Shortcuts
+
+ERPSEED include una **Global Command Palette** e scorciatoie da tastiera per un'esperienza ad alte prestazioni.
+
+### 1. Command Palette (`Ctrl+K` / `Cmd+K`)
+Il componente `<CommandPalette />` in `frontend/src/components/core/CommandPalette.jsx` è integrato nel `<ProjectLayout />` e gestito dallo stato dell'hook `useCommandPalette.js`.
+- **Attivazione**: Premere `Ctrl+K` o `Cmd+K` da qualsiasi schermata dell'applicazione.
+- **Funzionalità**:
+  - Cerca istantaneamente tra le 50+ pagine della piattaforma ERP (Anagrafiche, Vendite, Acquisti, Magazzino, Contabilità, HR, Admin).
+  - Offre azioni rapide (es. Nuovo Ordine, Apri AI Assistant, Cambia Tema/Lingua, Esegui CashRec).
+  - Permette il filtraggio dinamico e la navigazione da tastiera (`Freccia Su/Giù` + `Invio`).
+
+### 2. Global Keyboard Shortcuts
+In `ProjectLayout.jsx` sono attivi gli event listener globali da tastiera:
+- **`Ctrl+S` / `Cmd+S`**: Intercetta la combinazione di salvataggio ed esegue il submit del form attivo visibile nel DOM (modal, drawer o pagina corrente).
+- **`Esc`**: Chiude automaticamente dialoghi, modal, drawer o la Command Palette se aperti.
+
+---
+
+## Responsive Viewport & Mobile Card View
+
+ERPSEED gestisce il responsive design tramite l'hook `useResponsive()` (`frontend/src/hooks/useResponsive.js`).
+
+- **Breakpoint Standard**: `lg` (992px) per la gestione della sidebar e del layout.
+- **Mobile Card View**: In `<GenericCrudPage />`, quando `isMobile` è `true`, le tabelle dati vengono renderizzate automaticamente come griglie di `<Card>` espandibili, migliorando la fruibilità touchscreen.
+
+```jsx
+import useResponsive from '@/hooks/useResponsive';
+
+const MobileAwareComponent = () => {
+  const { isMobile, isTablet, isDesktop } = useResponsive();
+
+  return (
+    <div>
+      {isMobile ? <MobileCardList /> : <DesktopDataTable />}
+    </div>
+  );
+};
+```
+
+---
+
 ## Core Component Code Examples
 
 ### 1. Standard CRUD Page with `GenericCrudPage`
@@ -122,7 +164,30 @@ const TaxRatesPage = () => {
 export default TaxRatesPage;
 ```
 
-### 2. Custom Table with Column Customization (`useColumnManagerWithDrawer` + `ColumnSettingsButton`)
+### 2. Document Line Editing (`InlineEditableTable` & `ProductLookupInput`)
+
+Per la gestione avanzata di righe ordine di vendita e acquisto:
+
+```jsx
+import React, { useState } from 'react';
+import InlineEditableTable from '@/components/ui/InlineEditableTable';
+import ProductLookupInput from '@/components/ui/ProductLookupInput';
+
+const OrderLineEditor = () => {
+  const [lines, setLines] = useState([]);
+
+  return (
+    <InlineEditableTable
+      value={lines}
+      onChange={setLines}
+      productLookupComponent={ProductLookupInput}
+      currency="EUR"
+    />
+  );
+};
+```
+
+### 3. Custom Table with Column Customization (`useColumnManagerWithDrawer` + `ColumnSettingsButton`)
 
 For pages using custom `<Table>` layout, use `useColumnManagerWithDrawer` to manage column visibility and ordering with localStorage persistence:
 
@@ -161,7 +226,7 @@ const CustomAddressesPage = ({ data, loading }) => {
 export default CustomAddressesPage;
 ```
 
-### 3. API Requests with `apiFetch`
+### 4. API Requests with `apiFetch`
 
 Always use `apiFetch` from `@/utils.js` instead of raw `fetch` or `axios`:
 

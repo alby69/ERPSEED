@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Global Command Palette**: Modal di comando globale (`frontend/src/components/core/CommandPalette.jsx` e `useCommandPalette.js`) attivabile con `Ctrl+K` / `Cmd+K` per navigazione immediata e azioni rapide su tutte le 50+ pagine della piattaforma.
+- **Global Keyboard Shortcuts**: Scorciatoie produttive `Ctrl+S` / `Cmd+S` (salvataggio form/modal attivo) ed `Esc` (chiusura dialoghi e drawer).
+- **Responsive Mobile Card View**: Conversione automatica delle tabelle in `<GenericCrudPage />` in griglie di `<Card>` espandibili quando `useResponsive().isMobile` è attivo (`<992px`).
+- **Document Line Editing Components**: `InlineEditableTable.jsx` per l'editing delle righe ordine in tempo reale e `ProductLookupInput.jsx` per la ricerca articoli debounced con autocompletamento.
+- **Enhanced Sales & Purchases Domain Models**: Estensione modelli e schemi di dominio per ordini di vendita ed acquisto con campi enterprise (`currency_id`, `pricelist_id`, `payment_term_id`, `billing_address_id`, `shipping_address_id`, `salesperson_id`, `buyer_id`, `customer_reference`, `supplier_reference`, `warehouse_id`, `landing_costs`, `tax_id` di riga, `discount_percent`, `uom_id`, `expected_delivery_date`).
 - Responsive viewport hook (`frontend/src/hooks/useResponsive.js`) and unit test suite (`frontend/src/__tests__/useResponsive.test.js`).
 - Mobile desktop-optimization alert banners for visual builders (`WorkflowBuilder.jsx`, `DashboardBuilder.jsx`, `RelationshipManagerPage.jsx`).
 - Centralized UX/UI Design Token layer (`frontend/src/theme/tokens.js`) providing theme tokens for colors, spacing, radii, and typography.
@@ -20,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Column customization code examples (`useColumnManagerWithDrawer` and `ColumnSettingsButton`) in `docs/FRONTEND_GUIDE.md`.
 
 ### Changed
+- **Completamento Roadmap Q3-Q4 2026**: Raggiungimento del 100% degli obiettivi previsti in `docs/ROADMAP.md` (UX/UI Excellence, Command Palette, Shortcuts, Mobile Card View, Data Models, i18n).
 - Configured responsive breakpoint (`lg`) and auto-collapse (`collapsedWidth="0"`) on `ProjectLayout.jsx` Sider for mobile/tablet navigation (<992px).
 - Fixed template listing sorting in `TemplateService` to ensure deterministic ordering across all file systems.
 - Refactored `Dashboard.jsx`, `Products.jsx`, `Sales.jsx`, `PurchaseOrders.jsx`, and `SoggettiPage.jsx` to replace Bootstrap utility classes with native Ant Design layout components (`Flex`, `Space`, `Card`, `List`).
