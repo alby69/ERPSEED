@@ -12,7 +12,7 @@
 |-----------|-----------|--------|
 | [README.md](../README.md) | Presentazione progetto, features, stack, avvio | Tutti |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Architettura di sistema, pattern (CQRS, Multi-Tenant), struttura repository | Sviluppatori |
-| [ROADMAP.md](ROADMAP.md) | Roadmap Q3-Q4 2026, UX/UI, Command Palette, Data Model Enhancements | Team |
+| [ROADMAP.md](ROADMAP.md) | Roadmap Q3-Q4 2026: UX/UI Excellence, Command Palette, Data Model Enhancements (100% Completata) | Team |
 
 ## 🚀 Guide Operative
 
@@ -20,7 +20,7 @@
 |-----------|-----------|--------|
 | [GETTING_STARTED.md](GETTING_STARTED.md) | Guida all'avvio rapido: Docker, setup locale (backend/frontend) e risoluzione problemi | Tutti |
 | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | Guida per sviluppatori backend: workflow branch Git, creazione moduli, refactoring, testing, debug | Sviluppatori BE |
-| [FRONTEND_GUIDE.md](FRONTEND_GUIDE.md) | Guida per sviluppatori frontend: React, Vite, Ant Design, componenti e state management | Sviluppatori FE |
+| [FRONTEND_GUIDE.md](FRONTEND_GUIDE.md) | Guida per sviluppatori frontend: React, Vite, Ant Design, Command Palette, componenti e state management | Sviluppatori FE |
 | [USER_MANUAL.md](USER_MANUAL.md) | Manuale utente: concetti chiave, uso delle applicazioni, builder visivo | Utenti finali |
 
 ## 📡 Riferimento API e Integrazione Agentica

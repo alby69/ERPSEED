@@ -1,5 +1,14 @@
 # Documentation Overhaul Log
 
+## [2026-09-10] Completamento Roadmap Q3-Q4 2026 e Overhaul Documentazione
+- **Completamento Roadmap**: Aggiornato `docs/ROADMAP.md` contrassegnando tutte e 6 le aree di intervento Q3-Q4 2026 come completate (100% ✅): Refactoring documentazione, Data Model Enhancement (Sales/Purchases), `InlineEditableTable` / `ProductLookupInput`, Global Command Palette (`Ctrl+K`), Global Keyboard Shortcuts (`Ctrl+S`, `Esc`), Mobile Card View e i18n IT/EN.
+- **Aggiornamento README.md e INDEX.md**: Integrati i riferimenti alla Command Palette, alle scorciatoie da tastiera, alla vista Mobile Card responsive, ai modelli di dominio CQRS estesi e alla Roadmap completata.
+- **Aggiornamento Guide Sviluppo**:
+  - `docs/FRONTEND_GUIDE.md`: Aggiunta documentazione di dettaglio per `<CommandPalette />`, `useCommandPalette`, scorciatoie da tastiera, `useResponsive` mobile fallback, `<InlineEditableTable />` e `<ProductLookupInput />`.
+  - `docs/DEVELOPER_GUIDE.md`: Documentazione modelli di dominio CQRS `SalesOrder` e `PurchaseOrder`, campi enterprise estesi e convenzioni i18n backend.
+  - `docs/ARCHITECTURE.md`: Aggiornamento architetturale con il layer UI Command Palette, le scorciatoie e i modelli di dominio.
+- **Verifica e Test**: Verificata la coerenza di tutta la documentazione e confermato il superamento di 100% dei test unitari e di integrazione backend e frontend.
+
 ## [2026-06-11] Deprecazione Bootstrap e aggiornamento Roadmap UX/UI
 - **Deprecazione completata nelle pagine target e builder**: Refattorizzate le pagine `ProjectDetail.jsx`, `SysChartBuilder.jsx`, `SysModelDetail.jsx`, `ResetPassword.jsx`, e `RuoliPage.jsx` sostituendo le classi utility Bootstrap residue con componenti nativi Ant Design (`Flex`, `Space`, `Card`, `List`, `Modal`, `Form`, `Input`, `Select`, `Breadcrumb`, `Avatar`, `Badge`, `Tag`, `Row`, `Col`).
 - **Aggiornamento ROADMAP.md e IMPLEMENTATION_PLAN.md**: Allineata la roadmap per riflettere il completamento della Fase A (Design System UX/UI) e l'integrazione di Import/Export UI (Fase 3).
@@ -14,7 +23,7 @@
 - **Unificazione Tutorial Fleet**: Fusi `TUTORIAL_FLEET_CLI.md` e `TUTORIAL_FLEET.md` in un unico `TUTORIAL_FLEET.md` con sezioni GUI e CLI e indice di navigazione iniziale. Eliminato `TUTORIAL_FLEET_CLI.md`.
 - **Aggiornamento Strategia Branch**: Aggiornato `BRANCH_STRATEGY.md` indicando la unificazione su `main` e la gestione tramite feature branch.
 - **Rimozione Archivio e README ridondanti**: Eliminata interamente la cartella `docs/archive/` (contenuto già confluito in roadmap e plan) ed eliminato `docs/README.md`.
-- **Aggiornamento Indice e Links**: Riscritto `docs/INDEX.md` per mappare esattamente i 13 file attivi. Aggiornati i link in root `README.md` (puntatori da `backend/docs/` corretti in `docs/`).
+- **Aggiornamento Indice e Links**: Riscritto `docs/INDEX.md` per mappelle esattamente i 13 file attivi. Aggiornati i link in root `README.md` (puntatori da `backend/docs/` corretti in `docs/`).
 - **Verifica finale**: Verificato con script automatizzato che 100% dei link Markdown interni siano validi (0 link rotti). Ridotto il numero di file `.md` in `docs/` da 19 a 13 attivi.
 
 ## [2026-06-09] Refactoring documentazione

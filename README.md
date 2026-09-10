@@ -28,6 +28,10 @@ Vedi [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) per setup manuale e coma
 | Area | Funzionalità |
 |------|-------------|
 | **Low-Code Builder** | Crea modelli, campi, relazioni, viste e dashboard dal browser |
+| **Command Palette** | Modal globale (`Ctrl+K` / `Cmd+K`) per navigazione veloce, ricerca ed azioni rapide |
+| **UX & Keyboard Shortcuts** | Salvataggio form con `Ctrl+S`, chiusura dialoghi con `Esc` e vista Mobile Card responsive su schermi `<992px` |
+| **Editing Linee Documento** | Componenti `InlineEditableTable` e `ProductLookupInput` (ricerca debounced) per gestione ordini e preventivi |
+| **Model Data Enhancement** | Modelli `Sales` e `Purchases` avanzati (valute, sconti di riga, termini di pagamento, indirizzi, IVA di riga) |
 | **Multi-Tenant** | Isolamento dati per tenant con middleware automatico (JWT/header/subdomain) |
 | **AI Assistant** | Genera modelli, workflow, regole da linguaggio naturale (OpenRouter/OpenAI/Anthropic/Ollama) |
 | **Workflow Automation** | Automatizza processi con step: delay, HTTP request, condition, webhook, notification |
@@ -57,7 +61,7 @@ Vedi [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) per setup manuale e coma
 erpseed/
 ├── backend/                          # Flask API Backend
 │   ├── __init__.py                  # App factory (create_app)
-│   ├── models/                      # Modelli SQLAlchemy
+│   ├── models/                      # Modelli SQLAlchemy (Sales, Purchases, Entities, etc.)
 │   ├── core/                        # Sistema core (API, Models, Services, Middleware)
 │   │   ├── api/                     #   Auth, Tenant, Modules, System, Import/Export
 │   │   ├── models/                  #   Tenant, Audit, Module, Modulo
@@ -66,8 +70,8 @@ erpseed/
 │   ├── modules/                     # Moduli applicativi (CQRS & Domain Logic)
 │   │   ├── entities/               #   Anagrafiche: Soggetto, Ruolo, Indirizzo, Contatto, Comune, Via
 │   │   ├── products/               #   Prodotti (CQRS)
-│   │   ├── sales/                  #   Vendite & Preventivi (CQRS)
-│   │   ├── purchases/              #   Acquisti (CQRS)
+│   │   ├── sales/                  #   Vendite & Preventivi (CQRS & Domain Dataclasses)
+│   │   ├── purchases/              #   Acquisti (CQRS & Domain Dataclasses)
 │   │   ├── purchase_returns/       #   Resi Acquisti
 │   │   ├── invoicing/              #   Fatturazione (CQRS)
 │   │   ├── fattura_elettronica/    #   Generazione XML FatturaElettronicaPA 1.2
@@ -96,9 +100,9 @@ erpseed/
 └── frontend/                        # React 19 + Vite + Ant Design
     ├── src/
     │   ├── pages/                  # 50+ pagine applicative (Dashboard, Anagrafiche, Sales, HR, CashRec, etc.)
-    │   ├── components/             # Componenti UI (archetypes, charts, core, ui, workflow)
+    │   ├── components/             # Componenti UI (archetypes, charts, core/CommandPalette, ui/InlineEditableTable)
     │   ├── context/                # AuthContext, ThemeContext, NotificationContext
-    │   ├── hooks/                  # Custom hooks (useColumnManager, useResponsive, useCrudData)
+    │   ├── hooks/                  # Custom hooks (useColumnManager, useResponsive, useCommandPalette, useCrudData)
     │   ├── lib/cashrec/            # Motore CashRec 100% client-side
     │   ├── theme/                  # Token di design centralizzati (tokens.js)
     │   └── locales/                # Internazionalizzazione i18n (EN/IT)
@@ -116,11 +120,11 @@ La documentazione completa è organizzata in [docs/INDEX.md](docs/INDEX.md):
 | **Panoramica** | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architettura, pattern, struttura |
 | **Guida Rapida** | [GETTING_STARTED.md](docs/GETTING_STARTED.md) | Docker, setup locale, comandi |
 | **Sviluppo Backend** | [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | Setup dev, convenzioni refactoring, moduli, testing |
-| **Sviluppo Frontend** | [FRONTEND_GUIDE.md](docs/FRONTEND_GUIDE.md) | Guida sviluppo React/Vite/UI |
+| **Sviluppo Frontend** | [FRONTEND_GUIDE.md](docs/FRONTEND_GUIDE.md) | Guida sviluppo React/Vite/UI, Command Palette, shortcuts |
 | **API** | [API.md](docs/API.md) | Riferimento endpoint completo |
 | **AgentMesh AI** | [AGENTMESH.md](docs/AGENTMESH.md) | Architettura ERP distribuito agentico |
 | **Manuale Utente** | [USER_MANUAL.md](docs/USER_MANUAL.md) | Uso piattaforma e builder |
-| **Roadmap Qualità** | [ROADMAP.md](docs/ROADMAP.md) | Refactoring KISS/DRY e priorità |
+| **Roadmap Qualità** | [ROADMAP.md](docs/ROADMAP.md) | Refactoring KISS/DRY, UX/UI & Data Model (100% Completato) |
 | **Piano ERP** | [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Stato avanzamento 24 blocchi ERP |
 | **Tutorial Fleet** | [TUTORIAL_FLEET.md](docs/TUTORIAL_FLEET.md) | Fleet Management via GUI & CLI |
 | **Tutorial AI** | [TUTORIAL_AI_ASSISTANT.md](docs/TUTORIAL_AI_ASSISTANT.md) | Uso AI Assistant |
