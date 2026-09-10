@@ -19,11 +19,15 @@ class SalesOrderLine:
     description: str = ""
     quantity: float = 0.0
     unit_price: float = 0.0
+    discount_percent: float = 0.0
+    tax_id: Optional[int] = None
+    uom_id: Optional[int] = None
     total_price: float = 0.0
 
     def calculate_total(self) -> float:
-        """Calculate total price."""
-        self.total_price = self.quantity * self.unit_price
+        """Calculate total price accounting for discount percent."""
+        discount_factor = max(0.0, 1.0 - (self.discount_percent / 100.0))
+        self.total_price = self.quantity * self.unit_price * discount_factor
         return self.total_price
 
     def to_dict(self) -> Dict[str, Any]:
@@ -35,21 +39,30 @@ class SalesOrderLine:
             "description": self.description,
             "quantity": self.quantity,
             "unit_price": self.unit_price,
+            "discount_percent": self.discount_percent,
+            "tax_id": self.tax_id,
+            "uom_id": self.uom_id,
             "total_price": self.total_price,
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SalesOrderLine":
-        return cls(
+        line = cls(
             id=data.get("id"),
             tenant_id=data.get("tenant_id", 0),
             order_id=data.get("order_id", 0),
             product_id=data.get("product_id", 0),
             description=data.get("description", ""),
-            quantity=data.get("quantity", 0.0),
-            unit_price=data.get("unit_price", 0.0),
-            total_price=data.get("total_price", 0.0),
+            quantity=float(data.get("quantity", 0.0)),
+            unit_price=float(data.get("unit_price", 0.0)),
+            discount_percent=float(data.get("discount_percent", 0.0)),
+            tax_id=data.get("tax_id"),
+            uom_id=data.get("uom_id"),
+            total_price=float(data.get("total_price", 0.0)),
         )
+        if not line.total_price and (line.quantity or line.unit_price):
+            line.calculate_total()
+        return line
 
 
 @dataclass
@@ -61,6 +74,14 @@ class SalesOrder:
     number: str = ""
     date: date = field(default_factory=date.today)
     customer_id: int = 0
+    pricelist_id: Optional[int] = None
+    currency_id: str = "EUR"
+    payment_term_id: Optional[int] = None
+    billing_address_id: Optional[int] = None
+    shipping_address_id: Optional[int] = None
+    salesperson_id: Optional[int] = None
+    customer_reference: str = ""
+    warehouse_id: Optional[int] = None
     status: str = "draft"
     type: str = "order"  # order, quote, delivery_note
     expiry_date: Optional[date] = None  # for quotes
@@ -83,6 +104,14 @@ class SalesOrder:
             "number": self.number,
             "date": self.date.isoformat() if self.date else None,
             "customer_id": self.customer_id,
+            "pricelist_id": self.pricelist_id,
+            "currency_id": self.currency_id,
+            "payment_term_id": self.payment_term_id,
+            "billing_address_id": self.billing_address_id,
+            "shipping_address_id": self.shipping_address_id,
+            "salesperson_id": self.salesperson_id,
+            "customer_reference": self.customer_reference,
+            "warehouse_id": self.warehouse_id,
             "status": self.status,
             "type": self.type,
             "expiry_date": self.expiry_date.isoformat() if self.expiry_date else None,
@@ -99,16 +128,30 @@ class SalesOrder:
         ed = data.get("expiry_date")
         if ed and isinstance(ed, str):
             ed = date.fromisoformat(ed)
+        d_val = data.get("date")
+        if d_val and isinstance(d_val, str):
+            d_val = date.fromisoformat(d_val)
+        elif not d_val:
+            d_val = date.today()
+
         return cls(
             id=data.get("id"),
             tenant_id=data.get("tenant_id", 0),
             number=data.get("number", ""),
-            date=data.get("date", date.today()),
+            date=d_val,
             customer_id=data.get("customer_id", 0),
+            pricelist_id=data.get("pricelist_id"),
+            currency_id=data.get("currency_id", "EUR") or "EUR",
+            payment_term_id=data.get("payment_term_id"),
+            billing_address_id=data.get("billing_address_id"),
+            shipping_address_id=data.get("shipping_address_id"),
+            salesperson_id=data.get("salesperson_id"),
+            customer_reference=data.get("customer_reference", ""),
+            warehouse_id=data.get("warehouse_id"),
             status=data.get("status", "draft"),
             type=data.get("type", "order"),
             expiry_date=ed,
-            total_amount=data.get("total_amount", 0.0),
+            total_amount=float(data.get("total_amount", 0.0)),
             notes=data.get("notes", ""),
             lines=lines,
         )

@@ -163,3 +163,5 @@ export function useCrudData(apiPath, { initialPerPage = 10 } = {}) {
     refresh: () => setRefreshTrigger(prev => prev + 1)
   };
 }
+
+export default useCrudData;

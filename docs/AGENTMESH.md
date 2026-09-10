@@ -83,3 +83,7 @@ erpseed/
 ---
 
 *Per la cronologia completa delle modifiche di questo documento, consulta la cronologia Git del repository.*
+
+---
+
+> Ultimo aggiornamento: 10 Settembre 2026 | [Torna all'Indice](INDEX.md)

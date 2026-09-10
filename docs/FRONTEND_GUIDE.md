@@ -193,3 +193,7 @@ async function fetchProducts() {
 - **Unit & Component Tests**: `npm run test:run` (Vitest + React Testing Library)
 - **Interactive Watch Mode**: `npm test`
 - **E2E Tests**: `npm run test:e2e` (Playwright)
+
+---
+
+> Ultimo aggiornamento: 10 Settembre 2026 | [Torna all'Indice](INDEX.md)

@@ -1179,3 +1179,7 @@ X-RateLimit-Reset: 1705320000
 ---
 
 *Swagger UI disponibile su `/swagger-ui`*
+
+---
+
+> Ultimo aggiornamento: 10 Settembre 2026 | [Torna all'Indice](INDEX.md)

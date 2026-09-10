@@ -4,6 +4,8 @@ import { Layout as AntLayout, Spin, theme } from 'antd';
 import { apiFetch } from '@/utils';
 import Sidebar from '@/components/Sidebar';
 import AppHeader from '@/components/AppHeader';
+import CommandPalette from '@/components/core/CommandPalette';
+import useCommandPalette from '@/hooks/useCommandPalette';
 import { useTheme } from '@/context';
 
 const { Sider, Content } = AntLayout;
@@ -15,6 +17,35 @@ const ProjectLayout = () => {
     const [loading, setLoading] = useState(true);
     const [projectTitle, setProjectTitle] = useState('');
     const [collapsed, setCollapsed] = useState(false);
+    const { isOpen, close } = useCommandPalette();
+
+    // Global keyboard shortcuts (Ctrl+S / Cmd+S for Save, Esc to close/cancel)
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                // Find active visible modal/drawer or form submit button
+                const activeForm = document.querySelector('.modal.show form, form.active, form');
+                if (activeForm) {
+                    const submitBtn = activeForm.querySelector('button[type="submit"], input[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.click();
+                    } else {
+                        activeForm.requestSubmit();
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                // Trigger cancel on close buttons if modal or drawer open
+                const closeBtn = document.querySelector('.modal.show .btn-close, .ant-modal-close, .ant-drawer-close');
+                if (closeBtn) {
+                    closeBtn.click();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, []);
 
     useEffect(() => {
         if (projectId) {
@@ -89,6 +120,7 @@ const ProjectLayout = () => {
 
     return (
         <AntLayout style={{ minHeight: '100vh' }}>
+            <CommandPalette isOpen={isOpen} onClose={close} />
             <Sider
                 breakpoint="lg"
                 collapsedWidth="0"

@@ -18268,6 +18268,23 @@
           "unit_price": {
             "type": "number"
           },
+          "discount_percent": {
+            "type": "number",
+            "nullable": true
+          },
+          "tax_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "uom_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "expected_delivery_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
           "total_price": {
             "type": "number"
           },
@@ -18351,6 +18368,28 @@
           },
           "supplier_id": {
             "type": "integer"
+          },
+          "currency_id": {
+            "type": "string",
+            "maxLength": 10,
+            "nullable": true
+          },
+          "payment_term_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "buyer_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "supplier_reference": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "landing_costs": {
+            "type": "number",
+            "nullable": true
           },
           "status": {
             "type": "string",

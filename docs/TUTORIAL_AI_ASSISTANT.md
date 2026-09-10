@@ -200,3 +200,7 @@ totale (decimal), cliente_id (relation → clienti, label_field=nome).
 **Select field vuoto in edit form** — Se il dropdown select non mostra le opzioni, verifica che `dynamic_api_service.py:get_model_metadata` usi `require_published=False`.
 
 **JWT scade troppo presto** — In `backend/__init__.py`, imposta `JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)` per sviluppo.
+
+---
+
+> Ultimo aggiornamento: 10 Settembre 2026 | [Torna all'Indice](INDEX.md)

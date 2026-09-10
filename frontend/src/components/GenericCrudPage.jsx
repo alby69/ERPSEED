@@ -10,12 +10,12 @@
  * - Form validation (regex and required fields)
  * - File uploads
  * - CSV Import/Export
- * - Multiple view modes: Table, Card (Grid), and Kanban
+ * - Multiple view modes: Table, Card (Grid), and Kanban (auto-fallback to Card on Mobile)
  */
 
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
-import { message } from 'antd';
+import { message, Card, Button } from 'antd';
 import Layout from './Layout';
 import SearchBar from './SearchBar';
 import Pagination from './Pagination';
@@ -25,11 +25,12 @@ import KanbanView from './KanbanView';
 import DateRangePicker from './DateRangePicker';
 import TableSearch from './TableSearch';
 import ColumnsControl from './ColumnsControl';
+import useCrudData from '../hooks/useCrudData';
+import useResponsive from '../hooks/useResponsive';
 import { apiFetch, getNestedValue } from '../utils';
 
 const evaluateFormula = (formula, data) => {
   try {
-    // Sostituisce {var} con data['var'] per l'eval sicuro
     const expression = formula.replace(/{(\w+)}/g, "data['$1']");
     const func = new Function('data', `try { return ${expression}; } catch(e) { return ''; }`);
     return func(data);
@@ -72,25 +73,14 @@ const TagInput = ({ value = [], onChange, disabled }) => {
 
 /**
  * GenericCrudPage Component
- *
- * @param {string} pageTitle - Title displayed at the top of the page.
- * @param {string} apiPath - The base API endpoint for CRUD operations.
- * @param {Array} columns - Configuration for table columns and grid cards.
- * @param {Array} formFields - Configuration for the creation/edit form fields.
- * @param {Array} filterTabs - Configuration for top-level filter tabs.
- * @param {string} defaultView - Initial view mode ('table', 'card', 'kanban').
- * @param {object} defaultSort - Initial sort configuration { field, order }.
- * @param {boolean} enableDateFilter - Whether to show date range filters.
- * @param {object} kanbanConfig - Configuration for Kanban board (columns, status field).
- * @param {boolean} embedded - If true, renders without the global Layout.
  */
-// Rimuovo il Layout da qui, ogni pagina deve wrappare GenericCrudPage nel suo Layout se lo desidera.
 function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, filterTabs, defaultView = 'table', defaultSort, enableDateFilter = false, kanbanConfig, embedded = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const outletContext = useOutletContext() || {};
   const { projectTitle, projectId } = outletContext;
   const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+  const { isMobile } = useResponsive();
 
   // Build breadcrumbs
   const breadcrumbs = [
@@ -101,10 +91,8 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
   }
   breadcrumbs.push({ title: pageTitle });
 
-  // Check if we should render without internal layout (when embedded in ProjectLayout)
   const renderWithoutLayout = embedded || (projectId && location.pathname.startsWith('/projects/'));
 
-  // Integrazione Custom Hook useCrudData
   const {
     data,
     loading,
@@ -126,7 +114,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
     refresh
   } = useCrudData(apiPath, { initialPerPage: 10, initialSort: defaultSort });
 
-  // Stato locale per UI
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -136,9 +123,9 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
   const [selectedIds, setSelectedIds] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
   const [viewMode, setViewMode] = useState(defaultView);
+  const [expandedCards, setExpandedCards] = useState({});
   const fileInputRef = useRef(null);
 
-  // Inizializza formData
   const initialFormData = formFields.reduce((acc, field) => {
     acc[field.name] = field.defaultValue !== undefined ? field.defaultValue : '';
     if (field.type === 'checkbox') acc[field.name] = field.defaultValue || false;
@@ -155,7 +142,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
     }
   }, [token, navigate]);
 
-  // Caricamento opzioni dinamiche per le select
   useEffect(() => {
     if (!token) return;
 
@@ -164,7 +150,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
         apiFetch(field.apiUrl)
         .then(res => res.json())
         .then(data => {
-           // Gestisce sia array diretto che formato paginato { items: [...] }
            const items = Array.isArray(data) ? data : (data.items || []);
            setDynamicOptions(prev => ({ ...prev, [field.name]: items }));
         })
@@ -173,28 +158,28 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
     });
   }, [formFields, token]);
 
-  // Inizializza i filtri del primo tab al montaggio
   useEffect(() => {
     if (filterTabs && filterTabs.length > 0) {
       const defaultFilters = filterTabs[0].filters || {};
       setFilters(prev => ({ ...prev, ...defaultFilters }));
     }
-  }, []); // Esegui solo al mount
+  }, []);
+
+  const toggleExpandCard = (id) => {
+    setExpandedCards(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const handleTabChange = (index) => {
     setActiveTab(index);
     const tabFilters = filterTabs[index].filters || {};
-
-    // Ricostruisce i filtri mantenendo ricerca e date, ma sostituendo i filtri del tab
     const newFilters = {
         q: searchTerm,
         date_from: dateFilters.from,
         date_to: dateFilters.to,
         ...tabFilters
     };
-
     setFilters(newFilters);
-    setPage(1); // Reset a pagina 1 quando cambia il filtro principale
+    setPage(1);
   };
 
   const handleSearch = (term) => {
@@ -247,10 +232,8 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
 
     setFormData(prev => {
       const newData = { ...prev, [name]: val };
-
-      // Ricalcola campi calculated
       formFields.forEach(field => {
-        if (field.formula && field.readOnly) { // Assumiamo che i campi con formula nel form siano calculated
+        if (field.formula && field.readOnly) {
            newData[field.name] = evaluateFormula(field.formula, newData);
         }
       });
@@ -260,12 +243,9 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
       setErrors(prev => ({ ...prev, [name]: null }));
     }
 
-    // Gestione dipendenze (Cascading Selects)
     formFields.forEach(field => {
       if (field.dependsOn === name) {
-        // Reset del valore del campo figlio
         setFormData(prev => ({ ...prev, [field.name]: '' }));
-
         if (val) {
            const queryParam = field.paramName || name;
            apiFetch(`${field.apiUrl}?${queryParam}=${val}`)
@@ -287,8 +267,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
     setEditingId(null);
     setErrors({});
     setShowModal(true);
-
-    // Pulisce le opzioni dei campi dipendenti per il nuovo inserimento
     setDynamicOptions(prev => {
         const next = { ...prev };
         formFields.forEach(f => {
@@ -305,24 +283,18 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
       if (val === null || val === undefined) {
         val = field.type === 'lines' || field.type === 'tags' ? [] : '';
       }
-
-      // Gestione specifica per le date: estrai YYYY-MM-DD dall'ISO string
       if (field.type === 'date' && val && val.length >= 10) {
         val = val.substring(0, 10);
       }
-
       if (field.type === 'tags') {
          if (!Array.isArray(val)) val = [];
       }
-
       if (field.apiUrl && val && typeof val === 'object' && !Array.isArray(val)) {
         val = val.id ?? val.value ?? '';
       }
-
       newFormData[field.name] = val;
     });
 
-    // Calcolo iniziale dei campi calculated
     formFields.forEach(field => {
       if (field.formula && field.readOnly) {
          newFormData[field.name] = evaluateFormula(field.formula, newFormData);
@@ -334,7 +306,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
     setErrors({});
     setShowModal(true);
 
-    // Carica opzioni per i campi dipendenti basandosi sui valori esistenti
     formFields.forEach(field => {
         if (field.dependsOn) {
             const parentValue = item[field.dependsOn];
@@ -354,7 +325,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
     });
   };
 
-  // Carica dati esistenti per i campi lines (Master-Detail) quando si modifica un record
   useEffect(() => {
     if (!editingId) return;
     formFields.forEach(async field => {
@@ -363,7 +333,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
           const res = await apiFetch(`${field.fetchUrl}?${field.filterField}=${editingId}`);
           const data = await res.json();
           const items = Array.isArray(data) ? data : (data.items || []);
-          console.log(`[FormLines] Fetched ${field.name} (${field.filterField}=${editingId}):`, items);
           setFormData(prev => ({ ...prev, [field.name]: items }));
         } catch (e) {
           console.error(`Failed to fetch lines data for ${field.name}`, e);
@@ -374,7 +343,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this item?")) return;
-
     try {
       await deleteItem(id);
       message.success("Item deleted successfully");
@@ -385,7 +353,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
 
   const handleClone = async (item) => {
     if (!window.confirm("Do you want to duplicate this item?")) return;
-
     try {
       const res = await apiFetch(`${apiPath}/${item.id}/clone`, {
         method: 'POST'
@@ -399,16 +366,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
     } catch (err) {
       console.error(err);
       message.error("Connection error");
-    }
-  };
-
-  const handleKanbanStatusChange = async (itemId, newStatus) => {
-    try {
-      await updateItem(itemId, { [kanbanConfig.statusField]: newStatus });
-      message.success("Status updated");
-      refresh(); // Refresh data from server
-    } catch (err) {
-      message.error("Failed to update status.");
     }
   };
 
@@ -429,22 +386,17 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
     if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} items?`)) return;
-
     try {
       await bulkDeleteItem(selectedIds);
       message.success(`${selectedIds.length} items deleted`);
-      setSelectedIds([]); // Clear selection after deletion
+      setSelectedIds([]);
     } catch (err) {
       message.error(err.message || "Error during bulk deletion");
     }
   };
 
   const isFieldRequired = (field, currentFormData) => {
-    // Static requirement from DB
-    if (field.required) {
-        return true;
-    }
-    // Conditional requirement from Builder options
+    if (field.required) return true;
     if (field.optionsConfig?.requirement?.field) {
         const depField = field.optionsConfig.requirement.field;
         const depValue = field.optionsConfig.requirement.value;
@@ -457,9 +409,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const newErrors = {};
-    // Client-side validation
     formFields.forEach(field => {
       const required = isFieldRequired(field, formData);
       const value = formData[field.name];
@@ -483,7 +433,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
     }
 
     setErrors({});
-
     const hasFile = formFields.some(f => f.type === 'file');
     let payload;
 
@@ -491,12 +440,9 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
       const formDataObj = new FormData();
       Object.keys(formData).forEach(key => {
         const val = formData[key];
-        // Se è un file vero e proprio, lo aggiungiamo
         if (val instanceof File) {
           formDataObj.append(key, val);
         } else if (val !== null && val !== undefined && typeof val !== 'object') {
-           // Aggiungiamo gli altri campi (escludendo eventuali oggetti/array non gestiti)
-           // Nota: Se il campo è file ma il valore è una stringa (URL esistente), non lo rimandiamo
            const isFileField = formFields.find(f => f.name === key)?.type === 'file';
            if (!isFileField) {
              formDataObj.append(key, val);
@@ -523,7 +469,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
 
   const handleExport = async () => {
     const params = new URLSearchParams();
-    // Usa i filtri attuali del hook
     Object.keys(filters).forEach(key => {
       if (filters[key]) params.append(key, filters[key]);
     });
@@ -534,7 +479,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
 
     try {
       const res = await apiFetch(`${apiPath}/export?${params.toString()}`);
-
       if (res.ok) {
         const blob = await res.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
@@ -561,7 +505,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const formData = new FormData();
     formData.append('file', file);
 
@@ -570,7 +513,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
         method: 'POST',
         body: formData
       });
-
       const result = await res.json();
       if (res.ok) {
         let msg = result.message;
@@ -602,7 +544,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
             type="file"
             className={`form-control ${errors[field.name] ? 'is-invalid' : ''}`}
             name={field.name}
-            onChange={handleInputChange} // Obbligatorio solo in creazione
+            onChange={handleInputChange}
             required={required && !editingId}
             disabled={isReadOnly}
           />
@@ -656,20 +598,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
               return <option key={opt} value={opt}>{opt}</option>;
             }
             const value = field.valueKey ? opt[field.valueKey] : (opt.value !== undefined ? opt.value : opt.id);
-            let label;
-            if (field.labelKey) {
-              label = opt[field.labelKey];
-            } else if (opt.label !== undefined) {
-              label = opt.label;
-            } else if (opt.name !== undefined) {
-              label = opt.name;
-            } else if (opt.title !== undefined) {
-              label = opt.title;
-            } else {
-              const labelPriority = ['plate', 'name', 'title', 'code', 'label', 'description', 'email', 'username'];
-              const strKey = labelPriority.find(k => typeof opt[k] === 'string') || Object.keys(opt).find(k => typeof opt[k] === 'string' && k !== 'id');
-              label = strKey ? opt[strKey] : opt.id;
-            }
+            let label = opt.label || opt.name || opt.title || opt.id;
             return <option key={value} value={value}>{label}</option>;
           })}
         </select>
@@ -693,9 +622,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
           />
           <label className="form-check-label">
             {field.label}{required && <span className="text-danger ms-1">*</span>}
-            {field.tooltip && (
-              <i className="bi bi-info-circle ms-2 text-muted" title={field.tooltip} style={{ cursor: 'help' }}></i>
-            )}
           </label>
         </div>
       );
@@ -704,11 +630,14 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
     return <input type={field.type || 'text'} {...commonProps} />;
   };
 
+  // Determine active view mode (Force 'card' view on mobile screens if mode is 'table')
+  const activeViewMode = isMobile ? 'card' : viewMode;
+
   const renderContent = () => (
     <ColumnsControl pageKey={apiPath.replace(/\//g, '_')} columns={rawColumns}>
       {({ columns, button }) => (
     <>
-    <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <h2>{pageTitle}</h2>
         {selectedIds.length > 0 ? (
           <div className="d-flex gap-2">
@@ -720,31 +649,22 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
             </button>
           </div>
         ) : (
-          <div className="d-flex gap-2">
-            {/* View Mode Toggles */}
+          <div className="d-flex gap-2 flex-wrap">
             <div className="btn-group me-2">
               <button
-                className={`btn btn-outline-secondary ${viewMode === 'table' ? 'active' : ''}`}
+                className={`btn btn-outline-secondary ${activeViewMode === 'table' ? 'active' : ''}`}
                 onClick={() => setViewMode('table')}
                 title="Table View"
               >
                 <i className="bi bi-list"></i>
               </button>
               <button
-                className={`btn btn-outline-secondary ${viewMode === 'card' ? 'active' : ''}`}
+                className={`btn btn-outline-secondary ${activeViewMode === 'card' ? 'active' : ''}`}
                 onClick={() => setViewMode('card')}
-                title="Grid View"
+                title="Grid/Card View"
               >
                 <i className="bi bi-grid"></i>
             </button>
-            {kanbanConfig &&
-              <button
-                className={`btn btn-outline-secondary ${viewMode === 'kanban' ? 'active' : ''}`}
-                onClick={() => setViewMode('kanban')}
-                title="Kanban View">
-                <i className="bi bi-kanban"></i>
-              </button>
-            }
             </div>
             {enableDateFilter && (
               <div className="d-flex gap-1">
@@ -773,7 +693,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
         )}
       </div>
 
-      {/* Filter Tabs */}
       {filterTabs && filterTabs.length > 0 && (
         <ul className="nav nav-tabs mb-3">
           {filterTabs.map((tab, idx) => (
@@ -794,7 +713,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
       {loading && <div className="text-center my-2 text-muted">Loading...</div>}
       {hookError && <div className="alert alert-danger">{hookError}</div>}
 
-      {viewMode === 'table' ? (
+      {activeViewMode === 'table' ? (
         <div>
           <div className="mb-3">
             <TableSearch
@@ -826,33 +745,45 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
         </div>
       ) : (
         <div className="row g-3">
-          {data.map(row => (
-            <div key={row.id} className="col-md-6 col-lg-4">
-              <div className={`card h-100 shadow-sm ${selectedIds.includes(row.id) ? 'border-primary' : ''}`}>
-                <div className="card-body">
-                  <div className="d-flex justify-content-between mb-3">
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      checked={selectedIds.includes(row.id)}
-                      onChange={() => handleSelectRow(row.id)}
-                    />
-                    <div className="position-relative">
+          {data.map(row => {
+            const isExpanded = !!expandedCards[row.id];
+            const visibleColumns = isExpanded ? columns : columns.slice(0, 3);
+            return (
+              <div key={row.id} className="col-12 col-md-6 col-lg-4">
+                <div className={`card h-100 shadow-sm ${selectedIds.includes(row.id) ? 'border-primary' : ''}`}>
+                  <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        checked={selectedIds.includes(row.id)}
+                        onChange={() => handleSelectRow(row.id)}
+                      />
                       <ActionsMenu row={row} onEdit={handleEdit} onDelete={handleDelete} onClone={handleClone} />
                     </div>
-                  </div>
-                  {columns.map((col, index) => (
-                    <div key={index} className="mb-2">
-                      <strong className="d-block small text-muted">{col.header}</strong>
-                      <div className="text-truncate">
-                        {col.render ? col.render(row) : (col.accessor ? getNestedValue(row, col.accessor) : '')}
+                    {visibleColumns.map((col, index) => (
+                      <div key={index} className="mb-2">
+                        <strong className="d-block small text-muted">{col.header}</strong>
+                        <div className="text-truncate">
+                          {col.render ? col.render(row) : (col.accessor ? getNestedValue(row, col.accessor) : '')}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                    {columns.length > 3 && (
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={() => toggleExpandCard(row.id)}
+                        style={{ paddingLeft: 0 }}
+                      >
+                        {isExpanded ? 'Mostra Meno' : 'Espandi Dettagli'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {data.length === 0 && <div className="col-12 text-center text-muted py-5">No data found.</div>}
         </div>
       )}
@@ -875,17 +806,14 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
                 <form onSubmit={handleSubmit}>
                   <div className="row">
                     {formFields.map(field => {
-                      // Check Visibility
                       let isVisible = true;
                       if (field.optionsConfig && field.optionsConfig.visibility && field.optionsConfig.visibility.field) {
                          const depField = field.optionsConfig.visibility.field;
                          const depValue = field.optionsConfig.visibility.value;
-                         // Confronto stringa per sicurezza (gestisce numeri e stringhe)
                          if (String(formData[depField]) !== String(depValue)) {
                            isVisible = false;
                          }
                       }
-
                       if (!isVisible) return null;
 
                       return (
@@ -893,9 +821,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
                           {field.type !== 'checkbox' && (
                             <label className="form-label">
                               {field.label}{isFieldRequired(field, formData) && <span className="text-danger ms-1">*</span>}
-                              {field.tooltip && (
-                                <i className="bi bi-info-circle ms-2 text-muted" title={field.tooltip} style={{ cursor: 'help' }}></i>
-                              )}
                             </label>
                           )}
                           {renderField(field)}
@@ -919,7 +844,6 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
     </ColumnsControl>
   );
 
-  // GenericCrudPage non si auto-wrappa più nel Layout
   return renderContent();
 }
 

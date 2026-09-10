@@ -13,6 +13,14 @@ class PurchaseOrder(BaseModel):
     number = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, default=datetime.date.today)
     supplier_id = db.Column(db.Integer, db.ForeignKey("soggetti.id"), nullable=False)
+
+    # ERP Best Practices Enhancements
+    currency_id = db.Column(db.String(10), default="EUR")
+    payment_term_id = db.Column(db.Integer, nullable=True)
+    buyer_id = db.Column(db.Integer, nullable=True)
+    supplier_reference = db.Column(db.String(100), default="")
+    landing_costs = db.Column(db.Float, default=0.0)
+
     status = db.Column(db.String(20), default="draft")
     total_amount = db.Column(db.Float, default=0)
     expected_date = db.Column(db.Date)
@@ -43,6 +51,10 @@ class PurchaseOrderLine(BaseModel):
     description = db.Column(db.String(255))
     quantity = db.Column(db.Float, nullable=False)
     unit_price = db.Column(db.Float, nullable=False)
+    discount_percent = db.Column(db.Float, default=0.0)
+    tax_id = db.Column(db.Integer, nullable=True)
+    uom_id = db.Column(db.Integer, nullable=True)
+    expected_delivery_date = db.Column(db.Date, nullable=True)
     total_price = db.Column(db.Float, nullable=False)
     quantity_received = db.Column(db.Float, default=0)
 

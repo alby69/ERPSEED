@@ -13,6 +13,17 @@ class SalesOrder(BaseModel):
     number = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, default=datetime.date.today)
     customer_id = db.Column(db.Integer, db.ForeignKey("soggetti.id"), nullable=False)
+
+    # ERP Best Practices Enhancements
+    pricelist_id = db.Column(db.Integer, nullable=True)
+    currency_id = db.Column(db.String(10), default="EUR")
+    payment_term_id = db.Column(db.Integer, nullable=True)
+    billing_address_id = db.Column(db.Integer, nullable=True)
+    shipping_address_id = db.Column(db.Integer, nullable=True)
+    salesperson_id = db.Column(db.Integer, nullable=True)
+    customer_reference = db.Column(db.String(100), default="")
+    warehouse_id = db.Column(db.Integer, nullable=True)
+
     status = db.Column(db.String(20), default="draft")
     type = db.Column(db.String(20), default="order")  # order, quote, delivery_note
     expiry_date = db.Column(db.Date, nullable=True)  # for quotes
@@ -42,6 +53,9 @@ class SalesOrderLine(BaseModel):
     description = db.Column(db.String(255))
     quantity = db.Column(db.Float, nullable=False)
     unit_price = db.Column(db.Float, nullable=False)
+    discount_percent = db.Column(db.Float, default=0.0)
+    tax_id = db.Column(db.Integer, nullable=True)
+    uom_id = db.Column(db.Integer, nullable=True)
     total_price = db.Column(db.Float, nullable=False)
 
     tenant = db.relationship("Tenant")
