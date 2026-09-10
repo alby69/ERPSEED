@@ -14,9 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Repository Dispatch
+        env:
+          AGENTMESH_PAT: ${{ secrets.AGENTMESH_PAT }}
+        if: ${{ env.AGENTMESH_PAT != '' }}
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.AGENTMESH_PAT || secrets.GITHUB_TOKEN }} # Fallback su GITHUB_TOKEN se AGENTMESH_PAT non e' impostato
+          token: ${{ secrets.AGENTMESH_PAT }}
           repository: alby69/agentmesh
           event-type: erpseed-updated
           client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
