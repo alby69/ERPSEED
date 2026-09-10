@@ -7,7 +7,8 @@ from backend.extensions import db
 from backend.core.models.base import BaseModel
 from .user import User
 from .project import Project, project_members
-from .product import Product, ProductCategory, ProductStockModel as ProductStock
+from .product import Product, ProductCategory, ProductStockModel as ProductStock, StockValuationLayer
+from .logistics import Incoterm, Carrier
 from .sales import SalesOrder, SalesOrderLine
 from .purchase import PurchaseOrder, PurchaseOrderLine
 from .ai import AIConversation
@@ -57,6 +58,9 @@ __all__ = [
     "Product",
     "ProductCategory",
     "ProductStock",
+    "StockValuationLayer",
+    "Incoterm",
+    "Carrier",
     "SalesOrder",
     "SalesOrderLine",
     "PurchaseOrder",
