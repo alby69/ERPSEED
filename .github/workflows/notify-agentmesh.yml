@@ -14,7 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Repository Dispatch
-        if: ${{ secrets.AGENTMESH_PAT != '' }}
+        env:
+          AGENTMESH_PAT: ${{ secrets.AGENTMESH_PAT }}
+        if: ${{ env.AGENTMESH_PAT != '' }}
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AGENTMESH_PAT }}
