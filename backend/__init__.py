@@ -161,8 +161,9 @@ from .modules.logistics.api import logistics_blp
 # Import Visual Builder API
 from .modules.system_tools.api.visual_builder_api import blp as visual_builder_bp
 
-# Import Template API
+# Import Template API & Wizard API
 from .modules.system_tools.api.templates_api import blp as template_bp
+from .modules.wizard.api import blp as wizard_bp
 
 
 class CustomJSONProvider(DefaultJSONProvider):
@@ -293,8 +294,10 @@ def create_app(db_url=None):
 
     event_bus = EventBus()
     from .shared.events.handlers.read_model_handler import register_read_model_handlers
+    from .modules.sales.listeners import register_sales_event_listeners
 
     register_read_model_handlers(event_bus)
+    register_sales_event_listeners(event_bus)
 
     container.register("event_bus", lambda: event_bus, singleton=True)
     container.register("db", lambda: db, singleton=True)
@@ -526,6 +529,7 @@ def create_app(db_url=None):
         visual_builder_bp, url_prefix=f"{API_V1_PREFIX}/visual-builder"
     )
     api.register_blueprint(template_bp, url_prefix=f"{API_V1_PREFIX}/templates")
+    api.register_blueprint(wizard_bp)
 
     # Marketplace
     api.register_blueprint(

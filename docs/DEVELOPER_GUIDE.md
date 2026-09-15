@@ -56,9 +56,20 @@ backend/
 └── plugins/         # Plugin estensibili (accounting, hr, inventory)
 ```
 
-### Creare un Nuovo Modulo
+### Creare un Nuovo Modulo e CLI Scaffolding
 
-Tutti i nuovi moduli backend devono seguire l'architettura **CQRS (Command Query Responsibility Segregation)**, in modo da disaccoppiare logica di business, accesso ai dati ed esposizione API (necessaria anche per l'esposizione automatica come capability in AgentMesh).
+Per garantire la massima produttività seguendo le regole KISS e DRY, ERPSEED fornisce uno script CLI di scaffolding per generare automaticamente l'ossatura di un modulo:
+
+```bash
+# Modalità Semplice (BaseService + CRUD rapido)
+python -m backend.cli scaffold_module --name Vehicle --type simple
+
+# Modalità Complessa (CQRS / Enterprise Domain Events)
+python -m backend.cli scaffold_module --name Vehicle --type cqrs
+```
+
+- **Modalità Semplice (`simple`)**: Genera `models.py` (usando `BaseModel` e `CoreEntityMixin`), `schemas.py`, `services.py` (estendendo `BaseService`) e le rotte REST `api.py`. Indicata per entità standard.
+- **Modalità Complessa (`cqrs`)**: Genera la struttura completa per domini con logica complessa disaccoppiata (domain, application, infrastructure, container e routes).
 
 #### 1. Struttura del Modulo CQRS
 

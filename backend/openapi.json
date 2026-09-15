@@ -12804,7 +12804,7 @@
         ]
       }
     },
-    "/api/v1/templates/templates/{template_name}/install": {
+    "/api/v1/templates/templates/{template_name}/apply": {
       "post": {
         "responses": {
           "200": {
@@ -12814,7 +12814,7 @@
             "$ref": "#/components/responses/DEFAULT_ERROR"
           }
         },
-        "summary": "Install a template into a project",
+        "summary": "Install or apply a template into a project/tenant",
         "tags": [
           "templates"
         ],
@@ -12835,6 +12835,137 @@
           }
         }
       ]
+    },
+    "/api/v1/templates/templates/{template_name}/install": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Install or apply a template into a project/tenant",
+        "tags": [
+          "templates"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "template_name",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    "/api/v1/wizard/analyze-domain": {
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainAnalysisRequest"
+              }
+            }
+          }
+        },
+        "summary": "Analyzes questionnaire and custom description to build candidate ERP entities.",
+        "tags": [
+          "wizard"
+        ]
+      }
+    },
+    "/api/v1/wizard/provision": {
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProvisionDomainRequest"
+              }
+            }
+          }
+        },
+        "summary": "Provisions SQLAlchemy models and metadata based on final domain specification.",
+        "tags": [
+          "wizard"
+        ]
+      }
+    },
+    "/api/v1/wizard/sessions": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WizardSession"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Lists wizard sessions for tenant.",
+        "tags": [
+          "wizard"
+        ]
+      },
+      "post": {
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WizardSession"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Creates a new wizard session.",
+        "tags": [
+          "wizard"
+        ]
+      }
     },
     "/api/v1/marketplace/builder/archetypes": {
       "get": {
@@ -13889,9 +14020,6 @@
       },
       "delete": {
         "responses": {
-          "204": {
-            "description": "No Content"
-          },
           "default": {
             "$ref": "#/components/responses/DEFAULT_ERROR"
           }
@@ -15333,6 +15461,10 @@
     {
       "name": "templates",
       "description": "Starter templates gallery"
+    },
+    {
+      "name": "wizard",
+      "description": "Guided ERP Domain Wizard APIs"
     },
     {
       "name": "api_marketplace_builder",
@@ -19215,6 +19347,94 @@
         "required": [
           "layout"
         ],
+        "additionalProperties": false
+      },
+      "DomainAnalysisRequest": {
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string"
+          },
+          "industry": {
+            "type": "string"
+          },
+          "has_inventory": {
+            "type": "boolean"
+          },
+          "has_purchases": {
+            "type": "boolean"
+          },
+          "has_projects": {
+            "type": "boolean"
+          },
+          "custom_description": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProvisionDomainRequest": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "project_id": {
+            "type": "integer"
+          },
+          "domain_spec": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "domain_spec"
+        ],
+        "additionalProperties": false
+      },
+      "WizardSession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "tenant_id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "session_name": {
+            "type": "string"
+          },
+          "industry": {
+            "type": "string",
+            "nullable": true
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "domain_spec": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
         "additionalProperties": false
       },
       "Category": {

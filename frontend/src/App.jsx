@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth, ThemeProvider, useTheme } from '@/context';
-import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, SoggettiPage, RuoliPage, IndirizziPage, ComuniPage, ContattiPage, NazioniPage, RegioniPage, ProvincePage, Products, ProductDetail, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage } from './pages';
+import { Login, Dashboard, ForgotPassword, ResetPassword, Profile, Users, SoggettiPage, RuoliPage, IndirizziPage, ComuniPage, ContattiPage, NazioniPage, RegioniPage, ProvincePage, Products, ProductDetail, ProjectSelectionPage, ProjectMembersPage, ProjectSettingsPage, ModulesPage, WizardPage } from './pages';
 import Sales from './pages/Sales';
 import SalesOrderDetail from './pages/SalesOrderDetail';
 import SysModelDetail from './pages/SysModelDetail';
@@ -136,6 +136,7 @@ return (
             {/* Module App Dashboard - App-like experience */}
             <Route path="app/:moduleName" element={<ModuleAppPage />} />
             <Route path="workflows" element={<WorkflowsPage />} />
+            <Route path="wizard" element={<WizardPage />} />
             {/* You can add more project-specific routes here */}
         </Route>
 
@@ -146,6 +147,14 @@ return (
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/wizard"
+          element={
+            <ProtectedRoute roles={['admin', 'owner']}>
+              <WizardPage />
             </ProtectedRoute>
           }
         />

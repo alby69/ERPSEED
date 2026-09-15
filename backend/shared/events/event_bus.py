@@ -25,7 +25,8 @@ class EventBus:
             handler: La funzione da chiamare quando l'evento viene pubblicato.
         """
         self._handlers[event_type].append(handler)
-        logger.debug(f"Handler {handler.__name__} subscribed to event '{event_type}'")
+        handler_name = getattr(handler, "__name__", handler.__class__.__name__)
+        logger.debug(f"Handler {handler_name} subscribed to event '{event_type}'")
 
     def publish(self, event: DomainEvent):
         """
@@ -38,12 +39,13 @@ class EventBus:
         logger.debug(f"Publishing event '{event_type}' with payload: {event.payload}")
         if event_type in self._handlers:
             for handler in self._handlers[event_type]:
+                handler_name = getattr(handler, "__name__", handler.__class__.__name__)
                 try:
                     handler(event)
-                    logger.debug(f"Handler {handler.__name__} executed for event '{event_type}'")
+                    logger.debug(f"Handler {handler_name} executed for event '{event_type}'")
                 except Exception as e:
                     logger.error(
-                        f"Error executing handler {handler.__name__} for event {event_type}: {e}",
+                        f"Error executing handler {handler_name} for event {event_type}: {e}",
                         exc_info=True
                     )
 
@@ -57,7 +59,8 @@ class EventBus:
         """
         if event_type in self._handlers and handler in self._handlers[event_type]:
             self._handlers[event_type].remove(handler)
-            logger.debug(f"Handler {handler.__name__} unsubscribed from event '{event_type}'")
+            handler_name = getattr(handler, "__name__", handler.__class__.__name__)
+            logger.debug(f"Handler {handler_name} unsubscribed from event '{event_type}'")
 
 # Istanza globale per semplicità, gestita tramite DI container nell'app
 _event_bus = EventBus()

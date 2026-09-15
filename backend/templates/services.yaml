@@ -1,0 +1,36 @@
+id: services
+name: Agenzia di Servizi / Professionisti
+category: Services
+description: Blueprint per agenzie di servizi, società di consulenza e studi professionali con gestione contratti, progetti, timesheet e risorse umane.
+modules:
+  - entities
+  - projects
+  - timesheets
+  - hr
+  - contracts
+  - invoicing
+models:
+  - table: service_contracts
+    title: Contratti di Servizio
+    description: Gestione canoni e contratti di consulenza
+    fields:
+      - name: contract_number
+        type: string
+        title: Numero Contratto
+        required: true
+      - name: client_name
+        type: string
+        title: Cliente
+        required: true
+      - name: start_date
+        type: date
+        title: Data Inizio
+        required: true
+      - name: end_date
+        type: date
+        title: Data Fine
+        required: false
+      - name: monthly_fee
+        type: decimal
+        title: Canone Mensile
+        required: false
