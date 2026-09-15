@@ -41,3 +41,4 @@ export { default as TestRunnerPage } from './TestRunnerPage';
 export { default as Users } from './Users';
 export { default as WorkflowBuilder } from './WorkflowBuilder';
 export { default as WorkflowsPage } from './WorkflowsPage';
+export { default as WizardPage } from './Wizard/WizardPage';

@@ -40,6 +40,12 @@ The main dashboard provides real-time KPIs, visual charts (Bar, Line, Pie via An
 2. **View Builder**: Design list views, forms, and kanban boards.
 3. **Workflow Builder**: Automate business tasks based on triggers (e.g., status changes or scheduled events).
 
+### Guided ERP Creation Wizard
+The Guided ERP Creation Wizard turns business requirements into tailored ER schemas and system modules in minutes:
+1. **Domain Discovery (Smart Questionnaire)**: Answer simple questions about your company, industry, and core operations (Inventory, Purchases, Projects) or describe custom requirements in natural language (e.g., *"I manage a fleet of delivery vans"*).
+2. **Visual ER Diagram Builder**: Inspect and interactively refine proposed entities, fields, and relationships on a visual canvas powered by React Flow. Add custom entities via the side drawer.
+3. **Automated ERP Provisioning**: Click *"Generate ERP"* to automatically provision database tables, Marshmallow schemas, REST API endpoints, and module metadata.
+
 ### AI Assistant
 The AI Assistant helps build applications using natural language. You can prompt it to:
 - "Create a customer feedback model with rating and comment fields."

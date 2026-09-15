@@ -1,21 +1,23 @@
+import os
 import unittest
-import json
+
+os.environ["JWT_SECRET_KEY"] = "this-is-a-32-character-long-secret-key-for-testing"
+
 from backend import create_app
 from backend.extensions import db
-from backend.models import Project, SysModel, SysField
+from backend.models import Project, SysModel
 from backend.modules.system_tools.services.template_service import TemplateService
+
 
 class TemplateTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app()
+        self.app = create_app("sqlite:///:memory:")
         self.app.config['TESTING'] = True
-        self.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
 
-        # Create a test user and project
         from backend.models import User
         user = User(email='test@example.com', role='admin')
         db.session.add(user)
@@ -36,26 +38,36 @@ class TemplateTestCase(unittest.TestCase):
         self.assertGreater(len(templates), 0)
         template_ids = [t['id'] for t in templates]
         self.assertIn('crm_base', template_ids)
+        self.assertIn('commercial', template_ids)
+        self.assertIn('manufacturing', template_ids)
+        self.assertIn('services', template_ids)
 
-    def test_install_template(self):
+    def test_apply_commercial_yaml_template(self):
         service = TemplateService()
-        result = service.install_template('crm_base', self.project.id)
+        result = service.apply_template('commercial', projectId=self.project.id)
 
         self.assertTrue(result['success'])
-        self.assertGreater(len(result['models']), 0)
+        self.assertEqual(result['template_id'], 'commercial')
+        self.assertIn('sales', result['modules'])
 
-        # Verify models were actually created
-        models = SysModel.query.filter_by(projectId=self.project.id).all()
-        self.assertEqual(len(models), 3) # customer, lead, activity
+        # Verify created SysModels
+        quotations_model = SysModel.query.filter_by(projectId=self.project.id, name='commercial_quotations').first()
+        self.assertIsNotNone(quotations_model)
+        field_names = [f.name for f in quotations_model.fields]
+        self.assertIn('code', field_names)
+        self.assertIn('customer_name', field_names)
 
-        # Verify fields for 'customer'
-        customer = SysModel.query.filter_by(projectId=self.project.id, name='crm_customers').first()
-        self.assertIsNotNone(customer)
-        self.assertGreater(len(customer.fields), 0)
+    def test_apply_manufacturing_yaml_template(self):
+        service = TemplateService()
+        result = service.apply_template('manufacturing', projectId=self.project.id)
 
-        field_names = [f.name for f in customer.fields]
-        self.assertIn('name', field_names)
-        self.assertIn('email', field_names)
+        self.assertTrue(result['success'])
+        self.assertEqual(result['template_id'], 'manufacturing')
+        self.assertIn('manufacturing', result['modules'])
+
+        quality_model = SysModel.query.filter_by(projectId=self.project.id, name='quality_inspections').first()
+        self.assertIsNotNone(quality_model)
+
 
 if __name__ == '__main__':
     unittest.main()

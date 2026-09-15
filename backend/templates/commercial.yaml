@@ -1,0 +1,53 @@
+id: commercial
+name: Azienda Commerciale / Trading
+category: Trading
+description: Blueprint per aziende commerciali con gestione preventivi, ordini di vendita, acquisti, magazzino, fatture e scadenze.
+modules:
+  - entities
+  - products
+  - sales
+  - purchases
+  - inventory
+  - invoicing
+  - maturities
+models:
+  - table: commercial_quotations
+    title: Preventivi Commerciali
+    description: Gestione preventivi clienti
+    fields:
+      - name: code
+        type: string
+        title: Codice Preventivo
+        required: true
+      - name: customer_name
+        type: string
+        title: Cliente
+        required: true
+      - name: total_amount
+        type: decimal
+        title: Importo Totale
+        required: false
+      - name: status
+        type: string
+        title: Stato
+        required: true
+  - table: commercial_delivery_notes
+    title: Documenti di Trasporto (DDT)
+    description: Documenti di accompagnamento merci
+    fields:
+      - name: number
+        type: string
+        title: Numero DDT
+        required: true
+      - name: date
+        type: date
+        title: Data Spedizione
+        required: true
+      - name: carrier
+        type: string
+        title: Vettore
+        required: false
+      - name: tracking_number
+        type: string
+        title: Codice Tracciamento
+        required: false

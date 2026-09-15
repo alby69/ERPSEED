@@ -1,0 +1,34 @@
+id: manufacturing
+name: Azienda di Produzione / Manufacturing
+category: Production
+description: Blueprint per aziende di produzione con Distinta Base (BOM), Cicli di lavoro, Ordini di Produzione (ODP), MRP e Controllo Qualità.
+modules:
+  - entities
+  - products
+  - sales
+  - purchases
+  - inventory
+  - manufacturing
+  - mrp
+  - quality
+models:
+  - table: quality_inspections
+    title: Controlli Qualità
+    description: Registro ispezioni di qualità su materie prime e prodotti finiti
+    fields:
+      - name: code
+        type: string
+        title: Codice Ispezione
+        required: true
+      - name: batch_number
+        type: string
+        title: Numero Lotto
+        required: true
+      - name: result
+        type: string
+        title: Esito Ispezione
+        required: true
+      - name: inspector
+        type: string
+        title: Ispettore
+        required: false

@@ -4,9 +4,10 @@ All models inherit from BaseModel which includes basic fields and utility method
 """
 from datetime import datetime, timezone
 from backend.extensions import db
+from backend.core.models.mixins import TenantMixin, TimestampMixin, SoftDeleteMixin
 
 
-class BaseModel(db.Model):
+class BaseModel(db.Model, SoftDeleteMixin):
     """
     Base class for all database models.
     Includes:
@@ -20,26 +21,6 @@ class BaseModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
-    deleted_at = db.Column(db.DateTime, nullable=True, index=True)
-
-    @property
-    def is_deleted(self):
-        return self.deleted_at is not None
-
-    def soft_delete(self):
-        """Mark record as deleted without removing."""
-        self.deleted_at = datetime.now(timezone.utc)
-        db.session.add(self)
-
-    def restore(self):
-        """Restore soft-deleted record."""
-        self.deleted_at = None
-        db.session.add(self)
-
-    @classmethod
-    def active(cls):
-        """Return only records that are not soft-deleted."""
-        return cls.query.filter_by(deleted_at=None)
 
     def to_dict(self, exclude=None):
         """Convert model to dictionary."""
@@ -57,12 +38,12 @@ class BaseModel(db.Model):
         return result
 
 
-class TimestampMixin:
-    """Mixin for tracking who created/updated records."""
+class CoreEntityMixin(TenantMixin, TimestampMixin, SoftDeleteMixin):
+    """
+    Unified mixin combining multi-tenancy, creation/update timestamps/user-tracking, and soft deletion.
+    """
+    pass
 
-    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    updated_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
-    # Note: Use lazy imports or string references to avoid circular dependency with User model
-    created_by = db.relationship('User', foreign_keys=[created_by_id], lazy='joined')
-    updated_by = db.relationship('User', foreign_keys=[updated_by_id], lazy='joined')
+# Re-export mixins for backward compatibility
+__all__ = ["BaseModel", "TenantMixin", "TimestampMixin", "SoftDeleteMixin", "CoreEntityMixin"]

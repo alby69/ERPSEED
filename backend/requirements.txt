@@ -27,6 +27,7 @@ aiohttp
 pandas
 xlsxwriter
 openpyxl
+pyyaml
 
 # Caching (Redis)
 Flask-Caching>=2.0.0

@@ -209,6 +209,7 @@ const Sidebar = ({ projectMenuItems = [] }) => {
         { key: '/test-runner', label: t('menu.admin.testRunner'), icon: <ExperimentOutlined /> },
         { key: '/admin/projects', label: t('menu.admin.projectsAdmin'), icon: <ProjectOutlined /> },
         { key: '/admin/audit-logs', label: t('menu.admin.auditLogs'), icon: <AuditOutlined /> },
+        { key: '/wizard', label: 'Guided ERP Wizard', icon: <RobotOutlined /> },
         { key: '/ai-assistant', label: t('menu.admin.aiAssistant'), icon: <RobotOutlined /> },
         { key: '/marketplace', label: t('menu.admin.marketplace'), icon: <ShopOutlined /> },
         { key: '/admin/project-import-export', label: t('menu.admin.importExport'), icon: <SwapOutlined /> },
