@@ -6,8 +6,9 @@
 - **UI Components**: Ant Design (`antd`)
 - **Design Tokens & Themes**: `frontend/src/theme/tokens.js` + Ant Design `ConfigProvider`
 - **Charting Standard**: `@ant-design/charts` (Primary standard for data visualizations)
-- **State Management**: React Hooks + Context API + Zustand
-- **API Communication**: Custom `apiFetch` utility with automatic JWT token management
+- **State Management**: TanStack Query (`@tanstack/react-query`) + React Hooks + Context API + Zustand
+- **Forms & Validation**: React Hook Form + Zod (`zod`, `@hookform/resolvers/zod`)
+- **API Communication**: Custom `apiFetch` utility integrated with TanStack Query and JWT token management
 
 ## Getting Started
 1. `cd frontend`
@@ -164,14 +165,36 @@ const TaxRatesPage = () => {
 export default TaxRatesPage;
 ```
 
-### 2. Document Line Editing (`InlineEditableTable` & `ProductLookupInput`)
+### 2. Server State Management with TanStack Query (`useCrudData`)
 
-Per la gestione avanzata di righe ordine di vendita e acquisto:
+`useCrudData` uses `@tanstack/react-query` to provide automatic server data caching, query invalidation on mutations, pagination, sorting, and search state:
+
+```jsx
+import { useCrudData } from '@/hooks/useCrudData';
+
+const ProductsList = () => {
+  const { data, loading, error, pagination, createItem, updateItem, deleteItem } = useCrudData('/api/v1/products');
+
+  if (loading) return <div>Caricamento...</div>;
+  if (error) return <div>Errore: {error}</div>;
+
+  return (
+    <div>
+      {data.map(product => (
+        <div key={product.id}>{product.name}</div>
+      ))}
+    </div>
+  );
+};
+```
+
+### 3. Document Line Editing (`InlineEditableTable` & React Hook Form + Zod)
+
+Per la gestione ad alte prestazioni e con validazione Type-Safe di righe ordine di vendita e acquisto, `InlineEditableTable` utilizza **React Hook Form** e **Zod**:
 
 ```jsx
 import React, { useState } from 'react';
-import InlineEditableTable from '@/components/ui/InlineEditableTable';
-import ProductLookupInput from '@/components/ui/ProductLookupInput';
+import InlineEditableTable, { orderLineSchema } from '@/components/ui/InlineEditableTable';
 
 const OrderLineEditor = () => {
   const [lines, setLines] = useState([]);
@@ -180,7 +203,6 @@ const OrderLineEditor = () => {
     <InlineEditableTable
       value={lines}
       onChange={setLines}
-      productLookupComponent={ProductLookupInput}
       currency="EUR"
     />
   );

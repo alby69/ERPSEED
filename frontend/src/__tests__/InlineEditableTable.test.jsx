@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import InlineEditableTable from '@/components/ui/InlineEditableTable';
+import InlineEditableTable, { orderLineSchema } from '@/components/ui/InlineEditableTable';
 
 // Mock matchMedia for Ant Design components in jsdom environment
 Object.defineProperty(window, 'matchMedia', {
@@ -55,5 +55,28 @@ describe('InlineEditableTable Component', () => {
         expect(screen.getByDisplayValue('Prodotto Test')).toBeDefined();
         expect(screen.getByText('€ 180.00')).toBeDefined();
         expect(screen.getByText(/Sconto Totale: -€ 20.00/i)).toBeDefined();
+    });
+
+    it('validates line items using Zod schema', () => {
+        const validLine = {
+            quantity: 5,
+            unit_price: 25.5,
+            discount_percent: 10
+        };
+        expect(orderLineSchema.safeParse(validLine).success).toBe(true);
+
+        const invalidNegativeQty = {
+            quantity: -1,
+            unit_price: 10,
+            discount_percent: 0
+        };
+        expect(orderLineSchema.safeParse(invalidNegativeQty).success).toBe(false);
+
+        const invalidDiscountHigh = {
+            quantity: 1,
+            unit_price: 10,
+            discount_percent: 150
+        };
+        expect(orderLineSchema.safeParse(invalidDiscountHigh).success).toBe(false);
     });
 });
