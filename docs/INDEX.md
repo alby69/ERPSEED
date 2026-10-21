@@ -12,7 +12,8 @@
 |-----------|-----------|--------|
 | [README.md](../README.md) | Presentazione progetto, features, stack, avvio | Tutti |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Architettura di sistema, pattern (CQRS, Multi-Tenant), struttura repository | Sviluppatori |
-| [ROADMAP.md](ROADMAP.md) | Roadmap Q3-Q4 2026: UX/UI Excellence, Command Palette, Data Model Enhancements (100% Completata) | Team |
+| [ROADMAP.md](ROADMAP.md) | Roadmap Q3-Q4 2026 e Proposta Fase 6 Schema-as-Code | Team |
+| [SCAFFOLD_ENGINE_PROPOSAL.md](SCAFFOLD_ENGINE_PROPOSAL.md) | Proposta architetturale e specifica per il motore "Schema-as-Code" (Fase 6) | Sviluppatori / Team |
 
 ## 🚀 Guide Operative
 
@@ -60,7 +61,8 @@ README.md (root)
 └── docs/INDEX.md (Entry Point Unico)
     ├── Panoramica & Architettura
     │   ├── ARCHITECTURE.md
-    │   └── ROADMAP.md
+    │   ├── ROADMAP.md
+    │   └── SCAFFOLD_ENGINE_PROPOSAL.md
     ├── Guide Operative
     │   ├── GETTING_STARTED.md
     │   ├── DEVELOPER_GUIDE.md
