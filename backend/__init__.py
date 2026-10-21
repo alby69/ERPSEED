@@ -75,7 +75,7 @@ from .modules.builder import blp as builder_init_bp
 # Import Core API blueprints (additional)
 from .core.api.tenant import tenant_bp
 from .core.api.modules import blp as modules_bp
-from .core.api.system import blp as system_bp
+from .core.api.system import blp as system_bp, global_blp as global_search_bp
 from .core.api.pdf import pdf_bp
 from .core.api.test_runner import blp as test_runner_bp
 from .core.api.custom_modules import blp as custom_modules_bp
@@ -459,6 +459,7 @@ def create_app(db_url=None):
     api.register_blueprint(tenant_bp, url_prefix=f"{API_V1_PREFIX}/tenant")
     api.register_blueprint(modules_bp, url_prefix=f"{API_V1_PREFIX}/modules")
     api.register_blueprint(system_bp, url_prefix=f"{API_V1_PREFIX}/system")
+    api.register_blueprint(global_search_bp)
     api.register_blueprint(pdf_bp, url_prefix=f"{API_V1_PREFIX}/pdf")
     api.register_blueprint(test_runner_bp, url_prefix=f"{API_V1_PREFIX}/tests")
     api.register_blueprint(

@@ -1328,6 +1328,32 @@
         }
       ]
     },
+    "/api/v1/system/search": {
+      "get": {
+        "responses": {
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Esegue una ricerca globale su Soggetti, Prodotti, Ordini di Vendita e Fatture.\nRestituisce un array di risultati tipizzati.",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/global/search": {
+      "get": {
+        "responses": {
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Esegue una ricerca globale tramite l'endpoint dedicato /api/v1/global/search.",
+        "tags": [
+          "global_search"
+        ]
+      }
+    },
     "/api/v1/pdf/sales-order/{order_id}": {
       "get": {
         "responses": {
@@ -3147,6 +3173,24 @@
           }
         }
       ]
+    },
+    "/api/v1/users/permissions": {
+      "get": {
+        "responses": {
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "summary": "Get role, permissions and field-level masking rules for the authenticated user",
+        "tags": [
+          "api_users"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
     },
     "/api/v1/users/registrations": {
       "post": {
@@ -15288,6 +15332,10 @@
     },
     {
       "name": "system",
+      "description": ""
+    },
+    {
+      "name": "global_search",
       "description": ""
     },
     {

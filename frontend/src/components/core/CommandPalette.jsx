@@ -116,7 +116,7 @@ const CommandPalette = ({ isOpen, onClose, extraCommands = [] }) => {
 
         const handler = setTimeout(async () => {
             try {
-                const res = await apiFetch(`/api/v1/system/search?q=${encodeURIComponent(query)}`);
+                const res = await apiFetch(`/api/v1/global/search?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
                 const results = data?.results || [];
                 const formatted = results.map(r => ({

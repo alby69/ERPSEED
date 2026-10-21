@@ -11,9 +11,10 @@
  * - File uploads
  * - CSV Import/Export
  * - Multiple view modes: Table, Card (Grid), and Kanban (auto-fallback to Card on Mobile)
+ * - Field-level RBAC column and field masking
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { message, Card, Button, Skeleton } from 'antd';
 import Layout from './Layout';
@@ -74,13 +75,46 @@ const TagInput = ({ value = [], onChange, disabled }) => {
 /**
  * GenericCrudPage Component
  */
-function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, filterTabs, defaultView = 'table', defaultSort, enableDateFilter = false, kanbanConfig, embedded = false }) {
+function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields: rawFormFields, filterTabs, defaultView = 'table', defaultSort, enableDateFilter = false, kanbanConfig, embedded = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const outletContext = useOutletContext() || {};
   const { projectTitle, projectId } = outletContext;
   const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
   const { isMobile } = useResponsive();
+
+  const [userPermissions, setUserPermissions] = useState(null);
+
+  useEffect(() => {
+    if (token) {
+      apiFetch('/api/v1/users/permissions')
+        .then(res => res.ok ? res.json() : null)
+        .then(data => setUserPermissions(data))
+        .catch(err => console.error("Error loading user permissions:", err));
+    }
+  }, [token]);
+
+  // Compute restricted hidden fields for current apiPath
+  const hiddenFields = useMemo(() => {
+    if (!userPermissions || !userPermissions.hidden_fields) return [];
+    const keys = Object.keys(userPermissions.hidden_fields);
+    const matchedKey = keys.find(k => apiPath.includes(k));
+    return matchedKey ? userPermissions.hidden_fields[matchedKey] : [];
+  }, [userPermissions, apiPath]);
+
+  // Filter columns and form fields based on hiddenFields
+  const columns = useMemo(() => {
+    if (!hiddenFields || hiddenFields.length === 0) return rawColumns;
+    return rawColumns.filter(col => {
+      const key = col.accessor || col.dataIndex || col.key;
+      return !hiddenFields.includes(key);
+    });
+  }, [rawColumns, hiddenFields]);
+
+  const formFields = useMemo(() => {
+    if (!hiddenFields || hiddenFields.length === 0) return rawFormFields;
+    return rawFormFields.filter(field => !hiddenFields.includes(field.name));
+  }, [rawFormFields, hiddenFields]);
 
   // Build breadcrumbs
   const breadcrumbs = [
@@ -634,8 +668,8 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
   const activeViewMode = isMobile ? 'card' : viewMode;
 
   const renderContent = () => (
-    <ColumnsControl pageKey={apiPath.replace(/\//g, '_')} columns={rawColumns}>
-      {({ columns, button }) => (
+    <ColumnsControl pageKey={apiPath.replace(/\//g, '_')} columns={columns}>
+      {({ columns: displayColumns, button }) => (
     <>
     <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <h2>{pageTitle}</h2>
@@ -720,7 +754,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
         <div>
           <div className="mb-3">
             <TableSearch
-              columns={columns}
+              columns={displayColumns}
               globalSearchValue={filters.q || ''}
               onSearchSubmit={() => {}}
               onClearSearch={handleSearchClear}
@@ -728,7 +762,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
             />
           </div>
           <DataTable
-          columns={columns}
+          columns={displayColumns}
           data={data}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -745,7 +779,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
         <div className="row g-3">
           {data.map(row => {
             const isExpanded = !!expandedCards[row.id];
-            const visibleColumns = isExpanded ? columns : columns.slice(0, 3);
+            const visibleColumns = isExpanded ? displayColumns : displayColumns.slice(0, 3);
             return (
               <div key={row.id} className="col-12 col-md-6 col-lg-4">
                 <div className={`card h-100 shadow-sm ${selectedIds.includes(row.id) ? 'border-primary' : ''}`}>
@@ -767,7 +801,7 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
                         </div>
                       </div>
                     ))}
-                    {columns.length > 3 && (
+                    {displayColumns.length > 3 && (
                       <Button
                         type="link"
                         size="small"

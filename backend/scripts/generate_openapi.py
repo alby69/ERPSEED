@@ -16,8 +16,9 @@ PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# Set fallback JWT_SECRET_KEY for initialization if missing
-if not os.getenv("JWT_SECRET_KEY"):
+# Set fallback JWT_SECRET_KEY for initialization if missing or too short
+jwt_key = os.getenv("JWT_SECRET_KEY")
+if not jwt_key or len(jwt_key) < 32:
     os.environ["JWT_SECRET_KEY"] = "openapi-spec-generator-secret-key-min-32-chars"
 
 from backend import create_app, api

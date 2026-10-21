@@ -2,13 +2,28 @@ from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
+from backend.models import User
 from backend.core.schemas.schemas import UserDisplaySchema, UserRegisterSchema, AdminPasswordResetSchema, UserUpdateSchema
 from backend.core.decorators.decorators import admin_required
+from backend.core.middleware.permission import get_user_permissions_summary
 from backend.modules.users.service import get_user_service
 
 blp = Blueprint("users", __name__, description="Operations on users")
 
 user_service = get_user_service()
+
+
+@blp.route("/permissions")
+class UserPermissionsResource(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    def get(self):
+        """Get role, permissions and field-level masking rules for the authenticated user"""
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        if not user:
+            abort(404, message="User not found")
+        return get_user_permissions_summary(user)
 
 
 @blp.route("/registrations")
