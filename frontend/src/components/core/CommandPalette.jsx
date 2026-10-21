@@ -13,7 +13,7 @@ import {
     FileTextOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { apiFetch } from '../../utils';
 
 const { Text } = Typography;
 
@@ -116,8 +116,9 @@ const CommandPalette = ({ isOpen, onClose, extraCommands = [] }) => {
 
         const handler = setTimeout(async () => {
             try {
-                const response = await axios.get(`/api/v1/system/search?q=${encodeURIComponent(query)}`);
-                const results = response.data?.results || [];
+                const res = await apiFetch(`/api/v1/system/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                const results = data?.results || [];
                 const formatted = results.map(r => ({
                     id: `search-${r.type}-${r.id}`,
                     title: r.label,

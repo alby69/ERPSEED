@@ -1,7 +1,7 @@
 import React from 'react';
 import { Drawer, Spin, Descriptions, Empty } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import { apiFetch } from '../../utils';
 
 export default function ContextualDrawer({
   open,
@@ -16,8 +16,8 @@ export default function ContextualDrawer({
     queryKey: ['contextual-drawer', apiEndpoint, recordId],
     queryFn: async () => {
       if (!apiEndpoint || !recordId) return null;
-      const response = await axios.get(`${apiEndpoint}/${recordId}`);
-      return response.data;
+      const res = await apiFetch(`${apiEndpoint}/${recordId}`);
+      return res.json();
     },
     enabled: !!open && !!apiEndpoint && !!recordId,
   });
