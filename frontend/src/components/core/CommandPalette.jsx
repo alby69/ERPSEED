@@ -13,6 +13,7 @@ import {
     FileTextOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const { Text } = Typography;
 
@@ -103,8 +104,35 @@ const defaultCommands = [
  */
 const CommandPalette = ({ isOpen, onClose, extraCommands = [] }) => {
     const [query, setQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!query.trim() || query.length < 2) {
+            setSearchResults([]);
+            return;
+        }
+
+        const handler = setTimeout(async () => {
+            try {
+                const response = await axios.get(`/api/v1/system/search?q=${encodeURIComponent(query)}`);
+                const results = response.data?.results || [];
+                const formatted = results.map(r => ({
+                    id: `search-${r.type}-${r.id}`,
+                    title: r.label,
+                    category: 'Ricerca Globale',
+                    icon: <SearchOutlined style={{ color: '#1890ff' }} />,
+                    path: r.url,
+                }));
+                setSearchResults(formatted);
+            } catch (err) {
+                console.error('Error fetching global search in CommandPalette:', err);
+            }
+        }, 300);
+
+        return () => clearTimeout(handler);
+    }, [query]);
 
     const allCommands = useMemo(() => {
         return [...defaultCommands, ...extraCommands];
@@ -113,15 +141,16 @@ const CommandPalette = ({ isOpen, onClose, extraCommands = [] }) => {
     const filteredCommands = useMemo(() => {
         if (!query.trim()) return allCommands;
         const q = query.toLowerCase();
-        return allCommands.filter(c =>
+        const navMatches = allCommands.filter(c =>
             c.title.toLowerCase().includes(q) ||
             c.category.toLowerCase().includes(q)
         );
-    }, [allCommands, query]);
+        return [...searchResults, ...navMatches];
+    }, [allCommands, query, searchResults]);
 
     useEffect(() => {
         setSelectedIndex(0);
-    }, [query]);
+    }, [query, searchResults]);
 
     const handleSelect = (cmd) => {
         if (!cmd) return;

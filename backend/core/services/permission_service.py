@@ -72,6 +72,18 @@ DEFAULT_ROLES = {
     ]
 }
 
+# Restricted fields by role for field-level RBAC masking
+FIELD_PERMISSIONS_BY_ROLE = {
+    'user': {
+        'product': ['cost_price', 'margin'],
+        'sales_order': ['cost_price', 'profit_margin'],
+    },
+    'viewer': {
+        'product': ['cost_price', 'margin', 'unit_cost'],
+        'sales_order': ['cost_price', 'profit_margin', 'discount_percent'],
+    }
+}
+
 
 class PermissionService:
     """Service for permission management."""
@@ -120,6 +132,32 @@ class PermissionService:
     def has_all_permissions(user, permissions):
         """Check if user has all permissions."""
         return all(PermissionService.has_permission(user, p) for p in permissions)
+
+    @staticmethod
+    def get_hidden_fields(user, resource_type: str) -> list:
+        """
+        Returns a list of field names that should be hidden/masked for a given user and resource type.
+        """
+        if not user or user.role in ['admin', 'manager'] or getattr(user, 'is_primary', False):
+            return []
+
+        restricted = FIELD_PERMISSIONS_BY_ROLE.get(user.role, {})
+        return restricted.get(resource_type, [])
+
+    @staticmethod
+    def mask_dict(user, resource_type: str, data: dict) -> dict:
+        """
+        Masks/removes restricted fields from a single dictionary object based on user permissions.
+        """
+        hidden_fields = PermissionService.get_hidden_fields(user, resource_type)
+        if not hidden_fields or not isinstance(data, dict):
+            return data
+
+        masked = dict(data)
+        for field in hidden_fields:
+            if field in masked:
+                masked.pop(field, None)
+        return masked
 
     @staticmethod
     def require_permission(permission):
