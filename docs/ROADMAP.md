@@ -93,6 +93,22 @@ Tutti gli obiettivi strategici per il secondo semestre 2026 sono stati completat
 
 ---
 
+## 🏗️ Fase 6: Schema-as-Code & Template Engine (Q1 2027)
+
+La Fase 6 introduce un motore di **Generazione Guidata da Dominio (Domain-Driven Scaffolding)** basato sul concetto di *Schema-as-Code*. I moduli ERP ed i relativi data model possono essere descritti mediante template testuali dichiarativi (YAML) e materializzati in artefatti di codice (modelli SQLAlchemy, schemi Marshmallow, handler CQRS e componenti React Ant Design) mediante il bus di comandi di sistema.
+
+Per la specifica completa ed il piano esecutivo della Fase 6:
+👉 [Consulta la Proposta Architetturale Scaffold Engine](SCAFFOLD_ENGINE_PROPOSAL.md)
+
+| Sottofase | Descrizione | Stato |
+|-----------|-------------|-------|
+| **Fase 6.1** | Core DSL Parser & Command Bus Integration | 🔄 In corso |
+| **Fase 6.2** | Backend Scaffolding Engine (Jinja2 Templates) | 📅 Pianificata |
+| **Fase 6.3** | Frontend Scaffolding Engine (React/AntD Templates) | 📅 Pianificata |
+| **Fase 6.4** | CLI Tool & REST API Endpoint (`/api/v1/builder/scaffold`) | 📅 Pianificata |
+
+---
+
 ## 📚 Archivio Fasi Precedenti
 Per la documentazione dettagliata delle fasi di stabilizzazione, refactoring KISS/DRY, responsive design, agentificazione e sicurezza già completate:
 - 👉 [Consulta lo Storico Fasi 0-5](ARCHIVE/COMPLETED_PHASES.md)
