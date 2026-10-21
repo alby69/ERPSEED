@@ -11,7 +11,7 @@ class InventoryListener:
     """Listens for SalesOrderConfirmed events to update stock reservations."""
 
     def __call__(self, event: DomainEvent):
-        if event.event_type == "sales_order.confirmed":
+        if event.event_type in ["sales_order.confirmed", "order.confirmed"]:
             order_id = event.payload.get("order_id")
             tenant_id = event.payload.get("tenant_id")
             logger.info(
@@ -23,7 +23,7 @@ class InvoicingListener:
     """Listens for SalesOrderConfirmed events to prepare draft invoices."""
 
     def __call__(self, event: DomainEvent):
-        if event.event_type == "sales_order.confirmed":
+        if event.event_type in ["sales_order.confirmed", "order.confirmed"]:
             order_id = event.payload.get("order_id")
             tenant_id = event.payload.get("tenant_id")
             logger.info(
@@ -42,5 +42,7 @@ def register_sales_event_listeners(event_bus=None):
     invoicing_listener = InvoicingListener()
 
     event_bus.subscribe("sales_order.confirmed", inventory_listener)
+    event_bus.subscribe("order.confirmed", inventory_listener)
     event_bus.subscribe("sales_order.confirmed", invoicing_listener)
+    event_bus.subscribe("order.confirmed", invoicing_listener)
     logger.info("Sales order confirmation listeners subscribed successfully.")

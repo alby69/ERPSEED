@@ -22,6 +22,7 @@ from backend.modules.sales.domain import (
     SalesOrderCreatedEvent,
     SalesOrderUpdatedEvent,
     SalesOrderConfirmedEvent,
+    OrderConfirmedEvent,
     SalesOrderCancelledEvent,
     SalesOrderDeletedEvent,
 )
@@ -177,6 +178,12 @@ class ConfirmSalesOrderHandler(CommandHandler):
                     tenant_id=command.tenant_id
                 )
                 self.event_bus.publish(event)
+                order_confirmed_event = OrderConfirmedEvent(
+                    order_id=command.entity_id,
+                    order_data=result,
+                    tenant_id=command.tenant_id
+                )
+                self.event_bus.publish(order_confirmed_event)
 
             return CommandResult.ok(result)
         except Exception as e:

@@ -7,6 +7,7 @@ from .events import (
     SalesOrderCreatedEvent,
     SalesOrderUpdatedEvent,
     SalesOrderConfirmedEvent,
+    OrderConfirmedEvent,
     SalesOrderCancelledEvent,
     SalesOrderDeletedEvent,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "SalesOrderCreatedEvent",
     "SalesOrderUpdatedEvent",
     "SalesOrderConfirmedEvent",
+    "OrderConfirmedEvent",
     "SalesOrderCancelledEvent",
     "SalesOrderDeletedEvent",
 ]

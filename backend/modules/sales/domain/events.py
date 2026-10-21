@@ -51,6 +51,20 @@ class SalesOrderConfirmedEvent(DomainEvent):
 
 
 @dataclass
+class OrderConfirmedEvent(DomainEvent):
+    def __init__(self, order_id: int, order_data: Dict, tenant_id: int):
+        super().__init__(
+            event_type="order.confirmed",
+            payload={
+                "order_id": order_id,
+                "customer_id": order_data.get("customer_id"),
+                "lines": order_data.get("lines", []),
+                "tenant_id": tenant_id,
+            }
+        )
+
+
+@dataclass
 class SalesOrderCancelledEvent(DomainEvent):
     def __init__(self, order_id: int, order_data: Dict, tenant_id: int):
         super().__init__(

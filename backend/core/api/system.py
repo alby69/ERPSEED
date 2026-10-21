@@ -1,5 +1,5 @@
 """
-System API - Endpoints per informazioni di sistema.
+System API - Endpoints per informazioni di sistema e ricerca globale.
 """
 
 from flask import g
@@ -13,6 +13,7 @@ from backend.core.services.tenant_module_service import TenantModuleService
 from backend.plugins.registry import ModuleRegistry
 
 blp = Blueprint("system", __name__, url_prefix="/api/v1/system")
+global_blp = Blueprint("global_search", __name__, url_prefix="/api/v1/global")
 
 
 @blp.route("/modules-info")
@@ -117,7 +118,10 @@ class GlobalSearch(MethodView):
         """
         from flask import request
         from backend.models import Product, SalesOrder, Soggetto
-        from backend.modules.invoicing.domain.models import Invoice
+        try:
+            from backend.plugins.accounting.models import Invoice
+        except ImportError:
+            Invoice = None
 
         query_str = request.args.get("q", "").strip()
         limit = request.args.get("limit", 10, type=int)
@@ -198,25 +202,36 @@ class GlobalSearch(MethodView):
             pass
 
         # 4. Fatture
-        try:
-            invoices = (
-                Invoice.query.filter(
-                    Invoice.tenant_id == tenant_id,
-                    Invoice.number.ilike(search_pattern),
+        if Invoice:
+            try:
+                invoices = (
+                    Invoice.query.filter(
+                        Invoice.tenant_id == tenant_id,
+                        Invoice.number.ilike(search_pattern),
+                    )
+                    .limit(limit)
+                    .all()
                 )
-                .limit(limit)
-                .all()
-            )
-            for inv in invoices:
-                results.append(
-                    {
-                        "type": "invoice",
-                        "id": inv.id,
-                        "label": f"Fattura #{inv.number or inv.id}",
-                        "url": f"/invoices/{inv.id}",
-                    }
-                )
-        except Exception:
-            pass
+                for inv in invoices:
+                    results.append(
+                        {
+                            "type": "invoice",
+                            "id": inv.id,
+                            "label": f"Fattura #{inv.number or inv.id}",
+                            "url": f"/invoices/{inv.id}",
+                        }
+                    )
+            except Exception:
+                pass
 
         return {"results": results[:limit]}
+
+
+@global_blp.route("/search")
+class GlobalSearchDirect(MethodView):
+    @jwt_required()
+    def get(self):
+        """
+        Esegue una ricerca globale tramite l'endpoint dedicato /api/v1/global/search.
+        """
+        return GlobalSearch().get()
