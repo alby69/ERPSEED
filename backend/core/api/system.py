@@ -105,3 +105,118 @@ class CheckModule(MethodView):
         is_enabled = TenantModuleService.is_module_enabled(user.tenant_id if user else None, module_id) # type: ignore
 
         return {"module_id": module_id, "is_enabled": is_enabled}
+
+
+@blp.route("/search")
+class GlobalSearch(MethodView):
+    @jwt_required()
+    def get(self):
+        """
+        Esegue una ricerca globale su Soggetti, Prodotti, Ordini di Vendita e Fatture.
+        Restituisce un array di risultati tipizzati.
+        """
+        from flask import request
+        from backend.models import Product, SalesOrder, Soggetto
+        from backend.modules.invoicing.domain.models import Invoice
+
+        query_str = request.args.get("q", "").strip()
+        limit = request.args.get("limit", 10, type=int)
+
+        if not query_str or len(query_str) < 2:
+            return {"results": []}
+
+        user = User.query.get(get_jwt_identity())
+        tenant_id = user.tenant_id if user else None
+
+        results = []
+        search_pattern = f"%{query_str}%"
+
+        # 1. Soggetti
+        try:
+            soggetti = (
+                Soggetto.query.filter(
+                    Soggetto.tenant_id == tenant_id,
+                    Soggetto.ragione_sociale.ilike(search_pattern),
+                )
+                .limit(limit)
+                .all()
+            )
+            for s in soggetti:
+                results.append(
+                    {
+                        "type": "subject",
+                        "id": s.id,
+                        "label": s.ragione_sociale,
+                        "url": f"/subjects/{s.id}",
+                    }
+                )
+        except Exception:
+            pass
+
+        # 2. Prodotti
+        try:
+            products = (
+                Product.query.filter(
+                    Product.tenant_id == tenant_id,
+                    (Product.name.ilike(search_pattern) | Product.sku.ilike(search_pattern)),
+                )
+                .limit(limit)
+                .all()
+            )
+            for p in products:
+                results.append(
+                    {
+                        "type": "product",
+                        "id": p.id,
+                        "label": f"{p.sku} - {p.name}" if p.sku else p.name,
+                        "url": f"/products/{p.id}",
+                    }
+                )
+        except Exception:
+            pass
+
+        # 3. Ordini di Vendita
+        try:
+            orders = (
+                SalesOrder.query.filter(
+                    SalesOrder.tenant_id == tenant_id,
+                    (SalesOrder.number.ilike(search_pattern) | SalesOrder.customer_reference.ilike(search_pattern)),
+                )
+                .limit(limit)
+                .all()
+            )
+            for o in orders:
+                results.append(
+                    {
+                        "type": "sales_order",
+                        "id": o.id,
+                        "label": f"Ordine #{o.number or o.id}",
+                        "url": f"/sales/orders/{o.id}",
+                    }
+                )
+        except Exception:
+            pass
+
+        # 4. Fatture
+        try:
+            invoices = (
+                Invoice.query.filter(
+                    Invoice.tenant_id == tenant_id,
+                    Invoice.number.ilike(search_pattern),
+                )
+                .limit(limit)
+                .all()
+            )
+            for inv in invoices:
+                results.append(
+                    {
+                        "type": "invoice",
+                        "id": inv.id,
+                        "label": f"Fattura #{inv.number or inv.id}",
+                        "url": f"/invoices/{inv.id}",
+                    }
+                )
+        except Exception:
+            pass
+
+        return {"results": results[:limit]}

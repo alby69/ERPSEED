@@ -15,7 +15,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
-import { message, Card, Button } from 'antd';
+import { message, Card, Button, Skeleton } from 'antd';
 import Layout from './Layout';
 import SearchBar from './SearchBar';
 import Pagination from './Pagination';
@@ -710,10 +710,13 @@ function GenericCrudPage({ pageTitle, apiPath, columns: rawColumns, formFields, 
         </ul>
       )}
 
-      {loading && <div className="text-center my-2 text-muted">Loading...</div>}
       {hookError && <div className="alert alert-danger">{hookError}</div>}
 
-      {activeViewMode === 'table' ? (
+      {loading ? (
+        <div style={{ padding: '16px 0' }}>
+          <Skeleton active paragraph={{ rows: 8 }} />
+        </div>
+      ) : activeViewMode === 'table' ? (
         <div>
           <div className="mb-3">
             <TableSearch

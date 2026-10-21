@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, useTheme } from '../context';
 import LanguageSelector from './LanguageSelector';
+import KnowledgeDrawer from './ui/KnowledgeDrawer';
 import { useTranslation } from 'react-i18next';
 import { Dropdown, Breadcrumb } from 'antd';
 import {
@@ -10,7 +12,8 @@ import {
   LeftOutlined,
   UserOutlined,
   LogoutOutlined,
-  SettingOutlined
+  SettingOutlined,
+  QuestionCircleOutlined
 } from '@ant-design/icons';
 
 function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
@@ -19,6 +22,7 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
   const location = useLocation();
   const { t } = useTranslation();
   const { themeConfig, updateTheme } = useTheme();
+  const [knowledgeOpen, setKnowledgeOpen] = useState(false);
 
   const canGoBack = showBackButton && location.pathname !== '/projects' &&
     location.pathname !== '/' &&
@@ -241,6 +245,12 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+        <QuestionCircleOutlined
+          onClick={() => setKnowledgeOpen(true)}
+          style={{ fontSize: 18, cursor: 'pointer', color: themeConfig.primaryColor }}
+          title="Guida contestuale"
+        />
+
         <LanguageSelector />
 
         <Dropdown menu={{ items: themeItems }} trigger={['click']}>
@@ -270,6 +280,8 @@ function AppHeader({ showBackButton = true, breadcrumbs = [] }) {
           <span style={{ color: themeConfig.mode === 'dark' ? '#fff' : '#000' }}>Guest</span>
         )}
       </div>
+
+      <KnowledgeDrawer open={knowledgeOpen} onClose={() => setKnowledgeOpen(false)} />
     </div>
   );
 }
