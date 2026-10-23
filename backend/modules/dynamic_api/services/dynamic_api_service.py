@@ -65,7 +65,7 @@ class DynamicApiService(BaseService):
         if projectId is not None and sys_model.projectId != projectId:
             abort(404, message=f"Model '{sys_model.name}' not found in project {projectId}.")
 
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = self.db.session.get(User, userId)
 
         if not user:
@@ -186,7 +186,7 @@ class DynamicApiService(BaseService):
             if userId:
                 if field_type in ["relation", "integer"]:
                     return int(userId)
-                user = self.db.session.get(User, userId)
+                user = self.db.session.get(User, int(userId))
                 return user.email if user else None
             return None
 

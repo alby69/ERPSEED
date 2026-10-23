@@ -19,7 +19,7 @@ class UserPermissionsResource(MethodView):
     @jwt_required()
     def get(self):
         """Get role, permissions and field-level masking rules for the authenticated user"""
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = User.query.get(user_id)
         if not user:
             abort(404, message="User not found")

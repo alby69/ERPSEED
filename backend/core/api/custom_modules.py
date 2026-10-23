@@ -77,7 +77,7 @@ class ModuleList(MethodView):
         from backend.models import User, Project
         from backend.core.models import TenantMember
 
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = db.session.get(User, userId)
 
         if not user:
@@ -154,7 +154,7 @@ class ModuleList(MethodView):
         """Create a new module."""
         from backend.models import User
 
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = db.session.get(User, userId)
 
         if not user:
@@ -273,7 +273,7 @@ class ModuleDetail(MethodView):
         """Delete module with mandatory backup."""
         from backend.models import User
 
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = db.session.get(User, userId)
 
         if not user or user.role != "admin":
@@ -321,7 +321,7 @@ class ModuleBackup(MethodView):
         from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
         import json
 
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = db.session.get(User, userId)
 
         if not user or user.role != "admin":
@@ -632,7 +632,7 @@ class ModulePublish(MethodView):
         """
         from backend.models import User
 
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = db.session.get(User, userId)
 
         if not user or user.role != "admin":
@@ -696,7 +696,7 @@ class ModuleUnpublish(MethodView):
         """Unpublish a module (make it draft again)."""
         from backend.models import User
 
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = db.session.get(User, userId)
 
         if not user or user.role != "admin":
@@ -724,7 +724,7 @@ class ModuleTest(MethodView):
         from backend.modules.dynamic_api.services.dynamic_api_service import DynamicApiService
         import time
 
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = db.session.get(User, userId)
 
         if not user or user.role != "admin":

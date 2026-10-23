@@ -24,7 +24,7 @@ class SystemModulesInfo(MethodView):
         Restituisce informazioni completo moduli per UI.
         Include stato, menu, widget per il tenant corrente.
         """
-        user = User.query.get(get_jwt_identity())
+        user = User.query.get(int(get_jwt_identity()))
         tenant_id = user.tenant_id if user else None
 
         # Moduli abilitati per tenant
@@ -101,7 +101,7 @@ class CheckModule(MethodView):
         """
         Verifica se un modulo è abilitato per il tenant corrente.
         """
-        user = User.query.get(get_jwt_identity())
+        user = User.query.get(int(get_jwt_identity()))
 
         is_enabled = TenantModuleService.is_module_enabled(user.tenant_id if user else None, module_id) # type: ignore
 
@@ -129,7 +129,7 @@ class GlobalSearch(MethodView):
         if not query_str or len(query_str) < 2:
             return {"results": []}
 
-        user = User.query.get(get_jwt_identity())
+        user = User.query.get(int(get_jwt_identity()))
         tenant_id = user.tenant_id if user else None
 
         results = []

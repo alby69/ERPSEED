@@ -10,7 +10,7 @@ class ProjectCommandHandler:
         if existing:
             abort(409, message=f"A project with name '{cmd.name}' already exists.")
 
-        owner = db.session.get(User, cmd.owner_id)
+        owner = db.session.get(User, int(cmd.owner_id))
         if not owner:
             abort(404, message="Owner user not found.")
 
@@ -18,7 +18,7 @@ class ProjectCommandHandler:
             name=cmd.name,
             title=cmd.title,
             description=cmd.description,
-            owner_id=cmd.owner_id
+            owner_id=int(cmd.owner_id)
         )
 
         if owner:
@@ -43,8 +43,8 @@ class ProjectCommandHandler:
         if not project:
             abort(404, message="Project not found.")
 
-        user = db.session.get(User, cmd.userId)
-        if user.role != 'admin' and project.owner_id != cmd.userId:
+        user = db.session.get(User, int(cmd.userId))
+        if user.role != 'admin' and project.owner_id != int(cmd.userId):
             abort(403, message="Only the owner or an admin can modify the project.")
 
         for key, value in cmd.data.items():
@@ -63,7 +63,7 @@ class ProjectCommandHandler:
         if not project:
             abort(404, message="Project not found.")
 
-        user = db.session.get(User, cmd.userId)
+        user = db.session.get(User, int(cmd.userId))
         if user.role != 'admin' and project.owner_id != int(cmd.userId):
             abort(403, message="Only the owner or an admin can delete the project.")
 
@@ -86,8 +86,8 @@ class ProjectCommandHandler:
         if not project:
             abort(404, message="Project not found.")
 
-        user = db.session.get(User, cmd.userId)
-        if user.role != 'admin' and project.owner_id != cmd.userId:
+        user = db.session.get(User, int(cmd.userId))
+        if user.role != 'admin' and project.owner_id != int(cmd.userId):
             abort(403, message="Only the owner or an admin can add members.")
 
         user_to_add = db.session.get(User, cmd.member_userId)
@@ -106,8 +106,8 @@ class ProjectCommandHandler:
         if not project:
             abort(404, message="Project not found.")
 
-        user = db.session.get(User, cmd.userId)
-        if user.role != 'admin' and project.owner_id != cmd.userId:
+        user = db.session.get(User, int(cmd.userId))
+        if user.role != 'admin' and project.owner_id != int(cmd.userId):
             abort(403, message="Only the owner or an admin can remove members.")
 
         user_to_remove = db.session.get(User, cmd.member_userId)

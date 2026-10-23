@@ -171,7 +171,7 @@ class PermissionService:
                 from backend.core.models import User
 
                 userId = get_jwt_identity()
-                user = User.query.get(userId)
+                user = User.query.get(int(userId))
 
                 if not user:
                     abort(404, description="User not found")
@@ -193,7 +193,7 @@ class PermissionService:
                 from backend.core.models import User
 
                 userId = get_jwt_identity()
-                user = User.query.get(userId)
+                user = User.query.get(int(userId))
 
                 if not user:
                     abort(404, description="User not found")

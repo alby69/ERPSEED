@@ -31,7 +31,7 @@ class ModuleMiddleware:
                 verify_jwt_in_request()
                 userId = get_jwt_identity()
 
-                user = User.query.get(userId)
+                user = User.query.get(int(userId))
                 if not user:
                     return jsonify({
                         'error': 'USER_NOT_FOUND',
@@ -63,7 +63,7 @@ class ModuleMiddleware:
                 userId = get_jwt_identity(optional=True)
 
                 if userId:
-                    user = User.query.get(userId)
+                    user = User.query.get(int(userId))
                     if user and user.tenant_id:
                         enabled = TenantModuleService.get_enabled_module_ids(user.tenant_id)
                         g.enabled_modules = enabled
@@ -94,7 +94,7 @@ class ModuleMiddleware:
             if not userId:
                 return False
 
-            user = User.query.get(userId)
+            user = User.query.get(int(userId))
             if not user or not user.tenant_id:
                 return False
 

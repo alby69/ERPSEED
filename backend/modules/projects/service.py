@@ -9,15 +9,16 @@ class ProjectService:
         self.handler = ProjectCommandHandler()
 
     def get_all_for_user(self, userId):
-        user = db.session.get(User, userId)
+        user = db.session.get(User, int(userId))
         if not user:
             abort(404, message="User not found.")
 
+        user_id_int = int(userId)
         if user.role == 'admin':
             return Project.query.order_by(Project.name)
 
         return Project.query.filter(
-            (Project.owner_id == userId) | (Project.members.any(id=userId))
+            (Project.owner_id == user_id_int) | (Project.members.any(id=user_id_int))
         ).order_by(Project.name)
 
     def get_by_id(self, projectId, userId):
@@ -25,10 +26,11 @@ class ProjectService:
         if not project:
             abort(404, message="Project not found.")
 
-        user = db.session.get(User, userId)
-        is_member = project.members.filter_by(id=userId).first() is not None
+        user = db.session.get(User, int(userId))
+        user_id_int = int(userId)
+        is_member = project.members.filter_by(id=user_id_int).first() is not None
 
-        if user.role != 'admin' and project.owner_id != userId and not is_member:
+        if user.role != 'admin' and project.owner_id != user_id_int and not is_member:
             abort(403, message="You don't have access to this project.")
 
         return project

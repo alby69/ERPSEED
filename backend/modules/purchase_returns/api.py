@@ -56,7 +56,7 @@ class PurchaseReturnList(MethodView):
     @jwt_required()
     def post(self):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         data = request.get_json() or {}
         if not data.get("supplier_id"):
             abort(400, message="supplier_id is required")

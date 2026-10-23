@@ -67,7 +67,7 @@ class TenantModules(MethodView):
         """
         Lista moduli attivi per il tenant corrente.
         """
-        user = User.query.get(get_jwt_identity())
+        user = User.query.get(int(get_jwt_identity()))
         tenant_id = user.tenant_id if user else None
 
         enabled = TenantModuleService.get_enabled_modules(tenant_id) # type: ignore
@@ -80,7 +80,7 @@ class TenantModules(MethodView):
         """
         Attiva un modulo per il tenant corrente.
         """
-        user = User.query.get(get_jwt_identity())
+        user = User.query.get(int(get_jwt_identity()))
 
         # Solo admin può attivare moduli
         if not user or user.role != 'admin':
@@ -122,7 +122,7 @@ class ModuleDetail(MethodView):
         if not module:
             abort(404, message="Modulo non trovato")
 
-        user = User.query.get(get_jwt_identity())
+        user = User.query.get(int(get_jwt_identity()))
         is_enabled = TenantModuleService.is_module_enabled(user.tenant_id if user else None, module_id) # type: ignore
 
         result = module.to_dict()
@@ -135,7 +135,7 @@ class ModuleDetail(MethodView):
         """
         Disattiva un modulo per il tenant corrente.
         """
-        user = User.query.get(get_jwt_identity())
+        user = User.query.get(int(get_jwt_identity()))
 
         if not user or user.role != 'admin':
             abort(403, message="Solo gli admin possono gestire i moduli")
@@ -156,7 +156,7 @@ class ModuleConfig(MethodView):
         """
         Configurazione del modulo per il tenant corrente.
         """
-        user = User.query.get(get_jwt_identity())
+        user = User.query.get(int(get_jwt_identity()))
         config = TenantModuleService.get_module_config(user.tenant_id if user else None, module_id) # type: ignore
         return {'config': config}
 
@@ -167,7 +167,7 @@ class ModuleConfig(MethodView):
         """
         Aggiorna configurazione del modulo.
         """
-        user = User.query.get(get_jwt_identity())
+        user = User.query.get(int(get_jwt_identity()))
 
         if not user or user.role != 'admin':
             abort(403, message="Solo gli admin possono gestire la configurazione")

@@ -345,7 +345,7 @@ class LeaveApproval(MethodView):
             abort(400, message="Only pending requests can be approved/rejected.")
 
         leave.status = data.get('status', 'approved')
-        leave.approved_by = get_jwt_identity()
+        leave.approved_by = int(get_jwt_identity())
         leave.approved_at = datetime.datetime.utcnow()
 
         from backend.extensions import db

@@ -251,7 +251,7 @@ class StockMovementList(MethodView):
         # Set server-side fields
         movement_instance.tenant_id = tenant_id
         movement_instance.movement_number = movement_number
-        movement_instance.created_by_id = get_jwt_identity()
+        movement_instance.created_by_id = int(get_jwt_identity())
 
         db.session.add(movement_instance)
 
@@ -344,7 +344,7 @@ class InventoryCountList(MethodView):
         # Set server-side fields
         count_instance.tenant_id = tenant_id
         count_instance.count_number = count_number
-        count_instance.created_by_id = get_jwt_identity()
+        count_instance.created_by_id = int(get_jwt_identity())
 
         db.session.add(count_instance)
         db.session.flush()

@@ -24,7 +24,7 @@ def field_masking_middleware(resource_type: str):
             if not user_id:
                 return response
 
-            user = User.query.get(user_id)
+            user = User.query.get(int(user_id))
             if not user:
                 return response
 

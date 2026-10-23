@@ -99,7 +99,7 @@ class AuthService:
     def refresh_token():
         """Refresh access token."""
         userId = get_jwt_identity()
-        user = User.query.get(userId)
+        user = User.query.get(int(userId))
 
         if not user or not user.is_active:
             raise ValueError("Invalid user")
@@ -232,7 +232,7 @@ class AuthService:
     @staticmethod
     def change_password(userId, current_password, new_password):
         """Change password with verification."""
-        user = User.query.get(userId)
+        user = User.query.get(int(userId))
 
         if not user:
             raise ValueError("User not found")

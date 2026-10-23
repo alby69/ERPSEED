@@ -59,7 +59,7 @@ class ModuleApiRoot(MethodView):
     @blp.response(200, {"type": "object"})
     def get(self, module_name):
         """Info sul modulo e modelli disponibili."""
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         from backend.models import User
 
         user = db.session.get(User, userId)
@@ -107,7 +107,7 @@ class ModuleModelList(MethodView):
     @blp.response(200, {"type": "object"})
     def get(self, module_name, model_name):
         """Lista record del modello."""
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         from backend.models import User
 
         user = db.session.get(User, userId)
@@ -142,7 +142,7 @@ class ModuleModelList(MethodView):
     @blp.response(201, {"type": "object"})
     def post(self, module_name, model_name):
         """Crea un nuovo record nel modello."""
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         from backend.models import User
 
         user = db.session.get(User, userId)
@@ -182,7 +182,7 @@ class ModuleModelDetail(MethodView):
     @blp.response(200, {"type": "object"})
     def get(self, module_name, model_name, itemId):
         """Leggi un record."""
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         from backend.models import User
 
         user = db.session.get(User, userId)
@@ -213,7 +213,7 @@ class ModuleModelDetail(MethodView):
     @blp.response(200, {"type": "object"})
     def put(self, module_name, model_name, itemId):
         """Aggiorna un record."""
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         from backend.models import User
 
         user = db.session.get(User, userId)
@@ -246,7 +246,7 @@ class ModuleModelDetail(MethodView):
     @blp.response(204)
     def delete(self, module_name, model_name, itemId):
         """Elimina un record."""
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         from backend.models import User
 
         user = db.session.get(User, userId)

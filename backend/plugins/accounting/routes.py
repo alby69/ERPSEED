@@ -215,7 +215,7 @@ class JournalEntryList(MethodView):
         # Set tenant_id and other server-side fields on the main instance
         entry_instance.tenant_id = tenant_id
         entry_instance.entry_number = entry_number
-        entry_instance.created_by = get_jwt_identity()
+        entry_instance.created_by = int(get_jwt_identity())
         if not entry_instance.date:
             entry_instance.date = datetime.date.today()
 

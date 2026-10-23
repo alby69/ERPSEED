@@ -53,7 +53,7 @@ class DynamicApiService(BaseService):
                 message=f"Model '{sys_model.name}' not found in project {project_id}.",
             )
 
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         user = self.db.session.get(User, user_id)
 
         if not user:
@@ -467,7 +467,7 @@ class DynamicApiService(BaseService):
         elif val_upper == "{NOW}":
             return datetime.datetime.now()
         elif val_upper == "{CURRENT_USER}":
-            user_id = get_jwt_identity()
+            user_id = int(get_jwt_identity())
             if user_id:
                 if field_type in ["relation", "integer"]:
                     return int(user_id)
@@ -616,7 +616,7 @@ class DynamicApiService(BaseService):
         result = self.db.session.execute(stmt).mappings().one()
 
         self.handle_nested_writes(result.id, data, sys_model, schema=schema_name)
-        log_audit(get_jwt_identity(), model_name, result.id, "CREATE", validated_data)
+        log_audit(int(get_jwt_identity()), model_name, result.id, "CREATE", validated_data)
 
         self.db.session.commit()
 
@@ -684,7 +684,7 @@ class DynamicApiService(BaseService):
         result = self.db.session.execute(stmt).mappings().one()
 
         self.handle_nested_writes(item_id, data, sys_model, schema=schema_name)
-        log_audit(get_jwt_identity(), model_name, item_id, "UPDATE", validated_data)
+        log_audit(int(get_jwt_identity()), model_name, item_id, "UPDATE", validated_data)
 
         self.db.session.commit()
 
@@ -715,7 +715,7 @@ class DynamicApiService(BaseService):
 
         stmt = delete(table).where(table.c.id == item_id)
         self.db.session.execute(stmt)
-        log_audit(get_jwt_identity(), model_name, item_id, "DELETE")
+        log_audit(int(get_jwt_identity()), model_name, item_id, "DELETE")
         self.db.session.commit()
 
         try:
@@ -737,7 +737,7 @@ class DynamicApiService(BaseService):
         schema_name = f"project_{project_id}"
         table = get_table_object(model_name, schema=schema_name)
 
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         for item_id in ids_to_delete:
             log_audit(user_id, model_name, item_id, "DELETE")
 
@@ -834,7 +834,7 @@ class DynamicApiService(BaseService):
         result = self.db.session.execute(stmt).mappings().one()
 
         log_audit(
-            get_jwt_identity(), model_name, result.id, "CLONE", {"source_id": item_id}
+            int(get_jwt_identity()), model_name, result.id, "CLONE", {"source_id": item_id}
         )
         self.db.session.commit()
 
@@ -938,7 +938,7 @@ class DynamicApiService(BaseService):
 
         if inserted_count > 0:
             log_audit(
-                get_jwt_identity(), model_name, 0, "IMPORT", {"count": inserted_count}
+                int(get_jwt_identity()), model_name, 0, "IMPORT", {"count": inserted_count}
             )
             self.db.session.commit()
 

@@ -125,7 +125,7 @@ class WorkflowList(MethodView):
         if data['trigger_event'] not in WebhookEvent.get_all_events() and data['trigger_event'] != '*':
             abort(400, message=f"Invalid trigger event: {data['trigger_event']}")
 
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
 
         workflow = WorkflowService.create_workflow(
             name=data['name'],

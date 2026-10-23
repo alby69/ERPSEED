@@ -21,7 +21,7 @@ class SalesOrderPDF(MethodView):
         """
         Genera PDF per ordine di vendita.
         """
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = User.query.get(userId)
 
         if not user:
@@ -50,7 +50,7 @@ class InvoicePDF(MethodView):
         """
         Genera PDF per fattura.
         """
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = User.query.get(userId)
 
         if not user:
@@ -79,7 +79,7 @@ class QuotePDF(MethodView):
         """
         Genera PDF per preventivo.
         """
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
         user = User.query.get(userId)
 
         if not user:

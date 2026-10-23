@@ -14,7 +14,7 @@ def register_audit_routes(blp):
         def get(self):
             """Retrieve audit logs (admin only)."""
             from backend.models.user import User
-            userId = get_jwt_identity()
+            userId = int(get_jwt_identity())
             user = db.session.get(User, userId)
 
             if not user or user.role != 'admin':

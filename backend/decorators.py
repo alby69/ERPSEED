@@ -10,7 +10,7 @@ def admin_required():
         def decorator(*args, **kwargs):
             verify_jwt_in_request()
             user_id = get_jwt_identity()
-            user = User.query.get(user_id)
+            user = User.query.get(int(user_id))
             if user and user.role == 'admin':
                 return fn(*args, **kwargs)
             else:

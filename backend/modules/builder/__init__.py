@@ -175,7 +175,7 @@ class SysModelResetTable(MethodView):
     @blp.response(200)
     def post(self, modelId):
         """Drop and Re-create the table based on metadata (DATA LOSS WARNING)"""
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
 
         backup_folder = current_app.config.get("BACKUP_FOLDER", "backups")
 
@@ -190,7 +190,7 @@ class SysModelClone(MethodView):
     @jwt_required()
     def post(self, modelId):
         """Clone an existing model (definition and fields)."""
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
 
         data = request.get_json()
         new_name = data.get("name")

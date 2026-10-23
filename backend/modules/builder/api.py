@@ -289,7 +289,7 @@ class BlockList(MethodView):
     @blp.response(201)
     def post(self, projectId, block_data):
         """Create a new block, optionally from a template"""
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
 
         block = Block(
             projectId=projectId,
@@ -500,7 +500,7 @@ class BlockRunTests(MethodView):
         if not suite:
             return {"error": "Test suite not found"}, 404
 
-        userId = get_jwt_identity()
+        userId = int(get_jwt_identity())
 
         execution = TestExecution(
             test_suite_id=suite.id,

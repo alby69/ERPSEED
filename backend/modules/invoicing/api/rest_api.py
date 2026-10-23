@@ -34,7 +34,7 @@ class InvoiceList(MethodView):
     @jwt_required()
     def post(self):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         data = request.get_json() or {}
         result = get_service().execute({
             "command": "CreateInvoice",
@@ -84,7 +84,7 @@ class InvoiceIssue(MethodView):
     @jwt_required()
     def post(self, invoice_id):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         result = get_service().execute({
             "command": "IssueInvoice",
             "entity_id": invoice_id,
@@ -139,7 +139,7 @@ class InvoiceFromSalesOrder(MethodView):
     @jwt_required()
     def post(self, sales_order_id):
         tenant_id = request.headers.get("X-Tenant-ID", 1, type=int)
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         data = request.get_json() or {}
         result = get_service().execute({
             "command": "CreateInvoiceFromSalesOrder",
