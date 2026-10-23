@@ -52,8 +52,7 @@ services:
       # Ottieni una API key gratuita su https://openrouteservice.org/signup
       - OPENROUTESERVICE_API_KEY=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImZhNjdlNzk5YmI2ODQ2ZjlhZjcxMjNkMDlkOGFjMTQ1IiwiaCI6Im11cm11cjY0In0=
     command: >
-      sh -c "pip install -r /app/backend/requirements.txt &&
-             cd /app && python -m backend.cli.create_admin admin@erpseed.it admin123 &&
+      sh -c "cd /app && python -m backend.cli.create_admin admin@erpseed.it admin123 &&
              gunicorn --worker-class sync -w 1 --bind 0.0.0.0:5000 --reload --timeout 120 backend.wsgi:app"
     depends_on:
       db:
@@ -76,7 +75,7 @@ services:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:5000
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    command: sh -c "npm run dev -- --host 0.0.0.0"
     depends_on:
       - backend
     networks:
@@ -95,8 +94,7 @@ services:
       - JWT_SECRET_KEY=a-very-secure-and-long-jwt-secret-key-for-dev-env
       - PYTHONPATH=/app
     command: >
-      sh -c "pip install -r /app/backend/requirements.txt &&
-             cd /app && python -m backend.seeds.seed_initial &&
+      sh -c "cd /app && python -m backend.seeds.seed_initial &&
              cd /app && python -m backend.cli.create_admin admin@erpseed.it admin123 &&
              cd /app && python -m backend.seeds.seed_metadata &&
              cd /app && python -m backend.seeds.seed_comuni"

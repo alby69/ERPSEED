@@ -102,10 +102,10 @@ Per la specifica completa ed il piano esecutivo della Fase 6:
 
 | Sottofase | Descrizione | Stato |
 |-----------|-------------|-------|
-| **Fase 6.1** | Core DSL Parser & Command Bus Integration | 🔄 In corso |
-| **Fase 6.2** | Backend Scaffolding Engine (Jinja2 Templates) | 📅 Pianificata |
-| **Fase 6.3** | Frontend Scaffolding Engine (React/AntD Templates) | 📅 Pianificata |
-| **Fase 6.4** | CLI Tool & REST API Endpoint (`/api/v1/builder/scaffold`) | 📅 Pianificata |
+| **Fase 6.1** | Core DSL Parser & Command Bus Integration | ✅ Completato |
+| **Fase 6.2** | Backend Scaffolding Engine (Jinja2 Templates) | ✅ Completato |
+| **Fase 6.3** | Frontend Scaffolding Engine (React/AntD Templates) | ✅ Completato |
+| **Fase 6.4** | CLI Tool & REST API Endpoint (`/api/v1/builder/scaffold`) | ✅ Completato |
 
 ---
 

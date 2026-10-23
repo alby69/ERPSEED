@@ -1,0 +1,29 @@
+{# Frontend API Service Template #}
+import axios from 'axios';
+
+const API_BASE = '/api/v1/{{ module_name }}/{{ endpoint_slug }}';
+
+export const fetch{{ entity_name }}List = async (params = {}) => {
+  const response = await axios.get(API_BASE, { params });
+  return response.data;
+};
+
+export const fetch{{ entity_name }}Detail = async (id) => {
+  const response = await axios.get(`${API_BASE}/${id}`);
+  return response.data;
+};
+
+export const create{{ entity_name }} = async (payload) => {
+  const response = await axios.post(API_BASE, payload);
+  return response.data;
+};
+
+export const update{{ entity_name }} = async (id, payload) => {
+  const response = await axios.put(`${API_BASE}/${id}`, payload);
+  return response.data;
+};
+
+export const delete{{ entity_name }} = async (id) => {
+  const response = await axios.delete(`${API_BASE}/${id}`);
+  return response.data;
+};

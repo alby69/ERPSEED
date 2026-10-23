@@ -123,11 +123,9 @@ La documentazione completa è organizzata in [docs/INDEX.md](docs/INDEX.md):
 | **Sviluppo Frontend** | [FRONTEND_GUIDE.md](docs/FRONTEND_GUIDE.md) | Guida sviluppo React/Vite/UI, Command Palette, shortcuts |
 | **API** | [API.md](docs/API.md) | Riferimento endpoint completo |
 | **AgentMesh AI** | [AGENTMESH.md](docs/AGENTMESH.md) | Architettura ERP distribuito agentico |
-| **Manuale Utente** | [USER_MANUAL.md](docs/USER_MANUAL.md) | Uso piattaforma e builder |
+| **Manuale Utente** | [USER_MANUAL.md](docs/USER_MANUAL.md) | Uso piattaforma, builder, AI Assistant e Tutorial Fleet |
 | **Roadmap Qualità** | [ROADMAP.md](docs/ROADMAP.md) | Refactoring KISS/DRY, UX/UI & Data Model (100% Completato) |
 | **Piano ERP** | [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Stato avanzamento 24 blocchi ERP |
-| **Tutorial Fleet** | [TUTORIAL_FLEET.md](docs/TUTORIAL_FLEET.md) | Fleet Management via GUI & CLI |
-| **Tutorial AI** | [TUTORIAL_AI_ASSISTANT.md](docs/TUTORIAL_AI_ASSISTANT.md) | Uso AI Assistant |
 
 ---
 

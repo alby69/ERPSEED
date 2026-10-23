@@ -12,8 +12,8 @@
 |-----------|-----------|--------|
 | [README.md](../README.md) | Presentazione progetto, features, stack, avvio | Tutti |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Architettura di sistema, pattern (CQRS, Multi-Tenant), struttura repository | Sviluppatori |
-| [ROADMAP.md](ROADMAP.md) | Roadmap Q3-Q4 2026 e Proposta Fase 6 Schema-as-Code | Team |
-| [SCAFFOLD_ENGINE_PROPOSAL.md](SCAFFOLD_ENGINE_PROPOSAL.md) | Proposta architetturale e specifica per il motore "Schema-as-Code" (Fase 6) | Sviluppatori / Team |
+| [ROADMAP.md](ROADMAP.md) | Roadmap Q3-Q4 2026 e Fase 6 Schema-as-Code (Completata) | Team |
+| [SCAFFOLD_ENGINE_PROPOSAL.md](SCAFFOLD_ENGINE_PROPOSAL.md) | Specifica architetturale e motore "Schema-as-Code" (Fase 6) | Sviluppatori / Team |
 
 ## 🚀 Guide Operative
 
@@ -22,7 +22,7 @@
 | [GETTING_STARTED.md](GETTING_STARTED.md) | Guida all'avvio rapido: Docker, setup locale (backend/frontend) e risoluzione problemi | Tutti |
 | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) | Guida per sviluppatori backend: workflow branch Git, creazione moduli, refactoring, testing, debug | Sviluppatori BE |
 | [FRONTEND_GUIDE.md](FRONTEND_GUIDE.md) | Guida per sviluppatori frontend: React, Vite, Ant Design, Command Palette, componenti e state management | Sviluppatori FE |
-| [USER_MANUAL.md](USER_MANUAL.md) | Manuale utente: concetti chiave, uso delle applicazioni, builder visivo | Utenti finali |
+| [USER_MANUAL.md](USER_MANUAL.md) | Manuale utente: concetti chiave, uso delle applicazioni, builder visivo e tutorial | Utenti finali |
 
 ## 📡 Riferimento API e Integrazione Agentica
 
@@ -38,19 +38,12 @@
 | [CHANGELOG.md](../CHANGELOG.md) | Changelog di prodotto e delle release dell'applicazione | Tutti |
 | [DOC_LOG.md](../DOC_LOG.md) | Registro delle modifiche e refactoring della documentazione | Maintainers / Team |
 
-## 🧪 Tutorial
-
-| Documento | Contenuto | Target |
-|-----------|-----------|--------|
-| [TUTORIAL_FLEET.md](TUTORIAL_FLEET.md) | Tutorial completo per creare un progetto di Gestione Flotta (via GUI e via CLI/curl) | Tutti |
-| [TUTORIAL_AI_ASSISTANT.md](TUTORIAL_AI_ASSISTANT.md) | Guida all'uso dell'AI Assistant: configurazione LLM, prompt e risoluzione problemi | Tutti |
-
 ## 📐 Piani di Implementazione & Archivio
 
 | Documento | Contenuto | Target |
 |-----------|-----------|--------|
 | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Piano e stato di avanzamento dei 24 blocchi funzionali ERP | Team / Stakeholder |
-| [ARCHIVE/COMPLETED_PHASES.md](ARCHIVE/COMPLETED_PHASES.md) | Archivio storico delle fasi di sviluppo completate (Fasi 0-5) | Maintainers |
+| [ARCHIVE/COMPLETED_PHASES.md](ARCHIVE/COMPLETED_PHASES.md) | Archivio storico delle fasi di sviluppo completate (Fasi 0-6) | Maintainers |
 
 ---
 
@@ -71,9 +64,6 @@ README.md (root)
     ├── API & AgentMesh
     │   ├── API.md
     │   └── AGENTMESH.md
-    ├── Tutorial
-    │   ├── TUTORIAL_FLEET.md (GUI + CLI)
-    │   └── TUTORIAL_AI_ASSISTANT.md
     └── Piani Esecutivi & Archivio
         ├── IMPLEMENTATION_PLAN.md
         └── ARCHIVE/COMPLETED_PHASES.md

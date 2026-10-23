@@ -1,0 +1,26 @@
+{# React Ant Design List Page Template #}
+import React from 'react';
+import { Table, Button, Card, Space, Tag } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import GenericCrudPage from '../../components/core/GenericCrudPage';
+
+export default function {{ entity_name }}ListPage() {
+  const columns = [
+{% for field in fields %}
+    {
+      title: '{{ field.ui.label if field.ui and field.ui.label else field.name }}',
+      dataIndex: '{{ field.name }}',
+      key: '{{ field.name }}',
+    },
+{% endfor %}
+  ];
+
+  return (
+    <GenericCrudPage
+      title="{{ metadata.label if metadata and metadata.label else entity_name }}"
+      entityKey="{{ entity_name | lower }}"
+      columns={columns}
+      apiEndpoint="/api/v1/{{ module_name }}/{{ endpoint_slug }}"
+    />
+  );
+}

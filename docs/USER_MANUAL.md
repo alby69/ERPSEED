@@ -46,11 +46,75 @@ The Guided ERP Creation Wizard turns business requirements into tailored ER sche
 2. **Visual ER Diagram Builder**: Inspect and interactively refine proposed entities, fields, and relationships on a visual canvas powered by React Flow. Add custom entities via the side drawer.
 3. **Automated ERP Provisioning**: Click *"Generate ERP"* to automatically provision database tables, Marshmallow schemas, REST API endpoints, and module metadata.
 
-### AI Assistant
+### AI Assistant & LLM Configuration
 The AI Assistant helps build applications using natural language. You can prompt it to:
 - "Create a customer feedback model with rating and comment fields."
 - "Show me a list of all pending sales orders."
 - "Generate a monthly revenue report."
+
+#### Supported LLM Providers & Environment Setup
+
+| Provider | Environment Variable | Key Acquisition |
+|----------|---------------------|-----------------|
+| **OpenRouter** (Default) | `LLM_PROVIDER=openrouter` + `OPENROUTER_API_KEY` | https://openrouter.ai/keys |
+| **OpenAI** | `LLM_PROVIDER=openai` + `OPENAI_API_KEY` | https://platform.openai.com/api-keys |
+| **Anthropic** | `LLM_PROVIDER=anthropic` + `ANTHROPIC_API_KEY` | https://console.anthropic.com/ |
+| **Ollama** (Local) | `LLM_PROVIDER=ollama` | Requires local Ollama server running at `http://localhost:11434` |
+
+#### Using AI Assistant via API
+```bash
+# 1. Generate an ERP configuration
+curl -s -X POST "http://localhost:5000/api/v1/ai/generations" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "request": "Create a Suppliers model with fields: company_name (string, required), vat_number (string, unique), phone (string)",
+    "projectId": 1
+  }'
+
+# 2. Apply generated configuration
+curl -s -X POST "http://localhost:5000/api/v1/ai/applications" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "models": [
+      {
+        "name": "suppliers",
+        "title": "Suppliers",
+        "fields": [
+          {"name": "company_name", "type": "string", "required": true, "title": "Company Name"},
+          {"name": "vat_number", "type": "string", "is_unique": true, "title": "VAT Number"},
+          {"name": "phone", "type": "string", "title": "Phone"}
+        ]
+      }
+    ]
+  }'
+```
+
+---
+
+## Step-by-Step Tutorial: Fleet Management Application
+
+Follow these steps to create a complete **Fleet Management** system via GUI or REST API:
+
+### 1. Create a Project
+- **GUI**: Go to **Projects** → **New Project** → Set Name: `fleet_management`, Title: `Fleet Management`.
+- **API**:
+  ```bash
+  curl -s -X POST http://localhost:5000/api/v1/projects \
+    -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+    -d '{"name": "fleet_management", "title": "Fleet Management", "description": "Vehicle fleet management."}'
+  ```
+
+### 2. Define the `Vehicle` Model
+- **Fields**: `plate` (string, required, unique), `model` (string, required), `brand` (select), `purchase_date` (date), `mileage` (integer).
+- **Generate Table**: Click **Generate Table** in the Model Builder to synchronize with the database.
+
+### 3. Define Relational `Maintenance` Model
+- **Fields**: `description` (text), `date` (date, required), `cost` (decimal).
+- **Relation Field**: Add `vehicle` (type `relation` pointing to model `vehicle`, label field: `plate`).
+- **Lookup Field**: Add `vehicle_plate` (type `lookup` linking `vehicle` → `plate`) for read-only auto-fill without data duplication.
+- **Summary Field on Vehicle**: Add `total_maintenance_cost` (type `summary`, `SUM(cost)`) on `Vehicle` to track total maintenance expenses.
 
 ---
 
@@ -124,7 +188,7 @@ All requests are scoped to the active tenant via header `X-Tenant-ID`, subdomain
 ## Support & Resources
 - **Developer Guide**: [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)
 - **API Reference**: [API.md](./API.md)
-- **Fleet Tutorial**: [TUTORIAL_FLEET.md](./TUTORIAL_FLEET.md)
+- **Getting Started Guide**: [GETTING_STARTED.md](./GETTING_STARTED.md)
 
 ---
 
