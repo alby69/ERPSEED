@@ -1,0 +1,49 @@
+{# React Ant Design Form Page Template #}
+import React from 'react';
+import { Form, Input, InputNumber, DatePicker, Button, Card, Flex } from 'antd';
+import { useTranslation } from 'react-i18next';
+
+export default function {{ entity_name }}FormPage({ initialValues, onSave, loading }) {
+  const [form] = Form.useForm();
+  const { t } = useTranslation();
+
+  const handleFinish = (values) => {
+    if (onSave) {
+      onSave(values);
+    }
+  };
+
+  return (
+    <Card title={initialValues ? t('Edit {{ entity_name }}') : t('New {{ entity_name }}')}>
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={initialValues}
+        onFinish={handleFinish}
+      >
+{% for field in fields %}
+{% if field.name not in ['id', 'created_at', 'updated_at', 'deleted_at', 'created_by'] %}
+        <Form.Item
+          name="{{ field.name }}"
+          label="{{ field.ui.label if field.ui and field.ui.label else field.name }}"
+          rules={[{ required: {{ 'true' if field.required else 'false' }}, message: t('Please enter {{ field.name }}') }]}
+        >
+{% if field.type in ['integer', 'decimal', 'float', 'number'] %}
+          <InputNumber style={ { width: '100%' } } />
+{% elif field.type == 'date' %}
+          <DatePicker style={ { width: '100%' } } />
+{% else %}
+          <Input />
+{% endif %}
+        </Form.Item>
+{% endif %}
+{% endfor %}
+        <Flex justify="end" gap="middle">
+          <Button type="primary" htmlType="submit" loading={loading}>
+            {t('Save')}
+          </Button>
+        </Flex>
+      </Form>
+    </Card>
+  );
+}

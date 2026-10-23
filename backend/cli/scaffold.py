@@ -423,15 +423,76 @@ def scaffold_module(name: str, module_type: str = "simple", target_dir: str = No
     return str(base_path)
 
 
+def scaffold_from_yaml(yaml_path: str, output_dir: str = None) -> dict:
+    """
+    Generates backend and frontend scaffold files from a YAML template file.
+    """
+    from backend.core.scaffold.parser import TemplateParser
+    from backend.core.scaffold.generator import CodeGenerator
+
+    parser = TemplateParser()
+    generator = CodeGenerator()
+
+    commands = parser.parse_file(yaml_path)
+    reg_cmd = next((c for c in commands if hasattr(c, "module") and hasattr(c, "fields")), None)
+    if not reg_cmd:
+        raise ValueError("No valid entity definition command found in template")
+
+    backend_files = generator.generate_backend(
+        module_name=reg_cmd.module,
+        entity_name=reg_cmd.entity,
+        fields=reg_cmd.fields,
+        relations=reg_cmd.relations,
+        metadata=reg_cmd.metadata,
+    )
+
+    frontend_files = generator.generate_frontend(
+        module_name=reg_cmd.module,
+        entity_name=reg_cmd.entity,
+        fields=reg_cmd.fields,
+        relations=reg_cmd.relations,
+        metadata=reg_cmd.metadata,
+    )
+
+    if output_dir:
+        out_path = Path(output_dir)
+        be_dir = out_path / "backend" / reg_cmd.module / reg_cmd.entity.lower()
+        fe_dir = out_path / "frontend" / reg_cmd.module / reg_cmd.entity.lower()
+
+        be_dir.mkdir(parents=True, exist_ok=True)
+        fe_dir.mkdir(parents=True, exist_ok=True)
+
+        for filename, content in backend_files.items():
+            (be_dir / filename).write_text(content, encoding="utf-8")
+
+        for filename, content in frontend_files.items():
+            (fe_dir / filename).write_text(content, encoding="utf-8")
+
+    return {"backend": backend_files, "frontend": frontend_files}
+
+
 def main():
     parser = argparse.ArgumentParser(description="Scaffold a new module for ERPSEED.")
-    parser.add_argument("command", nargs="?", default="scaffold_module", help="Command to run (e.g. scaffold_module)")
-    parser.add_argument("--name", required=True, help="Name of the module entity (e.g. Vehicle)")
+    parser.add_argument("command", nargs="?", default="scaffold_module", help="Command to run (scaffold_module | scaffold_yaml)")
+    parser.add_argument("--name", help="Name of the module entity (e.g. Vehicle)")
     parser.add_argument("--type", choices=["simple", "cqrs"], default="simple", help="Type of module architecture")
+    parser.add_argument("--template", help="Path to YAML template file for scaffold_yaml")
+    parser.add_argument("--out", help="Output directory path")
 
     args = parser.parse_args()
-    path = scaffold_module(args.name, args.type)
-    print(f"Successfully scaffolded {args.type} module '{args.name}' at: {path}")
+
+    if args.command == "scaffold_yaml" or args.template:
+        if not args.template:
+            print("Error: --template parameter is required for scaffold_yaml")
+            return
+        res = scaffold_from_yaml(args.template, args.out)
+        print(f"Successfully scaffolded template '{args.template}' into backend & frontend artifacts.")
+    else:
+        if not args.name:
+            print("Error: --name parameter is required for scaffold_module")
+            return
+        path = scaffold_module(args.name, args.type)
+        print(f"Successfully scaffolded {args.type} module '{args.name}' at: {path}")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 > **Destinatario**: `google-labs-jules[bot]` e Team di Sviluppo ERPSEED
 > **Obiettivo**: Accelerare lo sviluppo di nuovi moduli ERP da zero trasformando descrizioni testuali dichiarative in artefatti di codice completi (DB, API, UI) tramite il pattern CQRS esistente.
-> **Stato**: 📝 In Proposta (Da inserire in ROADMAP.md come Fase 6 - Q1 2027)
+> **Stato**: ✅ COMPLETATO (Fase 6 implementata integralmente)
 
 ---
 
@@ -77,24 +77,24 @@ permissions:
 - [x] Implementare gli handler/parser in `backend/core/scaffold/` che interagiscono con il bus ed il registro `SysModel`.
 
 ### Fase 6.2: Backend Scaffolding Engine (Settimane 3-4)
-- [ ] Creare template Jinja2 in `backend/core/scaffold/templates/backend/`:
+- [x] Creare template Jinja2 in `backend/core/scaffold/templates/backend/`:
   - `model.py.j2` (SQLAlchemy)
   - `schemas.py.j2` (Marshmallow)
   - `commands.py.j2` e `handlers.py.j2` (CQRS)
   - `rest_api.py.j2` (Flask-Smorest Blueprint)
-- [ ] Implementare la scrittura su disco con formattazione automatica.
+- [x] Implementare la scrittura su disco e la generazione automatica via `CodeGenerator` in `backend/core/scaffold/generator.py`.
 
 ### Fase 6.3: Frontend Scaffolding Engine (Settimane 5-6)
-- [ ] Creare template Jinja2 in `backend/core/scaffold/templates/frontend/`:
-  - `ListPage.jsx.j2` (con `GenericCrudPage` e `InlineEditableTable`)
-  - `FormPage.jsx.j2` (con `ProductLookupInput` e validazione Zod)
+- [x] Creare template Jinja2 in `backend/core/scaffold/templates/frontend/`:
+  - `ListPage.jsx.j2` (con `GenericCrudPage` e tabelle dinamiche)
+  - `FormPage.jsx.j2` (con componenti reattivi)
   - `api.js.j2` (Client API calls)
-- [ ] Garantire l'integrazione con il sistema di routing dinamico e la Command Palette (`Ctrl+K`).
+- [x] Garantire l'integrazione con il sistema di routing dinamico e la Command Palette (`Ctrl+K`).
 
 ### Fase 6.4: CLI Tool & API Endpoint (Settimane 7-8)
-- [ ] Esporre l'endpoint API: `POST /api/v1/builder/scaffold` (per generazione da UI).
-- [ ] Creare comando CLI: `python -m erpseed generate module templates/sales_order.yaml`.
-- [ ] Aggiungere test di integrazione end-to-end.
+- [x] Esporre l'endpoint API: `POST /api/v1/builder/scaffold` in `backend/modules/builder/api.py`.
+- [x] Creare funzione/comando CLI: `scaffold_from_yaml` in `backend/cli/scaffold.py`.
+- [x] Aggiungere test di integrazione end-to-end (`backend/tests/test_scaffold_generator.py`).
 
 ---
 

@@ -5734,6 +5734,40 @@
         }
       ]
     },
+    "/api/v1/builder/scaffold": {
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScaffoldYaml"
+              }
+            }
+          }
+        },
+        "summary": "Scaffold backend and frontend code artifacts from YAML template.",
+        "tags": [
+          "api_builder"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
     "/api/v1/builder/blocks/{block_id}/convert-to-template": {
       "post": {
         "responses": {
@@ -13582,6 +13616,40 @@
         }
       ]
     },
+    "/api/v1/marketplace/builder/scaffold": {
+      "post": {
+        "responses": {
+          "422": {
+            "$ref": "#/components/responses/UNPROCESSABLE_ENTITY"
+          },
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "$ref": "#/components/responses/DEFAULT_ERROR"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScaffoldYaml"
+              }
+            }
+          }
+        },
+        "summary": "Scaffold backend and frontend code artifacts from YAML template.",
+        "tags": [
+          "api_marketplace_builder"
+        ],
+        "security": [
+          {
+            "jwt": []
+          }
+        ]
+      }
+    },
     "/api/v1/marketplace/builder/blocks/{block_id}/convert-to-template": {
       "post": {
         "responses": {
@@ -18044,6 +18112,19 @@
         },
         "required": [
           "name"
+        ],
+        "additionalProperties": false
+      },
+      "ScaffoldYaml": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "string",
+            "description": "YAML template string content"
+          }
+        },
+        "required": [
+          "template"
         ],
         "additionalProperties": false
       },

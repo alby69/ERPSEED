@@ -598,6 +598,61 @@ class BlockCertify(MethodView):
         return {"message": "Certification revoked"}
 
 
+# === SCAFFOLD ENGINE ENDPOINT ===
+
+
+class ScaffoldYamlSchema(Schema):
+    template = fields.String(required=True, metadata={"description": "YAML template string content"})
+
+
+@blp.route("/scaffold")
+class ScaffoldEngineAPI(MethodView):
+    @blp.doc(security=[{"jwt": []}])
+    @jwt_required()
+    @blp.arguments(ScaffoldYamlSchema)
+    @blp.response(200)
+    def post(self, data):
+        """Scaffold backend and frontend code artifacts from YAML template."""
+        from backend.core.scaffold.parser import TemplateParser
+        from backend.core.scaffold.generator import CodeGenerator
+
+        yaml_content = data.get("template", "")
+        parser = TemplateParser()
+        generator = CodeGenerator()
+
+        try:
+            commands = parser.parse_string(yaml_content)
+        except Exception as e:
+            abort(400, message=f"Template parsing failed: {str(e)}")
+
+        reg_cmd = next((c for c in commands if hasattr(c, "module") and hasattr(c, "fields")), None)
+        if not reg_cmd:
+            abort(400, message="No valid entity definition command found in template")
+
+        backend_files = generator.generate_backend(
+            module_name=reg_cmd.module,
+            entity_name=reg_cmd.entity,
+            fields=reg_cmd.fields,
+            relations=reg_cmd.relations,
+            metadata=reg_cmd.metadata,
+        )
+
+        frontend_files = generator.generate_frontend(
+            module_name=reg_cmd.module,
+            entity_name=reg_cmd.entity,
+            fields=reg_cmd.fields,
+            relations=reg_cmd.relations,
+            metadata=reg_cmd.metadata,
+        )
+
+        return {
+            "module": reg_cmd.module,
+            "entity": reg_cmd.entity,
+            "backend": backend_files,
+            "frontend": frontend_files,
+        }
+
+
 # === BLOCK TEMPLATE ENDPOINTS ===
 
 @blp.route("/blocks/<int:block_id>/convert-to-template")
