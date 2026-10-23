@@ -67,15 +67,15 @@ services:
   # Frontend React/Vite
   frontend:
     container_name: erpseed_frontend
-    image: node:20-alpine
-    working_dir: /app
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     volumes:
       - ./frontend:/app
     ports:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:5000
-    command: sh -c "npm run dev -- --host 0.0.0.0"
     depends_on:
       - backend
     networks:
